@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 // Mock Data
 const EVENTS = [
@@ -16,13 +17,18 @@ const EVENTS = [
 ];
 
 export const Calendar: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(14);
   const [currentMonth, setCurrentMonth] = useState('September 2024');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 900);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Generate 35 days (5 weeks) for the grid
   const days = Array.from({ length: 35 }, (_, i) => {
     // Sept 1, 2024 is Sunday. Index 0 is Sunday.
-    // We'll just map 1-30 directly for simplicity in this view
     const offset = 0; 
     const dayNum = i - offset + 1;
     
@@ -43,8 +49,39 @@ export const Calendar: React.FC = () => {
 
   const selectedEvents = EVENTS.filter(e => e.day === selectedDay);
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto">
+            <div className="mb-8 flex flex-col md:flex-row justify-between items-end gap-6">
+                <div>
+                    <Skeleton className="h-10 w-48 mb-2" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 w-64 rounded-full" />
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-10 w-32 rounded-full" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="lg:col-span-8 flex flex-col gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Skeleton className="h-[140px] rounded-[2rem] bg-[#EAD07D]" />
+                        <Skeleton className="h-[140px] rounded-[2rem] bg-[#1A1A1A]" />
+                        <Skeleton className="h-[140px] rounded-[2rem]" />
+                    </div>
+                    <Skeleton className="h-[600px] rounded-[2rem]" />
+                </div>
+                <div className="lg:col-span-4">
+                    <Skeleton className="h-[600px] rounded-[2rem]" />
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
        {/* Header */}
        <div className="mb-8 flex flex-col md:flex-row justify-between items-end gap-6">
           <div>

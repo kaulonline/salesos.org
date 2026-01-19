@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, MoreHorizontal, Filter, LayoutGrid, List as ListIcon, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 const STAGES = [
   { id: 'discovery', title: 'Discovery', color: 'bg-sky-500', badge: 'blue' as const },
-  { id: 'proposal', title: 'Proposal', color: 'bg-orange-500', badge: 'red' as const }, // orange not in badge yet, using red/similar or custom class
+  { id: 'proposal', title: 'Proposal', color: 'bg-orange-500', badge: 'red' as const },
   { id: 'negotiation', title: 'Negotiation', color: 'bg-violet-500', badge: 'purple' as const },
   { id: 'closed', title: 'Closed Won', color: 'bg-emerald-500', badge: 'green' as const },
 ];
@@ -23,10 +24,16 @@ const DEALS = [
 ];
 
 export const Deals: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [selectedStage, setSelectedStage] = useState('all');
   const [minProbability, setMinProbability] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredDeals = DEALS.filter(deal => {
     const query = searchQuery.toLowerCase();
@@ -38,8 +45,44 @@ export const Deals: React.FC = () => {
     return matchesSearch && matchesStage && matchesProb;
   });
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col">
+            <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
+                <div>
+                    <Skeleton className="h-10 w-48 mb-2" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 w-32 rounded-full" />
+                    <Skeleton className="h-10 w-32 rounded-full" />
+                    <Skeleton className="h-10 w-24 rounded-full" />
+                    <Skeleton className="h-10 w-64 rounded-full" />
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                </div>
+            </div>
+            <div className="flex-1 overflow-x-auto pb-4">
+                <div className="flex gap-6 h-full min-w-[1000px]">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="flex-1 flex flex-col">
+                            <div className="flex justify-between items-center mb-4 px-2">
+                                <Skeleton className="h-6 w-32" />
+                                <Skeleton className="h-4 w-12" />
+                            </div>
+                            <div className="flex-1 bg-gray-100/50 rounded-[2rem] p-4 space-y-4">
+                                <Skeleton className="h-48 w-full rounded-[2rem] bg-white" />
+                                <Skeleton className="h-48 w-full rounded-[2rem] bg-white" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col">
+    <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
       <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-2">Pipeline</h1>

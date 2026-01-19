@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, Download, Plus } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 const LEADS = [
   { id: 1, name: "Harry Bender", role: "Head of Design", company: "Product", country: "Rome", value: "$1,350", status: "Invited", statusVariant: "green" as const },
@@ -15,7 +16,13 @@ const LEADS = [
 ];
 
 export const Leads: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredLeads = LEADS.filter(lead => 
     lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -23,9 +30,45 @@ export const Leads: React.FC = () => {
     lead.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
+           <div>
+              <Skeleton className="h-10 w-32 mb-8" />
+              <Skeleton className="h-12 w-96 rounded-full" />
+           </div>
+           <div className="flex gap-2">
+              <Skeleton className="h-10 w-28 rounded-full" />
+              <Skeleton className="h-10 w-28 rounded-full" />
+           </div>
+        </div>
+        <Card className="min-h-[600px] p-6">
+           <div className="flex justify-between items-center mb-8 gap-4">
+              <div className="flex gap-2">
+                 <Skeleton className="h-9 w-24 rounded-full" />
+                 <Skeleton className="h-9 w-24 rounded-full" />
+                 <Skeleton className="h-9 w-24 rounded-full" />
+              </div>
+              <div className="flex gap-3">
+                 <Skeleton className="h-10 w-64 rounded-full" />
+                 <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+           </div>
+           <div className="space-y-4">
+              <Skeleton className="h-8 w-full rounded-lg bg-gray-100" />
+              {[1,2,3,4,5,6].map(i => (
+                  <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+              ))}
+           </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
+      <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Leads</h1>
             
@@ -51,7 +94,7 @@ export const Leads: React.FC = () => {
          </div>
       </div>
 
-      <Card className="min-h-[600px]">
+      <Card className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
          {/* Filters Bar */}
          <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
             <div className="flex gap-2 overflow-x-auto max-w-full pb-2 md:pb-0 no-scrollbar">

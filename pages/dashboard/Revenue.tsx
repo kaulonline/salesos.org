@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ArrowUpRight, CheckCircle2, Clock, FileCheck } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 const INVOICES = [
   { id: 'INV-2024-001', client: "Acme Corp", date: "Sep 13, 2024", amount: "$12,500", status: "Paid", statusColor: "bg-[#EAD07D] text-[#1A1A1A]" },
@@ -11,8 +12,14 @@ const INVOICES = [
 ];
 
 export const Revenue: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredInvoices = INVOICES.filter(inv => 
     inv.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -49,8 +56,32 @@ export const Revenue: React.FC = () => {
   const linePath = getPath(forecastData);
   const areaPath = `${linePath} L 100,150 L 0,150 Z`;
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto">
+            <div className="mb-10">
+                <Skeleton className="h-10 w-64 mb-8" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <Skeleton className="h-[160px] rounded-[2rem]" />
+                    <Skeleton className="h-[160px] rounded-[2rem]" />
+                    <Skeleton className="h-[160px] rounded-[2rem] bg-gray-800" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8">
+                    <Skeleton className="h-[500px] rounded-[2rem]" />
+                </div>
+                <div className="lg:col-span-4 space-y-6">
+                    <Skeleton className="h-[340px] rounded-[2rem] bg-gray-800" />
+                    <Skeleton className="h-[200px] rounded-[2rem] bg-[#EAD07D]" />
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10">
         <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Revenue & Cash</h1>
         

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Edit, Phone, Video, MoreHorizontal, Send, Paperclip } from 'lucide-react';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 interface Message {
     id: string;
@@ -87,11 +88,17 @@ const INITIAL_CONVERSATIONS: Conversation[] = [
 ];
 
 export const Messages: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<number>(1);
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
   const [inputValue, setInputValue] = useState('');
 
   const activeChat = conversations.find(c => c.id === activeId) || conversations[0];
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSendMessage = (e: React.FormEvent) => {
       e.preventDefault();
@@ -132,8 +139,48 @@ export const Messages: React.FC = () => {
       setConversations(updatedConversations);
   };
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] dash-card overflow-hidden flex">
+            <div className="w-full md:w-80 border-r border-gray-100 flex flex-col bg-white">
+                <div className="p-6">
+                    <Skeleton className="h-8 w-32 mb-6" />
+                    <Skeleton className="h-10 w-full rounded-full" />
+                </div>
+                <div className="p-4 space-y-4">
+                    {[1,2,3,4,5].map(i => (
+                        <div key={i} className="flex gap-3">
+                            <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
+                            <div className="flex-1">
+                                <Skeleton className="h-4 w-24 mb-2" />
+                                <Skeleton className="h-3 w-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="flex-1 flex flex-col bg-[#F9F9F9]">
+                <div className="p-6 bg-white border-b border-gray-100 flex justify-between">
+                    <div className="flex gap-3">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <div className="space-y-1">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-16" />
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-1 p-6 space-y-6">
+                    <Skeleton className="h-16 w-64 rounded-2xl rounded-bl-none" />
+                    <Skeleton className="h-16 w-64 rounded-2xl rounded-br-none ml-auto" />
+                    <Skeleton className="h-24 w-80 rounded-2xl rounded-bl-none" />
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] dash-card overflow-hidden flex">
+    <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] dash-card overflow-hidden flex animate-in fade-in duration-500">
        {/* Sidebar */}
        <div className="w-full md:w-80 border-r border-gray-100 flex flex-col bg-white">
           <div className="p-6 border-b border-gray-100">

@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, TrendingUp, Users, Target, Activity } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export const Analytics: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Revenue Data Generation
   const revenueData = [30, 45, 40, 60, 55, 75, 70, 85, 90, 80, 95, 100];
@@ -36,8 +43,26 @@ export const Analytics: React.FC = () => {
   const linePath = getChartPath(revenueData);
   const areaPath = `${linePath} L 100,100 L 0,100 Z`;
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto">
+            <div className="mb-10">
+                <Skeleton className="h-10 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
+                <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
+                <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem] bg-gray-800" />
+                <Skeleton className="md:col-span-8 h-[400px] rounded-[2rem]" />
+                <Skeleton className="md:col-span-4 h-[400px] rounded-[2rem]" />
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10">
         <h1 className="text-4xl font-medium text-[#1A1A1A]">Analytics</h1>
         <p className="text-[#666] mt-2">Team performance and revenue insights.</p>

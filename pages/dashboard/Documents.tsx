@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight } from 'lucide-react';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 const DOCS = [
   { id: 'DOC-1024', name: "Acme Corp - Enterprise Proposal", client: "Acme Corp", value: "$125,000", type: "Proposal", status: "Viewed", date: "Sep 24, 2024", owner: "Valentina" },
@@ -10,18 +11,58 @@ const DOCS = [
 ];
 
 export const Documents: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredDocs = DOCS.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           doc.client.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'All' || doc.type + 's' === activeTab || doc.type === activeTab; // Simple matching, e.g. "Proposal" matches "Proposals"
+    const matchesTab = activeTab === 'All' || doc.type + 's' === activeTab || doc.type === activeTab;
     return matchesSearch && matchesTab;
   });
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto">
+             <div className="mb-10">
+                 <Skeleton className="h-10 w-48 mb-8" />
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                     <Skeleton className="h-[140px] rounded-[2rem]" />
+                     <Skeleton className="h-[140px] rounded-[2rem]" />
+                     <Skeleton className="h-[140px] rounded-[2rem]" />
+                     <Skeleton className="h-[140px] rounded-[2rem] bg-gray-800" />
+                 </div>
+             </div>
+             <div className="bg-white rounded-[2rem] p-8 border border-black/5 min-h-[500px]">
+                 <div className="flex justify-between mb-8">
+                     <div className="flex gap-2">
+                         <Skeleton className="h-9 w-20 rounded-full" />
+                         <Skeleton className="h-9 w-20 rounded-full" />
+                     </div>
+                     <div className="flex gap-2">
+                         <Skeleton className="h-9 w-48 rounded-full" />
+                         <Skeleton className="h-9 w-24 rounded-full" />
+                     </div>
+                 </div>
+                 <div className="space-y-4">
+                     <Skeleton className="h-8 w-full rounded-lg" />
+                     {[1,2,3,4,5].map(i => (
+                         <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                     ))}
+                 </div>
+             </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10">
          <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Documents</h1>
          

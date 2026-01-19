@@ -1,20 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, Play, Activity } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export const DashboardHome: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-10">
+           <Skeleton className="h-10 w-64 mb-8" />
+           <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+              <Skeleton className="h-12 w-96 rounded-full" />
+              <div className="flex gap-12">
+                 {[1, 2, 3].map(i => (
+                    <div key={i} className="flex flex-col items-end gap-2">
+                       <Skeleton className="h-10 w-16" />
+                       <Skeleton className="h-4 w-12" />
+                    </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+           <Skeleton className="md:col-span-4 h-[340px] rounded-[2rem]" />
+           <Skeleton className="md:col-span-4 h-[340px] rounded-[2rem]" />
+           <Skeleton className="md:col-span-4 h-[340px] rounded-[2rem]" />
+           <Skeleton className="md:col-span-8 h-[240px] rounded-[2rem]" />
+           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Welcome Header */}
       <div className="mb-10">
-        <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">
+        <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
           Welcome in, <span className="font-bold">Valentina</span>
         </h1>
 
         {/* Top Stats Strip - Frosted Glass Control Center */}
-        <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
           <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
             <Badge variant="dark" size="md" className="px-6 py-2 shadow-lg">Interviews</Badge>
             <Badge variant="yellow" size="md" className="px-6 py-2 shadow-sm">Hired</Badge>
@@ -40,7 +77,7 @@ export const DashboardHome: React.FC = () => {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
         
         {/* 1. Profile / Key Contact Card (Left Column) */}
         <Card className="md:col-span-4 p-4 min-h-[340px] flex flex-col justify-end group overflow-hidden">

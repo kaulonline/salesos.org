@@ -1,10 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Bell, Shield, CreditCard, LogOut, Camera } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export const Settings: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+      return (
+        <div className="max-w-4xl mx-auto">
+            <div className="mb-10">
+                <Skeleton className="h-10 w-48" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <div className="md:col-span-4">
+                    <Skeleton className="h-[240px] rounded-[2rem] bg-white" />
+                </div>
+                <div className="md:col-span-8 space-y-6">
+                    <Skeleton className="h-[400px] rounded-[2rem] bg-white" />
+                    <Skeleton className="h-[200px] rounded-[2rem] bg-white" />
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
        <div className="mb-10">
           <h1 className="text-4xl font-medium text-[#1A1A1A]">Settings</h1>
        </div>

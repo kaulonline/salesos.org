@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Package, Tag, MoreHorizontal } from 'lucide-react';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 const PRODUCTS = [
   { id: 1, name: "Enterprise License", sku: "SW-ENT-001", price: "$2,500", type: "Subscription", billing: "Annual", color: "bg-[#EAD07D]" },
@@ -11,15 +12,43 @@ const PRODUCTS = [
 ];
 
 export const Products: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredProducts = PRODUCTS.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (isLoading) {
+      return (
+        <div className="max-w-7xl mx-auto">
+            <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
+                <div>
+                    <Skeleton className="h-10 w-48 mb-2" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 w-64 rounded-full" />
+                    <Skeleton className="h-10 w-32 rounded-full" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                    <Skeleton key={i} className="h-[260px] rounded-[2rem]" />
+                ))}
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-2">Product Catalog</h1>

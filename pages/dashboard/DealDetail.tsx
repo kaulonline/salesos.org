@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Phone, Mail, Printer, ArrowLeft, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 // Enhanced Mock Data
 const DEALS_DATA = [
@@ -50,10 +51,16 @@ const DEALS_DATA = [
 export const DealDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const deal = DEALS_DATA.find(d => d.id === Number(id)) || DEALS_DATA[0];
   
   const [openSection, setOpenSection] = useState<string | null>('basic');
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 900);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -97,8 +104,39 @@ export const DealDetail: React.FC = () => {
       return `${line} L 100,100 L 0,100 Z`;
   }
 
+  if (isLoading) {
+      return (
+        <div className="max-w-[1600px] mx-auto p-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+                <div className="lg:w-80 shrink-0 hidden xl:block space-y-4">
+                    <Skeleton className="h-6 w-32 mb-6" />
+                    {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-3xl" />)}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+                        <Skeleton className="lg:col-span-8 h-[340px] rounded-[2rem]" />
+                        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {[1,2,3,4].map(i => <Skeleton key={i} className="h-[160px] rounded-[2rem]" />)}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-4 space-y-4">
+                            <Skeleton className="h-24 w-full rounded-[2rem]" />
+                            <Skeleton className="h-24 w-full rounded-[2rem]" />
+                        </div>
+                        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <Skeleton className="md:col-span-8 h-[320px] rounded-[2rem]" />
+                            <Skeleton className="md:col-span-4 h-[320px] rounded-[2rem]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )
+  }
+
   return (
-    <div className="max-w-[1600px] mx-auto p-6">
+    <div className="max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row gap-6">
         
         {/* Left Sidebar */}
