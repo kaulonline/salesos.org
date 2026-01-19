@@ -15,7 +15,7 @@ export const Analytics: React.FC = () => {
     if (data.length === 0) return '';
     const points = data.map((val, i) => {
       const x = (i / (data.length - 1)) * 100;
-      const y = 100 - val; // Invert Y because SVG 0 is top
+      const y = 100 - val; // Invert Y because SVG 0 is top (val 0-100)
       return [x, y];
     });
 
@@ -112,7 +112,7 @@ export const Analytics: React.FC = () => {
               >
                  <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                       <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.5" />
+                       <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.4" />
                        <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
                     </linearGradient>
                  </defs>
@@ -121,7 +121,14 @@ export const Analytics: React.FC = () => {
                  <path d={areaPath} fill="url(#chartGradient)" />
                  
                  {/* Stroke Line */}
-                 <path d={linePath} fill="none" stroke="#EAD07D" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                 <path 
+                    d={linePath} 
+                    fill="none" 
+                    stroke="#EAD07D" 
+                    strokeWidth="3" 
+                    vectorEffect="non-scaling-stroke" 
+                    strokeLinecap="round"
+                 />
 
                  {/* Interactive Points */}
                  {revenueData.map((val, i) => {
@@ -138,10 +145,10 @@ export const Analytics: React.FC = () => {
                             <circle 
                                 cx={x} 
                                 cy={y} 
-                                r={isHovered ? 3 : 0} 
+                                r={isHovered ? 6 : 0} 
                                 fill="#1A1A1A" 
                                 stroke="#fff" 
-                                strokeWidth="1"
+                                strokeWidth="2"
                                 className="transition-all duration-200" 
                                 vectorEffect="non-scaling-stroke"
                             />
@@ -153,7 +160,7 @@ export const Analytics: React.FC = () => {
               {/* Tooltip Overlay */}
               {hoveredIndex !== null && (
                  <div 
-                    className="absolute bg-[#1A1A1A] text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full mb-3 transition-all pointer-events-none z-10"
+                    className="absolute bg-[#1A1A1A] text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full mb-3 transition-all pointer-events-none z-10 whitespace-nowrap"
                     style={{ 
                         left: `${(hoveredIndex / (revenueData.length - 1)) * 100}%`, 
                         top: `${100 - revenueData[hoveredIndex]}%` 
@@ -165,7 +172,7 @@ export const Analytics: React.FC = () => {
               )}
            </div>
            
-           <div className="flex justify-between text-xs text-[#999] mt-4 pt-4 border-t border-gray-100">
+           <div className="flex justify-between text-xs text-[#999] mt-6 pt-4 border-t border-gray-100">
               {months.map(m => <span key={m}>{m}</span>)}
            </div>
         </Card>
@@ -176,7 +183,7 @@ export const Analytics: React.FC = () => {
            <div className="space-y-6">
               {[1, 2, 3, 4, 5].map((i) => (
                  <div key={i} className="flex items-center gap-4 group cursor-pointer">
-                    <div className={`font-bold w-4 ${i === 1 ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>{i}</div>
+                    <div className={`font-bold w-4 text-center ${i === 1 ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>{i}</div>
                     <Avatar 
                         src={`https://picsum.photos/40/40?random=${i+50}`} 
                         size="md" 

@@ -70,34 +70,32 @@ export const DealDetail: React.FC = () => {
     { label: 'Negot.', deal: 80, avg: 85 },
   ];
 
-  const getPoint = (index: number, val: number) => {
-     // X range: 5 to 95 to add padding
-     const x = 5 + (index / (velocityData.length - 1)) * 90;
-     // Y range: 90 to 10 (SVG 0 is top)
-     const y = 90 - (val / 100) * 80;
-     return { x, y };
+  // Logic for Step Chart
+  const getStepPoints = (key: 'deal' | 'avg') => {
+      let d = '';
+      const w = 100 / (velocityData.length - 1);
+      
+      velocityData.forEach((item, i) => {
+          const x = i * w;
+          const y = 100 - item[key];
+          
+          if (i === 0) {
+              d += `M ${x},${y}`;
+          } else {
+              const prevY = 100 - velocityData[i-1][key];
+              const prevX = (i - 1) * w;
+              // Step logic: Horizontal then Vertical
+              d += ` L ${x},${prevY} L ${x},${y}`;
+          }
+      });
+      return d;
   };
-
-  const generatePath = (key: 'deal' | 'avg') => {
-    if (velocityData.length === 0) return '';
-    const points = velocityData.map((d, i) => getPoint(i, d[key]));
-    
-    let d = `M ${points[0].x},${points[0].y}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-        const curr = points[i];
-        const next = points[i + 1];
-        
-        // Control points for smooth bezier curve
-        const cp1x = curr.x + (next.x - curr.x) * 0.4;
-        const cp1y = curr.y;
-        const cp2x = next.x - (next.x - curr.x) * 0.4;
-        const cp2y = next.y;
-
-        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
-    }
-    return d;
-  };
+  
+  // Create area fill
+  const getAreaFill = (key: 'deal' | 'avg') => {
+      const line = getStepPoints(key);
+      return `${line} L 100,100 L 0,100 Z`;
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto p-6">
@@ -274,7 +272,7 @@ export const DealDetail: React.FC = () => {
               {/* Charts Area */}
               <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-12 gap-6">
                  
-                 {/* Deal Velocity Chart */}
+                 {/* Deal Velocity Chart - Redesigned as Step Chart */}
                  <Card className="md:col-span-8 flex flex-col justify-between min-h-[320px] p-8">
                     <div className="flex justify-between items-start mb-6">
                        <h3 className="text-xl font-medium text-[#1A1A1A]">Deal Velocity</h3>
@@ -285,69 +283,65 @@ export const DealDetail: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                              <div className="w-2.5 h-2.5 rounded-full bg-[#ccc]"></div>
-                             <span className="text-[#666]">Avg.</span>
+                             <span className="text-[#666]">Avg. Benchmark</span>
                           </div>
                        </div>
                     </div>
                     
-                    {/* SVG Line Chart */}
+                    {/* SVG Chart */}
                     <div className="relative h-56 w-full group">
                        <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
-                          {/* Average Line (Dashed) */}
+                          {/* Gradients */}
+                          <defs>
+                             <linearGradient id="dealFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.3" />
+                                <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
+                             </linearGradient>
+                          </defs>
+
+                          {/* Avg Line (Dashed Step) */}
                           <path 
-                             d={generatePath('avg')} 
+                             d={getStepPoints('avg')} 
                              fill="none" 
                              stroke="#ccc" 
-                             strokeWidth="3" 
-                             strokeDasharray="6 6"
-                             strokeLinecap="round"
+                             strokeWidth="2" 
+                             strokeDasharray="4 4"
                              vectorEffect="non-scaling-stroke"
                           />
-                          {/* Deal Line (Solid) */}
+                          
+                          {/* Deal Area */}
+                          <path d={getAreaFill('deal')} fill="url(#dealFill)" />
+
+                          {/* Deal Line (Solid Step) */}
                           <path 
-                             d={generatePath('deal')} 
+                             d={getStepPoints('deal')} 
                              fill="none" 
                              stroke="#EAD07D" 
-                             strokeWidth="6" 
-                             strokeLinecap="round"
+                             strokeWidth="4" 
                              vectorEffect="non-scaling-stroke"
                           />
                           
                           {/* Interactive Points */}
                           {velocityData.map((d, i) => {
-                               const pAvg = getPoint(i, d.avg);
-                               const pDeal = getPoint(i, d.deal);
+                               const x = i * (100 / (velocityData.length - 1));
+                               const y = 100 - d.deal;
                                const isHovered = hoveredPoint === i;
 
                                return (
                                    <g key={i} onMouseEnter={() => setHoveredPoint(i)} className="transition-all duration-300">
-                                       {/* Avg Point */}
-                                       <circle cx={pAvg.x} cy={pAvg.y} r="2" fill="#ccc" />
-
-                                       {/* Deal Point - Specific Design */}
-                                       <circle cx={pDeal.x} cy={pDeal.y} r="12" fill="transparent" cursor="pointer" />
+                                       {/* Invisible Hit Area */}
+                                       <rect x={x-5} y={0} width="10" height="100" fill="transparent" cursor="pointer" />
                                        
+                                       {/* Point */}
                                        <circle 
-                                            cx={pDeal.x} 
-                                            cy={pDeal.y} 
-                                            r={isHovered ? 8 : 6} 
+                                            cx={x} 
+                                            cy={y} 
+                                            r={isHovered ? 6 : 4} 
                                             fill="#1A1A1A" 
-                                            stroke="#EAD07D" 
-                                            strokeWidth="0" // Solid
+                                            stroke="#fff" 
+                                            strokeWidth="2" 
                                             className="transition-all duration-200"
                                        />
-                                       <circle 
-                                            cx={pDeal.x} 
-                                            cy={pDeal.y} 
-                                            r={isHovered ? 4 : 3} 
-                                            fill="#EAD07D" 
-                                            className="transition-all duration-200"
-                                       />
-                                       {isHovered && (
-                                           <g pointerEvents="none">
-                                              <line x1={pDeal.x} y1={pDeal.y} x2={pDeal.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="3 3" opacity="0.3" vectorEffect="non-scaling-stroke" />
-                                           </g>
-                                       )}
                                    </g>
                                );
                           })}
@@ -358,14 +352,14 @@ export const DealDetail: React.FC = () => {
                           <div 
                               className="absolute bg-[#1A1A1A] text-white p-3 rounded-xl shadow-xl text-xs z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4 transition-all duration-200"
                               style={{ 
-                                  left: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).x}%`, 
-                                  top: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).y}%`,
+                                  left: `${hoveredPoint * (100 / (velocityData.length - 1))}%`, 
+                                  top: `${100 - velocityData[hoveredPoint].deal}%`,
                               }}
                           >
                               <div className="font-bold mb-1 text-[#EAD07D]">{velocityData[hoveredPoint].label}</div>
                               <div className="flex flex-col whitespace-nowrap gap-1">
-                                  <span>This Deal: <span className="font-bold">{velocityData[hoveredPoint].deal}d</span></span>
-                                  <span className="opacity-60">Average: {velocityData[hoveredPoint].avg}d</span>
+                                  <span>Time: <span className="font-bold">{velocityData[hoveredPoint].deal} days</span></span>
+                                  <span className="opacity-60">Avg: {velocityData[hoveredPoint].avg} days</span>
                               </div>
                               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[#1A1A1A]"></div>
                           </div>
@@ -387,29 +381,12 @@ export const DealDetail: React.FC = () => {
                        <div className="text-xs font-bold text-[#1A1A1A]/60 uppercase tracking-widest">AI Confidence</div>
                     </div>
                     
-                    {/* Decorative Waves matching reference */}
+                    {/* Decorative Waves */}
                     <div className="absolute bottom-0 left-0 right-0 h-32 w-full text-[#1A1A1A] pointer-events-none">
                        <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full">
-                          {/* Background wave */}
                           <path d="M0,35 C30,25 60,45 100,30 V50 H0 Z" fill="#1A1A1A" fillOpacity="0.1" />
-                          
-                          {/* Main thick wave line */}
-                          <path 
-                             d="M-5,40 C30,45 60,25 105,40" 
-                             fill="none" 
-                             stroke="#1A1A1A" 
-                             strokeWidth="1.5" 
-                             strokeLinecap="round"
-                          />
-                          
-                          {/* Secondary thin line */}
-                          <path 
-                             d="M-5,45 C40,50 70,30 105,42" 
-                             fill="none" 
-                             stroke="#1A1A1A" 
-                             strokeWidth="0.5" 
-                             opacity="0.5"
-                          />
+                          <path d="M-5,40 C30,45 60,25 105,40" fill="none" stroke="#1A1A1A" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M-5,45 C40,50 70,30 105,42" fill="none" stroke="#1A1A1A" strokeWidth="0.5" opacity="0.5" />
                        </svg>
                     </div>
                  </Card>
