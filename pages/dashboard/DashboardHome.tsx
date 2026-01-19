@@ -4,6 +4,9 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
+import { AIInsightsPanel } from '../../components/dashboard/AIInsightsPanel';
+import { QuickActions } from '../../components/dashboard/QuickActions';
 
 export const DashboardHome: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -237,7 +240,7 @@ export const DashboardHome: React.FC = () => {
               <h3 className="text-xl font-medium">Pipeline Mix</h3>
               <span className="text-2xl font-light">18%</span>
            </div>
-           
+
            <div className="flex gap-2 mb-8">
               <div className="flex-1 bg-[#EAD07D] h-12 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm">New</div>
               <div className="w-12 bg-[#1A1A1A] h-12 rounded-xl"></div>
@@ -259,6 +262,20 @@ export const DashboardHome: React.FC = () => {
         </Card>
 
       </div>
+
+      {/* Quick Actions Section */}
+      <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        <QuickActions variant="inline" />
+      </div>
+
+      {/* AI Insights & Activity Feed Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+        <AIInsightsPanel maxInsights={4} />
+        <ActivityFeed maxItems={6} />
+      </div>
+
+      {/* Floating Quick Actions Button */}
+      <QuickActions variant="floating" />
     </div>
   );
 };

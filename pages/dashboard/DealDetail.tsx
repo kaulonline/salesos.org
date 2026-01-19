@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ContactTimeline } from '../../components/dashboard/ContactTimeline';
 
 // Enhanced Mock Data
 const DEALS_DATA = [
@@ -433,6 +434,14 @@ export const DealDetail: React.FC = () => {
                  </Card>
 
               </div>
+           </div>
+
+           {/* Contact Timeline Section */}
+           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+              <ContactTimeline
+                contactName={deal.contactName}
+                maxEvents={6}
+              />
            </div>
 
         </div>
