@@ -134,27 +134,32 @@ export const DealDetail: React.FC = () => {
 
   if (!deal) return null;
 
-  // Chart Data: Days spent in each stage vs Average
+  // Chart Data: Cumulative time or progress metric
   const velocityData = [
-    { label: 'Lead', deal: 2, avg: 5 },
-    { label: 'Discovery', deal: 12, avg: 15 },
-    { label: 'Qual', deal: 28, avg: 25 },
-    { label: 'Demo', deal: 35, avg: 32 },
-    { label: 'Proposal', deal: 42, avg: 45 },
-    { label: 'Negot.', deal: 50, avg: 55 },
+    { label: 'Lead', deal: 5, avg: 10 },
+    { label: 'Discovery', deal: 15, avg: 22 },
+    { label: 'Qual', deal: 35, avg: 30 },
+    { label: 'Demo', deal: 42, avg: 45 },
+    { label: 'Proposal', deal: 55, avg: 60 },
+    { label: 'Negot.', deal: 75, avg: 80 },
   ];
 
-  const maxY = Math.max(...velocityData.map(d => Math.max(d.deal, d.avg))) * 1.2;
+  const maxY = 100; // Normalized scale 0-100
 
   // Helper to get coordinates for the chart (0-100 scale)
   const getPoint = (index: number, val: number) => {
      // Padding: x from 5 to 95, y from 90 to 10
-     const x = 5 + (index / (velocityData.length - 1)) * 90;
-     const y = 90 - (val / maxY) * 80;
+     const paddingX = 5;
+     const paddingY = 15; // More vertical padding
+     const width = 100 - (paddingX * 2);
+     const height = 100 - (paddingY * 2);
+
+     const x = paddingX + (index / (velocityData.length - 1)) * width;
+     const y = (100 - paddingY) - (val / maxY) * height;
      return { x, y };
   };
 
-  // Generate SVG Paths
+  // Generate Smooth SVG Paths
   const generatePath = (key: 'deal' | 'avg') => {
     if (velocityData.length === 0) return '';
     
@@ -162,13 +167,18 @@ export const DealDetail: React.FC = () => {
     const first = getPoint(0, velocityData[0][key]);
     let d = `M ${first.x},${first.y}`;
 
-    // Bezier curves
+    // Cubic Bezier curves for smoothness
     for (let i = 0; i < velocityData.length - 1; i++) {
         const curr = getPoint(i, velocityData[i][key]);
         const next = getPoint(i + 1, velocityData[i+1][key]);
         
-        const controlX = (curr.x + next.x) / 2;
-        d += ` C ${controlX},${curr.y} ${controlX},${next.y} ${next.x},${next.y}`;
+        // Control points
+        const controlX1 = curr.x + (next.x - curr.x) * 0.4;
+        const controlY1 = curr.y;
+        const controlX2 = next.x - (next.x - curr.x) * 0.4;
+        const controlY2 = next.y;
+
+        d += ` C ${controlX1},${controlY1} ${controlX2},${controlY2} ${next.x},${next.y}`;
     }
     return d;
   };
@@ -262,27 +272,32 @@ export const DealDetail: React.FC = () => {
                  </div>
               </div>
 
-              {/* Score Card */}
-              <div className="lg:col-span-4 bg-white rounded-[2.5rem] p-8 shadow-card flex flex-col items-center justify-center text-center relative overflow-hidden">
-                 <div className="relative w-48 h-48 mb-4">
-                     <svg className="w-full h-full transform -rotate-90">
-                         <circle cx="96" cy="96" r="80" stroke="#F2F1EA" strokeWidth="16" fill="transparent" />
-                         <circle 
-                            cx="96" 
-                            cy="96" 
-                            r="80" 
-                            stroke="#EAD07D" 
-                            strokeWidth="16" 
-                            fill="transparent" 
-                            strokeDasharray={`${deal.score * 50.2} 502`} 
-                            strokeLinecap="round" 
-                         />
-                     </svg>
-                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                         <div className="text-5xl font-medium text-[#1A1A1A]">{deal.score}</div>
-                         <div className="text-sm text-[#999] mt-1">Total score</div>
-                     </div>
-                 </div>
+              {/* Stats Pills - Moved up to replace Score Card in layout logic for better flow if needed, but keeping separate for now */}
+              <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-[#EAD07D] rounded-[2rem] p-6 flex flex-col justify-between group hover:scale-[1.02] transition-transform">
+                      <div>
+                          <div className="text-3xl font-medium text-[#1A1A1A] mb-1">{deal.value}</div>
+                          <div className="text-xs text-[#1A1A1A]/60 uppercase font-bold tracking-wider">Deal Value</div>
+                      </div>
+                  </div>
+                  <div className="bg-[#1A1A1A] rounded-[2rem] p-6 flex flex-col justify-between group hover:scale-[1.02] transition-transform">
+                      <div>
+                          <div className="text-3xl font-medium text-white mb-1">{deal.probability}</div>
+                          <div className="text-xs text-white/50 uppercase font-bold tracking-wider">Probability</div>
+                      </div>
+                  </div>
+                  <div className="bg-white rounded-[2rem] p-6 flex flex-col justify-between group hover:scale-[1.02] transition-transform shadow-sm border border-black/5">
+                      <div>
+                          <div className="text-3xl font-medium text-[#1A1A1A] mb-1">12<span className="text-lg text-[#999]">d</span></div>
+                          <div className="text-xs text-[#999] uppercase font-bold tracking-wider">Time in Stage</div>
+                      </div>
+                  </div>
+                  <div className="bg-[#999] rounded-[2rem] p-6 flex flex-col justify-between group hover:scale-[1.02] transition-transform">
+                      <div>
+                          <div className="text-3xl font-medium text-white mb-1">{deal.tags.length}</div>
+                          <div className="text-xs text-white/70 uppercase font-bold tracking-wider">Active Tags</div>
+                      </div>
+                  </div>
               </div>
            </div>
 
@@ -350,136 +365,159 @@ export const DealDetail: React.FC = () => {
                  </div>
               </div>
 
-              {/* Stats & Charts Column */}
-              <div className="lg:col-span-8 flex flex-col gap-6">
+              {/* Charts Area */}
+              <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-12 gap-6">
                  
-                 {/* Stats Pills */}
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-[#EAD07D] rounded-[1.5rem] p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                       <div className="text-2xl font-medium text-[#1A1A1A] mb-1">{deal.value}</div>
-                       <div className="text-xs text-[#1A1A1A]/70 uppercase font-bold tracking-wider">Deal Value</div>
+                 {/* Deal Velocity Chart */}
+                 <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 shadow-card flex flex-col justify-between min-h-[320px]">
+                    <div className="flex justify-between items-start mb-6">
+                       <h3 className="text-xl font-medium text-[#1A1A1A]">Deal Velocity</h3>
+                       <div className="flex gap-4 text-xs font-medium">
+                          <div className="flex items-center gap-2">
+                             <div className="w-2.5 h-2.5 rounded-full bg-[#EAD07D]"></div>
+                             <span className="text-[#666]">This Deal</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <div className="w-2.5 h-2.5 rounded-full bg-[#ccc]"></div>
+                             <span className="text-[#666]">Avg.</span>
+                          </div>
+                       </div>
                     </div>
                     
-                    <div className="bg-[#1A1A1A] rounded-[1.5rem] p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                       <div className="text-2xl font-medium text-white mb-1">{deal.probability}</div>
-                       <div className="text-xs text-white/50 uppercase font-bold tracking-wider">Probability</div>
-                    </div>
+                    {/* SVG Line Chart */}
+                    <div className="relative h-56 w-full group">
+                       <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
+                          {/* Dashed Average Line */}
+                          <path 
+                             d={generatePath('avg')} 
+                             fill="none" 
+                             stroke="#ccc" 
+                             strokeWidth="3" 
+                             strokeDasharray="6 6"
+                             strokeLinecap="round"
+                          />
+                          {/* Solid Deal Line */}
+                          <path 
+                             d={generatePath('deal')} 
+                             fill="none" 
+                             stroke="#EAD07D" 
+                             strokeWidth="6" 
+                             strokeLinecap="round"
+                          />
+                          
+                          {/* Interactive Points - Render Avg points smaller */}
+                          {velocityData.map((d, i) => {
+                               // Avg Points
+                               const pAvg = getPoint(i, d.avg);
+                               // Deal Points
+                               const pDeal = getPoint(i, d.deal);
+                               const isHovered = hoveredPoint === i;
 
-                    <div className="bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] bg-gray-100 rounded-[1.5rem] p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                       <div className="text-2xl font-medium text-[#1A1A1A] mb-1">12<span className="text-sm">d</span></div>
-                       <div className="text-xs text-[#666] uppercase font-bold tracking-wider">Time in Stage</div>
-                    </div>
+                               return (
+                                   <g key={i} onMouseEnter={() => setHoveredPoint(i)} className="transition-all duration-300">
+                                       {/* Avg Point - Just a small dot */}
+                                       <circle cx={pAvg.x} cy={pAvg.y} r="2" fill="#ccc" />
 
-                    <div className="bg-[#999] rounded-[1.5rem] p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                       <div className="text-2xl font-medium text-white mb-1">{deal.tags.length}</div>
-                       <div className="text-xs text-white/70 uppercase font-bold tracking-wider">Active Tags</div>
+                                       {/* Deal Point - Specific Design: Black ring, yellow/transparent fill */}
+                                       {/* Hit Area */}
+                                       <circle cx={pDeal.x} cy={pDeal.y} r="10" fill="transparent" cursor="pointer" />
+                                       
+                                       {/* Visible Point */}
+                                       <circle 
+                                          cx={pDeal.x} 
+                                          cy={pDeal.y} 
+                                          r={isHovered ? 7 : 5} 
+                                          fill="#1A1A1A" 
+                                          stroke="#EAD07D" 
+                                          strokeWidth="0" // Solid black dot
+                                       />
+                                       <circle 
+                                          cx={pDeal.x} 
+                                          cy={pDeal.y} 
+                                          r={isHovered ? 4 : 2} 
+                                          fill="#EAD07D" // Yellow center
+                                       />
+
+                                       {/* Tooltip */}
+                                       {isHovered && (
+                                           <g pointerEvents="none">
+                                              {/* Simple line to bottom */}
+                                              <line x1={pDeal.x} y1={pDeal.y} x2={pDeal.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
+                                           </g>
+                                       )}
+                                   </g>
+                               );
+                          })}
+                       </svg>
+
+                       {/* Tooltip Overlay (HTML for better text handling) */}
+                       {hoveredPoint !== null && (
+                          <div 
+                              className="absolute bg-[#1A1A1A] text-white p-3 rounded-xl shadow-xl text-xs z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4 transition-all duration-200"
+                              style={{ 
+                                  left: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).x}%`, 
+                                  top: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).y}%`,
+                              }}
+                          >
+                              <div className="font-bold mb-1 text-[#EAD07D]">{velocityData[hoveredPoint].label}</div>
+                              <div className="flex flex-col whitespace-nowrap gap-1">
+                                  <span>This Deal: <span className="font-bold">{velocityData[hoveredPoint].deal}d</span></span>
+                                  <span className="opacity-60">Average: {velocityData[hoveredPoint].avg}d</span>
+                              </div>
+                              {/* Arrow */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[#1A1A1A]"></div>
+                          </div>
+                      )}
+
+                       {/* X-Axis Labels */}
+                       <div className="flex justify-between text-xs text-[#999] mt-6 px-1 absolute w-full bottom-0">
+                          {velocityData.map((d) => (
+                              <div key={d.label} className="w-8 text-center">{d.label}</div>
+                          ))}
+                       </div>
                     </div>
                  </div>
 
-                 {/* Charts Area */}
-                 <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
-                    {/* Line Chart */}
-                    <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 shadow-card flex flex-col justify-between min-h-[300px]">
-                       <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-lg font-medium text-[#1A1A1A]">Deal Velocity</h3>
-                          <div className="flex gap-4 text-xs">
-                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[#EAD07D]"></div>
-                                <span className="text-[#666]">This Deal</span>
-                             </div>
-                             <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[#999]"></div>
-                                <span className="text-[#666]">Avg.</span>
-                             </div>
-                          </div>
-                       </div>
-                       
-                       {/* SVG Line Chart */}
-                       <div className="relative h-48 w-full group">
-                          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
-                             {/* Dashed Average Line */}
-                             <path 
-                                d={generatePath('avg')} 
-                                fill="none" 
-                                stroke="#ccc" 
-                                strokeWidth="2" 
-                                strokeDasharray="4 4"
-                             />
-                             {/* Solid Deal Line */}
-                             <path 
-                                d={generatePath('deal')} 
-                                fill="none" 
-                                stroke="#EAD07D" 
-                                strokeWidth="3" 
-                             />
-                             
-                             {/* Interactive Points */}
-                             {velocityData.map((d, i) => {
-                                 const p = getPoint(i, d.deal);
-                                 const isHovered = hoveredPoint === i;
-                                 return (
-                                     <g key={i} onMouseEnter={() => setHoveredPoint(i)}>
-                                         {/* Hit Area */}
-                                         <circle cx={p.x} cy={p.y} r="8" fill="transparent" cursor="pointer" />
-                                         {/* Visual Point */}
-                                         <circle 
-                                            cx={p.x} 
-                                            cy={p.y} 
-                                            r={isHovered ? 4 : 3} 
-                                            fill="#EAD07D" 
-                                            stroke="#1A1A1A" 
-                                            strokeWidth="2" 
-                                            className="transition-all duration-200 pointer-events-none"
-                                         />
-                                         {/* Vertical Line on Hover */}
-                                         {isHovered && (
-                                             <line x1={p.x} y1={p.y} x2={p.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" pointer-events-none />
-                                         )}
-                                     </g>
-                                 );
-                             })}
-                          </svg>
-
-                          {/* Tooltip Overlay */}
-                          {hoveredPoint !== null && (
-                              <div 
-                                  className="absolute bg-[#1A1A1A] text-white p-3 rounded-xl shadow-xl text-xs z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 transition-all duration-200"
-                                  style={{ 
-                                      left: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).x}%`, 
-                                      top: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).y}%`,
-                                  }}
-                              >
-                                  <div className="font-bold mb-1">{velocityData[hoveredPoint].label}</div>
-                                  <div className="flex gap-3 whitespace-nowrap">
-                                      <span>Act: <span className="text-[#EAD07D] font-bold">{velocityData[hoveredPoint].deal}d</span></span>
-                                      <span className="opacity-60">Avg: {velocityData[hoveredPoint].avg}d</span>
-                                  </div>
-                                  {/* Arrow */}
-                                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[#1A1A1A]"></div>
-                              </div>
-                          )}
-
-                          <div className="flex justify-between text-xs text-[#999] mt-2 pt-2 border-t border-gray-100 absolute w-full bottom-0">
-                             {velocityData.map((d) => <span key={d.label}>{d.label}</span>)}
-                          </div>
-                       </div>
+                 {/* Win Probability Card */}
+                 <div className="md:col-span-4 bg-[#EAD07D] rounded-[2.5rem] p-8 relative overflow-hidden flex flex-col min-h-[320px]">
+                    <div className="relative z-10 mt-2">
+                       <h3 className="text-[#1A1A1A] font-medium mb-4 text-lg">Win Probability</h3>
+                       <div className="text-7xl font-light text-[#1A1A1A] tracking-tighter mb-4">55%</div>
+                       <div className="text-xs font-bold text-[#1A1A1A]/60 uppercase tracking-widest">AI Confidence</div>
                     </div>
-
-                    {/* Match Card */}
-                    <div className="md:col-span-4 bg-[#EAD07D] rounded-[2.5rem] p-8 relative overflow-hidden flex flex-col justify-between">
-                       <div className="relative z-10">
-                          <h3 className="text-[#1A1A1A] font-medium mb-1">Win Probability</h3>
-                          <div className="text-5xl font-light text-[#1A1A1A] mb-2">{deal.probability}</div>
-                          <div className="text-xs font-bold text-[#1A1A1A]/60 uppercase tracking-wide">AI Confidence</div>
-                       </div>
-                       
-                       {/* Wave decoration */}
-                       <div className="absolute bottom-0 left-0 right-0 h-20">
-                          <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="w-full h-full text-[#1A1A1A]">
-                             <path d="M0,10 C20,20 40,0 60,10 S100,0 100,10 V20 H0 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-                             <path d="M0,15 C30,5 60,25 100,10 V20 H0 Z" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-                          </svg>
-                       </div>
+                    
+                    {/* Decorative Waves */}
+                    <div className="absolute bottom-0 left-0 right-0 h-40 w-full text-[#1A1A1A] pointer-events-none">
+                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                          {/* Back Wave */}
+                          <path 
+                            d="M0,80 C30,70 60,90 100,75 V100 H0 Z" 
+                            fill="#1A1A1A" 
+                            fillOpacity="0.1" 
+                          />
+                          {/* Middle Wave */}
+                          <path 
+                             d="M0,85 C40,95 70,65 100,80 V100 H0 Z" 
+                             fill="none" 
+                             stroke="#1A1A1A" 
+                             strokeWidth="2"
+                             opacity="0.2"
+                          />
+                          {/* Front Wave (Thick) */}
+                          <path 
+                             d="M0,82 C20,92 50,70 100,85" 
+                             fill="none" 
+                             stroke="#1A1A1A" 
+                             strokeWidth="3" 
+                             strokeLinecap="round"
+                          />
+                          {/* Bottom Fill */}
+                          <path 
+                             d="M0,90 C30,100 70,90 100,95 V100 H0 Z" 
+                             fill="#1A1A1A" 
+                             opacity="0.05"
+                          />
+                       </svg>
                     </div>
                  </div>
 
