@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Search, Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
+import { SearchInput } from '../../components/ui/Input';
 
 // Mock Data
 const EVENTS = [
@@ -40,13 +44,8 @@ export const Calendar: React.FC = () => {
           </div>
           
           <div className="flex gap-3 w-full md:w-auto">
-             <div className="relative flex-1 md:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search events..." 
-                  className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none shadow-sm focus:ring-1 focus:ring-[#EAD07D]"
-                />
+             <div className="w-full md:w-64">
+                <SearchInput placeholder="Search events..." />
              </div>
              <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#666] hover:text-[#1A1A1A] shadow-sm">
                 <Filter size={18} />
@@ -64,7 +63,7 @@ export const Calendar: React.FC = () => {
              
              {/* Stats Pills */}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#EAD07D] rounded-[1.5rem] p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden group">
+                <Card variant="yellow" className="flex flex-col justify-between min-h-[140px] group">
                    <div className="flex justify-between items-start z-10">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]/60">Meetings</span>
                       <Video size={18} className="text-[#1A1A1A]" />
@@ -74,9 +73,9 @@ export const Calendar: React.FC = () => {
                       <div className="text-sm font-medium text-[#1A1A1A]/60 mt-1">Scheduled</div>
                    </div>
                    <div className="absolute right-[-20px] bottom-[-20px] w-24 h-24 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-                </div>
+                </Card>
 
-                <div className="bg-[#1A1A1A] rounded-[1.5rem] p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden group">
+                <Card variant="dark" className="flex flex-col justify-between min-h-[140px] group">
                    <div className="flex justify-between items-start z-10">
                       <span className="text-xs font-bold uppercase tracking-wider text-white/60">Deep Work</span>
                       <Clock size={18} className="text-white" />
@@ -86,9 +85,9 @@ export const Calendar: React.FC = () => {
                       <div className="text-sm font-medium text-white/60 mt-1">Focus Time</div>
                    </div>
                    <div className="absolute right-[-20px] bottom-[-20px] w-24 h-24 bg-[#EAD07D]/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-                </div>
+                </Card>
 
-                <div className="bg-white border border-gray-100 rounded-[1.5rem] p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden">
+                <Card variant="default" className="flex flex-col justify-between min-h-[140px] border-gray-100">
                    {/* Diagonal Pattern Background */}
                    <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%)', backgroundSize: '10px 10px' }}></div>
                    
@@ -100,11 +99,11 @@ export const Calendar: React.FC = () => {
                       <div className="text-4xl font-medium text-[#1A1A1A]">2d</div>
                       <div className="text-sm font-medium text-[#666] mt-1">Planned</div>
                    </div>
-                </div>
+                </Card>
              </div>
 
              {/* Main Calendar Grid */}
-             <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex-1 flex flex-col">
+             <Card padding="lg" className="flex-1 flex flex-col border-gray-100">
                 <div className="flex justify-between items-center mb-6">
                    <h2 className="text-xl font-bold text-[#1A1A1A]">{currentMonth}</h2>
                    <div className="flex items-center gap-2 bg-[#F8F8F6] p-1 rounded-full">
@@ -154,18 +153,18 @@ export const Calendar: React.FC = () => {
                          
                          {day.date === selectedDay && (
                             <div className="absolute bottom-3 right-3">
-                               <div className="bg-[#1A1A1A] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">4 Events</div>
+                               <Badge variant={day.date === selectedDay ? 'dark' : 'neutral'} size="sm">4 Events</Badge>
                             </div>
                          )}
                       </div>
                    ))}
                 </div>
-             </div>
+             </Card>
           </div>
 
           {/* Right Column: Schedule/Agenda */}
           <div className="lg:col-span-4 flex flex-col h-full overflow-hidden">
-             <div className="bg-white rounded-[2.5rem] p-8 shadow-card border border-gray-100 h-full flex flex-col relative overflow-hidden">
+             <Card padding="lg" className="h-full flex flex-col border-gray-100">
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#EAD07D]/10 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -201,7 +200,7 @@ export const Calendar: React.FC = () => {
                          <div className="flex items-center justify-between">
                             <div className="flex -space-x-2">
                                {event.attendees.map(i => (
-                                  <img key={i} src={`https://picsum.photos/30/30?random=${i}`} className="w-6 h-6 rounded-full border-2 border-white" alt="Attendee" />
+                                  <Avatar key={i} src={`https://picsum.photos/30/30?random=${i}`} size="sm" border className="w-6 h-6" />
                                ))}
                             </div>
                             <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 flex items-center gap-1">
@@ -224,7 +223,7 @@ export const Calendar: React.FC = () => {
                         Sync Calendar
                     </button>
                 </div>
-             </div>
+             </Card>
           </div>
        </div>
     </div>

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, MoreHorizontal, Search, Filter, LayoutGrid, List as ListIcon, ChevronDown, ArrowUpRight } from 'lucide-react';
+import { Plus, MoreHorizontal, Filter, LayoutGrid, List as ListIcon, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
+import { SearchInput } from '../../components/ui/Input';
 
 const STAGES = [
-  { id: 'discovery', title: 'Discovery', color: 'bg-sky-500', badge: 'bg-sky-100 text-sky-700' },
-  { id: 'proposal', title: 'Proposal', color: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700' },
-  { id: 'negotiation', title: 'Negotiation', color: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700' },
-  { id: 'closed', title: 'Closed Won', color: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700' },
+  { id: 'discovery', title: 'Discovery', color: 'bg-sky-500', badge: 'blue' as const },
+  { id: 'proposal', title: 'Proposal', color: 'bg-orange-500', badge: 'red' as const }, // orange not in badge yet, using red/similar or custom class
+  { id: 'negotiation', title: 'Negotiation', color: 'bg-violet-500', badge: 'purple' as const },
+  { id: 'closed', title: 'Closed Won', color: 'bg-emerald-500', badge: 'green' as const },
 ];
 
 const DEALS = [
@@ -24,7 +28,6 @@ export const Deals: React.FC = () => {
   const [selectedStage, setSelectedStage] = useState('all');
   const [minProbability, setMinProbability] = useState(0);
 
-  // Filter deals based on search, stage, and probability
   const filteredDeals = DEALS.filter(deal => {
     const query = searchQuery.toLowerCase();
     const matchesSearch = deal.title.toLowerCase().includes(query) || deal.company.toLowerCase().includes(query);
@@ -87,14 +90,11 @@ export const Deals: React.FC = () => {
             </div>
 
             {/* Search */}
-            <div className="relative flex-1 md:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search deals..." 
-                  className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none shadow-sm focus:ring-1 focus:ring-[#EAD07D]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+            <div className="w-full md:w-64">
+                <SearchInput 
+                    placeholder="Search deals..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
 
@@ -128,8 +128,7 @@ export const Deals: React.FC = () => {
                      <div className="flex-1 bg-[#E5E5E5]/30 rounded-[2rem] p-4 space-y-4 overflow-y-auto custom-scrollbar">
                         {stageDeals.map((deal) => (
                           <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="block group">
-                            <div className="bg-white p-5 rounded-[1.5rem] shadow-soft hover:shadow-card transition-all duration-300 border border-transparent hover:border-[#EAD07D]/30 relative overflow-hidden">
-                               
+                            <Card padding="md" className="hover:border-[#EAD07D]/30">
                                <div className="flex justify-between items-start mb-3">
                                   <span className="text-xs font-bold text-[#999] uppercase tracking-wider">{deal.company}</span>
                                   <button className="text-[#999] hover:text-[#1A1A1A]"><MoreHorizontal size={16} /></button>
@@ -138,9 +137,9 @@ export const Deals: React.FC = () => {
                                <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight">{deal.title}</h4>
 
                                <div className="mb-4">
-                                  <span className={`inline-block text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${stage.badge}`}>
+                                  <Badge variant={stage.badge} size="sm">
                                      {stage.title}
-                                  </span>
+                                  </Badge>
                                </div>
                                
                                <div className="flex items-end justify-between">
@@ -148,14 +147,14 @@ export const Deals: React.FC = () => {
                                      <div className="text-sm font-medium text-[#1A1A1A]">{deal.value}</div>
                                      <div className="text-xs text-[#666] mt-1">{deal.probability} probability</div>
                                   </div>
-                                  <img src={deal.owner} alt="Owner" className="w-8 h-8 rounded-full border-2 border-white" />
+                                  <Avatar src={deal.owner} size="sm" border />
                                </div>
 
                                {/* Progress Bar */}
                                <div className="absolute bottom-0 left-0 h-1 bg-gray-100 w-full">
                                   <div className={`h-full ${stage.color}`} style={{ width: deal.probability }}></div>
                                </div>
-                            </div>
+                            </Card>
                           </Link>
                         ))}
                         
@@ -170,7 +169,7 @@ export const Deals: React.FC = () => {
           </div>
       ) : (
           /* List View */
-          <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+          <Card padding="none" className="flex-1 overflow-hidden flex flex-col">
               <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider bg-[#F9F9F9]">
                   <div className="col-span-4">Deal Name</div>
                   <div className="col-span-2">Stage</div>
@@ -189,9 +188,9 @@ export const Deals: React.FC = () => {
                                     <div className="text-xs text-[#666]">{deal.company}</div>
                                 </div>
                                 <div className="col-span-2">
-                                    <span className={`inline-block text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${stage?.badge}`}>
+                                    <Badge variant={stage?.badge} size="sm">
                                         {stage?.title}
-                                    </span>
+                                    </Badge>
                                 </div>
                                 <div className="col-span-2 text-sm font-medium text-[#1A1A1A]">
                                     {deal.value}
@@ -205,7 +204,7 @@ export const Deals: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="col-span-2 flex justify-end">
-                                    <img src={deal.owner} alt="Owner" className="w-8 h-8 rounded-full border border-gray-200" />
+                                    <Avatar src={deal.owner} size="sm" />
                                 </div>
                             </Link>
                          );
@@ -217,7 +216,7 @@ export const Deals: React.FC = () => {
                     </div>
                  )}
               </div>
-          </div>
+          </Card>
       )}
     </div>
   );

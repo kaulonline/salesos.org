@@ -1,5 +1,8 @@
 import React from 'react';
-import { ArrowUpRight, Play, MoreHorizontal, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, Play, Activity } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
 
 export const DashboardHome: React.FC = () => {
   return (
@@ -13,27 +16,25 @@ export const DashboardHome: React.FC = () => {
         {/* Top Stats Strip */}
         <div className="flex flex-col md:flex-row justify-between items-end gap-6">
           <div className="flex items-center gap-4 bg-white/50 p-2 pr-6 rounded-full backdrop-blur-sm">
-            <div className="bg-[#1A1A1A] text-white px-6 py-2 rounded-full text-sm font-bold">Interviews</div>
-            <div className="bg-[#EAD07D] text-[#1A1A1A] px-6 py-2 rounded-full text-sm font-bold">Hired</div>
+            <Badge variant="dark" size="md" className="px-6 py-2">Interviews</Badge>
+            <Badge variant="yellow" size="md" className="px-6 py-2">Hired</Badge>
             <div className="flex-1 w-32 h-2 bg-gray-200 rounded-full overflow-hidden relative">
                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
             </div>
-            <div className="border border-black/10 px-4 py-1.5 rounded-full text-xs font-bold">Output 10%</div>
+            <Badge variant="outline" size="md" className="px-4 py-1.5 border-black/10">Output 10%</Badge>
           </div>
 
           <div className="flex gap-12">
-            <div className="text-right">
-              <div className="text-4xl font-light">78</div>
-              <div className="text-xs uppercase font-bold text-[#666] tracking-wider mt-1">Deals</div>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-light">56</div>
-              <div className="text-xs uppercase font-bold text-[#666] tracking-wider mt-1">Closed</div>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-light">203</div>
-              <div className="text-xs uppercase font-bold text-[#666] tracking-wider mt-1">Projects</div>
-            </div>
+            {[
+                { label: 'Deals', val: '78' },
+                { label: 'Closed', val: '56' },
+                { label: 'Projects', val: '203' }
+            ].map(stat => (
+                <div key={stat.label} className="text-right">
+                    <div className="text-4xl font-light">{stat.val}</div>
+                    <div className="text-xs uppercase font-bold text-[#666] tracking-wider mt-1">{stat.label}</div>
+                </div>
+            ))}
           </div>
         </div>
       </div>
@@ -42,10 +43,10 @@ export const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* 1. Profile / Key Contact Card (Left Column) */}
-        <div className="md:col-span-4 dash-card p-4 relative overflow-hidden group min-h-[340px] flex flex-col justify-end">
+        <Card className="md:col-span-4 p-4 min-h-[340px] flex flex-col justify-end group">
            <img 
              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800" 
-             className="absolute inset-0 w-full h-full object-cover rounded-[1.5rem] grayscale group-hover:grayscale-0 transition-all duration-500"
+             className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
              alt="Top Performer"
            />
            <div className="relative z-10 p-4">
@@ -57,10 +58,10 @@ export const DashboardHome: React.FC = () => {
                 </div>
               </div>
            </div>
-        </div>
+        </Card>
 
         {/* 2. Pipeline Progress (Middle Column) */}
-        <div className="md:col-span-4 dash-card p-8 flex flex-col justify-between">
+        <Card padding="lg" className="md:col-span-4 flex flex-col justify-between">
            <div className="flex justify-between items-start mb-6">
               <div>
                  <h3 className="text-xl font-medium mb-1">Pipeline</h3>
@@ -94,10 +95,10 @@ export const DashboardHome: React.FC = () => {
            <div className="flex justify-between text-xs text-[#999] font-medium mt-4 px-1">
              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
            </div>
-        </div>
+        </Card>
 
         {/* 3. Activity Tracker (Right Column) */}
-        <div className="md:col-span-4 dash-card p-8 flex flex-col relative overflow-hidden">
+        <Card padding="lg" className="md:col-span-4 flex flex-col">
            <div className="flex justify-between items-start mb-2">
               <h3 className="text-xl font-medium">Call Time</h3>
               <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50">
@@ -111,7 +112,6 @@ export const DashboardHome: React.FC = () => {
                  <svg className="w-full h-full transform -rotate-90">
                     <circle cx="96" cy="96" r="88" stroke="#F2F1EA" strokeWidth="6" fill="transparent" />
                     <circle cx="96" cy="96" r="88" stroke="#EAD07D" strokeWidth="6" fill="transparent" strokeDasharray="560" strokeDashoffset="140" strokeLinecap="round" />
-                    {/* Tick marks */}
                     <circle cx="96" cy="96" r="72" stroke="#1A1A1A" strokeWidth="2" fill="transparent" strokeDasharray="4 8" opacity="0.1" />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -129,10 +129,10 @@ export const DashboardHome: React.FC = () => {
                <div className="w-4 h-4 bg-white rounded-sm"></div>
              </button>
            </div>
-        </div>
+        </Card>
 
         {/* 4. Bottom Row - Tasks / Calendar */}
-        <div className="md:col-span-8 dash-card-dark p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row gap-10">
+        <Card variant="dark" padding="lg" className="md:col-span-8 flex flex-col md:flex-row gap-10">
            {/* Dark card background stats decoration */}
            <div className="absolute top-0 right-0 p-4 flex gap-1">
               {[...Array(20)].map((_, i) => (
@@ -187,10 +187,10 @@ export const DashboardHome: React.FC = () => {
                  </div>
               </div>
            </div>
-        </div>
+        </Card>
 
         {/* 5. Right Bottom - Onboarding/Stats */}
-        <div className="md:col-span-4 dash-card p-8 flex flex-col justify-between">
+        <Card padding="lg" className="md:col-span-4 flex flex-col justify-between">
            <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-medium">Pipeline Mix</h3>
               <span className="text-2xl font-light">18%</span>
@@ -214,7 +214,7 @@ export const DashboardHome: React.FC = () => {
                  <span className="font-bold">0%</span>
               </div>
            </div>
-        </div>
+        </Card>
 
       </div>
     </div>

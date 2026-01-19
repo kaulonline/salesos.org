@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { Search, Filter, Download, Plus } from 'lucide-react';
+import { Filter, Download, Plus } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
+import { SearchInput } from '../../components/ui/Input';
 
 const LEADS = [
-  { id: 1, name: "Harry Bender", role: "Head of Design", company: "Product", country: "Rome", value: "$1,350", status: "Invited", statusColor: "bg-green-100 text-green-700" },
-  { id: 2, name: "Katy Fuller", role: "Fullstack Engineer", company: "Engineering", country: "Miami", value: "$1,500", status: "Absent", statusColor: "bg-gray-100 text-gray-500", active: true },
-  { id: 3, name: "Jonathan Kelly", role: "Mobile Lead", company: "Product", country: "Kyiv", value: "$2,600", status: "Invited", statusColor: "bg-green-100 text-green-700" },
-  { id: 4, name: "Billie Wright", role: "Sales Manager", company: "Operations", country: "Ottawa", value: "$900", status: "Invited", statusColor: "bg-green-100 text-green-700" },
-  { id: 5, name: "Sarah Page", role: "Network Engineer", company: "Product", country: "Sao Paulo", value: "$1,000", status: "Invited", statusColor: "bg-green-100 text-green-700" },
-  { id: 6, name: "Erica Wyatt", role: "Head of Design", company: "Product", country: "London", value: "$1,700", status: "Absent", statusColor: "bg-gray-100 text-gray-500" },
+  { id: 1, name: "Harry Bender", role: "Head of Design", company: "Product", country: "Rome", value: "$1,350", status: "Invited", statusVariant: "green" as const },
+  { id: 2, name: "Katy Fuller", role: "Fullstack Engineer", company: "Engineering", country: "Miami", value: "$1,500", status: "Absent", statusVariant: "neutral" as const, active: true },
+  { id: 3, name: "Jonathan Kelly", role: "Mobile Lead", company: "Product", country: "Kyiv", value: "$2,600", status: "Invited", statusVariant: "green" as const },
+  { id: 4, name: "Billie Wright", role: "Sales Manager", company: "Operations", country: "Ottawa", value: "$900", status: "Invited", statusVariant: "green" as const },
+  { id: 5, name: "Sarah Page", role: "Network Engineer", company: "Product", country: "Sao Paulo", value: "$1,000", status: "Invited", statusVariant: "green" as const },
+  { id: 6, name: "Erica Wyatt", role: "Head of Design", company: "Product", country: "London", value: "$1,700", status: "Absent", statusVariant: "neutral" as const },
 ];
 
 export const Leads: React.FC = () => {
@@ -25,13 +29,13 @@ export const Leads: React.FC = () => {
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Leads</h1>
             <div className="flex items-center gap-4 bg-white/50 p-2 pr-6 rounded-full backdrop-blur-sm w-fit">
-               <div className="bg-[#1A1A1A] text-white px-6 py-2 rounded-full text-sm font-bold">25%</div>
-               <div className="bg-[#EAD07D] text-[#1A1A1A] px-6 py-2 rounded-full text-sm font-bold">51%</div>
+               <Badge variant="dark" className="px-6 py-2">25%</Badge>
+               <Badge variant="yellow" className="px-6 py-2">51%</Badge>
                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden relative">
                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
                </div>
-               <div className="border border-black/10 px-4 py-1.5 rounded-full text-xs font-bold">14%</div>
-               <div className="border border-black/10 px-4 py-1.5 rounded-full text-xs font-bold">10%</div>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10">14%</Badge>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10">10%</Badge>
             </div>
          </div>
          
@@ -45,7 +49,7 @@ export const Leads: React.FC = () => {
          </div>
       </div>
 
-      <div className="dash-card p-6 min-h-[600px]">
+      <Card className="min-h-[600px]">
          {/* Filters Bar */}
          <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
             <div className="flex gap-2 overflow-x-auto max-w-full pb-2 md:pb-0 no-scrollbar">
@@ -57,23 +61,21 @@ export const Leads: React.FC = () => {
             </div>
             
             <div className="flex gap-3 w-full md:w-auto">
-               <div className="relative flex-1 md:w-64">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input 
-                    type="text" 
+               <div className="w-full md:w-64">
+                  <SearchInput 
+                    variant="filled" 
                     placeholder="Search leads..." 
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                </div>
-               <button className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors">
+               <button className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors shrink-0">
                   <Plus size={18} />
                </button>
-               <button className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200 transition-colors">
+               <button className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200 transition-colors shrink-0">
                   <Filter size={16} />
                </button>
-               <button className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50">
+               <button className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50 shrink-0">
                   <Download size={14} /> Export
                </button>
             </div>
@@ -104,7 +106,7 @@ export const Leads: React.FC = () => {
                          </div>
                       </div>
                       <div className="col-span-3 flex items-center gap-3">
-                         <img src={`https://picsum.photos/40/40?random=${lead.id}`} className="w-10 h-10 rounded-full object-cover" alt={lead.name} />
+                         <Avatar src={`https://picsum.photos/40/40?random=${lead.id}`} alt={lead.name} size="md" />
                          <span className={`font-medium ${lead.active ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>{lead.name}</span>
                       </div>
                       <div className="col-span-2 text-sm text-[#666]">{lead.role}</div>
@@ -115,10 +117,15 @@ export const Leads: React.FC = () => {
                       </div>
                       <div className="col-span-1 text-sm font-medium">{lead.value}</div>
                       <div className="col-span-2 flex justify-end">
-                         <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${lead.active ? 'bg-white text-[#1A1A1A]' : lead.statusColor}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${lead.active ? 'bg-[#1A1A1A]' : 'bg-current'}`}></div>
-                            {lead.status}
-                         </span>
+                         {lead.active ? (
+                            <Badge variant="neutral" className="bg-white text-[#1A1A1A]" dot>
+                               {lead.status}
+                            </Badge>
+                         ) : (
+                            <Badge variant={lead.statusVariant} dot>
+                               {lead.status}
+                            </Badge>
+                         )}
                       </div>
                    </div>
                 ))
@@ -129,7 +136,7 @@ export const Leads: React.FC = () => {
             )}
          </div>
 
-      </div>
+      </Card>
     </div>
   );
 };
