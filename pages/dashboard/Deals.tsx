@@ -128,13 +128,13 @@ export const Deals: React.FC = () => {
                      <div className="flex-1 bg-[#E5E5E5]/30 rounded-[2rem] p-4 space-y-4 overflow-y-auto custom-scrollbar">
                         {stageDeals.map((deal) => (
                           <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="block group">
-                            <Card padding="md" className="hover:border-[#EAD07D]/30">
+                            <Card padding="md" className="hover:border-[#EAD07D]/30 transition-all">
                                <div className="flex justify-between items-start mb-3">
                                   <span className="text-xs font-bold text-[#999] uppercase tracking-wider">{deal.company}</span>
                                   <button className="text-[#999] hover:text-[#1A1A1A]"><MoreHorizontal size={16} /></button>
                                </div>
                                
-                               <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight">{deal.title}</h4>
+                               <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight group-hover:text-[#EAD07D] transition-colors">{deal.title}</h4>
 
                                <div className="mb-4">
                                   <Badge variant={stage.badge} size="sm">
@@ -212,7 +212,7 @@ export const Deals: React.FC = () => {
                  ) : (
                     <div className="flex flex-col items-center justify-center h-64 text-[#666]">
                         <Filter size={24} className="mb-2 opacity-20" />
-                        <p>No deals match your filters</p>
+                        <p>No deals match "{searchQuery}"</p>
                     </div>
                  )}
               </div>
