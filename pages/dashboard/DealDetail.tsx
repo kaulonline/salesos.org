@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 
-// Enhanced Mock Data (Same as before)
+// Enhanced Mock Data
 const DEALS_DATA = [
   { 
     id: 1, 
@@ -26,13 +26,30 @@ const DEALS_DATA = [
     score: 9.7,
     tags: ['SaaS', 'Expansion', 'Q4 Priority']
   },
-  // ... other data (truncated for brevity since it's same as source)
+  { 
+    id: 2, 
+    title: 'GlobalBank Enterprise', 
+    company: 'GlobalBank', 
+    value: '$850,000', 
+    stage: 'Proposal', 
+    contactName: 'James Wilson',
+    contactRole: 'CTO',
+    contactImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+    owner: 'Alex', 
+    probability: '60%', 
+    email: 'j.wilson@globalbank.com', 
+    phone: '+1 (555) 987-6543', 
+    location: 'London, UK',
+    description: 'Full stack digital transformation project. Competing with Salesforce and HubSpot. Our security compliance is the winning factor.', 
+    expectedClose: 'Dec 15, 2024', 
+    score: 8.4,
+    tags: ['Enterprise', 'Security', 'Banking']
+  },
 ];
 
 export const DealDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  // Fallback to first deal if not found or id is missing (for demo purposes)
   const deal = DEALS_DATA.find(d => d.id === Number(id)) || DEALS_DATA[0];
   
   const [openSection, setOpenSection] = useState<string | null>('basic');
@@ -45,40 +62,39 @@ export const DealDetail: React.FC = () => {
   if (!deal) return null;
 
   const velocityData = [
-    { label: 'Lead', deal: 5, avg: 10 },
-    { label: 'Discovery', deal: 15, avg: 22 },
-    { label: 'Qual', deal: 35, avg: 30 },
-    { label: 'Demo', deal: 42, avg: 45 },
-    { label: 'Proposal', deal: 55, avg: 60 },
-    { label: 'Negot.', deal: 75, avg: 80 },
+    { label: 'Lead', deal: 10, avg: 15 },
+    { label: 'Discovery', deal: 25, avg: 30 },
+    { label: 'Qual', deal: 35, avg: 40 },
+    { label: 'Demo', deal: 45, avg: 55 },
+    { label: 'Proposal', deal: 60, avg: 70 },
+    { label: 'Negot.', deal: 80, avg: 85 },
   ];
 
-  const maxY = 100; 
-
   const getPoint = (index: number, val: number) => {
-     const paddingX = 5;
-     const paddingY = 15; 
-     const width = 100 - (paddingX * 2);
-     const height = 100 - (paddingY * 2);
-
-     const x = paddingX + (index / (velocityData.length - 1)) * width;
-     const y = (100 - paddingY) - (val / maxY) * height;
+     // X range: 5 to 95 to add padding
+     const x = 5 + (index / (velocityData.length - 1)) * 90;
+     // Y range: 90 to 10 (SVG 0 is top)
+     const y = 90 - (val / 100) * 80;
      return { x, y };
   };
 
   const generatePath = (key: 'deal' | 'avg') => {
     if (velocityData.length === 0) return '';
-    const first = getPoint(0, velocityData[0][key]);
-    let d = `M ${first.x},${first.y}`;
+    const points = velocityData.map((d, i) => getPoint(i, d[key]));
+    
+    let d = `M ${points[0].x},${points[0].y}`;
 
-    for (let i = 0; i < velocityData.length - 1; i++) {
-        const curr = getPoint(i, velocityData[i][key]);
-        const next = getPoint(i + 1, velocityData[i+1][key]);
-        const controlX1 = curr.x + (next.x - curr.x) * 0.4;
-        const controlY1 = curr.y;
-        const controlX2 = next.x - (next.x - curr.x) * 0.4;
-        const controlY2 = next.y;
-        d += ` C ${controlX1},${controlY1} ${controlX2},${controlY2} ${next.x},${next.y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+        const curr = points[i];
+        const next = points[i + 1];
+        
+        // Control points for smooth bezier curve
+        const cp1x = curr.x + (next.x - curr.x) * 0.4;
+        const cp1y = curr.y;
+        const cp2x = next.x - (next.x - curr.x) * 0.4;
+        const cp2y = next.y;
+
+        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
     }
     return d;
   };
@@ -125,7 +141,6 @@ export const DealDetail: React.FC = () => {
               
               {/* Profile Card */}
               <Card variant="ghost" padding="lg" className="lg:col-span-8 p-8 lg:p-10 relative flex flex-col md:flex-row gap-8 items-start">
-                 {/* Background Gradient */}
                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white rounded-full blur-[80px] opacity-60 pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
 
                  <div className="shrink-0 relative">
@@ -207,7 +222,6 @@ export const DealDetail: React.FC = () => {
               
               {/* Accordions Column */}
               <div className="lg:col-span-4 space-y-4">
-                 {/* Basic Info */}
                  <Card padding="sm" className="px-6 py-4 border border-black/5">
                     <button 
                        onClick={() => toggleSection('basic')} 
@@ -234,7 +248,6 @@ export const DealDetail: React.FC = () => {
                     )}
                  </Card>
 
-                 {/* Contact Details */}
                  <Card padding="sm" className="px-6 py-4 border border-black/5">
                     <button 
                        onClick={() => toggleSection('contact')} 
@@ -280,7 +293,7 @@ export const DealDetail: React.FC = () => {
                     {/* SVG Line Chart */}
                     <div className="relative h-56 w-full group">
                        <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
-                          {/* Dashed Average Line */}
+                          {/* Average Line (Dashed) */}
                           <path 
                              d={generatePath('avg')} 
                              fill="none" 
@@ -288,14 +301,16 @@ export const DealDetail: React.FC = () => {
                              strokeWidth="3" 
                              strokeDasharray="6 6"
                              strokeLinecap="round"
+                             vectorEffect="non-scaling-stroke"
                           />
-                          {/* Solid Deal Line */}
+                          {/* Deal Line (Solid) */}
                           <path 
                              d={generatePath('deal')} 
                              fill="none" 
                              stroke="#EAD07D" 
                              strokeWidth="6" 
                              strokeLinecap="round"
+                             vectorEffect="non-scaling-stroke"
                           />
                           
                           {/* Interactive Points */}
@@ -306,13 +321,31 @@ export const DealDetail: React.FC = () => {
 
                                return (
                                    <g key={i} onMouseEnter={() => setHoveredPoint(i)} className="transition-all duration-300">
+                                       {/* Avg Point */}
                                        <circle cx={pAvg.x} cy={pAvg.y} r="2" fill="#ccc" />
-                                       <circle cx={pDeal.x} cy={pDeal.y} r="10" fill="transparent" cursor="pointer" />
-                                       <circle cx={pDeal.x} cy={pDeal.y} r={isHovered ? 7 : 5} fill="#1A1A1A" stroke="#EAD07D" strokeWidth="0" />
-                                       <circle cx={pDeal.x} cy={pDeal.y} r={isHovered ? 4 : 2} fill="#EAD07D" />
+
+                                       {/* Deal Point - Specific Design */}
+                                       <circle cx={pDeal.x} cy={pDeal.y} r="12" fill="transparent" cursor="pointer" />
+                                       
+                                       <circle 
+                                            cx={pDeal.x} 
+                                            cy={pDeal.y} 
+                                            r={isHovered ? 8 : 6} 
+                                            fill="#1A1A1A" 
+                                            stroke="#EAD07D" 
+                                            strokeWidth="0" // Solid
+                                            className="transition-all duration-200"
+                                       />
+                                       <circle 
+                                            cx={pDeal.x} 
+                                            cy={pDeal.y} 
+                                            r={isHovered ? 4 : 3} 
+                                            fill="#EAD07D" 
+                                            className="transition-all duration-200"
+                                       />
                                        {isHovered && (
                                            <g pointerEvents="none">
-                                              <line x1={pDeal.x} y1={pDeal.y} x2={pDeal.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
+                                              <line x1={pDeal.x} y1={pDeal.y} x2={pDeal.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="3 3" opacity="0.3" vectorEffect="non-scaling-stroke" />
                                            </g>
                                        )}
                                    </g>
@@ -354,13 +387,29 @@ export const DealDetail: React.FC = () => {
                        <div className="text-xs font-bold text-[#1A1A1A]/60 uppercase tracking-widest">AI Confidence</div>
                     </div>
                     
-                    {/* Decorative Waves */}
-                    <div className="absolute bottom-0 left-0 right-0 h-40 w-full text-[#1A1A1A] pointer-events-none">
-                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                          <path d="M0,80 C30,70 60,90 100,75 V100 H0 Z" fill="#1A1A1A" fillOpacity="0.1" />
-                          <path d="M0,85 C40,95 70,65 100,80 V100 H0 Z" fill="none" stroke="#1A1A1A" strokeWidth="2" opacity="0.2" />
-                          <path d="M0,82 C20,92 50,70 100,85" fill="none" stroke="#1A1A1A" strokeWidth="3" strokeLinecap="round" />
-                          <path d="M0,90 C30,100 70,90 100,95 V100 H0 Z" fill="#1A1A1A" opacity="0.05" />
+                    {/* Decorative Waves matching reference */}
+                    <div className="absolute bottom-0 left-0 right-0 h-32 w-full text-[#1A1A1A] pointer-events-none">
+                       <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="w-full h-full">
+                          {/* Background wave */}
+                          <path d="M0,35 C30,25 60,45 100,30 V50 H0 Z" fill="#1A1A1A" fillOpacity="0.1" />
+                          
+                          {/* Main thick wave line */}
+                          <path 
+                             d="M-5,40 C30,45 60,25 105,40" 
+                             fill="none" 
+                             stroke="#1A1A1A" 
+                             strokeWidth="1.5" 
+                             strokeLinecap="round"
+                          />
+                          
+                          {/* Secondary thin line */}
+                          <path 
+                             d="M-5,45 C40,50 70,30 105,42" 
+                             fill="none" 
+                             stroke="#1A1A1A" 
+                             strokeWidth="0.5" 
+                             opacity="0.5"
+                          />
                        </svg>
                     </div>
                  </Card>

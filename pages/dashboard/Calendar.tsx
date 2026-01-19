@@ -18,15 +18,17 @@ export const Calendar: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState(14);
   const [currentMonth, setCurrentMonth] = useState('September 2024');
 
-  // Helper to generate calendar days
+  // Fix: Create a proper 7x5 grid where day 1 starts at correct offset
+  // September 2024 started on a Sunday (0), so offset is 0
   const days = Array.from({ length: 35 }, (_, i) => {
-    const day = i - 2; // Offset to start month on correct day
+    const day = i - 0; // Starts on Sunday
+    const inMonth = day > 0 && day <= 30;
     return {
-      date: day,
-      inMonth: day > 0 && day <= 30,
+      date: inMonth ? day : (day <= 0 ? 31 + day : day - 30), // Simple wrap logic for demo
+      inMonth: inMonth,
       isToday: day === 14,
       hasEvent: [14, 15, 20, 22].includes(day),
-      isPast: day < 14 && day > 0
+      isPast: inMonth && day < 14
     };
   });
 
@@ -87,9 +89,9 @@ export const Calendar: React.FC = () => {
                    <div className="absolute right-[-20px] bottom-[-20px] w-24 h-24 bg-[#EAD07D]/20 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
                 </Card>
 
-                <Card variant="default" className="flex flex-col justify-between min-h-[140px] border-gray-100">
+                <Card variant="default" className="flex flex-col justify-between min-h-[140px] border-gray-100 relative overflow-hidden">
                    {/* Diagonal Pattern Background */}
-                   <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%)', backgroundSize: '10px 10px' }}></div>
+                   <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 8px)', backgroundSize: '10px 10px' }}></div>
                    
                    <div className="flex justify-between items-start z-10">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#666]">Time Off</span>
@@ -114,7 +116,7 @@ export const Calendar: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-7 mb-4">
-                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                       <div key={day} className="text-center text-xs font-bold text-[#999] uppercase tracking-wider py-2">{day}</div>
                    ))}
                 </div>
@@ -125,15 +127,14 @@ export const Calendar: React.FC = () => {
                          key={i} 
                          onClick={() => day.inMonth && setSelectedDay(day.date)}
                          className={`
-                           relative rounded-2xl p-3 flex flex-col items-start justify-between min-h-[80px] transition-all group
-                           ${!day.inMonth ? 'opacity-0 pointer-events-none' : 'cursor-pointer'}
-                           ${day.date === selectedDay ? 'bg-[#EAD07D] shadow-md scale-[1.02] z-10' : 'bg-[#F8F8F6] hover:bg-[#F2F1EA]'}
-                           ${day.isPast && day.date !== selectedDay ? 'opacity-60' : ''}
+                           relative rounded-2xl p-3 flex flex-col items-start justify-between min-h-[80px] transition-all group border border-transparent
+                           ${!day.inMonth ? 'opacity-30 pointer-events-none bg-[#F8F8F6]' : 'cursor-pointer'}
+                           ${day.inMonth && day.date === selectedDay ? 'bg-[#EAD07D] shadow-md scale-[1.02] z-10' : day.inMonth ? 'bg-[#F8F8F6] hover:bg-[#F2F1EA] hover:border-black/5' : ''}
                          `}
                       >
                          {/* Hatched pattern for past days */}
                          {day.isPast && day.date !== selectedDay && (
-                            <div className="absolute inset-0 rounded-2xl opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 10px)' }}></div>
+                            <div className="absolute inset-0 rounded-2xl opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 8px)' }}></div>
                          )}
 
                          <span className={`text-sm font-bold ${day.date === selectedDay ? 'text-[#1A1A1A]' : 'text-[#666]'}`}>
@@ -164,7 +165,7 @@ export const Calendar: React.FC = () => {
 
           {/* Right Column: Schedule/Agenda */}
           <div className="lg:col-span-4 flex flex-col h-full overflow-hidden">
-             <Card padding="lg" className="h-full flex flex-col border-gray-100">
+             <Card padding="lg" className="h-full flex flex-col border-gray-100 relative overflow-hidden">
                 {/* Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#EAD07D]/10 rounded-full blur-2xl pointer-events-none"></div>
 
