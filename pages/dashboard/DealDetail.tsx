@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Phone, Mail, Printer, MoreHorizontal, ArrowLeft, User, CheckCircle2 } from 'lucide-react';
 
@@ -101,6 +101,9 @@ export const DealDetail: React.FC = () => {
   const navigate = useNavigate();
   const deal = DEALS_DATA.find(d => d.id === Number(id));
 
+  // Chart State
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+
   if (!deal) {
     return (
       <div className="max-w-7xl mx-auto p-10 flex flex-col items-center justify-center min-h-[400px]">
@@ -111,6 +114,45 @@ export const DealDetail: React.FC = () => {
       </div>
     );
   }
+
+  // --- Chart Logic ---
+  // Data: Cumulative days to reach each stage (Actual vs Industry Average)
+  const velocityData = [
+    { stage: 'Discovery', days: 5, avg: 7 },
+    { stage: 'Proposal', days: 12, avg: 15 },
+    { stage: 'Negotiation', days: 18, avg: 25 },
+    { stage: 'Close', days: 22, avg: 32 }
+  ];
+
+  const width = 1000;
+  const height = 300;
+  const paddingX = 50;
+  const paddingY = 50;
+  const graphWidth = width - paddingX * 2;
+  const graphHeight = height - paddingY * 2;
+  const maxY = Math.max(...velocityData.map(d => Math.max(d.days, d.avg))) * 1.2;
+
+  const getCoordinates = (index: number, value: number) => {
+    const x = paddingX + (index / (velocityData.length - 1)) * graphWidth;
+    const y = height - paddingY - (value / maxY) * graphHeight;
+    return { x, y };
+  };
+
+  const dealPath = velocityData.map((d, i) => {
+    const { x, y } = getCoordinates(i, d.days);
+    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
+
+  // Create area path closing at the bottom
+  const lastX = getCoordinates(velocityData.length - 1, 0).x;
+  const firstX = getCoordinates(0, 0).x;
+  const bottomY = height - paddingY;
+  const areaPath = `${dealPath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
+
+  const avgPath = velocityData.map((d, i) => {
+    const { x, y } = getCoordinates(i, d.avg);
+    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -258,25 +300,64 @@ export const DealDetail: React.FC = () => {
                   </div>
                </div>
 
-               <div className="h-48 relative flex items-end justify-between gap-1">
-                  {/* Simulated Line Chart */}
-                  <svg className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+               {/* Chart Container */}
+               <div className="w-full h-64 relative">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 300" preserveAspectRatio="none">
                      <defs>
                         <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.2" />
                           <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
                         </linearGradient>
                      </defs>
-                     <path d="M0,150 C50,140 100,100 150,80 S250,50 350,20" fill="url(#velocityGradient)" />
-                     <path d="M0,150 C50,140 100,100 150,80 S250,50 350,20" fill="none" stroke="#EAD07D" strokeWidth="3" />
-                     <circle cx="350" cy="20" r="4" fill="#1A1A1A" />
-                     {/* Dashed Avg Line */}
-                     <path d="M0,120 C100,110 200,90 350,60" fill="none" stroke="#ccc" strokeWidth="2" strokeDasharray="4 4" />
+                     
+                     {/* Avg Line (Dashed) */}
+                     <path d={avgPath} fill="none" stroke="#E5E7EB" strokeWidth="4" strokeDasharray="12 12" />
+                     
+                     {/* Deal Line Area */}
+                     <path d={areaPath} fill="url(#velocityGradient)" />
+                     
+                     {/* Deal Line */}
+                     <path d={dealPath} fill="none" stroke="#EAD07D" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                     
+                     {/* Data Points */}
+                     {velocityData.map((d, i) => {
+                        const { x, y } = getCoordinates(i, d.days);
+                        const isHovered = hoveredPoint === i;
+
+                        return (
+                           <g key={i} onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)}>
+                              {/* Invisible Hit Area */}
+                              <circle cx={x} cy={y} r="30" fill="transparent" cursor="pointer" />
+                              
+                              {/* Visible Point */}
+                              <circle cx={x} cy={y} r={isHovered ? 8 : 6} fill="#1A1A1A" stroke="#EAD07D" strokeWidth="3" className="transition-all duration-300" />
+                              
+                              {/* Tooltip */}
+                              <foreignObject x={x - 75} y={y - 80} width="150" height="80" className={`pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+                                 <div className="flex flex-col items-center">
+                                    <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-2 px-3 shadow-xl mb-2 min-w-[100px]">
+                                       <div className="font-bold mb-1 text-center">{d.stage}</div>
+                                       <div className="flex justify-between gap-3 text-[10px] opacity-80">
+                                          <span>Act: <span className="text-[#EAD07D] font-bold">{d.days}d</span></span>
+                                          <span>Avg: {d.avg}d</span>
+                                       </div>
+                                    </div>
+                                    <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-[#1A1A1A]"></div>
+                                 </div>
+                              </foreignObject>
+                           </g>
+                        );
+                     })}
                   </svg>
+                  
+                  {/* Avg Label */}
+                   <div className="absolute top-[20%] right-[10%] text-xs text-gray-300 font-bold rotate-[-12deg] pointer-events-none hidden lg:block">Industry Avg.</div>
                </div>
                
-               <div className="flex justify-between text-xs text-[#999] mt-4 pt-4 border-t border-gray-100">
-                  <span>Discovery</span><span>Proposal</span><span>Negotiation</span><span>Close</span>
+               <div className="flex justify-between text-xs text-[#999] mt-2 px-4">
+                  {velocityData.map((d, i) => (
+                      <span key={i} className={`transition-colors duration-300 ${hoveredPoint === i ? 'text-[#1A1A1A] font-bold scale-105' : ''}`}>{d.stage}</span>
+                  ))}
                </div>
             </div>
 

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, MoreHorizontal, Search, Filter } from 'lucide-react';
+import { Plus, MoreHorizontal, Search, Filter, LayoutGrid, List as ListIcon, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const STAGES = [
-  { id: 'discovery', title: 'Discovery', color: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
-  { id: 'proposal', title: 'Proposal', color: 'bg-[#EAD07D]', badge: 'bg-[#EAD07D]/20 text-[#7A6415]' },
-  { id: 'negotiation', title: 'Negotiation', color: 'bg-purple-500', badge: 'bg-purple-100 text-purple-700' },
-  { id: 'closed', title: 'Closed Won', color: 'bg-[#93C01F]', badge: 'bg-[#93C01F]/20 text-[#3C5205]' },
+  { id: 'discovery', title: 'Discovery', color: 'bg-sky-500', badge: 'bg-sky-100 text-sky-700' },
+  { id: 'proposal', title: 'Proposal', color: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700' },
+  { id: 'negotiation', title: 'Negotiation', color: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700' },
+  { id: 'closed', title: 'Closed Won', color: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700' },
 ];
 
 const DEALS = [
@@ -20,25 +20,73 @@ const DEALS = [
 
 export const Deals: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [selectedStage, setSelectedStage] = useState('all');
+  const [minProbability, setMinProbability] = useState(0);
 
-  // Filter deals based on search query
+  // Filter deals based on search, stage, and probability
   const filteredDeals = DEALS.filter(deal => {
     const query = searchQuery.toLowerCase();
-    return (
-      deal.title.toLowerCase().includes(query) ||
-      deal.company.toLowerCase().includes(query)
-    );
+    const matchesSearch = deal.title.toLowerCase().includes(query) || deal.company.toLowerCase().includes(query);
+    const matchesStage = selectedStage === 'all' || deal.stage === selectedStage;
+    const probValue = parseInt(deal.probability.replace('%', ''));
+    const matchesProb = probValue >= minProbability;
+
+    return matchesSearch && matchesStage && matchesProb;
   });
 
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col">
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-end gap-6 shrink-0">
+      <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-2">Pipeline</h1>
             <p className="text-[#666]">Manage your opportunities and track revenue.</p>
          </div>
          
-         <div className="flex gap-3 w-full md:w-auto">
+         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+            {/* Filters */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                <div className="relative group">
+                    <button className="px-4 py-2.5 bg-white rounded-full text-sm font-medium text-[#666] hover:text-[#1A1A1A] flex items-center gap-2 shadow-sm border border-transparent hover:border-gray-200">
+                        {selectedStage === 'all' ? 'All Stages' : STAGES.find(s => s.id === selectedStage)?.title} <ChevronDown size={14} />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 p-1 hidden group-hover:block z-20">
+                        <button onClick={() => setSelectedStage('all')} className={`w-full text-left px-3 py-2 rounded-lg text-sm ${selectedStage === 'all' ? 'bg-[#F8F8F6] font-bold' : 'hover:bg-[#F8F8F6]'}`}>All Stages</button>
+                        {STAGES.map(s => (
+                            <button key={s.id} onClick={() => setSelectedStage(s.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm ${selectedStage === s.id ? 'bg-[#F8F8F6] font-bold' : 'hover:bg-[#F8F8F6]'}`}>{s.title}</button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="relative group">
+                    <button className="px-4 py-2.5 bg-white rounded-full text-sm font-medium text-[#666] hover:text-[#1A1A1A] flex items-center gap-2 shadow-sm border border-transparent hover:border-gray-200">
+                        {minProbability === 0 ? 'All Probabilities' : `> ${minProbability}%`} <ChevronDown size={14} />
+                    </button>
+                    <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 p-1 hidden group-hover:block z-20">
+                        {[0, 25, 50, 75].map(p => (
+                             <button key={p} onClick={() => setMinProbability(p)} className={`w-full text-left px-3 py-2 rounded-lg text-sm ${minProbability === p ? 'bg-[#F8F8F6] font-bold' : 'hover:bg-[#F8F8F6]'}`}>{p === 0 ? 'All Probabilities' : `> ${p}%`}</button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* View Toggle */}
+            <div className="bg-white p-1 rounded-full shadow-sm flex items-center border border-gray-100">
+                <button 
+                    onClick={() => setViewMode('kanban')}
+                    className={`p-2 rounded-full transition-all ${viewMode === 'kanban' ? 'bg-[#1A1A1A] text-white' : 'text-[#666] hover:bg-gray-100'}`}
+                >
+                    <LayoutGrid size={18} />
+                </button>
+                <button 
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-[#1A1A1A] text-white' : 'text-[#666] hover:bg-gray-100'}`}
+                >
+                    <ListIcon size={18} />
+                </button>
+            </div>
+
+            {/* Search */}
             <div className="relative flex-1 md:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
@@ -49,73 +97,128 @@ export const Deals: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            <button className="w-10 h-10 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg">
+
+            {/* Add Button */}
+            <button className="w-10 h-10 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg shrink-0">
                 <Plus size={18} />
             </button>
          </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-6 h-full min-w-[1000px]">
-          {STAGES.map((stage) => {
-            const stageDeals = filteredDeals.filter(d => d.stage === stage.id);
-            const totalValue = stageDeals.reduce((acc, curr) => acc + parseInt(curr.value.replace(/[^0-9]/g, '')), 0);
-            
-            return (
-              <div key={stage.id} className="flex-1 min-w-[300px] flex flex-col">
-                 <div className="flex justify-between items-center mb-4 px-2">
-                    <div className="flex items-center gap-2">
-                       <div className={`w-2 h-2 rounded-full ${stage.color}`}></div>
-                       <span className="font-bold text-[#1A1A1A]">{stage.title}</span>
-                       <span className="bg-[#E5E5E5] text-[#666] px-2 py-0.5 rounded-full text-xs font-medium">{stageDeals.length}</span>
-                    </div>
-                    <span className="text-xs font-medium text-[#666]">${(totalValue / 1000).toFixed(0)}k</span>
-                 </div>
-
-                 <div className="flex-1 bg-[#E5E5E5]/30 rounded-[2rem] p-4 space-y-4 overflow-y-auto custom-scrollbar">
-                    {stageDeals.map((deal) => (
-                      <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="block group">
-                        <div className="bg-white p-5 rounded-[1.5rem] shadow-soft hover:shadow-card transition-all duration-300 border border-transparent hover:border-[#EAD07D]/30 relative overflow-hidden">
-                           
-                           <div className="flex justify-between items-start mb-3">
-                              <span className="text-xs font-bold text-[#999] uppercase tracking-wider">{deal.company}</span>
-                              <button className="text-[#999] hover:text-[#1A1A1A]"><MoreHorizontal size={16} /></button>
-                           </div>
-                           
-                           <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight">{deal.title}</h4>
-
-                           <div className="mb-4">
-                              <span className={`inline-block text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${stage.badge}`}>
-                                 {stage.title}
-                              </span>
-                           </div>
-                           
-                           <div className="flex items-end justify-between">
-                              <div>
-                                 <div className="text-sm font-medium text-[#1A1A1A]">{deal.value}</div>
-                                 <div className="text-xs text-[#666] mt-1">{deal.probability} probability</div>
-                              </div>
-                              <img src={deal.owner} alt="Owner" className="w-8 h-8 rounded-full border-2 border-white" />
-                           </div>
-
-                           {/* Progress Bar */}
-                           <div className="absolute bottom-0 left-0 h-1 bg-gray-100 w-full">
-                              <div className={`h-full ${stage.color}`} style={{ width: deal.probability }}></div>
-                           </div>
+      {/* Content Area */}
+      {viewMode === 'kanban' ? (
+          /* Kanban Board */
+          <div className="flex-1 overflow-x-auto pb-4">
+            <div className="flex gap-6 h-full min-w-[1000px]">
+              {STAGES.map((stage) => {
+                const stageDeals = filteredDeals.filter(d => d.stage === stage.id);
+                const totalValue = stageDeals.reduce((acc, curr) => acc + parseInt(curr.value.replace(/[^0-9]/g, '')), 0);
+                
+                return (
+                  <div key={stage.id} className="flex-1 min-w-[300px] flex flex-col">
+                     <div className="flex justify-between items-center mb-4 px-2">
+                        <div className="flex items-center gap-2">
+                           <div className={`w-2 h-2 rounded-full ${stage.color}`}></div>
+                           <span className="font-bold text-[#1A1A1A]">{stage.title}</span>
+                           <span className="bg-[#E5E5E5] text-[#666] px-2 py-0.5 rounded-full text-xs font-medium">{stageDeals.length}</span>
                         </div>
-                      </Link>
-                    ))}
-                    
-                    <button className="w-full py-3 rounded-[1.5rem] border-2 border-dashed border-[#1A1A1A]/5 text-[#1A1A1A]/40 font-medium hover:border-[#1A1A1A]/20 hover:text-[#1A1A1A]/60 transition-all flex items-center justify-center gap-2">
-                       <Plus size={16} /> Add Deal
-                    </button>
-                 </div>
+                        <span className="text-xs font-medium text-[#666]">${(totalValue / 1000).toFixed(0)}k</span>
+                     </div>
+
+                     <div className="flex-1 bg-[#E5E5E5]/30 rounded-[2rem] p-4 space-y-4 overflow-y-auto custom-scrollbar">
+                        {stageDeals.map((deal) => (
+                          <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="block group">
+                            <div className="bg-white p-5 rounded-[1.5rem] shadow-soft hover:shadow-card transition-all duration-300 border border-transparent hover:border-[#EAD07D]/30 relative overflow-hidden">
+                               
+                               <div className="flex justify-between items-start mb-3">
+                                  <span className="text-xs font-bold text-[#999] uppercase tracking-wider">{deal.company}</span>
+                                  <button className="text-[#999] hover:text-[#1A1A1A]"><MoreHorizontal size={16} /></button>
+                               </div>
+                               
+                               <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight">{deal.title}</h4>
+
+                               <div className="mb-4">
+                                  <span className={`inline-block text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${stage.badge}`}>
+                                     {stage.title}
+                                  </span>
+                               </div>
+                               
+                               <div className="flex items-end justify-between">
+                                  <div>
+                                     <div className="text-sm font-medium text-[#1A1A1A]">{deal.value}</div>
+                                     <div className="text-xs text-[#666] mt-1">{deal.probability} probability</div>
+                                  </div>
+                                  <img src={deal.owner} alt="Owner" className="w-8 h-8 rounded-full border-2 border-white" />
+                               </div>
+
+                               {/* Progress Bar */}
+                               <div className="absolute bottom-0 left-0 h-1 bg-gray-100 w-full">
+                                  <div className={`h-full ${stage.color}`} style={{ width: deal.probability }}></div>
+                               </div>
+                            </div>
+                          </Link>
+                        ))}
+                        
+                        <button className="w-full py-3 rounded-[1.5rem] border-2 border-dashed border-[#1A1A1A]/5 text-[#1A1A1A]/40 font-medium hover:border-[#1A1A1A]/20 hover:text-[#1A1A1A]/60 transition-all flex items-center justify-center gap-2">
+                           <Plus size={16} /> Add Deal
+                        </button>
+                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+      ) : (
+          /* List View */
+          <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+              <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider bg-[#F9F9F9]">
+                  <div className="col-span-4">Deal Name</div>
+                  <div className="col-span-2">Stage</div>
+                  <div className="col-span-2">Value</div>
+                  <div className="col-span-2">Probability</div>
+                  <div className="col-span-2 text-right">Owner</div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <div className="flex-1 overflow-y-auto">
+                 {filteredDeals.length > 0 ? (
+                     filteredDeals.map((deal) => {
+                         const stage = STAGES.find(s => s.id === deal.stage);
+                         return (
+                            <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-gray-50 items-center hover:bg-[#F8F8F6] transition-colors group">
+                                <div className="col-span-4">
+                                    <div className="font-bold text-[#1A1A1A] text-sm group-hover:text-[#EAD07D] transition-colors">{deal.title}</div>
+                                    <div className="text-xs text-[#666]">{deal.company}</div>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className={`inline-block text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider ${stage?.badge}`}>
+                                        {stage?.title}
+                                    </span>
+                                </div>
+                                <div className="col-span-2 text-sm font-medium text-[#1A1A1A]">
+                                    {deal.value}
+                                </div>
+                                <div className="col-span-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                            <div className={`h-full ${stage?.color}`} style={{ width: deal.probability }}></div>
+                                        </div>
+                                        <span className="text-xs font-medium text-[#666] w-8 text-right">{deal.probability}</span>
+                                    </div>
+                                </div>
+                                <div className="col-span-2 flex justify-end">
+                                    <img src={deal.owner} alt="Owner" className="w-8 h-8 rounded-full border border-gray-200" />
+                                </div>
+                            </Link>
+                         );
+                     })
+                 ) : (
+                    <div className="flex flex-col items-center justify-center h-64 text-[#666]">
+                        <Filter size={24} className="mb-2 opacity-20" />
+                        <p>No deals match your filters</p>
+                    </div>
+                 )}
+              </div>
+          </div>
+      )}
     </div>
   );
 };
