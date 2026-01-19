@@ -12,6 +12,8 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Deals', href: '/dashboard/deals' },
     { label: 'Revenue', href: '/dashboard/revenue' },
     { label: 'Calendar', href: '/dashboard/calendar' },
+    { label: 'Analytics', href: '/dashboard/analytics' },
+    { label: 'Messages', href: '/dashboard/messages' },
   ];
 
   return (
@@ -49,10 +51,10 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-[#666]">
+          <Link to="/dashboard/settings" className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-[#666]">
             <Settings size={16} />
             <span className="hidden sm:inline">Settings</span>
-          </button>
+          </Link>
           
           <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 shadow-sm text-[#1A1A1A] relative">
             <Bell size={18} />

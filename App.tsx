@@ -29,6 +29,9 @@ import { Deals } from './pages/dashboard/Deals';
 import { DealDetail } from './pages/dashboard/DealDetail';
 import { Revenue } from './pages/dashboard/Revenue';
 import { Calendar } from './pages/dashboard/Calendar';
+import { Analytics } from './pages/dashboard/Analytics';
+import { Messages } from './pages/dashboard/Messages';
+import { Settings } from './pages/dashboard/Settings';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -78,6 +81,9 @@ function App() {
             <Route path="deals/:id" element={<DealDetail />} />
             <Route path="revenue" element={<Revenue />} />
             <Route path="calendar" element={<Calendar />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="messages" element={<Messages />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* Catch-all route */}
