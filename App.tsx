@@ -16,6 +16,7 @@ import { Careers } from './pages/Careers';
 import { Contact } from './pages/Contact';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
+import { Login } from './pages/Login';
 import { Pricing } from './components/Pricing'; // Reuse Pricing component as a page wrapper or import from pages if refactored. 
 // Note: We can wrap existing Pricing component in a PageLayout for the /pricing route, 
 // but for simplicity, let's just render the Pricing section or create a wrapper.
@@ -29,6 +30,7 @@ const PricingPage = () => (
 
 function App() {
   const { pathname } = useLocation();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   // Scroll to top on route change
   React.useEffect(() => {
@@ -37,7 +39,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
-      <Navbar />
+      {!isAuthPage && <Navbar />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -53,11 +55,16 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Login />} />
+
           {/* Catch-all route to prevent empty content on unknown paths */}
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthPage && <Footer />}
     </div>
   );
 }
