@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Package, Tag, MoreHorizontal } from 'lucide-react';
 
 const PRODUCTS = [
@@ -11,6 +11,13 @@ const PRODUCTS = [
 ];
 
 export const Products: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredProducts = PRODUCTS.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
@@ -22,7 +29,13 @@ export const Products: React.FC = () => {
          <div className="flex gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input type="text" placeholder="Search products..." className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none shadow-sm focus:ring-1 focus:ring-[#EAD07D]" />
+                <input 
+                  type="text" 
+                  placeholder="Search products..." 
+                  className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none shadow-sm focus:ring-1 focus:ring-[#EAD07D]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
             </div>
             <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all">
                 <Plus size={16} /> Add Product
@@ -31,7 +44,7 @@ export const Products: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PRODUCTS.map((product) => (
+          {filteredProducts.map((product) => (
              <div key={product.id} className="dash-card p-6 group hover:shadow-card transition-all duration-300 relative overflow-hidden">
                 <div className="flex justify-between items-start mb-6">
                    <div className={`w-12 h-12 rounded-2xl ${product.color} flex items-center justify-center text-white shadow-sm`}>
@@ -61,14 +74,16 @@ export const Products: React.FC = () => {
              </div>
           ))}
           
-          {/* Add New Placeholder */}
-          <div className="border-2 border-dashed border-[#1A1A1A]/10 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center hover:border-[#EAD07D] hover:bg-[#EAD07D]/5 transition-all cursor-pointer min-h-[260px] group">
-              <div className="w-16 h-16 rounded-full bg-[#F2F1EA] flex items-center justify-center text-[#1A1A1A] mb-4 group-hover:scale-110 transition-transform">
-                  <Plus size={24} />
+          {/* Add New Placeholder - Only show if not searching or if specific behavior desired. Showing always for now as a CTA. */}
+          {searchQuery === '' && (
+              <div className="border-2 border-dashed border-[#1A1A1A]/10 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center hover:border-[#EAD07D] hover:bg-[#EAD07D]/5 transition-all cursor-pointer min-h-[260px] group">
+                  <div className="w-16 h-16 rounded-full bg-[#F2F1EA] flex items-center justify-center text-[#1A1A1A] mb-4 group-hover:scale-110 transition-transform">
+                      <Plus size={24} />
+                  </div>
+                  <h3 className="font-bold text-[#1A1A1A]">Create New Product</h3>
+                  <p className="text-sm text-[#666] mt-2">Add a service, item, or subscription to your catalog.</p>
               </div>
-              <h3 className="font-bold text-[#1A1A1A]">Create New Product</h3>
-              <p className="text-sm text-[#666] mt-2">Add a service, item, or subscription to your catalog.</p>
-          </div>
+          )}
       </div>
     </div>
   );

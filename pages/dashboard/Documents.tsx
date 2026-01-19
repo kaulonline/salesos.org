@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight } from 'lucide-react';
 
 const DOCS = [
@@ -10,6 +10,16 @@ const DOCS = [
 ];
 
 export const Documents: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
+
+  const filteredDocs = DOCS.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          doc.client.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === 'All' || doc.type + 's' === activeTab || doc.type === activeTab; // Simple matching, e.g. "Proposal" matches "Proposals"
+    return matchesSearch && matchesTab;
+  });
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-10">
@@ -61,8 +71,12 @@ export const Documents: React.FC = () => {
       <div className="dash-card p-8 min-h-[500px]">
          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div className="flex gap-2">
-               {['All', 'Quotes', 'Proposals', 'Contracts'].map((tab, i) => (
-                  <button key={tab} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${i === 0 ? 'bg-[#1A1A1A] text-white' : 'bg-[#F8F8F6] text-[#666] hover:bg-gray-200'}`}>
+               {['All', 'Quotes', 'Proposals', 'Contracts'].map((tab) => (
+                  <button 
+                     key={tab} 
+                     onClick={() => setActiveTab(tab)}
+                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab ? 'bg-[#1A1A1A] text-white' : 'bg-[#F8F8F6] text-[#666] hover:bg-gray-200'}`}
+                  >
                      {tab}
                   </button>
                ))}
@@ -71,7 +85,13 @@ export const Documents: React.FC = () => {
             <div className="flex gap-3 w-full md:w-auto">
                <div className="relative flex-1 md:w-64">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input type="text" placeholder="Search docs..." className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]" />
+                  <input 
+                    type="text" 
+                    placeholder="Search docs..." 
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                </div>
                <button className="flex items-center gap-2 px-4 py-2.5 bg-[#EAD07D] text-[#1A1A1A] rounded-full text-sm font-bold shadow-md hover:bg-[#e5c973] transition-all">
                   <Plus size={16} /> New Doc
@@ -91,34 +111,40 @@ export const Documents: React.FC = () => {
                   </tr>
                </thead>
                <tbody className="text-sm">
-                  {DOCS.map((doc, i) => (
-                     <tr key={i} className="group hover:bg-[#F8F8F6] transition-colors border-b border-gray-50 last:border-0 cursor-pointer">
-                        <td className="py-4 pl-4 rounded-l-xl">
-                           <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A]">
-                                 <FileText size={14} />
-                              </div>
-                              <div>
-                                 <div className="font-bold text-[#1A1A1A]">{doc.name}</div>
-                                 <div className="text-xs text-[#666]">{doc.client}</div>
-                              </div>
-                           </div>
-                        </td>
-                        <td className="py-4 text-[#666]">{doc.type}</td>
-                        <td className="py-4 font-medium text-[#1A1A1A]">{doc.value}</td>
-                        <td className="py-4 text-[#666]">{doc.date}</td>
-                        <td className="py-4 pr-4 text-right rounded-r-xl">
-                           <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 
-                              ${doc.status === 'Signed' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 
-                                doc.status === 'Sent' ? 'bg-blue-100 text-blue-700' : 
-                                doc.status === 'Viewed' ? 'bg-purple-100 text-purple-700' :
-                                'bg-gray-100 text-gray-500'}`}>
-                              {doc.status === 'Signed' && <CheckCircle2 size={12} />}
-                              {doc.status}
-                           </span>
-                        </td>
-                     </tr>
-                  ))}
+                  {filteredDocs.length > 0 ? (
+                      filteredDocs.map((doc, i) => (
+                         <tr key={i} className="group hover:bg-[#F8F8F6] transition-colors border-b border-gray-50 last:border-0 cursor-pointer">
+                            <td className="py-4 pl-4 rounded-l-xl">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A]">
+                                     <FileText size={14} />
+                                  </div>
+                                  <div>
+                                     <div className="font-bold text-[#1A1A1A]">{doc.name}</div>
+                                     <div className="text-xs text-[#666]">{doc.client}</div>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="py-4 text-[#666]">{doc.type}</td>
+                            <td className="py-4 font-medium text-[#1A1A1A]">{doc.value}</td>
+                            <td className="py-4 text-[#666]">{doc.date}</td>
+                            <td className="py-4 pr-4 text-right rounded-r-xl">
+                               <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 
+                                  ${doc.status === 'Signed' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 
+                                    doc.status === 'Sent' ? 'bg-blue-100 text-blue-700' : 
+                                    doc.status === 'Viewed' ? 'bg-purple-100 text-purple-700' :
+                                    'bg-gray-100 text-gray-500'}`}>
+                                  {doc.status === 'Signed' && <CheckCircle2 size={12} />}
+                                  {doc.status}
+                               </span>
+                            </td>
+                         </tr>
+                      ))
+                  ) : (
+                      <tr>
+                          <td colSpan={5} className="py-8 text-center text-[#666]">No documents found</td>
+                      </tr>
+                  )}
                </tbody>
             </table>
          </div>

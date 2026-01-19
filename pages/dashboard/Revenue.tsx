@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, Download, ArrowUpRight, FileText, CheckCircle2, Clock } from 'lucide-react';
 
 const INVOICES = [
@@ -10,6 +10,13 @@ const INVOICES = [
 ];
 
 export const Revenue: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredInvoices = INVOICES.filter(inv => 
+    inv.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    inv.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-10">
@@ -66,7 +73,13 @@ export const Revenue: React.FC = () => {
                <div className="flex gap-2 w-full md:w-auto">
                    <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                      <input type="text" placeholder="Search" className="w-full pl-9 pr-4 py-2 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]" />
+                      <input 
+                        type="text" 
+                        placeholder="Search invoice or client..." 
+                        className="w-full pl-9 pr-4 py-2 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
                    </div>
                    <button className="w-9 h-9 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200"><Filter size={14} /></button>
                </div>
@@ -84,23 +97,29 @@ export const Revenue: React.FC = () => {
                      </tr>
                   </thead>
                   <tbody className="text-sm">
-                     {INVOICES.map((inv, i) => (
-                        <tr key={i} className="group hover:bg-[#F8F8F6] transition-colors border-b border-gray-50 last:border-0">
-                           <td className="py-4 pl-4 font-medium text-[#1A1A1A] rounded-l-xl">{inv.id}</td>
-                           <td className="py-4 text-[#666] flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-[#1A1A1A]">{inv.client[0]}</div>
-                              {inv.client}
-                           </td>
-                           <td className="py-4 text-[#666]">{inv.date}</td>
-                           <td className="py-4 font-bold text-[#1A1A1A]">{inv.amount}</td>
-                           <td className="py-4 pr-4 text-right rounded-r-xl">
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 ${inv.statusColor}`}>
-                                 {inv.status === 'Paid' && <CheckCircle2 size={12} />}
-                                 {inv.status}
-                              </span>
-                           </td>
-                        </tr>
-                     ))}
+                     {filteredInvoices.length > 0 ? (
+                        filteredInvoices.map((inv, i) => (
+                            <tr key={i} className="group hover:bg-[#F8F8F6] transition-colors border-b border-gray-50 last:border-0">
+                                <td className="py-4 pl-4 font-medium text-[#1A1A1A] rounded-l-xl">{inv.id}</td>
+                                <td className="py-4 text-[#666] flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-[#1A1A1A]">{inv.client[0]}</div>
+                                    {inv.client}
+                                </td>
+                                <td className="py-4 text-[#666]">{inv.date}</td>
+                                <td className="py-4 font-bold text-[#1A1A1A]">{inv.amount}</td>
+                                <td className="py-4 pr-4 text-right rounded-r-xl">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 ${inv.statusColor}`}>
+                                        {inv.status === 'Paid' && <CheckCircle2 size={12} />}
+                                        {inv.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))
+                     ) : (
+                         <tr>
+                             <td colSpan={5} className="py-8 text-center text-[#666]">No invoices found</td>
+                         </tr>
+                     )}
                   </tbody>
                </table>
             </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, Download, Plus } from 'lucide-react';
 
 const LEADS = [
@@ -11,6 +11,14 @@ const LEADS = [
 ];
 
 export const Leads: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredLeads = LEADS.filter(lead => 
+    lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lead.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lead.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
@@ -51,7 +59,13 @@ export const Leads: React.FC = () => {
             <div className="flex gap-3 w-full md:w-auto">
                <div className="relative flex-1 md:w-64">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input type="text" placeholder="Search" className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]" />
+                  <input 
+                    type="text" 
+                    placeholder="Search leads..." 
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                </div>
                <button className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors">
                   <Plus size={18} />
@@ -78,35 +92,41 @@ export const Leads: React.FC = () => {
 
          {/* Table Rows */}
          <div className="space-y-2">
-            {LEADS.map((lead) => (
-               <div 
-                  key={lead.id} 
-                  className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${lead.active ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'}`}
-               >
-                  <div className="col-span-1 flex items-center justify-center">
-                     <div className={`w-5 h-5 rounded border flex items-center justify-center ${lead.active ? 'border-black bg-black text-white' : 'border-gray-300'}`}>
-                        {lead.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-                     </div>
-                  </div>
-                  <div className="col-span-3 flex items-center gap-3">
-                     <img src={`https://picsum.photos/40/40?random=${lead.id}`} className="w-10 h-10 rounded-full object-cover" alt={lead.name} />
-                     <span className={`font-medium ${lead.active ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>{lead.name}</span>
-                  </div>
-                  <div className="col-span-2 text-sm text-[#666]">{lead.role}</div>
-                  <div className="col-span-2 text-sm text-[#666]">{lead.company}</div>
-                  <div className="col-span-1 flex items-center gap-1 text-sm text-[#666]">
-                      {/* Flag placeholder */}
-                      <div className="w-4 h-3 bg-gray-200 rounded-sm"></div> {lead.country}
-                  </div>
-                  <div className="col-span-1 text-sm font-medium">{lead.value}</div>
-                  <div className="col-span-2 flex justify-end">
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${lead.active ? 'bg-white text-[#1A1A1A]' : lead.statusColor}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${lead.active ? 'bg-[#1A1A1A]' : 'bg-current'}`}></div>
-                        {lead.status}
-                     </span>
-                  </div>
-               </div>
-            ))}
+            {filteredLeads.length > 0 ? (
+                filteredLeads.map((lead) => (
+                   <div 
+                      key={lead.id} 
+                      className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${lead.active ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'}`}
+                   >
+                      <div className="col-span-1 flex items-center justify-center">
+                         <div className={`w-5 h-5 rounded border flex items-center justify-center ${lead.active ? 'border-black bg-black text-white' : 'border-gray-300'}`}>
+                            {lead.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                         </div>
+                      </div>
+                      <div className="col-span-3 flex items-center gap-3">
+                         <img src={`https://picsum.photos/40/40?random=${lead.id}`} className="w-10 h-10 rounded-full object-cover" alt={lead.name} />
+                         <span className={`font-medium ${lead.active ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>{lead.name}</span>
+                      </div>
+                      <div className="col-span-2 text-sm text-[#666]">{lead.role}</div>
+                      <div className="col-span-2 text-sm text-[#666]">{lead.company}</div>
+                      <div className="col-span-1 flex items-center gap-1 text-sm text-[#666]">
+                          {/* Flag placeholder */}
+                          <div className="w-4 h-3 bg-gray-200 rounded-sm"></div> {lead.country}
+                      </div>
+                      <div className="col-span-1 text-sm font-medium">{lead.value}</div>
+                      <div className="col-span-2 flex justify-end">
+                         <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${lead.active ? 'bg-white text-[#1A1A1A]' : lead.statusColor}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${lead.active ? 'bg-[#1A1A1A]' : 'bg-current'}`}></div>
+                            {lead.status}
+                         </span>
+                      </div>
+                   </div>
+                ))
+            ) : (
+                <div className="text-center py-20 text-[#666]">
+                    No leads found matching "{searchQuery}"
+                </div>
+            )}
          </div>
 
       </div>
