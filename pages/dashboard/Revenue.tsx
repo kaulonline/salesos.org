@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Filter, Download, ArrowUpRight, FileText, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Filter, ArrowUpRight, CheckCircle2, Clock, FileCheck } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
 
 const INVOICES = [
   { id: 'INV-2024-001', client: "Acme Corp", date: "Sep 13, 2024", amount: "$12,500", status: "Paid", statusColor: "bg-[#EAD07D] text-[#1A1A1A]" },
@@ -11,11 +12,42 @@ const INVOICES = [
 
 export const Revenue: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const filteredInvoices = INVOICES.filter(inv => 
     inv.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
     inv.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Forecast Graph Data & Logic
+  const forecastData = [40, 58, 45, 80, 65, 90];
+  const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+  const values = ['$28k', '$42k', '$35k', '$65k', '$52k', '$78k'];
+
+  const getPath = (data: number[]) => {
+      if (data.length === 0) return '';
+      let d = `M 0,${100 - data[0]}`;
+      const step = 100 / (data.length - 1);
+      
+      for (let i = 0; i < data.length - 1; i++) {
+          const x1 = i * step;
+          const y1 = 100 - data[i];
+          const x2 = (i + 1) * step;
+          const y2 = 100 - data[i+1];
+          
+          // Smooth bezier curves
+          const cp1x = x1 + (x2 - x1) * 0.5;
+          const cp1y = y1;
+          const cp2x = x2 - (x2 - x1) * 0.5;
+          const cp2y = y2;
+          
+          d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x2},${y2}`;
+      }
+      return d;
+  };
+  
+  const linePath = getPath(forecastData);
+  const areaPath = `${linePath} L 100,150 L 0,150 Z`;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -24,7 +56,7 @@ export const Revenue: React.FC = () => {
         
         {/* Top Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-           <div className="dash-card p-6 flex flex-col justify-between min-h-[160px]">
+           <Card padding="md" className="flex flex-col justify-between min-h-[160px]">
               <div className="flex justify-between items-start">
                  <div className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A]">
                     <CheckCircle2 size={20} />
@@ -35,9 +67,9 @@ export const Revenue: React.FC = () => {
                  <div className="text-3xl font-medium text-[#1A1A1A]">$148,250</div>
                  <div className="text-sm text-[#666] mt-1">Total Collected</div>
               </div>
-           </div>
+           </Card>
 
-           <div className="dash-card p-6 flex flex-col justify-between min-h-[160px]">
+           <Card padding="md" className="flex flex-col justify-between min-h-[160px]">
               <div className="flex justify-between items-start">
                  <div className="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center text-white">
                     <Clock size={20} />
@@ -47,9 +79,9 @@ export const Revenue: React.FC = () => {
                  <div className="text-3xl font-medium text-[#1A1A1A]">$32,400</div>
                  <div className="text-sm text-[#666] mt-1">Outstanding Invoices</div>
               </div>
-           </div>
+           </Card>
 
-           <div className="dash-card-dark p-6 flex flex-col justify-between min-h-[160px] relative overflow-hidden">
+           <Card variant="dark" padding="md" className="flex flex-col justify-between min-h-[160px] relative overflow-hidden">
                {/* Background decoration */}
                <div className="absolute top-[-20%] right-[-20%] w-32 h-32 bg-[#EAD07D] rounded-full blur-[40px] opacity-20"></div>
               <div className="flex justify-between items-start relative z-10">
@@ -61,13 +93,13 @@ export const Revenue: React.FC = () => {
                  <div className="text-3xl font-medium text-white">$45.2k</div>
                  <div className="text-sm text-white/60 mt-1">Projected MRR</div>
               </div>
-           </div>
+           </Card>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
          {/* Main Invoices Table */}
-         <div className="lg:col-span-8 dash-card p-8">
+         <Card padding="lg" className="lg:col-span-8">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                <h2 className="text-xl font-bold">Invoices</h2>
                <div className="flex gap-2 w-full md:w-auto">
@@ -123,46 +155,109 @@ export const Revenue: React.FC = () => {
                   </tbody>
                </table>
             </div>
-         </div>
+         </Card>
 
          {/* Right Column: Forecast / Calendar */}
          <div className="lg:col-span-4 space-y-6">
-            <div className="dash-card p-8 bg-[#1A1A1A] text-white">
-               <div className="flex justify-between items-start mb-6">
-                  <h3 className="font-bold">Revenue Forecast</h3>
-                  <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20">
-                     <ArrowUpRight size={14} />
+            <Card variant="dark" padding="lg" className="flex flex-col h-[340px]">
+               <div className="flex justify-between items-start mb-6 z-10 relative">
+                  <div>
+                    <h3 className="font-bold text-white text-lg">Revenue Forecast</h3>
+                    <p className="text-white/60 text-xs">Projected next 6 months</p>
+                  </div>
+                  <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                     <ArrowUpRight size={14} className="text-white" />
                   </button>
                </div>
                
-               <div className="h-40 relative flex items-end justify-between gap-2 mb-6">
-                  {[40, 65, 45, 90, 70, 85].map((h, i) => (
-                     <div key={i} className="w-full bg-white/10 rounded-t-lg relative group">
-                        <div className="absolute bottom-0 w-full bg-[#EAD07D] rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }}></div>
-                     </div>
-                  ))}
+               <div className="flex-1 w-full relative group">
+                  <svg 
+                    className="w-full h-full overflow-visible" 
+                    viewBox="0 0 100 100" 
+                    preserveAspectRatio="none"
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  >
+                      <defs>
+                        <linearGradient id="forecastGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Area */}
+                      <path d={areaPath} fill="url(#forecastGradient)" />
+                      
+                      {/* Line */}
+                      <path 
+                        d={linePath} 
+                        fill="none" 
+                        stroke="#EAD07D" 
+                        strokeWidth="2.5" 
+                        vectorEffect="non-scaling-stroke" 
+                        strokeLinecap="round" 
+                      />
+
+                      {/* Interactive Points */}
+                      {forecastData.map((d, i) => {
+                          const x = i * (100 / (forecastData.length - 1));
+                          const y = 100 - d;
+                          const isHovered = hoveredIndex === i;
+
+                          return (
+                              <g key={i} onMouseEnter={() => setHoveredIndex(i)} className="cursor-pointer">
+                                  {/* Hit area */}
+                                  <rect x={x - 5} y="0" width="10" height="100" fill="transparent" />
+                                  
+                                  {/* Dot */}
+                                  <circle 
+                                    cx={x} 
+                                    cy={y} 
+                                    r={isHovered ? 5 : 3} 
+                                    fill={isHovered ? "#EAD07D" : "#1A1A1A"} 
+                                    stroke="#EAD07D" 
+                                    strokeWidth={isHovered ? 0 : 2}
+                                    className="transition-all duration-200"
+                                  />
+                              </g>
+                          );
+                      })}
+                  </svg>
+                  
+                  {/* Tooltip */}
+                  {hoveredIndex !== null && (
+                      <div 
+                        className="absolute bg-white text-[#1A1A1A] px-2 py-1 rounded text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full pointer-events-none mb-3"
+                        style={{
+                            left: `${hoveredIndex * (100 / (forecastData.length - 1))}%`,
+                            top: `${100 - forecastData[hoveredIndex]}%`
+                        }}
+                      >
+                         {values[hoveredIndex]}
+                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                      </div>
+                  )}
                </div>
                
-               <div className="flex justify-between text-xs text-white/40 border-t border-white/10 pt-4">
-                  <span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span>
+               <div className="flex justify-between text-xs text-white/40 border-t border-white/10 pt-4 mt-2">
+                  {months.map(m => <span key={m}>{m}</span>)}
                </div>
-            </div>
+            </Card>
 
-            <div className="bg-[#EAD07D] rounded-[2rem] p-8 relative overflow-hidden text-[#1A1A1A]">
-                <h3 className="font-bold text-lg mb-2">Upcoming Payouts</h3>
-                <div className="text-4xl font-medium mb-8">$24,500</div>
+            <Card variant="yellow" padding="lg" className="relative overflow-hidden">
+                <h3 className="font-bold text-lg mb-2 text-[#1A1A1A]">Upcoming Payouts</h3>
+                <div className="text-4xl font-medium mb-8 text-[#1A1A1A]">$24,500</div>
                 
                 <div className="space-y-3 relative z-10">
                    <div className="bg-white/40 backdrop-blur-sm p-3 rounded-xl flex items-center justify-between">
-                      <span className="text-sm font-bold">Stripe Payout</span>
-                      <span className="text-sm">Tomorrow</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">Stripe Payout</span>
+                      <span className="text-sm text-[#1A1A1A]">Tomorrow</span>
                    </div>
                    <div className="bg-white/40 backdrop-blur-sm p-3 rounded-xl flex items-center justify-between">
-                      <span className="text-sm font-bold">Acme Wire</span>
-                      <span className="text-sm">Sep 28</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">Acme Wire</span>
+                      <span className="text-sm text-[#1A1A1A]">Sep 28</span>
                    </div>
                 </div>
-            </div>
+            </Card>
          </div>
       </div>
     </div>
