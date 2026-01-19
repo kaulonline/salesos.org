@@ -49,7 +49,9 @@ export const Navbar: React.FC = () => {
         {/* CTA */}
         <div className="hidden md:flex items-center gap-4">
           <Link to="/login" className="text-sm font-medium text-[#1A1A1A] hover:text-black/70">Log In</Link>
-          <Button variant="primary" size="sm">Get Demo</Button>
+          <Link to="/signup">
+            <Button variant="primary" size="sm">Sign Up Free</Button>
+          </Link>
         </div>
 
         {/* Mobile Toggle */}
@@ -76,7 +78,9 @@ export const Navbar: React.FC = () => {
           ))}
           <div className="h-px bg-black/10 my-2" />
           <Link to="/login" className="text-lg font-medium text-[#1A1A1A] text-center" onClick={() => setMobileMenuOpen(false)}>Log In</Link>
-          <Button variant="primary" className="w-full">Get Demo</Button>
+          <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+            <Button variant="primary" className="w-full">Sign Up Free</Button>
+          </Link>
         </div>
       )}
     </nav>

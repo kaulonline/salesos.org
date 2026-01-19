@@ -17,6 +17,7 @@ import { Contact } from './pages/Contact';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
 import { Pricing } from './components/Pricing'; // Reuse Pricing component as a page wrapper or import from pages if refactored. 
 // Note: We can wrap existing Pricing component in a PageLayout for the /pricing route, 
 // but for simplicity, let's just render the Pricing section or create a wrapper.
@@ -28,14 +29,29 @@ const PricingPage = () => (
     </div>
 );
 
+// Auth pages have their own layout (no navbar/footer)
+const authPages = ['/login', '/signup', '/forgot-password'];
+
 function App() {
   const { pathname } = useLocation();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = authPages.includes(pathname);
 
   // Scroll to top on route change
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Auth pages render without navbar/footer
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
