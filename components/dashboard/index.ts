@@ -1,4 +1,3 @@
-export { ActivityFeed } from './ActivityFeed';
-export { AIInsightsPanel } from './AIInsightsPanel';
-export { QuickActions, CommandPalette } from './QuickActions';
-export { ContactTimeline } from './ContactTimeline';
+export * from './ActivityFeed';
+export * from './ContactTimeline';
+export * from './QuickActions';

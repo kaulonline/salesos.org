@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { ContactTimeline } from '../../components/dashboard/ContactTimeline';
+import { ContactTimeline } from '../../components/dashboard';
 
 // Enhanced Mock Data
 const DEALS_DATA = [
@@ -309,6 +309,12 @@ export const DealDetail: React.FC = () => {
                        </div>
                     )}
                  </Card>
+
+                 {/* Timeline Section */}
+                 <Card padding="md" className="border border-black/5">
+                     <h3 className="text-sm font-bold text-[#1A1A1A] mb-4">Activity Timeline</h3>
+                     <ContactTimeline />
+                 </Card>
               </div>
 
               {/* Charts Area */}
@@ -434,14 +440,6 @@ export const DealDetail: React.FC = () => {
                  </Card>
 
               </div>
-           </div>
-
-           {/* Contact Timeline Section */}
-           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-              <ContactTimeline
-                contactName={deal.contactName}
-                maxEvents={6}
-              />
            </div>
 
         </div>

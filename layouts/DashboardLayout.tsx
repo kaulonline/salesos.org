@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Command, Bell, Settings } from 'lucide-react';
+import { CommandPalette } from '../components/CommandPalette';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F2F1EA] text-[#1A1A1A] font-sans selection:bg-[#EAD07D] selection:text-[#1A1A1A]">
+      <CommandPalette />
       
       {/* Fixed Frosted Header - Removed shadow-sm to eliminate border appearance */}
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300">

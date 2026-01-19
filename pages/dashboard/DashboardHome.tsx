@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Play, Activity } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { ActivityFeed } from '../../components/dashboard/ActivityFeed';
-import { AIInsightsPanel } from '../../components/dashboard/AIInsightsPanel';
-import { QuickActions } from '../../components/dashboard/QuickActions';
+import { ActivityFeed, QuickActions } from '../../components/dashboard';
 
 export const DashboardHome: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -141,106 +138,23 @@ export const DashboardHome: React.FC = () => {
            </div>
         </Card>
 
-        {/* 3. Activity Tracker (Right Column) */}
-        <Card padding="lg" className="md:col-span-4 flex flex-col">
-           <div className="flex justify-between items-start mb-2">
-              <h3 className="text-xl font-medium">Call Time</h3>
-              <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors">
-                 <ArrowUpRight size={18} />
-              </button>
-           </div>
+        {/* 3. Quick Actions (Right Column) - REPLACED Activity Tracker */}
+        <div className="md:col-span-4">
+            <QuickActions />
+        </div>
 
-           <div className="flex-1 flex items-center justify-center relative my-4">
-              {/* Radial Progress Simulation */}
-              <div className="relative w-48 h-48">
-                 <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="96" cy="96" r="88" stroke="#F2F1EA" strokeWidth="6" fill="transparent" />
-                    <circle cx="96" cy="96" r="88" stroke="#EAD07D" strokeWidth="6" fill="transparent" strokeDasharray="560" strokeDashoffset="140" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(234,208,125,0.3)]" />
-                    <circle cx="96" cy="96" r="72" stroke="#1A1A1A" strokeWidth="2" fill="transparent" strokeDasharray="4 8" opacity="0.1" />
-                 </svg>
-                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <div className="text-4xl font-medium text-[#1A1A1A]">02:35</div>
-                    <div className="text-xs text-[#999] uppercase tracking-wide mt-1">Talk Time</div>
-                 </div>
-              </div>
-           </div>
+        {/* 4. Activity Feed (Replaces Tasks) - Expanded Activity */}
+        <div className="md:col-span-8 h-[400px]">
+           <ActivityFeed />
+        </div>
 
-           <div className="flex justify-between items-center mt-2">
-             <button className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
-               <Play size={20} className="ml-1" fill="currentColor" />
-             </button>
-             <button className="w-12 h-12 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg shadow-black/20">
-               <div className="w-4 h-4 bg-white rounded-sm"></div>
-             </button>
-           </div>
-        </Card>
-
-        {/* 4. Bottom Row - Tasks / Calendar */}
-        <Card variant="dark" padding="lg" className="md:col-span-8 flex flex-col md:flex-row gap-10">
-           {/* Dark card background stats decoration */}
-           <div className="absolute top-0 right-0 p-4 flex gap-1">
-              {[...Array(20)].map((_, i) => (
-                 <div key={i} className={`w-2 h-2 rounded-full ${i % 3 === 0 ? 'bg-[#EAD07D]' : 'bg-white/10'}`}></div>
-              ))}
-           </div>
-
-           <div className="flex-1 z-10">
-              <div className="flex justify-between items-start mb-8">
-                 <h3 className="text-2xl font-medium">Onboarding Task</h3>
-                 <span className="text-3xl font-light opacity-50">2/8</span>
-              </div>
-
-              <div className="space-y-6">
-                 {[
-                    { title: "Interview", time: "Sep 13, 08:30", status: "done" },
-                    { title: "Team Meeting", time: "Sep 13, 10:30", status: "done" },
-                    { title: "Project Update", time: "Sep 13, 13:00", status: "pending" },
-                 ].map((task, i) => (
-                    <div key={i} className="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors">
-                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${task.status === 'done' ? 'bg-white/10 text-white' : 'bg-white text-[#1A1A1A]'}`}>
-                          {task.status === 'done' ? (
-                             <div className="w-5 h-5 bg-[#EAD07D] rounded-full flex items-center justify-center">
-                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                             </div>
-                          ) : (
-                             <div className="w-3 h-3 rounded-full border-2 border-[#1A1A1A]"></div>
-                          )}
-                       </div>
-                       <div className="flex-1">
-                          <h4 className={`font-medium ${task.status === 'done' ? 'opacity-50' : 'opacity-100'}`}>{task.title}</h4>
-                          <p className="text-xs opacity-40">{task.time}</p>
-                       </div>
-                       {task.status !== 'done' && (
-                          <div className="w-2 h-2 rounded-full bg-[#EAD07D] shadow-[0_0_10px_#EAD07D]"></div>
-                       )}
-                    </div>
-                 ))}
-              </div>
-           </div>
-
-           {/* Glass Schedule Container */}
-           <div className="w-full md:w-64 bg-white/5 rounded-3xl p-6 backdrop-blur-md border border-white/10 shadow-inner">
-              <h4 className="mb-4 text-sm opacity-60 uppercase tracking-wide">Schedule</h4>
-              <div className="space-y-4">
-                 <div className="bg-[#EAD07D] p-4 rounded-xl text-[#1A1A1A] shadow-md">
-                    <div className="text-xs font-bold mb-1 opacity-70">09:30 - 10:00</div>
-                    <div className="font-bold">Weekly Sync</div>
-                 </div>
-                 <div className="bg-white/10 p-4 rounded-xl border border-white/5">
-                    <div className="text-xs font-bold mb-1 opacity-50">11:00 - 12:00</div>
-                    <div className="font-bold">Design Review</div>
-                 </div>
-              </div>
-           </div>
-        </Card>
-
-        {/* 5. Right Bottom - Onboarding/Stats */}
-        <Card padding="lg" className="md:col-span-4 flex flex-col justify-between">
+        {/* 5. Right Bottom - Pipeline Mix */}
+        <Card padding="lg" className="md:col-span-4 flex flex-col justify-between h-[400px]">
            <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-medium">Pipeline Mix</h3>
               <span className="text-2xl font-light">18%</span>
            </div>
-
+           
            <div className="flex gap-2 mb-8">
               <div className="flex-1 bg-[#EAD07D] h-12 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm">New</div>
               <div className="w-12 bg-[#1A1A1A] h-12 rounded-xl"></div>
@@ -262,20 +176,6 @@ export const DashboardHome: React.FC = () => {
         </Card>
 
       </div>
-
-      {/* Quick Actions Section */}
-      <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-        <QuickActions variant="inline" />
-      </div>
-
-      {/* AI Insights & Activity Feed Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
-        <AIInsightsPanel maxInsights={4} />
-        <ActivityFeed maxItems={6} />
-      </div>
-
-      {/* Floating Quick Actions Button */}
-      <QuickActions variant="floating" />
     </div>
   );
 };
