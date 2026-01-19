@@ -192,7 +192,7 @@ export const DealDetail: React.FC = () => {
                       <div>
                           <div className="flex items-baseline text-[#1A1A1A] mb-1">
                               <span className="text-lg font-bold mr-1 opacity-80">$</span>
-                              <span className="text-3xl font-medium">{deal.value.replace('$', '')}</span>
+                              <span className="text-xl font-bold">{deal.value.replace('$', '')}</span>
                           </div>
                           <div className="text-xs text-[#1A1A1A]/60 uppercase font-bold tracking-wider">Deal Value</div>
                       </div>
