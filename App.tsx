@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
-// Pages
+// Public Pages
 import { Home } from './pages/Home';
 import { Product } from './pages/Product';
 import { FeaturesPage } from './pages/FeaturesPage';
@@ -17,11 +17,14 @@ import { Contact } from './pages/Contact';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Pricing } from './components/Pricing'; // Reuse Pricing component as a page wrapper or import from pages if refactored. 
-// Note: We can wrap existing Pricing component in a PageLayout for the /pricing route, 
-// but for simplicity, let's just render the Pricing section or create a wrapper.
+import { Pricing } from './components/Pricing';
 import { PageLayout } from './components/PageLayout';
+
+// Dashboard Pages
+import { DashboardLayout } from './layouts/DashboardLayout';
+import { DashboardHome } from './pages/dashboard/DashboardHome';
+import { Leads } from './pages/dashboard/Leads';
+import { DealDetail } from './pages/dashboard/DealDetail';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -29,35 +32,22 @@ const PricingPage = () => (
     </div>
 );
 
-// Auth pages have their own layout (no navbar/footer)
-const authPages = ['/login', '/signup', '/forgot-password'];
-
 function App() {
   const { pathname } = useLocation();
-  const isAuthPage = authPages.includes(pathname);
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isDashboard = pathname.startsWith('/dashboard');
 
   // Scroll to top on route change
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  // Auth pages render without navbar/footer
-  if (isAuthPage) {
-    return (
-      <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
-      {!isAuthPage && <Navbar />}
+      {!isAuthPage && !isDashboard && <Navbar />}
       <main>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/product" element={<Product />} />
           <Route path="/features" element={<FeaturesPage />} />
@@ -76,11 +66,20 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
 
-          {/* Catch-all route to prevent empty content on unknown paths */}
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardHome />} />
+            <Route path="leads" element={<Leads />} />
+            <Route path="deals" element={<DealDetail />} />
+            <Route path="revenue" element={<DashboardHome />} /> {/* Placeholder */}
+            <Route path="calendar" element={<DashboardHome />} /> {/* Placeholder */}
+          </Route>
+
+          {/* Catch-all route */}
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      {!isAuthPage && <Footer />}
+      {!isAuthPage && !isDashboard && <Footer />}
     </div>
   );
 }

@@ -49,7 +49,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-black/5">
-          <p className="text-xs text-[#888] font-medium">© {new Date().getFullYear()} SalesOS Inc. All rights reserved.</p>
+          <p className="text-xs text-[#888] font-medium">© 2024 SalesOS Inc. All rights reserved.</p>
           <div className="flex items-center gap-6 mt-4 md:mt-0">
             <a href="#" className="text-[#888] hover:text-[#1A1A1A] transition-colors"><Twitter size={20} /></a>
             <a href="#" className="text-[#888] hover:text-[#1A1A1A] transition-colors"><Linkedin size={20} /></a>
