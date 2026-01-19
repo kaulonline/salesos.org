@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Command, Eye, EyeOff, X, Apple } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
-// Custom Google Icon component since Lucide doesn't have the colored G
+// Custom Google Icon component
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M23.52 12.29C23.52 11.43 23.44 10.64 23.3 9.87H12V14.51H18.46C18.18 15.99 17.34 17.25 16.08 18.1V21.09H19.95C22.21 19 23.52 15.92 23.52 12.29Z" fill="#4285F4"/>
@@ -13,13 +13,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export const Login: React.FC = () => {
+export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F2F1EA] flex p-4 md:p-6 relative overflow-hidden">
-      {/* Background Gradient Effect for Left Side */}
+      {/* Background Gradient Effect */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Close Button */}
@@ -44,10 +44,19 @@ export const Login: React.FC = () => {
         </Link>
 
         <div className="max-w-md w-full mx-auto lg:mx-0">
-          <h1 className="text-3xl md:text-4xl font-medium text-[#1A1A1A] mb-3">Welcome back</h1>
-          <p className="text-[#666] mb-10">Enter your details to access your account</p>
+          <h1 className="text-3xl md:text-4xl font-medium text-[#1A1A1A] mb-3">Create an account</h1>
+          <p className="text-[#666] mb-10">Sign up and get 30 day free trial</p>
 
           <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[#666] ml-1">Full name</label>
+              <input 
+                type="text" 
+                defaultValue="Amélie Laurent"
+                className="w-full px-6 py-4 rounded-full bg-white border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-[#666] ml-1">Email</label>
               <input 
@@ -76,7 +85,7 @@ export const Login: React.FC = () => {
             </div>
 
             <Button variant="secondary" className="w-full py-4 rounded-full text-base font-bold shadow-none hover:shadow-lg mt-4">
-              Sign In
+              Create Account
             </Button>
           </form>
 
@@ -91,9 +100,9 @@ export const Login: React.FC = () => {
 
           <div className="flex justify-between items-center mt-12 text-sm">
             <div className="text-[#666]">
-              Don't have an account? <Link to="/signup" className="text-[#1A1A1A] underline font-medium hover:text-[#EAD07D] transition-colors">Sign up</Link>
+              Have an account? <Link to="/login" className="text-[#1A1A1A] underline font-medium hover:text-[#EAD07D] transition-colors">Sign in</Link>
             </div>
-            <Link to="/terms" className="text-[#666] underline hover:text-[#1A1A1A] transition-colors">Forgot Password?</Link>
+            <Link to="/terms" className="text-[#666] underline hover:text-[#1A1A1A] transition-colors">Terms & Conditions</Link>
           </div>
         </div>
       </div>
@@ -110,9 +119,7 @@ export const Login: React.FC = () => {
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-black/10"></div>
 
-          {/* Floating Cards - Positioned to match design */}
-          
-          {/* Top Yellow/Dark Card */}
+          {/* Floating Cards */}
           <div className="absolute top-[15%] left-[10%] bg-[#1A1A1A]/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl min-w-[220px] animate-float">
              <div className="bg-[#EAD07D] text-[#1A1A1A] p-3 rounded-xl mb-3 relative">
                 <div className="flex justify-between items-start">
@@ -124,7 +131,6 @@ export const Login: React.FC = () => {
              <div className="text-white/40 text-xs px-1">09:30am-10:00am</div>
           </div>
 
-          {/* Calendar Strip (Simulated) */}
           <div className="absolute top-[50%] right-[10%] left-[20%] h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 text-white border border-white/10">
              {[
                {d: '22', day: 'Sun'}, 
@@ -143,7 +149,6 @@ export const Login: React.FC = () => {
              ))}
           </div>
 
-          {/* Bottom White Card */}
           <div className="absolute bottom-[20%] left-[15%] bg-white p-5 rounded-3xl shadow-2xl min-w-[260px] animate-float" style={{ animationDelay: '1.5s' }}>
              <div className="flex justify-between items-start mb-4">
                 <div>

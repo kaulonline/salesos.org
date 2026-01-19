@@ -17,6 +17,7 @@ import { Contact } from './pages/Contact';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Login } from './pages/Login';
+import { SignUp } from './pages/SignUp';
 import { Pricing } from './components/Pricing';
 import { PageLayout } from './components/PageLayout';
 
@@ -24,7 +25,10 @@ import { PageLayout } from './components/PageLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { Leads } from './pages/dashboard/Leads';
+import { Deals } from './pages/dashboard/Deals';
 import { DealDetail } from './pages/dashboard/DealDetail';
+import { Revenue } from './pages/dashboard/Revenue';
+import { Calendar } from './pages/dashboard/Calendar';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -64,15 +68,16 @@ function App() {
           
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
 
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="leads" element={<Leads />} />
-            <Route path="deals" element={<DealDetail />} />
-            <Route path="revenue" element={<DashboardHome />} /> {/* Placeholder */}
-            <Route path="calendar" element={<DashboardHome />} /> {/* Placeholder */}
+            <Route path="deals" element={<Deals />} />
+            <Route path="deals/:id" element={<DealDetail />} />
+            <Route path="revenue" element={<Revenue />} />
+            <Route path="calendar" element={<Calendar />} />
           </Route>
 
           {/* Catch-all route */}

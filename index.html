@@ -45,6 +45,7 @@
       /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
+        height: 8px;
       }
       ::-webkit-scrollbar-track {
         background: #F2F1EA;
@@ -78,6 +79,13 @@
       .nav-pill-inactive:hover {
         color: #1A1A1A;
         background-color: rgba(0,0,0,0.05);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
   <script type="importmap">
