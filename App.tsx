@@ -32,6 +32,8 @@ import { Calendar } from './pages/dashboard/Calendar';
 import { Analytics } from './pages/dashboard/Analytics';
 import { Messages } from './pages/dashboard/Messages';
 import { Settings } from './pages/dashboard/Settings';
+import { Products } from './pages/dashboard/Products';
+import { Documents } from './pages/dashboard/Documents';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -79,6 +81,8 @@ function App() {
             <Route path="leads" element={<Leads />} />
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />
+            <Route path="products" element={<Products />} />
+            <Route path="documents" element={<Documents />} />
             <Route path="revenue" element={<Revenue />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="analytics" element={<Analytics />} />

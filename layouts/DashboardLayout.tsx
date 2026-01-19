@@ -10,6 +10,8 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Leads', href: '/dashboard/leads' },
     { label: 'Deals', href: '/dashboard/deals' },
+    { label: 'Products', href: '/dashboard/products' },
+    { label: 'Documents', href: '/dashboard/documents' },
     { label: 'Revenue', href: '/dashboard/revenue' },
     { label: 'Calendar', href: '/dashboard/calendar' },
     { label: 'Analytics', href: '/dashboard/analytics' },
