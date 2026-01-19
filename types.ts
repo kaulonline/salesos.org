@@ -16,9 +16,13 @@ export interface Feature {
 export interface PricingTier {
   name: string;
   price: string;
+  originalPrice?: string; // For strikethrough price
+  period: string;
   description: string;
   features: string[];
+  notIncluded?: string[]; // Features to show with X
   highlight: boolean;
+  badge?: string; // e.g. "Save 27%" or "Popular"
   cta: string;
 }
 

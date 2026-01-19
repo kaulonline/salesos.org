@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'white';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
@@ -20,6 +20,8 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-[#1A1A1A] text-white hover:bg-black shadow-lg shadow-black/10",
     // Secondary is the Yellow Accent button
     secondary: "bg-[#EAD07D] text-[#1A1A1A] hover:bg-[#E5C973] shadow-lg shadow-[#EAD07D]/20",
+    // White variant for dark cards
+    white: "bg-white text-[#1A1A1A] hover:bg-gray-100 shadow-md",
     // Outline matches the dark theme text
     outline: "border border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A]/5 backdrop-blur-sm",
     ghost: "text-[#666] hover:text-[#1A1A1A] hover:bg-black/5",
