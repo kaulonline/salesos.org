@@ -28,22 +28,24 @@ export const Leads: React.FC = () => {
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Leads</h1>
-            <div className="flex items-center gap-4 bg-white/50 p-2 pr-6 rounded-full backdrop-blur-sm w-fit">
-               <Badge variant="dark" className="px-6 py-2">25%</Badge>
-               <Badge variant="yellow" className="px-6 py-2">51%</Badge>
-               <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden relative">
+            
+            {/* Frosted Stats Strip */}
+            <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
+               <Badge variant="dark" className="px-6 py-2 shadow-lg">25%</Badge>
+               <Badge variant="yellow" className="px-6 py-2 shadow-sm">51%</Badge>
+               <div className="w-32 h-2 bg-gray-200/50 rounded-full overflow-hidden relative">
                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
                </div>
-               <Badge variant="outline" className="px-4 py-1.5 border-black/10">14%</Badge>
-               <Badge variant="outline" className="px-4 py-1.5 border-black/10">10%</Badge>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">14%</Badge>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">10%</Badge>
             </div>
          </div>
          
          <div className="flex gap-2">
-            <button className="bg-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
+            <button className="bg-white/60 backdrop-blur-sm border border-white/50 px-4 py-2 rounded-full text-sm font-medium hover:bg-white flex items-center gap-2 transition-colors">
                Directory <span className="text-xs">▼</span>
             </button>
-            <button className="bg-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
+            <button className="bg-white/60 backdrop-blur-sm border border-white/50 px-4 py-2 rounded-full text-sm font-medium hover:bg-white flex items-center gap-2 transition-colors">
                Org Chat <span className="text-xs">▼</span>
             </button>
          </div>

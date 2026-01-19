@@ -85,7 +85,7 @@ export const Revenue: React.FC = () => {
                {/* Background decoration */}
                <div className="absolute top-[-20%] right-[-20%] w-32 h-32 bg-[#EAD07D] rounded-full blur-[40px] opacity-20"></div>
               <div className="flex justify-between items-start relative z-10">
-                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white">
+                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white backdrop-blur-sm">
                     <ArrowUpRight size={20} />
                  </div>
               </div>
@@ -165,7 +165,7 @@ export const Revenue: React.FC = () => {
                     <h3 className="font-bold text-white text-lg">Revenue Forecast</h3>
                     <p className="text-white/60 text-xs">Projected next 6 months</p>
                   </div>
-                  <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                  <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm">
                      <ArrowUpRight size={14} className="text-white" />
                   </button>
                </div>
@@ -223,17 +223,17 @@ export const Revenue: React.FC = () => {
                       })}
                   </svg>
                   
-                  {/* Tooltip */}
+                  {/* Tooltip - Frosted */}
                   {hoveredIndex !== null && (
                       <div 
-                        className="absolute bg-white text-[#1A1A1A] px-2 py-1 rounded text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full pointer-events-none mb-3"
+                        className="absolute bg-white/90 backdrop-blur-sm border border-white/20 text-[#1A1A1A] px-2 py-1 rounded text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full pointer-events-none mb-3"
                         style={{
                             left: `${hoveredIndex * (100 / (forecastData.length - 1))}%`,
                             top: `${100 - forecastData[hoveredIndex]}%`
                         }}
                       >
                          {values[hoveredIndex]}
-                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90"></div>
                       </div>
                   )}
                </div>
@@ -248,13 +248,20 @@ export const Revenue: React.FC = () => {
                 <div className="text-4xl font-medium mb-8 text-[#1A1A1A]">$24,500</div>
                 
                 <div className="space-y-3 relative z-10">
-                   <div className="bg-white/40 backdrop-blur-sm p-3 rounded-xl flex items-center justify-between">
+                   {/* Frosted Glass on Yellow Background */}
+                   <div className="bg-white/30 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between shadow-sm transition-transform hover:scale-[1.02] cursor-pointer">
                       <span className="text-sm font-bold text-[#1A1A1A]">Stripe Payout</span>
-                      <span className="text-sm text-[#1A1A1A]">Tomorrow</span>
+                      <div className="text-right">
+                        <span className="block text-sm text-[#1A1A1A] font-bold">$12,400</span>
+                        <span className="text-xs text-[#1A1A1A]/70">Tomorrow</span>
+                      </div>
                    </div>
-                   <div className="bg-white/40 backdrop-blur-sm p-3 rounded-xl flex items-center justify-between">
+                   <div className="bg-white/30 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between shadow-sm transition-transform hover:scale-[1.02] cursor-pointer">
                       <span className="text-sm font-bold text-[#1A1A1A]">Acme Wire</span>
-                      <span className="text-sm text-[#1A1A1A]">Sep 28</span>
+                      <div className="text-right">
+                        <span className="block text-sm text-[#1A1A1A] font-bold">$12,100</span>
+                        <span className="text-xs text-[#1A1A1A]/70">Sep 28</span>
+                      </div>
                    </div>
                 </div>
             </Card>

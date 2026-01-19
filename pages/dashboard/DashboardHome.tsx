@@ -13,15 +13,15 @@ export const DashboardHome: React.FC = () => {
           Welcome in, <span className="font-bold">Valentina</span>
         </h1>
 
-        {/* Top Stats Strip */}
+        {/* Top Stats Strip - Frosted Glass Control Center */}
         <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-          <div className="flex items-center gap-4 bg-white/50 p-2 pr-6 rounded-full backdrop-blur-sm">
-            <Badge variant="dark" size="md" className="px-6 py-2">Interviews</Badge>
-            <Badge variant="yellow" size="md" className="px-6 py-2">Hired</Badge>
-            <div className="flex-1 w-32 h-2 bg-gray-200 rounded-full overflow-hidden relative">
+          <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
+            <Badge variant="dark" size="md" className="px-6 py-2 shadow-lg">Interviews</Badge>
+            <Badge variant="yellow" size="md" className="px-6 py-2 shadow-sm">Hired</Badge>
+            <div className="flex-1 w-32 h-2 bg-gray-200/50 rounded-full overflow-hidden relative">
                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
             </div>
-            <Badge variant="outline" size="md" className="px-4 py-1.5 border-black/10">Output 10%</Badge>
+            <Badge variant="outline" size="md" className="px-4 py-1.5 border-black/10 bg-white/50">Output 10%</Badge>
           </div>
 
           <div className="flex gap-12">
@@ -43,17 +43,21 @@ export const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* 1. Profile / Key Contact Card (Left Column) */}
-        <Card className="md:col-span-4 p-4 min-h-[340px] flex flex-col justify-end group">
+        <Card className="md:col-span-4 p-4 min-h-[340px] flex flex-col justify-end group overflow-hidden">
            <img 
              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800" 
              className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
              alt="Top Performer"
            />
+           {/* Dark Gradient Overlay for text readability */}
+           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 z-0"></div>
+           
            <div className="relative z-10 p-4">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-white">
+              {/* Frosted Dark Glass Card */}
+              <div className="bg-black/30 backdrop-blur-md border border-white/10 p-5 rounded-2xl text-white shadow-xl">
                 <h3 className="text-xl font-medium mb-1">Lora Piterson</h3>
                 <p className="text-white/70 text-sm mb-4">VP of Sales</p>
-                <div className="bg-[#1A1A1A]/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium w-fit">
+                <div className="bg-[#1A1A1A]/80 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium w-fit border border-white/10">
                    $124,200 <span className="text-white/50 text-xs ml-1">ARR</span>
                 </div>
               </div>
@@ -70,7 +74,7 @@ export const DashboardHome: React.FC = () => {
                  </div>
                  <span className="text-xs text-[#666] mt-1 block">Forecast this week</span>
               </div>
-              <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50">
+              <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors">
                  <ArrowUpRight size={18} />
               </button>
            </div>
@@ -80,10 +84,10 @@ export const DashboardHome: React.FC = () => {
                  <div key={i} className="w-full bg-[#F2F1EA] rounded-full relative group h-full flex items-end">
                     <div 
                        style={{height: `${h}%`}} 
-                       className={`w-full rounded-full transition-all duration-1000 ${i === 3 ? 'bg-[#EAD07D]' : 'bg-[#1A1A1A]'}`}
+                       className={`w-full rounded-full transition-all duration-1000 ${i === 3 ? 'bg-[#EAD07D] shadow-[0_0_20px_rgba(234,208,125,0.3)]' : 'bg-[#1A1A1A]'}`}
                     >
                       {i === 3 && (
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#EAD07D] text-[#1A1A1A] text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap">
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#EAD07D] text-[#1A1A1A] text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap shadow-sm animate-bounce">
                           $2.4M
                         </div>
                       )}
@@ -101,7 +105,7 @@ export const DashboardHome: React.FC = () => {
         <Card padding="lg" className="md:col-span-4 flex flex-col">
            <div className="flex justify-between items-start mb-2">
               <h3 className="text-xl font-medium">Call Time</h3>
-              <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50">
+              <button className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors">
                  <ArrowUpRight size={18} />
               </button>
            </div>
@@ -111,7 +115,7 @@ export const DashboardHome: React.FC = () => {
               <div className="relative w-48 h-48">
                  <svg className="w-full h-full transform -rotate-90">
                     <circle cx="96" cy="96" r="88" stroke="#F2F1EA" strokeWidth="6" fill="transparent" />
-                    <circle cx="96" cy="96" r="88" stroke="#EAD07D" strokeWidth="6" fill="transparent" strokeDasharray="560" strokeDashoffset="140" strokeLinecap="round" />
+                    <circle cx="96" cy="96" r="88" stroke="#EAD07D" strokeWidth="6" fill="transparent" strokeDasharray="560" strokeDashoffset="140" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(234,208,125,0.3)]" />
                     <circle cx="96" cy="96" r="72" stroke="#1A1A1A" strokeWidth="2" fill="transparent" strokeDasharray="4 8" opacity="0.1" />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -125,7 +129,7 @@ export const DashboardHome: React.FC = () => {
              <button className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
                <Play size={20} className="ml-1" fill="currentColor" />
              </button>
-             <button className="w-12 h-12 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center hover:bg-black transition-colors">
+             <button className="w-12 h-12 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg shadow-black/20">
                <div className="w-4 h-4 bg-white rounded-sm"></div>
              </button>
            </div>
@@ -152,7 +156,7 @@ export const DashboardHome: React.FC = () => {
                     { title: "Team Meeting", time: "Sep 13, 10:30", status: "done" },
                     { title: "Project Update", time: "Sep 13, 13:00", status: "pending" },
                  ].map((task, i) => (
-                    <div key={i} className="flex items-center gap-4 group cursor-pointer">
+                    <div key={i} className="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors">
                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${task.status === 'done' ? 'bg-white/10 text-white' : 'bg-white text-[#1A1A1A]'}`}>
                           {task.status === 'done' ? (
                              <div className="w-5 h-5 bg-[#EAD07D] rounded-full flex items-center justify-center">
@@ -167,21 +171,22 @@ export const DashboardHome: React.FC = () => {
                           <p className="text-xs opacity-40">{task.time}</p>
                        </div>
                        {task.status !== 'done' && (
-                          <div className="w-2 h-2 rounded-full bg-[#EAD07D]"></div>
+                          <div className="w-2 h-2 rounded-full bg-[#EAD07D] shadow-[0_0_10px_#EAD07D]"></div>
                        )}
                     </div>
                  ))}
               </div>
            </div>
 
-           <div className="w-full md:w-64 bg-white/5 rounded-3xl p-6 backdrop-blur-sm border border-white/5">
+           {/* Glass Schedule Container */}
+           <div className="w-full md:w-64 bg-white/5 rounded-3xl p-6 backdrop-blur-md border border-white/10 shadow-inner">
               <h4 className="mb-4 text-sm opacity-60 uppercase tracking-wide">Schedule</h4>
               <div className="space-y-4">
-                 <div className="bg-[#EAD07D] p-4 rounded-xl text-[#1A1A1A]">
+                 <div className="bg-[#EAD07D] p-4 rounded-xl text-[#1A1A1A] shadow-md">
                     <div className="text-xs font-bold mb-1 opacity-70">09:30 - 10:00</div>
                     <div className="font-bold">Weekly Sync</div>
                  </div>
-                 <div className="bg-white/10 p-4 rounded-xl">
+                 <div className="bg-white/10 p-4 rounded-xl border border-white/5">
                     <div className="text-xs font-bold mb-1 opacity-50">11:00 - 12:00</div>
                     <div className="font-bold">Design Review</div>
                  </div>
@@ -197,7 +202,7 @@ export const DashboardHome: React.FC = () => {
            </div>
            
            <div className="flex gap-2 mb-8">
-              <div className="flex-1 bg-[#EAD07D] h-12 rounded-xl flex items-center justify-center text-xs font-bold">New</div>
+              <div className="flex-1 bg-[#EAD07D] h-12 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm">New</div>
               <div className="w-12 bg-[#1A1A1A] h-12 rounded-xl"></div>
               <div className="w-12 bg-gray-200 h-12 rounded-xl"></div>
            </div>

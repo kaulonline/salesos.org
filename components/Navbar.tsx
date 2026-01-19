@@ -16,16 +16,16 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled 
-          ? 'bg-[#F2F1EA]/80 backdrop-blur-xl border-black/5 py-4' 
-          : 'bg-transparent border-transparent py-6'
+          ? 'bg-[#F2F1EA]/80 backdrop-blur-xl border-b border-black/5 py-4' 
+          : 'bg-transparent border-b border-transparent py-6'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white">
+          <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white shadow-lg shadow-[#1A1A1A]/20">
             <Command size={18} />
           </div>
           <span className="text-xl font-bold tracking-tight text-[#1A1A1A]">
@@ -34,12 +34,12 @@ export const Navbar: React.FC = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-1 bg-white/50 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 shadow-sm">
           {NAV_ITEMS.map((item) => (
             <Link 
               key={item.label} 
               to={item.href}
-              className="text-sm font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
+              className="px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] hover:bg-white rounded-full transition-all"
             >
               {item.label}
             </Link>
@@ -54,29 +54,30 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Toggle */}
         <button 
-          className="md:hidden text-[#1A1A1A]"
+          className="md:hidden text-[#1A1A1A] p-2 rounded-full hover:bg-black/5 transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X /> : <Menu />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Frosted Glass Overlay */}
       {mobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-[#F2F1EA] border-b border-black/5 p-6 md:hidden flex flex-col gap-4 animate-in slide-in-from-top-5 shadow-xl">
+        <div className="absolute top-0 left-0 right-0 h-screen bg-[#F2F1EA]/95 backdrop-blur-xl z-[-1] pt-32 px-6 md:hidden flex flex-col gap-6 animate-in slide-in-from-top-5">
            {NAV_ITEMS.map((item) => (
             <Link 
               key={item.label} 
               to={item.href}
-              className="text-lg font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
+              className="text-2xl font-medium text-[#1A1A1A] hover:text-[#EAD07D] transition-colors border-b border-black/5 pb-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               {item.label}
             </Link>
           ))}
-          <div className="h-px bg-black/10 my-2" />
-          <Link to="/login" className="text-lg font-medium text-[#1A1A1A] text-center" onClick={() => setMobileMenuOpen(false)}>Log In</Link>
-          <Button variant="primary" className="w-full">Get Demo</Button>
+          <div className="mt-4 space-y-4">
+            <Link to="/login" className="block text-xl font-medium text-[#1A1A1A] text-center w-full py-4 rounded-2xl bg-white border border-black/5" onClick={() => setMobileMenuOpen(false)}>Log In</Link>
+            <Button variant="primary" className="w-full text-lg py-4">Get Demo</Button>
+          </div>
         </div>
       )}
     </nav>

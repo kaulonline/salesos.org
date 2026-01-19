@@ -25,9 +25,10 @@ export const Hero: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-20">
           
-          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 shadow-sm mb-8 ${getTransition(0)}`} style={{ transitionDelay: '0ms' }}>
-            <span className="w-2 h-2 rounded-full bg-[#EAD07D] animate-pulse" />
-            <span className="text-xs font-semibold text-[#666] uppercase tracking-wider">v2.0 Now Available</span>
+          {/* Frosted Pill */}
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/60 shadow-sm mb-8 ${getTransition(0)}`} style={{ transitionDelay: '0ms' }}>
+            <span className="w-2 h-2 rounded-full bg-[#EAD07D] animate-pulse shadow-[0_0_10px_#EAD07D]" />
+            <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">v2.0 Now Available</span>
           </div>
 
           <h1 className={`text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
@@ -44,7 +45,7 @@ export const Hero: React.FC = () => {
               Start Free Trial
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" size="lg" className="min-w-[180px] bg-white border-white shadow-sm text-[#1A1A1A] hover:bg-gray-50">
+            <Button variant="outline" size="lg" className="min-w-[180px] bg-white/80 backdrop-blur-sm border-white/50 shadow-sm text-[#1A1A1A] hover:bg-white">
               <PlayCircle className="mr-2 w-4 h-4" />
               Watch Demo
             </Button>
@@ -61,18 +62,18 @@ export const Hero: React.FC = () => {
              {/* Screen Content */}
              <div className="bg-[#F8F7F4] rounded-[1.5rem] overflow-hidden aspect-[16/10] md:aspect-[16/9] flex flex-col font-sans relative">
                 
-                {/* Dashboard Header */}
-                <div className="px-8 py-6 flex justify-between items-center bg-transparent relative z-10">
+                {/* Dashboard Header - Glass */}
+                <div className="px-8 py-6 flex justify-between items-center bg-white/40 backdrop-blur-md relative z-10 border-b border-white/50">
                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded bg-[#1A1A1A] text-white flex items-center justify-center">
                          <Search size={16} />
                       </div>
                       <h2 className="text-2xl font-medium text-[#1A1A1A] hidden md:block">Welcome in, <span className="font-bold">SalesOS</span></h2>
                    </div>
-                   <div className="flex gap-3 overflow-x-auto no-scrollbar">
-                      <div className="bg-[#1A1A1A] text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">Dashboard</div>
-                      <div className="text-[#666] hover:text-[#1A1A1A] px-5 py-2 rounded-full text-sm font-medium cursor-pointer whitespace-nowrap">Pipeline</div>
-                      <div className="text-[#666] hover:text-[#1A1A1A] px-5 py-2 rounded-full text-sm font-medium cursor-pointer whitespace-nowrap">Analytics</div>
+                   <div className="flex gap-2 overflow-x-auto no-scrollbar bg-white/50 p-1.5 rounded-full backdrop-blur-md border border-white/20">
+                      <div className="bg-[#1A1A1A] text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-md">Dashboard</div>
+                      <div className="text-[#666] hover:text-[#1A1A1A] px-5 py-2 rounded-full text-sm font-medium cursor-pointer whitespace-nowrap hover:bg-white/50 transition-colors">Pipeline</div>
+                      <div className="text-[#666] hover:text-[#1A1A1A] px-5 py-2 rounded-full text-sm font-medium cursor-pointer whitespace-nowrap hover:bg-white/50 transition-colors">Analytics</div>
                    </div>
                    <div className="hidden md:flex items-center">
                       <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[#1A1A1A] shadow-sm ml-4">
@@ -88,13 +89,13 @@ export const Hero: React.FC = () => {
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#EAD07D]/20 blur-[80px] rounded-full pointer-events-none" />
 
                 {/* Main Content Grid */}
-                <div className="flex-1 px-8 pb-8 overflow-hidden">
-                   {/* Top Stats Row */}
+                <div className="flex-1 px-8 pb-8 overflow-hidden pt-8">
+                   {/* Top Stats Row - Frosted */}
                    <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6">
-                      <div className="flex gap-4 hidden md:flex">
-                         <div className="bg-[#1A1A1A] text-white px-4 py-1.5 rounded-full text-xs font-bold">15%</div>
-                         <div className="bg-[#EAD07D] text-[#1A1A1A] px-4 py-1.5 rounded-full text-xs font-bold">15%</div>
-                         <div className="border border-gray-300 text-[#666] px-4 py-1.5 rounded-full text-xs font-bold">60%</div>
+                      <div className="flex gap-4 hidden md:flex items-center bg-white/60 backdrop-blur-xl p-2 pr-6 rounded-full border border-white/40 shadow-sm">
+                         <div className="bg-[#1A1A1A] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">15%</div>
+                         <div className="bg-[#EAD07D] text-[#1A1A1A] px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">15%</div>
+                         <div className="border border-gray-300 text-[#666] px-4 py-1.5 rounded-full text-xs font-bold bg-white/50">60%</div>
                          <div className="w-48 h-2 bg-gray-200 rounded-full self-center ml-2 relative overflow-hidden">
                             <div className="absolute top-0 left-0 h-full w-[40%] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
                          </div>
@@ -119,21 +120,24 @@ export const Hero: React.FC = () => {
                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 h-full pb-8 md:pb-0">
                       
                       {/* Profile Card */}
-                      <div className="md:col-span-4 bg-[#E5E5E0] rounded-3xl p-4 relative overflow-hidden group min-h-[200px]">
+                      <div className="md:col-span-4 bg-[#E5E5E0] rounded-3xl p-4 relative overflow-hidden group min-h-[200px] shadow-sm">
                          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover rounded-2xl grayscale group-hover:grayscale-0 transition-all duration-500" alt="Profile" />
-                         <div className="absolute bottom-8 left-8 text-white">
-                            <h3 className="text-xl font-medium mb-1">Lora Piterson</h3>
-                            <p className="text-white/70 text-sm">VP of Sales</p>
+                         <div className="absolute bottom-8 left-8 text-white z-20">
+                            <h3 className="text-xl font-medium mb-1 drop-shadow-md">Lora Piterson</h3>
+                            <p className="text-white/80 text-sm drop-shadow-md">VP of Sales</p>
                          </div>
-                         <div className="absolute bottom-8 right-8 bg-[#585856]/80 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-medium">
+                         {/* Frosted Badge */}
+                         <div className="absolute bottom-8 right-8 bg-white/20 backdrop-blur-xl border border-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium z-20 shadow-lg">
                             $1,200
                          </div>
+                         {/* Gradient Overlay for Readability */}
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-2xl z-10 pointer-events-none"></div>
                       </div>
 
                       {/* Middle Column */}
                       <div className="md:col-span-4 flex flex-col gap-5">
                          {/* Progress Chart */}
-                         <div className="bg-white rounded-3xl p-6 flex-1 shadow-sm min-h-[200px]">
+                         <div className="bg-white rounded-3xl p-6 flex-1 shadow-sm min-h-[200px] border border-black/5">
                             <div className="flex justify-between items-start mb-6">
                                <div>
                                   <h3 className="text-lg text-[#1A1A1A] font-medium">Progress</h3>
@@ -151,7 +155,7 @@ export const Hero: React.FC = () => {
                                   <div key={i} className="w-full bg-[#F2F1EA] rounded-full relative group">
                                      <div 
                                         style={{height: `${h}%`}} 
-                                        className={`absolute bottom-0 left-0 w-full rounded-full transition-all duration-1000 ${i === 3 ? 'bg-[#EAD07D]' : 'bg-[#1A1A1A]'}`}
+                                        className={`absolute bottom-0 left-0 w-full rounded-full transition-all duration-1000 ${i === 3 ? 'bg-[#EAD07D] shadow-[0_0_15px_rgba(234,208,125,0.4)]' : 'bg-[#1A1A1A]'}`}
                                      >
                                      </div>
                                   </div>
@@ -163,7 +167,7 @@ export const Hero: React.FC = () => {
                       {/* Right Column */}
                       <div className="md:col-span-4 flex flex-col gap-5">
                          {/* Time Tracker */}
-                         <div className="bg-white rounded-3xl p-6 shadow-sm">
+                         <div className="bg-white rounded-3xl p-6 shadow-sm border border-black/5">
                             <div className="flex justify-between items-center mb-4">
                                <h3 className="text-lg font-medium">Time tracker</h3>
                                <div className="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center rotate-45">
@@ -172,7 +176,7 @@ export const Hero: React.FC = () => {
                             </div>
                             <div className="relative w-40 h-40 mx-auto flex items-center justify-center">
                                <div className="absolute inset-0 rounded-full border-4 border-[#F2F1EA]"></div>
-                               <div className="absolute inset-0 rounded-full border-4 border-[#EAD07D] border-l-transparent border-b-transparent rotate-45"></div>
+                               <div className="absolute inset-0 rounded-full border-4 border-[#EAD07D] border-l-transparent border-b-transparent rotate-45 shadow-[0_0_20px_rgba(234,208,125,0.2)]"></div>
                                <div className="text-center">
                                   <div className="text-2xl font-bold text-[#1A1A1A]">02:35</div>
                                   <div className="text-xs text-[#999] mt-1">Work Time</div>
