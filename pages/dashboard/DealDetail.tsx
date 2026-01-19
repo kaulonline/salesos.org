@@ -126,6 +126,7 @@ export const DealDetail: React.FC = () => {
   const deal = DEALS_DATA.find(d => d.id === Number(id));
   
   const [openSection, setOpenSection] = useState<string | null>('basic');
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -133,38 +134,43 @@ export const DealDetail: React.FC = () => {
 
   if (!deal) return null;
 
-  // Chart Data Simulation
+  // Chart Data: Days spent in each stage vs Average
   const velocityData = [
-    { label: 'Q1', deal: 150, avg: 200 },
-    { label: 'Q2', deal: 180, avg: 220 },
-    { label: 'Q3', deal: 260, avg: 240 },
-    { label: 'Q4', deal: 290, avg: 230 },
-    { label: 'Q5', deal: 280, avg: 250 },
-    { label: 'Q6', deal: 350, avg: 280 },
-    { label: 'Q7', deal: 320, avg: 290 },
-    { label: 'Q8', deal: 380, avg: 310 },
-    { label: 'Q9', deal: 420, avg: 330 },
+    { label: 'Lead', deal: 2, avg: 5 },
+    { label: 'Discovery', deal: 12, avg: 15 },
+    { label: 'Qual', deal: 28, avg: 25 },
+    { label: 'Demo', deal: 35, avg: 32 },
+    { label: 'Proposal', deal: 42, avg: 45 },
+    { label: 'Negot.', deal: 50, avg: 55 },
   ];
 
-  // Helper to generate SVG path for charts
-  const generateLinePath = (data: typeof velocityData, key: 'deal' | 'avg') => {
-    const maxY = 500;
-    const points = data.map((d, i) => {
-      const x = (i / (data.length - 1)) * 100;
-      const y = 100 - (d[key] / maxY) * 100;
-      return `${x},${y}`;
-    });
+  const maxY = Math.max(...velocityData.map(d => Math.max(d.deal, d.avg))) * 1.2;
+
+  // Helper to get coordinates for the chart (0-100 scale)
+  const getPoint = (index: number, val: number) => {
+     // Padding: x from 5 to 95, y from 90 to 10
+     const x = 5 + (index / (velocityData.length - 1)) * 90;
+     const y = 90 - (val / maxY) * 80;
+     return { x, y };
+  };
+
+  // Generate SVG Paths
+  const generatePath = (key: 'deal' | 'avg') => {
+    if (velocityData.length === 0) return '';
     
-    // Create smooth bezier curve
-    return `M ${points[0]} ` + points.slice(1).map((p, i) => {
-      const [currX, currY] = p.split(',');
-      const [prevX, prevY] = points[i].split(',');
-      const cp1x = parseFloat(prevX) + (parseFloat(currX) - parseFloat(prevX)) / 2;
-      const cp1y = parseFloat(prevY);
-      const cp2x = parseFloat(prevX) + (parseFloat(currX) - parseFloat(prevX)) / 2;
-      const cp2y = parseFloat(currY);
-      return `C ${cp1x},${cp1y} ${cp2x},${cp2y} ${currX},${currY}`;
-    }).join(' ');
+    // Start point
+    const first = getPoint(0, velocityData[0][key]);
+    let d = `M ${first.x},${first.y}`;
+
+    // Bezier curves
+    for (let i = 0; i < velocityData.length - 1; i++) {
+        const curr = getPoint(i, velocityData[i][key]);
+        const next = getPoint(i + 1, velocityData[i+1][key]);
+        
+        const controlX = (curr.x + next.x) / 2;
+        d += ` C ${controlX},${curr.y} ${controlX},${next.y} ${next.x},${next.y}`;
+    }
+    return d;
   };
 
   return (
@@ -375,7 +381,7 @@ export const DealDetail: React.FC = () => {
                     {/* Line Chart */}
                     <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 shadow-card flex flex-col justify-between min-h-[300px]">
                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-lg font-medium text-[#1A1A1A]">Deal Momentum</h3>
+                          <h3 className="text-lg font-medium text-[#1A1A1A]">Deal Velocity</h3>
                           <div className="flex gap-4 text-xs">
                              <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-[#EAD07D]"></div>
@@ -389,11 +395,11 @@ export const DealDetail: React.FC = () => {
                        </div>
                        
                        {/* SVG Line Chart */}
-                       <div className="relative h-48 w-full">
-                          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                       <div className="relative h-48 w-full group">
+                          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
                              {/* Dashed Average Line */}
                              <path 
-                                d={generateLinePath(velocityData, 'avg')} 
+                                d={generatePath('avg')} 
                                 fill="none" 
                                 stroke="#ccc" 
                                 strokeWidth="2" 
@@ -401,21 +407,59 @@ export const DealDetail: React.FC = () => {
                              />
                              {/* Solid Deal Line */}
                              <path 
-                                d={generateLinePath(velocityData, 'deal')} 
+                                d={generatePath('deal')} 
                                 fill="none" 
                                 stroke="#EAD07D" 
                                 strokeWidth="3" 
                              />
-                             {/* Current Point */}
-                             <g transform="translate(50, 44)"> 
-                                 {/* Hardcoded visual position for demo aesthetic matching the curve */}
-                                 <rect x="-30" y="-30" width="80" height="28" rx="14" fill="#1A1A1A" />
-                                 <text x="10" y="-12" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">294 points</text>
-                                 <circle cx="10" cy="10" r="3" fill="#EAD07D" stroke="#1A1A1A" strokeWidth="2" />
-                                 <line x1="10" y1="10" x2="10" y2="100" stroke="#1A1A1A" strokeWidth="1" strokeDasharray="2 2" />
-                             </g>
+                             
+                             {/* Interactive Points */}
+                             {velocityData.map((d, i) => {
+                                 const p = getPoint(i, d.deal);
+                                 const isHovered = hoveredPoint === i;
+                                 return (
+                                     <g key={i} onMouseEnter={() => setHoveredPoint(i)}>
+                                         {/* Hit Area */}
+                                         <circle cx={p.x} cy={p.y} r="8" fill="transparent" cursor="pointer" />
+                                         {/* Visual Point */}
+                                         <circle 
+                                            cx={p.x} 
+                                            cy={p.y} 
+                                            r={isHovered ? 4 : 3} 
+                                            fill="#EAD07D" 
+                                            stroke="#1A1A1A" 
+                                            strokeWidth="2" 
+                                            className="transition-all duration-200 pointer-events-none"
+                                         />
+                                         {/* Vertical Line on Hover */}
+                                         {isHovered && (
+                                             <line x1={p.x} y1={p.y} x2={p.x} y2={100} stroke="#1A1A1A" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" pointer-events-none />
+                                         )}
+                                     </g>
+                                 );
+                             })}
                           </svg>
-                          <div className="flex justify-between text-xs text-[#999] mt-2 pt-2 border-t border-gray-100">
+
+                          {/* Tooltip Overlay */}
+                          {hoveredPoint !== null && (
+                              <div 
+                                  className="absolute bg-[#1A1A1A] text-white p-3 rounded-xl shadow-xl text-xs z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 transition-all duration-200"
+                                  style={{ 
+                                      left: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).x}%`, 
+                                      top: `${getPoint(hoveredPoint, velocityData[hoveredPoint].deal).y}%`,
+                                  }}
+                              >
+                                  <div className="font-bold mb-1">{velocityData[hoveredPoint].label}</div>
+                                  <div className="flex gap-3 whitespace-nowrap">
+                                      <span>Act: <span className="text-[#EAD07D] font-bold">{velocityData[hoveredPoint].deal}d</span></span>
+                                      <span className="opacity-60">Avg: {velocityData[hoveredPoint].avg}d</span>
+                                  </div>
+                                  {/* Arrow */}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-[#1A1A1A]"></div>
+                              </div>
+                          )}
+
+                          <div className="flex justify-between text-xs text-[#999] mt-2 pt-2 border-t border-gray-100 absolute w-full bottom-0">
                              {velocityData.map((d) => <span key={d.label}>{d.label}</span>)}
                           </div>
                        </div>
