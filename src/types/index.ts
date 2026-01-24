@@ -1,0 +1,41 @@
+// Auth types
+export * from './auth';
+
+// CRM entity types
+export * from './lead';
+export * from './account';
+export * from './contact';
+export * from './opportunity';
+export * from './task';
+export * from './activity';
+
+// AI and communication types
+export * from './conversation';
+export * from './meeting';
+
+// Re-export specific types needed for dashboard
+export type { PipelineStats, SalesForecast } from './opportunity';
+export type { LeadStats } from './lead';
+
+// Common types
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ApiError {
+  message: string;
+  statusCode: number;
+  error?: string;
+}
+
+export interface QueryFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}

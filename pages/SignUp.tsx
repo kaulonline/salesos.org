@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Command, Eye, EyeOff, X, Apple } from 'lucide-react';
+import { Command, Eye, EyeOff, X, Apple, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../src/context/AuthContext';
 
 // Custom Google Icon component
 const GoogleIcon = () => (
@@ -15,7 +16,64 @@ const GoogleIcon = () => (
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
+  const { register, isAuthenticated, isLoading, error, clearError } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [localError, setLocalError] = useState('');
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors when inputs change
+  useEffect(() => {
+    if (error) clearError();
+    if (localError) setLocalError('');
+  }, [name, email, password]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError('');
+
+    if (!name.trim()) {
+      setLocalError('Full name is required');
+      return;
+    }
+
+    if (!email.trim()) {
+      setLocalError('Email is required');
+      return;
+    }
+
+    if (!password.trim()) {
+      setLocalError('Password is required');
+      return;
+    }
+
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      await register({
+        email: email.trim(),
+        password,
+        name: name.trim()
+      });
+      // Navigation happens via useEffect when isAuthenticated changes
+    } catch {
+      // Error is handled by AuthContext
+    }
+  };
+
+  const displayError = localError || error;
 
   return (
     <div className="min-h-screen bg-[#F2F1EA] flex p-4 md:p-6 relative overflow-hidden">
@@ -23,8 +81,8 @@ export const SignUp: React.FC = () => {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Close Button */}
-      <button 
-        onClick={() => navigate('/')} 
+      <button
+        onClick={() => navigate('/')}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-gray-100 transition-colors shadow-sm"
       >
         <X size={20} />
@@ -32,7 +90,7 @@ export const SignUp: React.FC = () => {
 
       {/* Left Column - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 md:px-12 lg:px-20 relative z-10">
-        
+
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 mb-16 w-fit">
           <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white">
@@ -47,34 +105,51 @@ export const SignUp: React.FC = () => {
           <h1 className="text-3xl md:text-4xl font-medium text-[#1A1A1A] mb-3">Create an account</h1>
           <p className="text-[#666] mb-10">Sign up and get 30 day free trial</p>
 
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
+          {/* Error Message */}
+          {displayError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
+              <AlertCircle size={20} />
+              <span className="text-sm">{displayError}</span>
+            </div>
+          )}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-[#666] ml-1">Full name</label>
-              <input 
-                type="text" 
-                defaultValue="Amélie Laurent"
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
                 className="w-full px-6 py-4 rounded-full bg-white border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium"
+                disabled={isLoading}
               />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-[#666] ml-1">Email</label>
-              <input 
-                type="email" 
-                defaultValue="amélielaurent7622@gmail.com"
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
                 className="w-full px-6 py-4 rounded-full bg-white border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium"
+                disabled={isLoading}
               />
             </div>
 
             <div className="space-y-1.5 relative">
               <label className="text-xs font-medium text-[#666] ml-1">Password</label>
               <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  defaultValue="password123"
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
                   className="w-full px-6 py-4 rounded-full bg-white border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium pr-12"
+                  disabled={isLoading}
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-5 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#1A1A1A] transition-colors"
@@ -84,16 +159,33 @@ export const SignUp: React.FC = () => {
               </div>
             </div>
 
-            <Button variant="secondary" className="w-full py-4 rounded-full text-base font-bold shadow-none hover:shadow-lg mt-4">
-              Create Account
+            <Button
+              variant="secondary"
+              className="w-full py-4 rounded-full text-base font-bold shadow-none hover:shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating account...
+                </span>
+              ) : (
+                'Create Account'
+              )}
             </Button>
           </form>
 
           <div className="grid grid-cols-2 gap-4 mt-6">
-            <button className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A]">
+            <button
+              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
+              disabled={isLoading}
+            >
               <Apple size={18} /> Apple
             </button>
-            <button className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A]">
+            <button
+              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
+              disabled={isLoading}
+            >
               <GoogleIcon /> Google
             </button>
           </div>
@@ -110,12 +202,12 @@ export const SignUp: React.FC = () => {
       {/* Right Column - Image & Overlay Cards */}
       <div className="hidden lg:block w-1/2 relative">
         <div className="absolute inset-0 bg-[#E5E5E5] rounded-[2.5rem] overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000" 
-            alt="Office Team" 
+          <img
+            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000"
+            alt="Office Team"
             className="w-full h-full object-cover"
           />
-          
+
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-black/10"></div>
 
@@ -133,10 +225,10 @@ export const SignUp: React.FC = () => {
 
           <div className="absolute top-[50%] right-[10%] left-[20%] h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 text-white border border-white/10">
              {[
-               {d: '22', day: 'Sun'}, 
-               {d: '23', day: 'Mon'}, 
-               {d: '24', day: 'Tue'}, 
-               {d: '25', day: 'Wed', active: true}, 
+               {d: '22', day: 'Sun'},
+               {d: '23', day: 'Mon'},
+               {d: '24', day: 'Tue'},
+               {d: '25', day: 'Wed', active: true},
                {d: '26', day: 'Thu'},
                {d: '27', day: 'Fri'},
                {d: '28', day: 'Sat'}

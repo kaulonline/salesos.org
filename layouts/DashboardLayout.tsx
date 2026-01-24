@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
-import { Command, Bell, Settings, Bot, Brain, Building2, Workflow, Plug, Users, ChevronDown, Sparkles } from 'lucide-react';
+import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
+import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, Sparkles, LogOut, User, Shield } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
+import { useAuth } from '../src/context/AuthContext';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Get user initials for avatar
+  const userInitials = user?.firstName && user?.lastName
+    ? `${user.firstName[0]}${user.lastName[0]}`
+    : user?.email?.[0]?.toUpperCase() || 'U';
 
   const primaryNavItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, highlight: true },
+    { label: 'AI Chat', href: '/dashboard/ai', icon: Sparkles, highlight: true },
     { label: 'Leads', href: '/dashboard/leads' },
+    { label: 'Contacts', href: '/dashboard/contacts', icon: User },
     { label: 'Companies', href: '/dashboard/companies', icon: Building2 },
     { label: 'Deals', href: '/dashboard/deals' },
-    { label: 'Analytics', href: '/dashboard/analytics' },
   ];
 
   const secondaryNavItems = [
+    { label: 'Analytics', href: '/dashboard/analytics' },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
@@ -123,8 +138,63 @@ export const DashboardLayout: React.FC = () => {
             <span className="absolute top-2.5 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
-          <div className="w-10 h-10 bg-gradient-to-br from-[#EAD07D] to-[#E5C973] rounded-full flex items-center justify-center font-bold text-[#1A1A1A] shadow-md border-2 border-white cursor-pointer hover:scale-105 transition-transform">
-            V
+          {/* User Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-10 h-10 bg-gradient-to-br from-[#EAD07D] to-[#E5C973] rounded-full flex items-center justify-center font-bold text-[#1A1A1A] shadow-md border-2 border-white cursor-pointer hover:scale-105 transition-transform"
+            >
+              {userInitials}
+            </button>
+
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* User Info */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="font-bold text-[#1A1A1A]">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-sm text-[#666] truncate">{user?.email}</p>
+                    {user?.role && (
+                      <span className="inline-block mt-1 text-xs bg-[#EAD07D]/20 text-[#1A1A1A] px-2 py-0.5 rounded-full font-medium">
+                        {user.role}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-1">
+                    {user?.role === 'ADMIN' && (
+                      <Link
+                        to="/dashboard/admin"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A] transition-colors"
+                      >
+                        <Shield size={16} className="text-[#999]" />
+                        Admin Console
+                      </Link>
+                    )}
+                    <Link
+                      to="/dashboard/settings"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A] transition-colors"
+                    >
+                      <Settings size={16} className="text-[#999]" />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>

@@ -1,23 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles, TrendingUp, AlertCircle, Eye, MousePointerClick, ChevronRight, Phone, Mail, Clock, Video, Calendar as CalendarIcon, MapPin, Flame, MoreHorizontal } from 'lucide-react';
+import React from 'react';
+import { Sparkles, TrendingUp, AlertCircle, Eye, MousePointerClick, Phone, Mail, Clock, Video, Flame, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { ActivityFeed, QuickActions } from '../../components/dashboard';
+import { useDashboard } from '../../src/hooks';
+import { useAuth } from '../../src/context/AuthContext';
 
 export const DashboardHome: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  const { user } = useAuth();
+  const {
+    loading: isLoading,
+    pipelineStats,
+    leadStats,
+    forecast,
+    quotaAttainment,
+    totalDeals,
+    closedWonThisMonth,
+    totalPipeline,
+  } = useDashboard();
 
   // Time based greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  // Get user's first name
+  const userName = user?.firstName || user?.email?.split('@')[0] || 'there';
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+    return `$${value.toFixed(0)}`;
+  };
+
+  // Calculate estimated commission (3% of closed-won value)
+  const estimatedCommission = (pipelineStats?.closedWonValue || 0) * 0.03;
 
   if (isLoading) {
     return (
@@ -54,7 +74,7 @@ export const DashboardHome: React.FC = () => {
                   </div>
               </div>
               <h1 className="text-4xl font-medium text-[#1A1A1A] tracking-tight">
-                {greeting}, <span className="font-bold">Valentina</span>
+                {greeting}, <span className="font-bold">{userName}</span>
               </h1>
           </div>
           
@@ -62,15 +82,15 @@ export const DashboardHome: React.FC = () => {
               <div className="text-right hidden sm:block">
                   <div className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Quota Attainment</div>
                   <div className="flex items-center gap-2 justify-end">
-                      <span className="text-2xl font-light text-[#1A1A1A]">72%</span>
+                      <span className="text-2xl font-light text-[#1A1A1A]">{quotaAttainment}%</span>
                       <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#1A1A1A] w-[72%] rounded-full"></div>
+                          <div className="h-full bg-[#1A1A1A] rounded-full" style={{ width: `${quotaAttainment}%` }}></div>
                       </div>
                   </div>
               </div>
               <div className="bg-[#EAD07D]/10 px-6 py-3 rounded-2xl border border-[#EAD07D]/20">
                   <div className="text-xs font-bold text-[#EAD07D] uppercase tracking-wider mb-1">Est. Commission</div>
-                  <div className="text-2xl font-bold text-[#1A1A1A]">$42,500</div>
+                  <div className="text-2xl font-bold text-[#1A1A1A]">{formatCurrency(estimatedCommission)}</div>
               </div>
           </div>
       </div>
@@ -92,9 +112,9 @@ export const DashboardHome: React.FC = () => {
           {/* Key Metrics */}
           <div className="flex gap-8 md:gap-12">
               {[
-                  { label: 'Deals', val: '78', trend: '+12' },
-                  { label: 'Closed', val: '56', trend: '+8' },
-                  { label: 'Pipeline', val: '$2.4M', trend: '' }
+                  { label: 'Deals', val: String(totalDeals), trend: leadStats?.newThisWeek ? `+${leadStats.newThisWeek}` : '' },
+                  { label: 'Closed', val: String(closedWonThisMonth), trend: pipelineStats?.winRate ? `${Math.round(pipelineStats.winRate)}%` : '' },
+                  { label: 'Pipeline', val: formatCurrency(totalPipeline), trend: '' }
               ].map(stat => (
                   <div key={stat.label} className="text-right">
                       <div className="flex items-baseline gap-1 justify-end">
@@ -269,7 +289,7 @@ export const DashboardHome: React.FC = () => {
             </div>
             
             <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-light text-[#1A1A1A]">$1.42M</span>
+                <span className="text-4xl font-light text-[#1A1A1A]">{formatCurrency(forecast?.bestCase || pipelineStats?.weightedPipeline || 0)}</span>
                 <span className="text-sm text-[#666] font-medium">projected</span>
             </div>
 

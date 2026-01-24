@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { AuthProvider } from './src/context/AuthContext';
+import { ProtectedRoute } from './src/components/ProtectedRoute';
 
 // Public Pages
 import { Home } from './pages/Home';
@@ -19,7 +21,6 @@ import { Terms } from './pages/Terms';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
 import { Pricing } from './components/Pricing';
-import { PageLayout } from './components/PageLayout';
 
 // Dashboard Pages
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -39,9 +40,12 @@ import { Documents } from './pages/dashboard/Documents';
 // New Enterprise CRM Pages
 import { AIAgents } from './pages/dashboard/AIAgents';
 import { Companies } from './pages/dashboard/Companies';
+import { Contacts } from './pages/dashboard/Contacts';
 import { Automations } from './pages/dashboard/Automations';
 import { IntegrationsPage } from './pages/dashboard/Integrations';
 import { Team } from './pages/dashboard/Team';
+import { AIChat } from './pages/dashboard/AIChat';
+import { Admin } from './pages/dashboard/Admin';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -49,7 +53,7 @@ const PricingPage = () => (
     </div>
 );
 
-function App() {
+function AppContent() {
   const { pathname } = useLocation();
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isDashboard = pathname.startsWith('/dashboard');
@@ -78,18 +82,24 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-          
+
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
 
-          {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* Dashboard Routes - Protected */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }>
             <Route index element={<DashboardHome />} />
             <Route path="agents" element={<Agents />} />
             <Route path="ai-agents" element={<AIAgents />} />
+            <Route path="ai" element={<AIChat />} />
             <Route path="knowledge" element={<Knowledge />} />
             <Route path="leads" element={<Leads />} />
+            <Route path="contacts" element={<Contacts />} />
             <Route path="companies" element={<Companies />} />
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />
@@ -103,6 +113,7 @@ function App() {
             <Route path="team" element={<Team />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="admin" element={<Admin />} />
           </Route>
 
           {/* Catch-all route */}
@@ -111,6 +122,14 @@ function App() {
       </main>
       {!isAuthPage && !isDashboard && <Footer />}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

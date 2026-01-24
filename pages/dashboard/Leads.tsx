@@ -1,36 +1,222 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Download, Plus } from 'lucide-react';
+import { Filter, Download, Plus, X, Sparkles, ArrowRightLeft, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Button } from '../../components/ui/Button';
+import { useLeads } from '../../src/hooks/useLeads';
+import type { Lead, CreateLeadDto, LeadStatus, LeadRating } from '../../src/types';
 
-const LEADS = [
-  { id: 1, name: "Harry Bender", role: "Head of Design", company: "Product", country: "Rome", value: "$1,350", status: "Invited", statusVariant: "green" as const },
-  { id: 2, name: "Katy Fuller", role: "Fullstack Engineer", company: "Engineering", country: "Miami", value: "$1,500", status: "Absent", statusVariant: "neutral" as const, active: true },
-  { id: 3, name: "Jonathan Kelly", role: "Mobile Lead", company: "Product", country: "Kyiv", value: "$2,600", status: "Invited", statusVariant: "green" as const },
-  { id: 4, name: "Billie Wright", role: "Sales Manager", company: "Operations", country: "Ottawa", value: "$900", status: "Invited", statusVariant: "green" as const },
-  { id: 5, name: "Sarah Page", role: "Network Engineer", company: "Product", country: "Sao Paulo", value: "$1,000", status: "Invited", statusVariant: "green" as const },
-  { id: 6, name: "Erica Wyatt", role: "Head of Design", company: "Product", country: "London", value: "$1,700", status: "Absent", statusVariant: "neutral" as const },
-];
+const STATUS_COLORS: Record<LeadStatus, 'green' | 'yellow' | 'neutral' | 'outline'> = {
+  NEW: 'yellow',
+  CONTACTED: 'green',
+  QUALIFIED: 'green',
+  UNQUALIFIED: 'neutral',
+  NURTURING: 'outline',
+  CONVERTED: 'green',
+  LOST: 'neutral',
+};
+
+const RATING_COLORS: Record<LeadRating, string> = {
+  HOT: 'text-red-500',
+  WARM: 'text-orange-500',
+  COLD: 'text-blue-500',
+};
+
+interface CreateLeadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (data: CreateLeadDto) => Promise<void>;
+}
+
+const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCreate }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<CreateLeadDto>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    title: '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName) {
+      setError('First name and last name are required');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await onCreate(formData);
+      onClose();
+      setFormData({ firstName: '', lastName: '', email: '', phone: '', company: '', title: '' });
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setError(e.message || 'Failed to create lead');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-medium text-[#1A1A1A]">New Lead</h2>
+          <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
+            <X size={24} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">First Name *</label>
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="John"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Last Name *</label>
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="Doe"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#666] mb-1 block">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+              placeholder="john@company.com"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#666] mb-1 block">Phone</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+              placeholder="+1 555 123 4567"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Company</label>
+              <input
+                type="text"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="Acme Inc"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Title</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="VP of Sales"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <Button
+              variant="secondary"
+              className="flex-1 py-3 rounded-xl"
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Create Lead'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 export const Leads: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const { leads, stats, loading, error, refetch, fetchStats, create, score, convert } = useLeads();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<string | null>(null);
+  const [scoringLead, setScoringLead] = useState<string | null>(null);
+  const [convertingLead, setConvertingLead] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchStats();
+  }, [fetchStats]);
 
-  const filteredLeads = LEADS.filter(lead => 
-    lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.role.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLeads = leads.filter(lead =>
+    `${lead.firstName} ${lead.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (lead.company?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (lead.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (lead.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) {
+  const handleCreateLead = async (data: CreateLeadDto) => {
+    await create(data);
+    await fetchStats();
+  };
+
+  const handleScoreLead = async (id: string) => {
+    setScoringLead(id);
+    try {
+      await score(id);
+    } finally {
+      setScoringLead(null);
+    }
+  };
+
+  const handleConvertLead = async (id: string) => {
+    setConvertingLead(id);
+    try {
+      await convert(id, {
+        createAccount: true,
+        createContact: true,
+        createOpportunity: true,
+      });
+      await fetchStats();
+    } finally {
+      setConvertingLead(null);
+    }
+  };
+
+  if (loading && leads.length === 0) {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
@@ -63,7 +249,7 @@ export const Leads: React.FC = () => {
            </div>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -71,50 +257,72 @@ export const Leads: React.FC = () => {
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Leads</h1>
-            
-            {/* Frosted Stats Strip */}
+
+            {/* Stats Strip */}
             <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
-               <Badge variant="dark" className="px-6 py-2 shadow-lg">25%</Badge>
-               <Badge variant="yellow" className="px-6 py-2 shadow-sm">51%</Badge>
+               <Badge variant="dark" className="px-6 py-2 shadow-lg">
+                 {stats?.total || leads.length} Total
+               </Badge>
+               <Badge variant="yellow" className="px-6 py-2 shadow-sm">
+                 {stats?.byStatus?.QUALIFIED || 0} Qualified
+               </Badge>
                <div className="w-32 h-2 bg-gray-200/50 rounded-full overflow-hidden relative">
-                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjRQUFQUFBIi8+PC9zdmc+')] opacity-30"></div>
+                   <div
+                     className="h-full bg-[#EAD07D] transition-all duration-500"
+                     style={{ width: `${stats?.total ? Math.round((stats.byStatus?.QUALIFIED || 0) / stats.total * 100) : 0}%` }}
+                   />
                </div>
-               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">14%</Badge>
-               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">10%</Badge>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">
+                 {stats?.byRating?.HOT || 0} Hot
+               </Badge>
+               <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">
+                 Avg: {stats?.avgScore?.toFixed(0) || 0}
+               </Badge>
             </div>
          </div>
-         
+
          <div className="flex gap-2">
-            <button className="bg-white/60 backdrop-blur-sm border border-white/50 px-4 py-2 rounded-full text-sm font-medium hover:bg-white flex items-center gap-2 transition-colors">
-               Directory <span className="text-xs">▼</span>
-            </button>
-            <button className="bg-white/60 backdrop-blur-sm border border-white/50 px-4 py-2 rounded-full text-sm font-medium hover:bg-white flex items-center gap-2 transition-colors">
-               Org Chat <span className="text-xs">▼</span>
+            <button
+              onClick={() => refetch()}
+              className="bg-white/60 backdrop-blur-sm border border-white/50 px-4 py-2 rounded-full text-sm font-medium hover:bg-white flex items-center gap-2 transition-colors"
+            >
+               Refresh
             </button>
          </div>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
+          <AlertCircle size={20} />
+          <span>{error}</span>
+          <button onClick={refetch} className="ml-auto text-sm underline">Retry</button>
+        </div>
+      )}
 
       <Card className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
          {/* Filters Bar */}
          <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
             <div className="flex gap-2 overflow-x-auto max-w-full pb-2 md:pb-0 no-scrollbar">
-               {['Columns', 'Department', 'Site', 'Lifecycle', 'Status', 'Entity'].map(f => (
+               {['All', 'New', 'Contacted', 'Qualified', 'Hot'].map(f => (
                   <button key={f} className="px-4 py-2 bg-[#F8F8F6] rounded-full text-sm font-medium text-[#666] whitespace-nowrap hover:bg-gray-200 transition-colors flex items-center gap-1">
-                     {f} <span className="text-[10px] opacity-50">▼</span>
+                     {f}
                   </button>
                ))}
             </div>
-            
+
             <div className="flex gap-3 w-full md:w-auto">
                <div className="w-full md:w-64">
-                  <SearchInput 
-                    variant="filled" 
-                    placeholder="Search leads..." 
+                  <SearchInput
+                    variant="filled"
+                    placeholder="Search leads..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                </div>
-               <button className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors shrink-0">
+               <button
+                 onClick={() => setShowCreateModal(true)}
+                 className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors shrink-0"
+               >
                   <Plus size={18} />
                </button>
                <button className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200 transition-colors shrink-0">
@@ -130,58 +338,100 @@ export const Leads: React.FC = () => {
          <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider mb-2">
              <div className="col-span-1"></div>
              <div className="col-span-3">Name</div>
-             <div className="col-span-2">Job title</div>
-             <div className="col-span-2">Department</div>
-             <div className="col-span-1">Site</div>
-             <div className="col-span-1">Value</div>
-             <div className="col-span-2 text-right">Status</div>
+             <div className="col-span-2">Company</div>
+             <div className="col-span-2">Email</div>
+             <div className="col-span-1">Score</div>
+             <div className="col-span-1">Status</div>
+             <div className="col-span-2 text-right">Actions</div>
          </div>
 
          {/* Table Rows */}
          <div className="space-y-2">
             {filteredLeads.length > 0 ? (
                 filteredLeads.map((lead) => (
-                   <div 
-                      key={lead.id} 
-                      className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${lead.active ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'}`}
+                   <div
+                      key={lead.id}
+                      className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${
+                        selectedLead === lead.id ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'
+                      }`}
+                      onClick={() => setSelectedLead(selectedLead === lead.id ? null : lead.id)}
                    >
                       <div className="col-span-1 flex items-center justify-center">
-                         <div className={`w-5 h-5 rounded border flex items-center justify-center ${lead.active ? 'border-black bg-black text-white' : 'border-gray-300'}`}>
-                            {lead.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                         <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                           selectedLead === lead.id ? 'border-black bg-black text-white' : 'border-gray-300'
+                         }`}>
+                            {selectedLead === lead.id && (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
                          </div>
                       </div>
                       <div className="col-span-3 flex items-center gap-3">
-                         <Avatar src={`https://picsum.photos/40/40?random=${lead.id}`} alt={lead.name} size="md" />
-                         <span className={`font-medium ${lead.active ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]'}`}>{lead.name}</span>
+                         <Avatar
+                           src={`https://ui-avatars.com/api/?name=${lead.firstName}+${lead.lastName}&background=random`}
+                           alt={`${lead.firstName} ${lead.lastName}`}
+                           size="md"
+                         />
+                         <div>
+                           <span className="font-medium text-[#1A1A1A]">{lead.firstName} {lead.lastName}</span>
+                           {lead.title && <div className="text-xs text-[#666]">{lead.title}</div>}
+                         </div>
                       </div>
-                      <div className="col-span-2 text-sm text-[#666]">{lead.role}</div>
-                      <div className="col-span-2 text-sm text-[#666]">{lead.company}</div>
-                      <div className="col-span-1 flex items-center gap-1 text-sm text-[#666]">
-                          {/* Flag placeholder */}
-                          <div className="w-4 h-3 bg-gray-200 rounded-sm"></div> {lead.country}
+                      <div className="col-span-2 text-sm text-[#666]">{lead.company || '-'}</div>
+                      <div className="col-span-2 text-sm text-[#666] truncate">{lead.email || '-'}</div>
+                      <div className="col-span-1">
+                        {lead.leadScore !== undefined ? (
+                          <span className={`text-sm font-medium ${
+                            lead.leadScore >= 70 ? 'text-green-600' :
+                            lead.leadScore >= 40 ? 'text-yellow-600' : 'text-gray-500'
+                          }`}>
+                            {lead.leadScore}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#999]">-</span>
+                        )}
                       </div>
-                      <div className="col-span-1 text-sm font-medium">{lead.value}</div>
-                      <div className="col-span-2 flex justify-end">
-                         {lead.active ? (
-                            <Badge variant="neutral" className="bg-white text-[#1A1A1A]" dot>
-                               {lead.status}
-                            </Badge>
-                         ) : (
-                            <Badge variant={lead.statusVariant} dot>
-                               {lead.status}
-                            </Badge>
+                      <div className="col-span-1">
+                         <Badge variant={STATUS_COLORS[lead.status] || 'neutral'} dot>
+                            {lead.status.toLowerCase()}
+                         </Badge>
+                      </div>
+                      <div className="col-span-2 flex justify-end gap-2">
+                         <button
+                           onClick={(e) => { e.stopPropagation(); handleScoreLead(lead.id); }}
+                           disabled={scoringLead === lead.id}
+                           className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+                           title="AI Score"
+                         >
+                           <Sparkles size={16} className={scoringLead === lead.id ? 'animate-spin' : ''} />
+                         </button>
+                         {lead.status === 'QUALIFIED' && (
+                           <button
+                             onClick={(e) => { e.stopPropagation(); handleConvertLead(lead.id); }}
+                             disabled={convertingLead === lead.id}
+                             className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+                             title="Convert to Account"
+                           >
+                             <ArrowRightLeft size={16} className={convertingLead === lead.id ? 'animate-pulse' : ''} />
+                           </button>
                          )}
                       </div>
                    </div>
                 ))
             ) : (
                 <div className="text-center py-20 text-[#666]">
-                    No leads found matching "{searchQuery}"
+                    {searchQuery ? `No leads found matching "${searchQuery}"` : 'No leads yet. Create your first lead!'}
                 </div>
             )}
          </div>
-
       </Card>
+
+      <CreateLeadModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreateLead}
+      />
     </div>
   );
 };
