@@ -24,6 +24,8 @@ import { PageLayout } from './components/PageLayout';
 // Dashboard Pages
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
+import { Agents } from './pages/dashboard/Agents';
+import { Knowledge } from './pages/dashboard/Knowledge';
 import { Leads } from './pages/dashboard/Leads';
 import { Deals } from './pages/dashboard/Deals';
 import { DealDetail } from './pages/dashboard/DealDetail';
@@ -78,6 +80,8 @@ function App() {
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
+            <Route path="agents" element={<Agents />} />
+            <Route path="knowledge" element={<Knowledge />} />
             <Route path="leads" element={<Leads />} />
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />

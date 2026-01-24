@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { Command, Bell, Settings } from 'lucide-react';
+import { Command, Bell, Settings, Bot, Brain } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 
 export const DashboardLayout: React.FC = () => {
@@ -9,10 +9,10 @@ export const DashboardLayout: React.FC = () => {
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Agents', href: '/dashboard/agents', icon: Bot }, // New
+    { label: 'Knowledge', href: '/dashboard/knowledge', icon: Brain }, // New
     { label: 'Leads', href: '/dashboard/leads' },
     { label: 'Deals', href: '/dashboard/deals' },
-    { label: 'Products', href: '/dashboard/products' },
-    { label: 'Documents', href: '/dashboard/documents' },
     { label: 'Revenue', href: '/dashboard/revenue' },
     { label: 'Calendar', href: '/dashboard/calendar' },
     { label: 'Analytics', href: '/dashboard/analytics' },
@@ -23,8 +23,8 @@ export const DashboardLayout: React.FC = () => {
     <div className="min-h-screen bg-[#F2F1EA] text-[#1A1A1A] font-sans selection:bg-[#EAD07D] selection:text-[#1A1A1A]">
       <CommandPalette />
       
-      {/* Fixed Frosted Header - Removed shadow-sm to eliminate border appearance */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300">
+      {/* Fixed Frosted Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group cursor-pointer mr-4 shrink-0">
@@ -44,12 +44,13 @@ export const DashboardLayout: React.FC = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 ${
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${
                   isActive 
                     ? 'bg-[#1A1A1A] text-white shadow-md' 
                     : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/50'
                 }`}
               >
+                {item.icon && <item.icon size={14} className={isActive ? 'text-[#EAD07D]' : ''} />}
                 {item.label}
               </Link>
             );
@@ -75,12 +76,11 @@ export const DashboardLayout: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      {/* Added large top padding to push content below the fixed header */}
       <main className="animate-in fade-in slide-in-from-bottom-4 duration-700 pt-[180px] md:pt-32 pb-24 px-4 md:px-8 max-w-[1920px] mx-auto">
         <Outlet />
       </main>
 
-      {/* Bottom Fade Gradient for "Infinity Scroll" aesthetic */}
+      {/* Bottom Fade Gradient */}
       <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#F2F1EA] via-[#F2F1EA]/80 to-transparent pointer-events-none z-40" />
     </div>
   );

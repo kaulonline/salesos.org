@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowRight, Zap, FileText, UserPlus, Calendar, Command } from 'lucide-react';
+import { Search, ArrowRight, Zap, FileText, UserPlus, Calendar, Command, Bot, Brain } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const CommandPalette: React.FC = () => {
@@ -25,6 +25,8 @@ export const CommandPalette: React.FC = () => {
   if (!isOpen) return null;
 
   const actions = [
+    { id: 'agents', label: 'Manage Agents', icon: Bot, action: () => navigate('/dashboard/agents') },
+    { id: 'knowledge', label: 'Knowledge Base', icon: Brain, action: () => navigate('/dashboard/knowledge') },
     { id: 'leads', label: 'Go to Leads', icon: UserPlus, action: () => navigate('/dashboard/leads') },
     { id: 'deals', label: 'Go to Deals', icon: Zap, action: () => navigate('/dashboard/deals') },
     { id: 'calendar', label: 'View Calendar', icon: Calendar, action: () => navigate('/dashboard/calendar') },
