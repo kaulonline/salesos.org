@@ -1,112 +1,150 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactsApi, ContactFilters } from '../api/contacts';
+import { queryKeys } from '../lib/queryKeys';
 import type { Contact, CreateContactDto, UpdateContactDto, ContactStats } from '../types';
 
-interface UseContactsReturn {
-  contacts: Contact[];
-  stats: ContactStats | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  fetchStats: () => Promise<void>;
-  create: (data: CreateContactDto) => Promise<Contact>;
-  update: (id: string, data: UpdateContactDto) => Promise<Contact>;
-  remove: (id: string) => Promise<void>;
-}
+// Hook for listing contacts with caching and background refresh
+export function useContacts(filters?: ContactFilters) {
+  const queryClient = useQueryClient();
 
-export function useContacts(initialFilters?: ContactFilters): UseContactsReturn {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [stats, setStats] = useState<ContactStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<ContactFilters | undefined>(initialFilters);
+  // Query for contacts list
+  const contactsQuery = useQuery({
+    queryKey: queryKeys.contacts.list(filters),
+    queryFn: () => contactsApi.getAll(filters),
+  });
 
-  const fetchContacts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await contactsApi.getAll(filters);
-      setContacts(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch contacts');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Query for contact stats
+  const statsQuery = useQuery({
+    queryKey: queryKeys.contacts.stats(),
+    queryFn: () => contactsApi.getStats(),
+    staleTime: 60 * 1000,
+  });
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const data = await contactsApi.getStats();
-      setStats(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.error('Failed to fetch contact stats:', e.message);
-    }
-  }, []);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateContactDto) => contactsApi.create(data),
+    onSuccess: (newContact) => {
+      queryClient.setQueryData<Contact[]>(
+        queryKeys.contacts.list(filters),
+        (old) => (old ? [newContact, ...old] : [newContact])
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.stats() });
+    },
+  });
 
-  useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateContactDto }) =>
+      contactsApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.contacts.list(filters) });
+      const previousContacts = queryClient.getQueryData<Contact[]>(queryKeys.contacts.list(filters));
 
-  const create = useCallback(async (data: CreateContactDto): Promise<Contact> => {
-    const contact = await contactsApi.create(data);
-    setContacts((prev) => [contact, ...prev]);
-    return contact;
-  }, []);
+      queryClient.setQueryData<Contact[]>(
+        queryKeys.contacts.list(filters),
+        (old) => old?.map((c) => (c.id === id ? { ...c, ...data } : c))
+      );
 
-  const update = useCallback(async (id: string, data: UpdateContactDto): Promise<Contact> => {
-    const updated = await contactsApi.update(id, data);
-    setContacts((prev) => prev.map((c) => (c.id === id ? updated : c)));
-    return updated;
-  }, []);
+      return { previousContacts };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousContacts) {
+        queryClient.setQueryData(queryKeys.contacts.list(filters), context.previousContacts);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.stats() });
+    },
+  });
 
-  const remove = useCallback(async (id: string): Promise<void> => {
-    await contactsApi.delete(id);
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => contactsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.contacts.list(filters) });
+      const previousContacts = queryClient.getQueryData<Contact[]>(queryKeys.contacts.list(filters));
+
+      queryClient.setQueryData<Contact[]>(
+        queryKeys.contacts.list(filters),
+        (old) => old?.filter((c) => c.id !== id)
+      );
+
+      return { previousContacts };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousContacts) {
+        queryClient.setQueryData(queryKeys.contacts.list(filters), context.previousContacts);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.stats() });
+    },
+  });
 
   return {
-    contacts,
-    stats,
-    loading,
-    error,
-    refetch: fetchContacts,
-    fetchStats,
-    create,
-    update,
-    remove,
+    // Data
+    contacts: contactsQuery.data ?? [],
+    stats: statsQuery.data ?? null,
+
+    // Loading states
+    loading: contactsQuery.isLoading,
+    isRefetching: contactsQuery.isRefetching,
+    statsLoading: statsQuery.isLoading,
+
+    // Error states
+    error: contactsQuery.error?.message ?? null,
+
+    // Actions
+    refetch: contactsQuery.refetch,
+    fetchStats: statsQuery.refetch,
+
+    // Mutations
+    create: (data: CreateContactDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateContactDto) => updateMutation.mutateAsync({ id, data }),
+    remove: (id: string) => deleteMutation.mutateAsync(id),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 }
 
+// Hook for single contact
 export function useContact(id: string | undefined) {
-  const [contact, setContact] = useState<Contact | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const contactQuery = useQuery({
+    queryKey: queryKeys.contacts.detail(id!),
+    queryFn: () => contactsApi.getById(id!),
+    enabled: !!id,
+  });
 
-  const fetchContact = useCallback(async () => {
-    if (!id) {
-      setContact(null);
-      setLoading(false);
-      return;
-    }
+  // Query for contact's opportunities
+  const opportunitiesQuery = useQuery({
+    queryKey: queryKeys.contacts.opportunities(id!),
+    queryFn: () => contactsApi.getOpportunities(id!),
+    enabled: !!id,
+  });
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await contactsApi.getById(id);
-      setContact(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch contact');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  return {
+    contact: contactQuery.data ?? null,
+    opportunities: opportunitiesQuery.data ?? [],
+    loading: contactQuery.isLoading,
+    error: contactQuery.error?.message ?? null,
+    refetch: contactQuery.refetch,
+  };
+}
 
-  useEffect(() => {
-    fetchContact();
-  }, [fetchContact]);
+// Prefetch helper for hover states
+export function usePrefetchContact() {
+  const queryClient = useQueryClient();
 
-  return { contact, loading, error, refetch: fetchContact };
+  return (id: string) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.contacts.detail(id),
+      queryFn: () => contactsApi.getById(id),
+      staleTime: 30 * 1000,
+    });
+  };
 }

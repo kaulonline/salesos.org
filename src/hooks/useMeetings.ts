@@ -1,5 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { meetingsApi, MeetingFilters } from '../api/meetings';
+import { queryKeys } from '../lib/queryKeys';
 import type {
   Meeting,
   CreateMeetingDto,
@@ -8,189 +10,222 @@ import type {
   MeetingInsights,
 } from '../types';
 
-interface UseMeetingsReturn {
-  meetings: Meeting[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  create: (data: CreateMeetingDto) => Promise<Meeting>;
-  update: (id: string, data: UpdateMeetingDto) => Promise<Meeting>;
-  deleteMeeting: (id: string) => Promise<void>;
-}
+// Hook for listing meetings with caching and background refresh
+export function useMeetings(filters?: MeetingFilters) {
+  const queryClient = useQueryClient();
 
-export function useMeetings(initialFilters?: MeetingFilters): UseMeetingsReturn {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<MeetingFilters | undefined>(initialFilters);
+  // Query for meetings list
+  const meetingsQuery = useQuery({
+    queryKey: queryKeys.meetings.list(filters),
+    queryFn: () => meetingsApi.getAll(filters),
+  });
 
-  const fetchMeetings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await meetingsApi.getAll(filters);
-      setMeetings(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch meetings');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMeetingDto) => meetingsApi.create(data),
+    onSuccess: (newMeeting) => {
+      queryClient.setQueryData<Meeting[]>(
+        queryKeys.meetings.list(filters),
+        (old) => (old ? [newMeeting, ...old] : [newMeeting])
+      );
+      // Invalidate calendar views
+      if (newMeeting.startTime) {
+        const date = new Date(newMeeting.startTime);
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.meetings.calendar(date.getFullYear(), date.getMonth()),
+        });
+      }
+    },
+  });
 
-  useEffect(() => {
-    fetchMeetings();
-  }, [fetchMeetings]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMeetingDto }) =>
+      meetingsApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.meetings.list(filters) });
+      const previousMeetings = queryClient.getQueryData<Meeting[]>(queryKeys.meetings.list(filters));
 
-  const create = useCallback(async (data: CreateMeetingDto): Promise<Meeting> => {
-    const meeting = await meetingsApi.create(data);
-    setMeetings((prev) => [meeting, ...prev]);
-    return meeting;
-  }, []);
+      queryClient.setQueryData<Meeting[]>(
+        queryKeys.meetings.list(filters),
+        (old) => old?.map((m) => (m.id === id ? { ...m, ...data } : m))
+      );
 
-  const update = useCallback(async (id: string, data: UpdateMeetingDto): Promise<Meeting> => {
-    const updated = await meetingsApi.update(id, data);
-    setMeetings((prev) => prev.map((m) => (m.id === id ? updated : m)));
-    return updated;
-  }, []);
+      return { previousMeetings };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousMeetings) {
+        queryClient.setQueryData(queryKeys.meetings.list(filters), context.previousMeetings);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meetings.lists() });
+    },
+  });
 
-  const deleteMeeting = useCallback(async (id: string): Promise<void> => {
-    await meetingsApi.delete(id);
-    setMeetings((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => meetingsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.meetings.list(filters) });
+      const previousMeetings = queryClient.getQueryData<Meeting[]>(queryKeys.meetings.list(filters));
+
+      queryClient.setQueryData<Meeting[]>(
+        queryKeys.meetings.list(filters),
+        (old) => old?.filter((m) => m.id !== id)
+      );
+
+      return { previousMeetings };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousMeetings) {
+        queryClient.setQueryData(queryKeys.meetings.list(filters), context.previousMeetings);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meetings.lists() });
+    },
+  });
 
   return {
-    meetings,
-    loading,
-    error,
-    refetch: fetchMeetings,
-    create,
-    update,
-    deleteMeeting,
+    // Data
+    meetings: meetingsQuery.data ?? [],
+
+    // Loading states
+    loading: meetingsQuery.isLoading,
+    isRefetching: meetingsQuery.isRefetching,
+
+    // Error states
+    error: meetingsQuery.error?.message ?? null,
+
+    // Actions
+    refetch: meetingsQuery.refetch,
+
+    // Mutations
+    create: (data: CreateMeetingDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateMeetingDto) => updateMutation.mutateAsync({ id, data }),
+    deleteMeeting: (id: string) => deleteMutation.mutateAsync(id),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 }
 
+// Hook for single meeting with analysis and insights
 export function useMeeting(id: string | undefined) {
-  const [meeting, setMeeting] = useState<Meeting | null>(null);
-  const [analysis, setAnalysis] = useState<MeetingAnalysis | null>(null);
-  const [insights, setInsights] = useState<MeetingInsights | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const meetingQuery = useQuery({
+    queryKey: queryKeys.meetings.detail(id!),
+    queryFn: () => meetingsApi.getById(id!),
+    enabled: !!id,
+  });
 
-  const fetchMeeting = useCallback(async () => {
-    if (!id) {
-      setMeeting(null);
-      setLoading(false);
-      return;
-    }
+  // Query for analysis (lazy loaded)
+  const analysisQuery = useQuery({
+    queryKey: queryKeys.meetings.analysis(id!),
+    queryFn: () => meetingsApi.getAnalysis(id!),
+    enabled: false,
+  });
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await meetingsApi.getById(id);
-      setMeeting(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch meeting');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  // Query for insights (lazy loaded)
+  const insightsQuery = useQuery({
+    queryKey: queryKeys.meetings.insights(id!),
+    queryFn: () => meetingsApi.getInsights(id!),
+    enabled: false,
+  });
 
-  const fetchAnalysis = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await meetingsApi.getAnalysis(id);
-      setAnalysis(data);
-    } catch (err: unknown) {
-      console.error('Failed to fetch analysis');
-    }
-  }, [id]);
+  const fetchAnalysis = () => {
+    if (id) analysisQuery.refetch();
+  };
 
-  const fetchInsights = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await meetingsApi.getInsights(id);
-      setInsights(data);
-    } catch (err: unknown) {
-      console.error('Failed to fetch insights');
-    }
-  }, [id]);
+  const fetchInsights = () => {
+    if (id) insightsQuery.refetch();
+  };
 
-  useEffect(() => {
-    fetchMeeting();
-  }, [fetchMeeting]);
-
-  return { meeting, analysis, insights, loading, error, refetch: fetchMeeting, fetchAnalysis, fetchInsights };
+  return {
+    meeting: meetingQuery.data ?? null,
+    analysis: analysisQuery.data ?? null,
+    insights: insightsQuery.data ?? null,
+    loading: meetingQuery.isLoading,
+    analysisLoading: analysisQuery.isLoading || analysisQuery.isFetching,
+    insightsLoading: insightsQuery.isLoading || insightsQuery.isFetching,
+    error: meetingQuery.error?.message ?? null,
+    refetch: meetingQuery.refetch,
+    fetchAnalysis,
+    fetchInsights,
+  };
 }
 
-// Calendar-specific hook to group meetings by date
+// Calendar-specific hook with date grouping
 export function useCalendarMeetings(year: number, month: number) {
-  const [meetingsByDate, setMeetingsByDate] = useState<Record<number, Meeting[]>>({});
-  const [stats, setStats] = useState({
-    totalMeetings: 0,
-    totalHours: 0,
-    externalMeetings: 0,
-    internalMeetings: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const startDate = new Date(year, month, 1).toISOString().split('T')[0];
   const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
-  const fetchMeetings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await meetingsApi.getAll({ startDate, endDate });
+  const meetingsQuery = useQuery({
+    queryKey: queryKeys.meetings.calendar(year, month),
+    queryFn: () => meetingsApi.getAll({ startDate, endDate }),
+  });
 
-      // Group meetings by day of month
-      const grouped: Record<number, Meeting[]> = {};
-      let totalHours = 0;
-      let external = 0;
-      let internal = 0;
+  // Compute grouped meetings and stats from raw data
+  const { meetingsByDate, stats } = useMemo(() => {
+    const meetings = meetingsQuery.data ?? [];
+    const grouped: Record<number, Meeting[]> = {};
+    let totalHours = 0;
+    let external = 0;
+    let internal = 0;
 
-      data.forEach((meeting) => {
-        const meetingDate = new Date(meeting.startTime);
-        const day = meetingDate.getDate();
+    meetings.forEach((meeting) => {
+      const meetingDate = new Date(meeting.startTime);
+      const day = meetingDate.getDate();
 
-        if (!grouped[day]) {
-          grouped[day] = [];
-        }
-        grouped[day].push(meeting);
+      if (!grouped[day]) {
+        grouped[day] = [];
+      }
+      grouped[day].push(meeting);
 
-        // Calculate hours
-        const start = new Date(meeting.startTime);
-        const end = new Date(meeting.endTime);
-        totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      // Calculate hours
+      const start = new Date(meeting.startTime);
+      const end = new Date(meeting.endTime);
+      totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
-        // Count by type
-        if (meeting.accountId || meeting.opportunityId) {
-          external++;
-        } else {
-          internal++;
-        }
-      });
+      // Count by type
+      if (meeting.accountId || meeting.opportunityId) {
+        external++;
+      } else {
+        internal++;
+      }
+    });
 
-      setMeetingsByDate(grouped);
-      setStats({
-        totalMeetings: data.length,
+    return {
+      meetingsByDate: grouped,
+      stats: {
+        totalMeetings: meetings.length,
         totalHours: Math.round(totalHours),
         externalMeetings: external,
         internalMeetings: internal,
-      });
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch meetings');
-    } finally {
-      setLoading(false);
-    }
-  }, [startDate, endDate]);
+      },
+    };
+  }, [meetingsQuery.data]);
 
-  useEffect(() => {
-    fetchMeetings();
-  }, [fetchMeetings]);
+  return {
+    meetingsByDate,
+    stats,
+    loading: meetingsQuery.isLoading,
+    error: meetingsQuery.error?.message ?? null,
+    refetch: meetingsQuery.refetch,
+  };
+}
 
-  return { meetingsByDate, stats, loading, error, refetch: fetchMeetings };
+// Prefetch helper for hover states
+export function usePrefetchMeeting() {
+  const queryClient = useQueryClient();
+
+  return (id: string) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.meetings.detail(id),
+      queryFn: () => meetingsApi.getById(id),
+      staleTime: 30 * 1000,
+    });
+  };
 }

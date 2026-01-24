@@ -1,130 +1,174 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, LeadFilters } from '../api/leads';
+import { queryKeys } from '../lib/queryKeys';
 import type { Lead, CreateLeadDto, UpdateLeadDto, ConvertLeadDto, LeadStats } from '../types';
 
-interface UseLeadsReturn {
-  leads: Lead[];
-  stats: LeadStats | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  fetchStats: () => Promise<void>;
-  create: (data: CreateLeadDto) => Promise<Lead>;
-  update: (id: string, data: UpdateLeadDto) => Promise<Lead>;
-  remove: (id: string) => Promise<void>;
-  score: (id: string) => Promise<void>;
-  convert: (id: string, data: ConvertLeadDto) => Promise<{ accountId?: string; contactId?: string; opportunityId?: string }>;
-}
+// Hook for listing leads with caching and background refresh
+export function useLeads(filters?: LeadFilters) {
+  const queryClient = useQueryClient();
 
-export function useLeads(initialFilters?: LeadFilters): UseLeadsReturn {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [stats, setStats] = useState<LeadStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<LeadFilters | undefined>(initialFilters);
+  // Query for leads list
+  const leadsQuery = useQuery({
+    queryKey: queryKeys.leads.list(filters),
+    queryFn: () => leadsApi.getAll(filters),
+  });
 
-  const fetchLeads = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await leadsApi.getAll(filters);
-      setLeads(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch leads');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Query for lead stats
+  const statsQuery = useQuery({
+    queryKey: queryKeys.leads.stats(),
+    queryFn: () => leadsApi.getStats(),
+    staleTime: 60 * 1000, // Stats can be stale for 1 minute
+  });
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const data = await leadsApi.getStats();
-      setStats(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.error('Failed to fetch lead stats:', e.message);
-    }
-  }, []);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateLeadDto) => leadsApi.create(data),
+    onSuccess: (newLead) => {
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => (old ? [newLead, ...old] : [newLead])
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats() });
+    },
+  });
 
-  useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateLeadDto }) =>
+      leadsApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.leads.list(filters) });
+      const previousLeads = queryClient.getQueryData<Lead[]>(queryKeys.leads.list(filters));
 
-  const create = useCallback(async (data: CreateLeadDto): Promise<Lead> => {
-    const lead = await leadsApi.create(data);
-    setLeads((prev) => [lead, ...prev]);
-    return lead;
-  }, []);
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => old?.map((l) => (l.id === id ? { ...l, ...data } : l))
+      );
 
-  const update = useCallback(async (id: string, data: UpdateLeadDto): Promise<Lead> => {
-    const updated = await leadsApi.update(id, data);
-    setLeads((prev) => prev.map((l) => (l.id === id ? updated : l)));
-    return updated;
-  }, []);
+      return { previousLeads };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(queryKeys.leads.list(filters), context.previousLeads);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats() });
+    },
+  });
 
-  const remove = useCallback(async (id: string): Promise<void> => {
-    await leadsApi.delete(id);
-    setLeads((prev) => prev.filter((l) => l.id !== id));
-  }, []);
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => leadsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.leads.list(filters) });
+      const previousLeads = queryClient.getQueryData<Lead[]>(queryKeys.leads.list(filters));
 
-  const score = useCallback(async (id: string): Promise<void> => {
-    const result = await leadsApi.score(id);
-    setLeads((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, leadScore: result.score } : l))
-    );
-  }, []);
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => old?.filter((l) => l.id !== id)
+      );
 
-  const convert = useCallback(async (id: string, data: ConvertLeadDto) => {
-    const result = await leadsApi.convert(id, data);
-    // Remove converted lead from list
-    setLeads((prev) => prev.filter((l) => l.id !== id));
-    return result;
-  }, []);
+      return { previousLeads };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(queryKeys.leads.list(filters), context.previousLeads);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats() });
+    },
+  });
+
+  // Score mutation
+  const scoreMutation = useMutation({
+    mutationFn: (id: string) => leadsApi.score(id),
+    onSuccess: (result, id) => {
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => old?.map((l) => (l.id === id ? { ...l, leadScore: result.score } : l))
+      );
+    },
+  });
+
+  // Convert mutation
+  const convertMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ConvertLeadDto }) =>
+      leadsApi.convert(id, data),
+    onSuccess: (_result, { id }) => {
+      // Remove converted lead from list
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => old?.filter((l) => l.id !== id)
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats() });
+      // Invalidate related entities that might have been created
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
+    },
+  });
 
   return {
-    leads,
-    stats,
-    loading,
-    error,
-    refetch: fetchLeads,
-    fetchStats,
-    create,
-    update,
-    remove,
-    score,
-    convert,
+    // Data
+    leads: leadsQuery.data ?? [],
+    stats: statsQuery.data ?? null,
+
+    // Loading states
+    loading: leadsQuery.isLoading,
+    isRefetching: leadsQuery.isRefetching,
+    statsLoading: statsQuery.isLoading,
+
+    // Error states
+    error: leadsQuery.error?.message ?? null,
+
+    // Actions
+    refetch: leadsQuery.refetch,
+    fetchStats: statsQuery.refetch,
+
+    // Mutations
+    create: (data: CreateLeadDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateLeadDto) => updateMutation.mutateAsync({ id, data }),
+    remove: (id: string) => deleteMutation.mutateAsync(id),
+    score: (id: string) => scoreMutation.mutateAsync(id),
+    convert: (id: string, data: ConvertLeadDto) => convertMutation.mutateAsync({ id, data }),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isConverting: convertMutation.isPending,
   };
 }
 
+// Hook for single lead
 export function useLead(id: string | undefined) {
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const leadQuery = useQuery({
+    queryKey: queryKeys.leads.detail(id!),
+    queryFn: () => leadsApi.getById(id!),
+    enabled: !!id,
+  });
 
-  const fetchLead = useCallback(async () => {
-    if (!id) {
-      setLead(null);
-      setLoading(false);
-      return;
-    }
+  return {
+    lead: leadQuery.data ?? null,
+    loading: leadQuery.isLoading,
+    error: leadQuery.error?.message ?? null,
+    refetch: leadQuery.refetch,
+  };
+}
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await leadsApi.getById(id);
-      setLead(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch lead');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+// Prefetch helper for hover states
+export function usePrefetchLead() {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchLead();
-  }, [fetchLead]);
-
-  return { lead, loading, error, refetch: fetchLead };
+  return (id: string) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.leads.detail(id),
+      queryFn: () => leadsApi.getById(id),
+      staleTime: 30 * 1000,
+    });
+  };
 }

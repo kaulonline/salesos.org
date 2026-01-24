@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { opportunitiesApi, OpportunityFilters } from '../api/opportunities';
+import { queryKeys } from '../lib/queryKeys';
 import type {
   Opportunity,
   CreateOpportunityDto,
@@ -11,160 +12,207 @@ import type {
   OpportunityAnalysis,
 } from '../types';
 
-interface UseDealsReturn {
-  deals: Opportunity[];
-  pipelineStats: PipelineStats | null;
-  forecast: SalesForecast | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  fetchPipelineStats: () => Promise<void>;
-  fetchForecast: () => Promise<void>;
-  create: (data: CreateOpportunityDto) => Promise<Opportunity>;
-  update: (id: string, data: UpdateOpportunityDto) => Promise<Opportunity>;
-  advanceStage: (id: string, notes?: string) => Promise<Opportunity>;
-  closeWon: (id: string, data?: CloseWonDto) => Promise<Opportunity>;
-  closeLost: (id: string, data: CloseLostDto) => Promise<Opportunity>;
-  analyze: (id: string) => Promise<OpportunityAnalysis>;
-}
+// Hook for listing deals with caching and background refresh
+export function useDeals(filters?: OpportunityFilters) {
+  const queryClient = useQueryClient();
 
-export function useDeals(initialFilters?: OpportunityFilters): UseDealsReturn {
-  const [deals, setDeals] = useState<Opportunity[]>([]);
-  const [pipelineStats, setPipelineStats] = useState<PipelineStats | null>(null);
-  const [forecast, setForecast] = useState<SalesForecast | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<OpportunityFilters | undefined>(initialFilters);
+  // Query for deals list
+  const dealsQuery = useQuery({
+    queryKey: queryKeys.deals.list(filters),
+    queryFn: () => opportunitiesApi.getAll(filters),
+  });
 
-  const fetchDeals = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await opportunitiesApi.getAll(filters);
-      setDeals(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch deals');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Query for pipeline stats
+  const statsQuery = useQuery({
+    queryKey: queryKeys.deals.pipelineStats(),
+    queryFn: () => opportunitiesApi.getPipelineStats(),
+    staleTime: 60 * 1000, // Stats can be stale for 1 minute
+  });
 
-  const fetchPipelineStats = useCallback(async () => {
-    try {
-      const data = await opportunitiesApi.getPipelineStats();
-      setPipelineStats(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.error('Failed to fetch pipeline stats:', e.message);
-    }
-  }, []);
+  // Query for forecast
+  const forecastQuery = useQuery({
+    queryKey: queryKeys.deals.forecast(),
+    queryFn: () => opportunitiesApi.getForecast(),
+    staleTime: 60 * 1000,
+  });
 
-  const fetchForecast = useCallback(async () => {
-    try {
-      const data = await opportunitiesApi.getForecast();
-      setForecast(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.error('Failed to fetch forecast:', e.message);
-    }
-  }, []);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateOpportunityDto) => opportunitiesApi.create(data),
+    onSuccess: (newDeal) => {
+      // Optimistically add to list
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => (old ? [newDeal, ...old] : [newDeal])
+      );
+      // Invalidate stats since they changed
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.forecast() });
+    },
+  });
 
-  useEffect(() => {
-    fetchDeals();
-  }, [fetchDeals]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateOpportunityDto }) =>
+      opportunitiesApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.deals.list(filters) });
 
-  const create = useCallback(async (data: CreateOpportunityDto): Promise<Opportunity> => {
-    const deal = await opportunitiesApi.create(data);
-    setDeals((prev) => [deal, ...prev]);
-    return deal;
-  }, []);
+      // Snapshot previous value
+      const previousDeals = queryClient.getQueryData<Opportunity[]>(queryKeys.deals.list(filters));
 
-  const update = useCallback(async (id: string, data: UpdateOpportunityDto): Promise<Opportunity> => {
-    const updated = await opportunitiesApi.update(id, data);
-    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
-    return updated;
-  }, []);
+      // Optimistically update
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.map((d) => (d.id === id ? { ...d, ...data } : d))
+      );
 
-  const advanceStage = useCallback(async (id: string, notes?: string): Promise<Opportunity> => {
-    const updated = await opportunitiesApi.advanceStage(id, notes ? { notes } : undefined);
-    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
-    return updated;
-  }, []);
+      return { previousDeals };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.previousDeals) {
+        queryClient.setQueryData(queryKeys.deals.list(filters), context.previousDeals);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+    },
+  });
 
-  const closeWon = useCallback(async (id: string, data?: CloseWonDto): Promise<Opportunity> => {
-    const updated = await opportunitiesApi.closeWon(id, data);
-    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
-    return updated;
-  }, []);
+  // Advance stage mutation
+  const advanceStageMutation = useMutation({
+    mutationFn: ({ id, notes }: { id: string; notes?: string }) =>
+      opportunitiesApi.advanceStage(id, notes ? { notes } : undefined),
+    onSuccess: (updatedDeal) => {
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.map((d) => (d.id === updatedDeal.id ? updatedDeal : d))
+      );
+      queryClient.setQueryData(queryKeys.deals.detail(updatedDeal.id), updatedDeal);
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+    },
+  });
 
-  const closeLost = useCallback(async (id: string, data: CloseLostDto): Promise<Opportunity> => {
-    const updated = await opportunitiesApi.closeLost(id, data);
-    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
-    return updated;
-  }, []);
+  // Close won mutation
+  const closeWonMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: CloseWonDto }) =>
+      opportunitiesApi.closeWon(id, data),
+    onSuccess: (updatedDeal) => {
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.map((d) => (d.id === updatedDeal.id ? updatedDeal : d))
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.forecast() });
+    },
+  });
 
-  const analyze = useCallback(async (id: string): Promise<OpportunityAnalysis> => {
-    return await opportunitiesApi.analyze(id);
-  }, []);
+  // Close lost mutation
+  const closeLostMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CloseLostDto }) =>
+      opportunitiesApi.closeLost(id, data),
+    onSuccess: (updatedDeal) => {
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.map((d) => (d.id === updatedDeal.id ? updatedDeal : d))
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.forecast() });
+    },
+  });
 
   return {
-    deals,
-    pipelineStats,
-    forecast,
-    loading,
-    error,
-    refetch: fetchDeals,
-    fetchPipelineStats,
-    fetchForecast,
-    create,
-    update,
-    advanceStage,
-    closeWon,
-    closeLost,
-    analyze,
+    // Data
+    deals: dealsQuery.data ?? [],
+    pipelineStats: statsQuery.data ?? null,
+    forecast: forecastQuery.data ?? null,
+
+    // Loading states
+    loading: dealsQuery.isLoading,
+    isRefetching: dealsQuery.isRefetching,
+    statsLoading: statsQuery.isLoading,
+    forecastLoading: forecastQuery.isLoading,
+
+    // Error states
+    error: dealsQuery.error?.message ?? null,
+    statsError: statsQuery.error?.message ?? null,
+
+    // Actions
+    refetch: dealsQuery.refetch,
+    fetchPipelineStats: statsQuery.refetch,
+    fetchForecast: forecastQuery.refetch,
+
+    // Mutations
+    create: (data: CreateOpportunityDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateOpportunityDto) => updateMutation.mutateAsync({ id, data }),
+    advanceStage: (id: string, notes?: string) => advanceStageMutation.mutateAsync({ id, notes }),
+    closeWon: (id: string, data?: CloseWonDto) => closeWonMutation.mutateAsync({ id, data }),
+    closeLost: (id: string, data: CloseLostDto) => closeLostMutation.mutateAsync({ id, data }),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
   };
 }
 
+// Hook for single deal with analysis
 export function useDeal(id: string | undefined) {
-  const [deal, setDeal] = useState<Opportunity | null>(null);
-  const [analysis, setAnalysis] = useState<OpportunityAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchDeal = useCallback(async () => {
-    if (!id) {
-      setDeal(null);
-      setLoading(false);
-      return;
+  // Query for deal details
+  const dealQuery = useQuery({
+    queryKey: queryKeys.deals.detail(id!),
+    queryFn: () => opportunitiesApi.getById(id!),
+    enabled: !!id,
+  });
+
+  // Query for analysis (lazy loaded)
+  const analysisQuery = useQuery({
+    queryKey: queryKeys.deals.analysis(id!),
+    queryFn: () => opportunitiesApi.analyze(id!),
+    enabled: false, // Only fetch when explicitly requested
+  });
+
+  const fetchAnalysis = () => {
+    if (id) {
+      analysisQuery.refetch();
     }
+  };
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await opportunitiesApi.getById(id);
-      setDeal(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch deal');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  return {
+    deal: dealQuery.data ?? null,
+    analysis: analysisQuery.data ?? null,
+    loading: dealQuery.isLoading,
+    analysisLoading: analysisQuery.isLoading || analysisQuery.isFetching,
+    error: dealQuery.error?.message ?? null,
+    refetch: dealQuery.refetch,
+    fetchAnalysis,
+  };
+}
 
-  const fetchAnalysis = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await opportunitiesApi.analyze(id);
-      setAnalysis(data);
-    } catch (err: unknown) {
-      console.error('Failed to fetch analysis');
-    }
-  }, [id]);
+// Hook for analyzing a deal (standalone)
+export function useDealAnalysis(id: string | undefined) {
+  return useQuery<OpportunityAnalysis>({
+    queryKey: queryKeys.deals.analysis(id!),
+    queryFn: () => opportunitiesApi.analyze(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // Analysis is expensive, cache for 5 minutes
+  });
+}
 
-  useEffect(() => {
-    fetchDeal();
-  }, [fetchDeal]);
+// Prefetch helper for hover states
+export function usePrefetchDeal() {
+  const queryClient = useQueryClient();
 
-  return { deal, analysis, loading, error, refetch: fetchDeal, fetchAnalysis };
+  return (id: string) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.deals.detail(id),
+      queryFn: () => opportunitiesApi.getById(id),
+      staleTime: 30 * 1000,
+    });
+  };
 }

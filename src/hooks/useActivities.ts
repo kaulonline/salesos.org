@@ -1,50 +1,65 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { activitiesApi } from '../api/activities';
+import { queryKeys } from '../lib/queryKeys';
 import type { Activity, CreateActivityDto, ActivityFilters } from '../types';
 
-interface UseActivitiesReturn {
-  activities: Activity[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  create: (data: CreateActivityDto) => Promise<Activity>;
-}
+// Hook for listing activities with caching and background refresh
+export function useActivities(filters?: ActivityFilters) {
+  const queryClient = useQueryClient();
 
-export function useActivities(initialFilters?: ActivityFilters): UseActivitiesReturn {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<ActivityFilters | undefined>(initialFilters);
+  // Query for activities list
+  const activitiesQuery = useQuery({
+    queryKey: queryKeys.activities.list(filters),
+    queryFn: () => activitiesApi.getAll(filters),
+  });
 
-  const fetchActivities = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await activitiesApi.getAll(filters);
-      setActivities(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch activities');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    fetchActivities();
-  }, [fetchActivities]);
-
-  const create = useCallback(async (data: CreateActivityDto): Promise<Activity> => {
-    const activity = await activitiesApi.create(data);
-    setActivities((prev) => [activity, ...prev]);
-    return activity;
-  }, []);
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateActivityDto) => activitiesApi.create(data),
+    onSuccess: (newActivity) => {
+      queryClient.setQueryData<Activity[]>(
+        queryKeys.activities.list(filters),
+        (old) => (old ? [newActivity, ...old] : [newActivity])
+      );
+      // Also invalidate related entity caches since activity might affect them
+      if (newActivity.leadId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(newActivity.leadId) });
+      }
+      if (newActivity.contactId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contacts.detail(newActivity.contactId) });
+      }
+      if (newActivity.accountId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.companies.detail(newActivity.accountId) });
+      }
+      if (newActivity.opportunityId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.deals.detail(newActivity.opportunityId) });
+      }
+    },
+  });
 
   return {
-    activities,
-    loading,
-    error,
-    refetch: fetchActivities,
-    create,
+    // Data
+    activities: activitiesQuery.data ?? [],
+
+    // Loading states
+    loading: activitiesQuery.isLoading,
+    isRefetching: activitiesQuery.isRefetching,
+
+    // Error states
+    error: activitiesQuery.error?.message ?? null,
+
+    // Actions
+    refetch: activitiesQuery.refetch,
+
+    // Mutations
+    create: (data: CreateActivityDto) => createMutation.mutateAsync(data),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
   };
+}
+
+// Hook for recent activities (commonly used in dashboard)
+export function useRecentActivities(limit: number = 10) {
+  return useActivities({ limit });
 }

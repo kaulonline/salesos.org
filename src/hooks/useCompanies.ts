@@ -1,112 +1,159 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountsApi, AccountFilters } from '../api/accounts';
+import { queryKeys } from '../lib/queryKeys';
 import type { Account, CreateAccountDto, UpdateAccountDto, AccountStats } from '../types';
 
-interface UseCompaniesReturn {
-  companies: Account[];
-  stats: AccountStats | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  fetchStats: () => Promise<void>;
-  create: (data: CreateAccountDto) => Promise<Account>;
-  update: (id: string, data: UpdateAccountDto) => Promise<Account>;
-  remove: (id: string) => Promise<void>;
-}
+// Hook for listing companies with caching and background refresh
+export function useCompanies(filters?: AccountFilters) {
+  const queryClient = useQueryClient();
 
-export function useCompanies(initialFilters?: AccountFilters): UseCompaniesReturn {
-  const [companies, setCompanies] = useState<Account[]>([]);
-  const [stats, setStats] = useState<AccountStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<AccountFilters | undefined>(initialFilters);
+  // Query for companies list
+  const companiesQuery = useQuery({
+    queryKey: queryKeys.companies.list(filters),
+    queryFn: () => accountsApi.getAll(filters),
+  });
 
-  const fetchCompanies = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await accountsApi.getAll(filters);
-      setCompanies(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch companies');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Query for company stats
+  const statsQuery = useQuery({
+    queryKey: queryKeys.companies.stats(),
+    queryFn: () => accountsApi.getStats(),
+    staleTime: 60 * 1000,
+  });
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const data = await accountsApi.getStats();
-      setStats(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.error('Failed to fetch account stats:', e.message);
-    }
-  }, []);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateAccountDto) => accountsApi.create(data),
+    onSuccess: (newCompany) => {
+      queryClient.setQueryData<Account[]>(
+        queryKeys.companies.list(filters),
+        (old) => (old ? [newCompany, ...old] : [newCompany])
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats() });
+    },
+  });
 
-  useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateAccountDto }) =>
+      accountsApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.companies.list(filters) });
+      const previousCompanies = queryClient.getQueryData<Account[]>(queryKeys.companies.list(filters));
 
-  const create = useCallback(async (data: CreateAccountDto): Promise<Account> => {
-    const company = await accountsApi.create(data);
-    setCompanies((prev) => [company, ...prev]);
-    return company;
-  }, []);
+      queryClient.setQueryData<Account[]>(
+        queryKeys.companies.list(filters),
+        (old) => old?.map((c) => (c.id === id ? { ...c, ...data } : c))
+      );
 
-  const update = useCallback(async (id: string, data: UpdateAccountDto): Promise<Account> => {
-    const updated = await accountsApi.update(id, data);
-    setCompanies((prev) => prev.map((c) => (c.id === id ? updated : c)));
-    return updated;
-  }, []);
+      return { previousCompanies };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(queryKeys.companies.list(filters), context.previousCompanies);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats() });
+    },
+  });
 
-  const remove = useCallback(async (id: string): Promise<void> => {
-    await accountsApi.delete(id);
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => accountsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.companies.list(filters) });
+      const previousCompanies = queryClient.getQueryData<Account[]>(queryKeys.companies.list(filters));
+
+      queryClient.setQueryData<Account[]>(
+        queryKeys.companies.list(filters),
+        (old) => old?.filter((c) => c.id !== id)
+      );
+
+      return { previousCompanies };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(queryKeys.companies.list(filters), context.previousCompanies);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats() });
+    },
+  });
 
   return {
-    companies,
-    stats,
-    loading,
-    error,
-    refetch: fetchCompanies,
-    fetchStats,
-    create,
-    update,
-    remove,
+    // Data
+    companies: companiesQuery.data ?? [],
+    stats: statsQuery.data ?? null,
+
+    // Loading states
+    loading: companiesQuery.isLoading,
+    isRefetching: companiesQuery.isRefetching,
+    statsLoading: statsQuery.isLoading,
+
+    // Error states
+    error: companiesQuery.error?.message ?? null,
+
+    // Actions
+    refetch: companiesQuery.refetch,
+    fetchStats: statsQuery.refetch,
+
+    // Mutations
+    create: (data: CreateAccountDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateAccountDto) => updateMutation.mutateAsync({ id, data }),
+    remove: (id: string) => deleteMutation.mutateAsync(id),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 }
 
+// Hook for single company
 export function useCompany(id: string | undefined) {
-  const [company, setCompany] = useState<Account | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const companyQuery = useQuery({
+    queryKey: queryKeys.companies.detail(id!),
+    queryFn: () => accountsApi.getById(id!),
+    enabled: !!id,
+  });
 
-  const fetchCompany = useCallback(async () => {
-    if (!id) {
-      setCompany(null);
-      setLoading(false);
-      return;
-    }
+  // Query for company hierarchy
+  const hierarchyQuery = useQuery({
+    queryKey: queryKeys.companies.hierarchy(id!),
+    queryFn: () => accountsApi.getHierarchy(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // Hierarchy changes rarely
+  });
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await accountsApi.getById(id);
-      setCompany(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch company');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  // Query for company revenue
+  const revenueQuery = useQuery({
+    queryKey: queryKeys.companies.revenue(id!),
+    queryFn: () => accountsApi.getRevenue(id!),
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    fetchCompany();
-  }, [fetchCompany]);
+  return {
+    company: companyQuery.data ?? null,
+    hierarchy: hierarchyQuery.data ?? null,
+    revenue: revenueQuery.data ?? null,
+    loading: companyQuery.isLoading,
+    error: companyQuery.error?.message ?? null,
+    refetch: companyQuery.refetch,
+  };
+}
 
-  return { company, loading, error, refetch: fetchCompany };
+// Prefetch helper for hover states
+export function usePrefetchCompany() {
+  const queryClient = useQueryClient();
+
+  return (id: string) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.companies.detail(id),
+      queryFn: () => accountsApi.getById(id),
+      staleTime: 30 * 1000,
+    });
+  };
 }

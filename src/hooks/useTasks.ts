@@ -1,73 +1,142 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi, TaskFilters } from '../api/tasks';
+import { queryKeys } from '../lib/queryKeys';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types';
 
-interface UseTasksReturn {
-  tasks: Task[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  create: (data: CreateTaskDto) => Promise<Task>;
-  update: (id: string, data: UpdateTaskDto) => Promise<Task>;
-  remove: (id: string) => Promise<void>;
-  complete: (id: string) => Promise<Task>;
-}
+// Hook for listing tasks with caching and background refresh
+export function useTasks(filters?: TaskFilters) {
+  const queryClient = useQueryClient();
 
-export function useTasks(initialFilters?: TaskFilters): UseTasksReturn {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters] = useState<TaskFilters | undefined>(initialFilters);
+  // Query for tasks list
+  const tasksQuery = useQuery({
+    queryKey: queryKeys.tasks.list(filters),
+    queryFn: () => tasksApi.getAll(filters),
+  });
 
-  const fetchTasks = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await tasksApi.getAll(filters);
-      setTasks(data);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e.response?.data?.message || e.message || 'Failed to fetch tasks');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Create mutation with optimistic updates
+  const createMutation = useMutation({
+    mutationFn: (data: CreateTaskDto) => tasksApi.create(data),
+    onSuccess: (newTask) => {
+      queryClient.setQueryData<Task[]>(
+        queryKeys.tasks.list(filters),
+        (old) => (old ? [newTask, ...old] : [newTask])
+      );
+    },
+  });
 
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  // Update mutation with optimistic updates
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateTaskDto }) =>
+      tasksApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.list(filters) });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.list(filters));
 
-  const create = useCallback(async (data: CreateTaskDto): Promise<Task> => {
-    const task = await tasksApi.create(data);
-    setTasks((prev) => [task, ...prev]);
-    return task;
-  }, []);
+      queryClient.setQueryData<Task[]>(
+        queryKeys.tasks.list(filters),
+        (old) => old?.map((t) => (t.id === id ? { ...t, ...data } : t))
+      );
 
-  const update = useCallback(async (id: string, data: UpdateTaskDto): Promise<Task> => {
-    const updated = await tasksApi.update(id, data);
-    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    return updated;
-  }, []);
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKeys.tasks.list(filters), context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.lists() });
+    },
+  });
 
-  const remove = useCallback(async (id: string): Promise<void> => {
-    await tasksApi.delete(id);
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => tasksApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.list(filters) });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.list(filters));
 
-  const complete = useCallback(async (id: string): Promise<Task> => {
-    const updated = await tasksApi.complete(id);
-    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    return updated;
-  }, []);
+      queryClient.setQueryData<Task[]>(
+        queryKeys.tasks.list(filters),
+        (old) => old?.filter((t) => t.id !== id)
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKeys.tasks.list(filters), context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.lists() });
+    },
+  });
+
+  // Complete mutation with optimistic updates
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => tasksApi.complete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.list(filters) });
+      const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.list(filters));
+
+      queryClient.setQueryData<Task[]>(
+        queryKeys.tasks.list(filters),
+        (old) => old?.map((t) => (t.id === id ? { ...t, status: 'COMPLETED' as const } : t))
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKeys.tasks.list(filters), context.previousTasks);
+      }
+    },
+    onSuccess: (updatedTask) => {
+      // Update with server response
+      queryClient.setQueryData<Task[]>(
+        queryKeys.tasks.list(filters),
+        (old) => old?.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+      );
+    },
+  });
 
   return {
-    tasks,
-    loading,
-    error,
-    refetch: fetchTasks,
-    create,
-    update,
-    remove,
-    complete,
+    // Data
+    tasks: tasksQuery.data ?? [],
+
+    // Loading states
+    loading: tasksQuery.isLoading,
+    isRefetching: tasksQuery.isRefetching,
+
+    // Error states
+    error: tasksQuery.error?.message ?? null,
+
+    // Actions
+    refetch: tasksQuery.refetch,
+
+    // Mutations
+    create: (data: CreateTaskDto) => createMutation.mutateAsync(data),
+    update: (id: string, data: UpdateTaskDto) => updateMutation.mutateAsync({ id, data }),
+    remove: (id: string) => deleteMutation.mutateAsync(id),
+    complete: (id: string) => completeMutation.mutateAsync(id),
+
+    // Mutation states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isCompleting: completeMutation.isPending,
   };
+}
+
+// Hook for today's tasks (commonly used in dashboard)
+export function useTodaysTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  return useTasks({ dueDate: today });
+}
+
+// Hook for overdue tasks
+export function useOverdueTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  return useTasks({ dueBefore: today, status: 'PENDING' });
 }
