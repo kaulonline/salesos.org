@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { Command, Bell, Settings, Bot, Brain } from 'lucide-react';
+import { Command, Bell, Settings, Bot, Brain, Building2, Workflow, Plug, Users, ChevronDown, Sparkles } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
-  const navItems = [
+  const primaryNavItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Agents', href: '/dashboard/agents', icon: Bot }, // New
-    { label: 'Knowledge', href: '/dashboard/knowledge', icon: Brain }, // New
+    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, highlight: true },
     { label: 'Leads', href: '/dashboard/leads' },
+    { label: 'Companies', href: '/dashboard/companies', icon: Building2 },
     { label: 'Deals', href: '/dashboard/deals' },
+    { label: 'Analytics', href: '/dashboard/analytics' },
+  ];
+
+  const secondaryNavItems = [
+    { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
+    { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
+    { label: 'Team', href: '/dashboard/team', icon: Users },
     { label: 'Revenue', href: '/dashboard/revenue' },
     { label: 'Calendar', href: '/dashboard/calendar' },
-    { label: 'Analytics', href: '/dashboard/analytics' },
     { label: 'Messages', href: '/dashboard/messages' },
   ];
 
@@ -37,25 +44,72 @@ export const DashboardLayout: React.FC = () => {
         </Link>
 
         {/* Pill Navigation - Scrollable on mobile */}
-        <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md mx-auto md:mx-0">
-          {navItems.map((item) => {
-            const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${
-                  isActive 
-                    ? 'bg-[#1A1A1A] text-white shadow-md' 
-                    : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/50'
-                }`}
-              >
-                {item.icon && <item.icon size={14} className={isActive ? 'text-[#EAD07D]' : ''} />}
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-2 mx-auto md:mx-0">
+          <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md">
+            {primaryNavItems.map((item) => {
+              const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-[#1A1A1A] text-white shadow-md'
+                      : item.highlight
+                      ? 'text-[#1A1A1A] hover:bg-[#EAD07D]/20'
+                      : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/50'
+                  }`}
+                >
+                  {item.icon && <item.icon size={14} className={isActive ? 'text-[#EAD07D]' : item.highlight ? 'text-[#EAD07D]' : ''} />}
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* More Dropdown - Outside nav to avoid overflow clipping */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${
+                secondaryNavItems.some(item => path.startsWith(item.href))
+                  ? 'bg-[#1A1A1A] text-white shadow-md border-[#1A1A1A]'
+                  : showMoreMenu
+                  ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
+                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
+              }`}
+            >
+              More
+              <ChevronDown size={14} className={`transition-transform duration-200 ${showMoreMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showMoreMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {secondaryNavItems.map((item) => {
+                    const isActive = path.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setShowMoreMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-[#F8F8F6] text-[#1A1A1A]'
+                            : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
+                        }`}
+                      >
+                        {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-3 shrink-0">
