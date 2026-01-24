@@ -6,6 +6,7 @@ export { useTasks } from './useTasks';
 export { useActivities } from './useActivities';
 export { useChat } from './useChat';
 export { useDashboard } from './useDashboard';
+export { useMeetings, useMeeting, useCalendarMeetings } from './useMeetings';
 
 // Admin hooks
 export {

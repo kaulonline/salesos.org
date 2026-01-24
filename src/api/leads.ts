@@ -24,9 +24,15 @@ export const leadsApi = {
   getAll: async (filters?: LeadFilters): Promise<Lead[]> => {
     const params = new URLSearchParams();
     if (filters) {
+      // Map frontend filter names to backend filter names
+      const filterMapping: Record<string, string> = {
+        source: 'leadSource',
+      };
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          params.append(key, String(value));
+          const backendKey = filterMapping[key] || key;
+          params.append(backendKey, String(value));
         }
       });
     }
