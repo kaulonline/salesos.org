@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Search,
@@ -12,7 +13,8 @@ import {
   X,
   AlertCircle,
   Linkedin,
-  MoreHorizontal
+  MoreHorizontal,
+  ChevronRight
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -183,6 +185,7 @@ const CreateContactModal: React.FC<CreateContactModalProps> = ({ isOpen, onClose
 };
 
 export const Contacts: React.FC = () => {
+  const navigate = useNavigate();
   const { contacts, stats, loading, error, refetch, fetchStats, create } = useContacts();
   const { companies } = useCompanies();
   const [view, setView] = useState<'grid' | 'list'>('list');
@@ -333,7 +336,11 @@ export const Contacts: React.FC = () => {
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredContacts.map((contact) => (
-            <Card key={contact.id} className="p-6 hover:shadow-lg transition-all cursor-pointer group">
+            <Card
+              key={contact.id}
+              className="p-6 hover:shadow-lg transition-all cursor-pointer group"
+              onClick={() => navigate(`/dashboard/contacts/${contact.id}`)}
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Avatar
@@ -348,7 +355,10 @@ export const Contacts: React.FC = () => {
                     {contact.title && <p className="text-xs text-[#666]">{contact.title}</p>}
                   </div>
                 </div>
-                <button className="text-[#999] hover:text-[#1A1A1A]">
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[#999] hover:text-[#1A1A1A]"
+                >
                   <MoreHorizontal size={16} />
                 </button>
               </div>
@@ -406,7 +416,11 @@ export const Contacts: React.FC = () => {
             </thead>
             <tbody>
               {filteredContacts.map((contact) => (
-                <tr key={contact.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors">
+                <tr
+                  key={contact.id}
+                  className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/dashboard/contacts/${contact.id}`)}
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar
@@ -430,9 +444,15 @@ export const Contacts: React.FC = () => {
                     ) : '-'}
                   </td>
                   <td className="px-6 py-4">
-                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      <MoreHorizontal size={16} className="text-[#666]" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <MoreHorizontal size={16} className="text-[#666]" />
+                      </button>
+                      <ChevronRight size={16} className="text-[#999]" />
+                    </div>
                   </td>
                 </tr>
               ))}

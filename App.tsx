@@ -40,6 +40,8 @@ const Knowledge = lazy(() => import('./pages/dashboard/Knowledge').then(m => ({ 
 const Leads = lazy(() => import('./pages/dashboard/Leads').then(m => ({ default: m.Leads })));
 const Deals = lazy(() => import('./pages/dashboard/Deals').then(m => ({ default: m.Deals })));
 const DealDetail = lazy(() => import('./pages/dashboard/DealDetail').then(m => ({ default: m.DealDetail })));
+const LeadDetail = lazy(() => import('./pages/dashboard/LeadDetail').then(m => ({ default: m.LeadDetail })));
+const ContactDetail = lazy(() => import('./pages/dashboard/ContactDetail').then(m => ({ default: m.ContactDetail })));
 const Revenue = lazy(() => import('./pages/dashboard/Revenue').then(m => ({ default: m.Revenue })));
 const Calendar = lazy(() => import('./pages/dashboard/Calendar').then(m => ({ default: m.Calendar })));
 const Analytics = lazy(() => import('./pages/dashboard/Analytics').then(m => ({ default: m.Analytics })));
@@ -213,10 +215,24 @@ function AppContent() {
                 </Suspense>
               </PageErrorBoundary>
             } />
+            <Route path="leads/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <LeadDetail />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
             <Route path="contacts" element={
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <Contacts />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="contacts/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <ContactDetail />
                 </Suspense>
               </PageErrorBoundary>
             } />

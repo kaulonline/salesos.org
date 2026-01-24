@@ -212,13 +212,20 @@ export const handlers = [
 
   http.get(`${API_BASE}/opportunities/forecast`, () => {
     return HttpResponse.json({
+      period: 'Q1 2026',
       committed: 200000,
       bestCase: 450000,
       pipeline: 750000,
+      quota: 500000,
       byMonth: [
-        { month: 'Jan', committed: 50000, bestCase: 100000 },
-        { month: 'Feb', committed: 75000, bestCase: 150000 },
-        { month: 'Mar', committed: 75000, bestCase: 200000 },
+        { month: 'Jan', forecast: 120000, actual: 115000 },
+        { month: 'Feb', forecast: 150000, actual: 142000 },
+        { month: 'Mar', forecast: 180000, actual: 165000 },
+        { month: 'Apr', forecast: 200000, actual: 195000 },
+        { month: 'May', forecast: 220000, actual: 210000 },
+        { month: 'Jun', forecast: 250000, actual: null },
+        { month: 'Jul', forecast: 280000, actual: null },
+        { month: 'Aug', forecast: 300000, actual: null },
       ],
     });
   }),

@@ -125,6 +125,40 @@ export function useDeals(filters?: OpportunityFilters) {
     },
   });
 
+  // Delete mutation with optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => opportunitiesApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.deals.list(filters) });
+      const previousDeals = queryClient.getQueryData<Opportunity[]>(queryKeys.deals.list(filters));
+
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.filter((d) => d.id !== id)
+      );
+
+      return { previousDeals };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousDeals) {
+        queryClient.setQueryData(queryKeys.deals.list(filters), context.previousDeals);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.forecast() });
+    },
+  });
+
+  // Analyze mutation
+  const analyzeMutation = useMutation({
+    mutationFn: (id: string) => opportunitiesApi.analyze(id),
+    onSuccess: (analysis, id) => {
+      queryClient.setQueryData(queryKeys.deals.analysis(id), analysis);
+    },
+  });
+
   return {
     // Data
     deals: dealsQuery.data ?? [],
@@ -149,13 +183,17 @@ export function useDeals(filters?: OpportunityFilters) {
     // Mutations
     create: (data: CreateOpportunityDto) => createMutation.mutateAsync(data),
     update: (id: string, data: UpdateOpportunityDto) => updateMutation.mutateAsync({ id, data }),
+    remove: (id: string) => deleteMutation.mutateAsync(id),
     advanceStage: (id: string, notes?: string) => advanceStageMutation.mutateAsync({ id, notes }),
     closeWon: (id: string, data?: CloseWonDto) => closeWonMutation.mutateAsync({ id, data }),
     closeLost: (id: string, data: CloseLostDto) => closeLostMutation.mutateAsync({ id, data }),
+    analyze: (id: string) => analyzeMutation.mutateAsync(id),
 
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isAnalyzing: analyzeMutation.isPending,
   };
 }
 

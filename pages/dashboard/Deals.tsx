@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MoreHorizontal, Filter, LayoutGrid, List as ListIcon, ChevronDown, AlertCircle, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, MoreHorizontal, Filter, LayoutGrid, List as ListIcon, ChevronDown, AlertCircle, X, Trophy, XCircle, Trash2, Sparkles, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
@@ -162,13 +162,17 @@ const formatCurrency = (amount?: number) => {
 };
 
 export const Deals: React.FC = () => {
-  const { deals, pipelineStats, loading, error, refetch, fetchPipelineStats, create, update } = useDeals();
+  const navigate = useNavigate();
+  const { deals, pipelineStats, loading, error, refetch, fetchPipelineStats, create, update, remove, closeWon, closeLost, analyze, isDeleting, isAnalyzing } = useDeals();
   const { companies } = useCompanies();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [selectedStage, setSelectedStage] = useState('all');
   const [minProbability, setMinProbability] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [closeLostReason, setCloseLostReason] = useState('');
+  const [showCloseLostModal, setShowCloseLostModal] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPipelineStats();
@@ -192,6 +196,50 @@ export const Deals: React.FC = () => {
 
   const handleDragEnd = async (dealId: string, newStage: OpportunityStage) => {
     await update(dealId, { stage: newStage });
+  };
+
+  const handleCloseWon = async (dealId: string) => {
+    try {
+      await closeWon(dealId);
+      await fetchPipelineStats();
+      setActionMenuOpen(null);
+    } catch (err) {
+      console.error('Failed to close deal as won:', err);
+    }
+  };
+
+  const handleCloseLost = async (dealId: string) => {
+    if (!closeLostReason.trim()) return;
+    try {
+      await closeLost(dealId, { reason: closeLostReason });
+      await fetchPipelineStats();
+      setShowCloseLostModal(null);
+      setCloseLostReason('');
+    } catch (err) {
+      console.error('Failed to close deal as lost:', err);
+    }
+  };
+
+  const handleDelete = async (dealId: string) => {
+    if (window.confirm('Are you sure you want to delete this deal? This action cannot be undone.')) {
+      try {
+        await remove(dealId);
+        await fetchPipelineStats();
+        setActionMenuOpen(null);
+      } catch (err) {
+        console.error('Failed to delete deal:', err);
+      }
+    }
+  };
+
+  const handleAnalyze = async (dealId: string) => {
+    try {
+      await analyze(dealId);
+      setActionMenuOpen(null);
+      navigate(`/dashboard/deals/${dealId}`);
+    } catch (err) {
+      console.error('Failed to analyze deal:', err);
+    }
   };
 
   if (loading && deals.length === 0) {
@@ -338,43 +386,94 @@ export const Deals: React.FC = () => {
 
                      <div className="flex-1 bg-[#E5E5E5]/30 rounded-[2rem] p-4 space-y-4 overflow-y-auto custom-scrollbar">
                         {stageDeals.map((deal) => (
-                          <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="block group">
-                            <Card padding="md" className="hover:border-[#EAD07D]/30 transition-all">
-                               <div className="flex justify-between items-start mb-3">
-                                  <span className="text-xs font-bold text-[#999] uppercase tracking-wider">
-                                    {deal.account?.name || 'No Account'}
-                                  </span>
-                                  <button className="text-[#999] hover:text-[#1A1A1A]"><MoreHorizontal size={16} /></button>
-                               </div>
+                          <div key={deal.id} className="relative">
+                            <Link to={`/dashboard/deals/${deal.id}`} className="block group">
+                              <Card padding="md" className="hover:border-[#EAD07D]/30 transition-all">
+                                 <div className="flex justify-between items-start mb-3">
+                                    <span className="text-xs font-bold text-[#999] uppercase tracking-wider">
+                                      {deal.account?.name || 'No Account'}
+                                    </span>
+                                    <button
+                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActionMenuOpen(actionMenuOpen === deal.id ? null : deal.id); }}
+                                      className="text-[#999] hover:text-[#1A1A1A] relative z-10"
+                                    >
+                                      <MoreHorizontal size={16} />
+                                    </button>
+                                 </div>
 
-                               <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight group-hover:text-[#EAD07D] transition-colors">
-                                 {deal.name}
-                               </h4>
+                                 <h4 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-tight group-hover:text-[#EAD07D] transition-colors">
+                                   {deal.name}
+                                 </h4>
 
-                               <div className="mb-4">
-                                  <Badge variant={stage.badge} size="sm">
-                                     {STAGES.find(s => s.id === deal.stage)?.title || deal.stage}
-                                  </Badge>
-                               </div>
+                                 <div className="mb-4">
+                                    <Badge variant={stage.badge} size="sm">
+                                       {STAGES.find(s => s.id === deal.stage)?.title || deal.stage}
+                                    </Badge>
+                                 </div>
 
-                               <div className="flex items-end justify-between">
-                                  <div>
-                                     <div className="text-sm font-medium text-[#1A1A1A]">{formatCurrency(deal.amount)}</div>
-                                     <div className="text-xs text-[#666] mt-1">{deal.probability || 0}% probability</div>
-                                  </div>
-                                  <Avatar
-                                    src={`https://ui-avatars.com/api/?name=User&background=random`}
-                                    size="sm"
-                                    border
-                                  />
-                               </div>
+                                 <div className="flex items-end justify-between">
+                                    <div>
+                                       <div className="text-sm font-medium text-[#1A1A1A]">{formatCurrency(deal.amount)}</div>
+                                       <div className="text-xs text-[#666] mt-1">{deal.probability || 0}% probability</div>
+                                    </div>
+                                    <Avatar
+                                      src={`https://ui-avatars.com/api/?name=User&background=random`}
+                                      size="sm"
+                                      border
+                                    />
+                                 </div>
 
-                               {/* Progress Bar */}
-                               <div className="absolute bottom-0 left-0 h-1 bg-gray-100 w-full">
-                                  <div className={`h-full ${stage.color}`} style={{ width: `${deal.probability || 0}%` }}></div>
-                               </div>
-                            </Card>
-                          </Link>
+                                 {/* Progress Bar */}
+                                 <div className="absolute bottom-0 left-0 h-1 bg-gray-100 w-full">
+                                    <div className={`h-full ${stage.color}`} style={{ width: `${deal.probability || 0}%` }}></div>
+                                 </div>
+                              </Card>
+                            </Link>
+
+                            {/* Actions Dropdown */}
+                            {actionMenuOpen === deal.id && (
+                              <div className="absolute top-10 right-4 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-1 z-30">
+                                <button
+                                  onClick={() => navigate(`/dashboard/deals/${deal.id}`)}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#F8F8F6] flex items-center gap-2"
+                                >
+                                  <ChevronRight size={14} /> View Details
+                                </button>
+                                <button
+                                  onClick={() => handleAnalyze(deal.id)}
+                                  disabled={isAnalyzing}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#F8F8F6] flex items-center gap-2 text-purple-600"
+                                >
+                                  <Sparkles size={14} /> AI Analysis
+                                </button>
+                                <hr className="my-1 border-gray-100" />
+                                {deal.stage !== 'CLOSED_WON' && (
+                                  <button
+                                    onClick={() => handleCloseWon(deal.id)}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-green-50 flex items-center gap-2 text-green-600"
+                                  >
+                                    <Trophy size={14} /> Mark Won
+                                  </button>
+                                )}
+                                {deal.stage !== 'CLOSED_LOST' && (
+                                  <button
+                                    onClick={() => { setShowCloseLostModal(deal.id); setActionMenuOpen(null); }}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-orange-50 flex items-center gap-2 text-orange-600"
+                                  >
+                                    <XCircle size={14} /> Mark Lost
+                                  </button>
+                                )}
+                                <hr className="my-1 border-gray-100" />
+                                <button
+                                  onClick={() => handleDelete(deal.id)}
+                                  disabled={isDeleting}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
+                                >
+                                  <Trash2 size={14} /> Delete Deal
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         ))}
 
                         {stageDeals.length === 0 && (
@@ -453,6 +552,49 @@ export const Deals: React.FC = () => {
         onCreate={handleCreateDeal}
         accounts={companies.map(c => ({ id: c.id, name: c.name }))}
       />
+
+      {/* Close Lost Modal */}
+      {showCloseLostModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-medium text-[#1A1A1A]">Mark Deal as Lost</h2>
+              <button onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="mb-6">
+              <label className="text-xs font-medium text-[#666] mb-1 block">Reason for Loss *</label>
+              <textarea
+                value={closeLostReason}
+                onChange={(e) => setCloseLostReason(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none min-h-[100px]"
+                placeholder="e.g., Lost to competitor, budget constraints, timing..."
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCloseLost(showCloseLostModal)}
+                disabled={!closeLostReason.trim()}
+                className="flex-1 px-4 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Mark as Lost
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Click outside to close action menu */}
+      {actionMenuOpen && (
+        <div className="fixed inset-0 z-20" onClick={() => setActionMenuOpen(null)} />
+      )}
     </div>
   );
 };

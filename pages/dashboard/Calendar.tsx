@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle, X } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { useCalendarMeetings } from '../../src/hooks';
-import type { Meeting, MeetingType } from '../../src/types';
+import { useCalendarMeetings, useMeetings } from '../../src/hooks';
+import type { Meeting, MeetingType, CreateMeetingDto } from '../../src/types';
 
 const formatTime = (dateString: string) => {
   return new Date(dateString).toLocaleTimeString('en-US', {
@@ -50,8 +50,63 @@ export const Calendar: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNewEventModal, setShowNewEventModal] = useState(false);
 
-  const { meetingsByDate, stats, loading, error } = useCalendarMeetings(currentYear, currentMonth);
+  const { meetingsByDate, stats, loading, error, refetch } = useCalendarMeetings(currentYear, currentMonth);
+  const { create, isCreating } = useMeetings();
+
+  // New event form state
+  const getDefaultStartTime = () => {
+    const date = new Date(currentYear, currentMonth, selectedDay);
+    date.setHours(9, 0, 0, 0);
+    return date.toISOString().slice(0, 16);
+  };
+
+  const getDefaultEndTime = () => {
+    const date = new Date(currentYear, currentMonth, selectedDay);
+    date.setHours(10, 0, 0, 0);
+    return date.toISOString().slice(0, 16);
+  };
+
+  const [newEvent, setNewEvent] = useState<Partial<CreateMeetingDto>>({
+    title: '',
+    type: 'VIDEO',
+    startTime: getDefaultStartTime(),
+    endTime: getDefaultEndTime(),
+    description: '',
+    location: '',
+  });
+
+  const handleOpenNewEventModal = () => {
+    setNewEvent({
+      title: '',
+      type: 'VIDEO',
+      startTime: getDefaultStartTime(),
+      endTime: getDefaultEndTime(),
+      description: '',
+      location: '',
+    });
+    setShowNewEventModal(true);
+  };
+
+  const handleCreateEvent = async () => {
+    if (!newEvent.title || !newEvent.startTime || !newEvent.endTime) return;
+    try {
+      await create({
+        title: newEvent.title,
+        type: newEvent.type || 'VIDEO',
+        startTime: new Date(newEvent.startTime).toISOString(),
+        endTime: new Date(newEvent.endTime).toISOString(),
+        description: newEvent.description,
+        location: newEvent.location,
+        meetingLink: newEvent.meetingLink,
+      });
+      await refetch();
+      setShowNewEventModal(false);
+    } catch (err) {
+      console.error('Failed to create event:', err);
+    }
+  };
 
   // Calculate calendar days
   const days = useMemo(() => {
@@ -198,7 +253,10 @@ export const Calendar: React.FC = () => {
           <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#666] hover:text-[#1A1A1A] shadow-sm">
             <Filter size={18} />
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all whitespace-nowrap">
+          <button
+            onClick={handleOpenNewEventModal}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all whitespace-nowrap"
+          >
             <Plus size={16} /> New Event
           </button>
         </div>
@@ -334,7 +392,10 @@ export const Calendar: React.FC = () => {
 
             <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
               <h4 className="font-bold text-[#1A1A1A]">Schedule</h4>
-              <button className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <button
+                onClick={handleOpenNewEventModal}
+                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
                 <Plus size={14} />
               </button>
             </div>
@@ -394,7 +455,12 @@ export const Calendar: React.FC = () => {
                 <div className="text-center py-10 px-4 text-[#999] bg-[#F8F8F6] rounded-[1.5rem] border border-dashed border-gray-200">
                   <CalendarIcon size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="mb-2">No events scheduled</p>
-                  <button className="text-[#EAD07D] font-bold text-sm hover:underline">Add Event</button>
+                  <button
+                    onClick={handleOpenNewEventModal}
+                    className="text-[#EAD07D] font-bold text-sm hover:underline"
+                  >
+                    Add Event
+                  </button>
                 </div>
               )}
             </div>
@@ -408,6 +474,114 @@ export const Calendar: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* New Event Modal */}
+      {showNewEventModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-medium text-[#1A1A1A]">New Event</h2>
+              <button
+                onClick={() => setShowNewEventModal(false)}
+                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Event Title *</label>
+                <input
+                  type="text"
+                  value={newEvent.title || ''}
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  placeholder="Meeting with client..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Meeting Type</label>
+                <select
+                  value={newEvent.type || 'VIDEO'}
+                  onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as MeetingType })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                >
+                  <option value="VIDEO">Video Call</option>
+                  <option value="CALL">Phone Call</option>
+                  <option value="IN_PERSON">In Person</option>
+                  <option value="WEBINAR">Webinar</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#666] mb-1">Start Time *</label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.startTime || ''}
+                    onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#666] mb-1">End Time *</label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.endTime || ''}
+                    onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Location / Room</label>
+                <input
+                  type="text"
+                  value={newEvent.location || ''}
+                  onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                  placeholder="Conference Room A..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Meeting Link</label>
+                <input
+                  type="url"
+                  value={newEvent.meetingLink || ''}
+                  onChange={(e) => setNewEvent({ ...newEvent, meetingLink: e.target.value })}
+                  placeholder="https://zoom.us/j/..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Description</label>
+                <textarea
+                  value={newEvent.description || ''}
+                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  rows={3}
+                  placeholder="Meeting agenda..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+              <button
+                onClick={() => setShowNewEventModal(false)}
+                className="px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateEvent}
+                disabled={isCreating || !newEvent.title || !newEvent.startTime || !newEvent.endTime}
+                className="px-6 py-2 text-sm font-medium bg-[#1A1A1A] text-white rounded-full hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Plus size={16} />
+                {isCreating ? 'Creating...' : 'Create Event'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

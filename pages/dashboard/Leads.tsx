@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Download, Plus, X, Sparkles, ArrowRightLeft, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Filter, Download, Plus, X, Sparkles, ArrowRightLeft, AlertCircle, ChevronRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
@@ -170,6 +171,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
 };
 
 export const Leads: React.FC = () => {
+  const navigate = useNavigate();
   const { leads, stats, loading, error, refetch, fetchStats, create, score, convert } = useLeads();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -355,6 +357,7 @@ export const Leads: React.FC = () => {
                         selectedLead === lead.id ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'
                       }`}
                       onClick={() => setSelectedLead(selectedLead === lead.id ? null : lead.id)}
+                      onDoubleClick={() => navigate(`/dashboard/leads/${lead.id}`)}
                    >
                       <div className="col-span-1 flex items-center justify-center">
                          <div className={`w-5 h-5 rounded border flex items-center justify-center ${
@@ -416,6 +419,13 @@ export const Leads: React.FC = () => {
                              <ArrowRightLeft size={16} className={convertingLead === lead.id ? 'animate-pulse' : ''} />
                            </button>
                          )}
+                         <button
+                           onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/leads/${lead.id}`); }}
+                           className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors"
+                           title="View Details"
+                         >
+                           <ChevronRight size={16} />
+                         </button>
                       </div>
                    </div>
                 ))

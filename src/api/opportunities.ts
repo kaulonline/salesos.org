@@ -79,6 +79,13 @@ export const opportunitiesApi = {
   },
 
   /**
+   * Delete an opportunity
+   */
+  delete: async (id: string): Promise<void> => {
+    await client.delete(`/opportunities/${id}`);
+  },
+
+  /**
    * Advance opportunity to next stage
    */
   advanceStage: async (id: string, data?: AdvanceStageDto): Promise<Opportunity> => {

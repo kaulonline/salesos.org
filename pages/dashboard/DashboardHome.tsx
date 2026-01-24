@@ -480,45 +480,95 @@ export const DashboardHome: React.FC = () => {
             <div className="flex justify-between items-start mb-2">
                 <div>
                     <h3 className="font-bold text-[#1A1A1A] text-lg">AI Forecast</h3>
-                    <p className="text-xs text-[#666]">End of Quarter Projection</p>
+                    <p className="text-xs text-[#666]">{forecast?.period || 'Current Quarter'} Projection</p>
                 </div>
                 <div className="flex items-center gap-3">
                      <div className="flex items-center gap-2 text-xs font-medium">
                          <span className="w-2 h-2 rounded-full bg-[#1A1A1A]"></span> Actual
                      </div>
                      <div className="flex items-center gap-2 text-xs font-medium">
-                         <span className="w-2 h-2 rounded-full bg-[#EAD07D] opacity-50"></span> Projected
+                         <span className="w-2 h-2 rounded-full bg-[#EAD07D]"></span> AI Forecast
                      </div>
-                     {pipelineStats?.winRate && pipelineStats.winRate > 50 && (
-                       <Badge variant="green" size="sm">+{Math.round(pipelineStats.winRate - 50)}% vs Target</Badge>
+                     {forecast?.quota && forecast?.bestCase && (
+                       <Badge variant={forecast.bestCase >= forecast.quota ? 'green' : 'yellow'} size="sm">
+                         {forecast.bestCase >= forecast.quota ? '+' : ''}{Math.round(((forecast.bestCase - forecast.quota) / forecast.quota) * 100)}% vs Quota
+                       </Badge>
                      )}
                 </div>
             </div>
 
-            <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-light text-[#1A1A1A]">{formatCurrency(forecast?.bestCase || pipelineStats?.weightedPipeline || 0)}</span>
-                <span className="text-sm text-[#666] font-medium">projected</span>
+            <div className="flex items-baseline gap-2 mb-6">
+                <div>
+                    <span className="text-4xl font-light text-[#1A1A1A]">{formatCurrency(forecast?.bestCase || 0)}</span>
+                    <span className="text-sm text-[#666] font-medium ml-2">AI projected</span>
+                </div>
+                {forecast?.committed && (
+                  <div className="ml-6 text-sm">
+                    <span className="text-[#666]">Committed: </span>
+                    <span className="font-bold text-[#1A1A1A]">{formatCurrency(forecast.committed)}</span>
+                  </div>
+                )}
             </div>
 
-            {/* Visual Bar Chart */}
-            <div className="flex items-end justify-between h-32 gap-3">
-                {[35, 45, 40, 60, 55, 75, 82, 90].map((h, i) => (
-                    <div key={i} className="w-full bg-[#F8F8F6] rounded-t-lg relative group overflow-hidden">
-                        <div
-                            style={{height: `${h}%`}}
-                            className={`absolute bottom-0 w-full transition-all duration-1000 ${i >= 5 ? 'bg-[url("https://www.transparenttextures.com/patterns/diagonal-stripes.png")] bg-[#EAD07D] opacity-60' : 'bg-[#1A1A1A]'}`}
-                        >
-                            {/* Hover Tooltip */}
-                            <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1A1A1A] text-white text-[10px] px-2 py-1 rounded whitespace-nowrap transition-opacity pointer-events-none z-10">
-                                ${h}0k
+            {/* Visual Bar Chart - Using Actual Forecast Data */}
+            {forecast?.byMonth && forecast.byMonth.length > 0 ? (
+              <>
+                <div className="flex items-end justify-between h-32 gap-2">
+                    {(() => {
+                      const maxValue = Math.max(
+                        ...forecast.byMonth.map(m => Math.max(m.forecast || 0, m.actual || 0))
+                      );
+                      return forecast.byMonth.map((monthData, i) => {
+                        const forecastHeight = maxValue > 0 ? ((monthData.forecast || 0) / maxValue) * 100 : 0;
+                        const actualHeight = maxValue > 0 ? ((monthData.actual || 0) / maxValue) * 100 : 0;
+                        const hasActual = monthData.actual !== null && monthData.actual !== undefined;
+
+                        return (
+                          <div key={i} className="w-full flex gap-1 items-end h-full">
+                            {/* Actual Bar */}
+                            <div className="flex-1 bg-[#F8F8F6] rounded-t-lg relative group overflow-hidden h-full">
+                              <div
+                                style={{height: `${hasActual ? actualHeight : 0}%`}}
+                                className="absolute bottom-0 w-full transition-all duration-700 bg-[#1A1A1A] rounded-t-lg"
+                              >
+                                <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1A1A1A] text-white text-[10px] px-2 py-1 rounded whitespace-nowrap transition-opacity pointer-events-none z-10">
+                                  Actual: {formatCurrency(monthData.actual || 0)}
+                                </div>
+                              </div>
                             </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <div className="flex justify-between text-xs text-[#999] font-bold mt-4 px-1">
-                <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span>
-            </div>
+                            {/* Forecast Bar */}
+                            <div className="flex-1 bg-[#F8F8F6] rounded-t-lg relative group overflow-hidden h-full">
+                              <div
+                                style={{height: `${forecastHeight}%`}}
+                                className={`absolute bottom-0 w-full transition-all duration-700 rounded-t-lg ${hasActual ? 'bg-[#EAD07D]' : 'bg-[#EAD07D] opacity-60'}`}
+                              >
+                                <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#EAD07D] text-[#1A1A1A] text-[10px] px-2 py-1 rounded whitespace-nowrap transition-opacity pointer-events-none z-10 font-medium">
+                                  AI: {formatCurrency(monthData.forecast || 0)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                </div>
+                <div className="flex justify-between text-xs text-[#999] font-bold mt-4 px-1">
+                    {forecast.byMonth.map((m, i) => (
+                      <span key={i} className="text-center flex-1">{m.month}</span>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-[#F8F8F6] flex items-center justify-center mx-auto mb-3">
+                    <TrendingUp size={20} className="text-[#999]" />
+                  </div>
+                  <p className="text-sm text-[#666]">No forecast data available</p>
+                  <p className="text-xs text-[#999]">Close some deals to generate AI forecasts</p>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* LIVE SIGNALS (Vertical Feed) */}
