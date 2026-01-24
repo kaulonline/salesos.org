@@ -159,6 +159,32 @@ export function useDeals(filters?: OpportunityFilters) {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => opportunitiesApi.bulkDelete(ids),
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.deals.list(filters) });
+      const previousDeals = queryClient.getQueryData<Opportunity[]>(queryKeys.deals.list(filters));
+
+      queryClient.setQueryData<Opportunity[]>(
+        queryKeys.deals.list(filters),
+        (old) => old?.filter((d) => !ids.includes(d.id))
+      );
+
+      return { previousDeals };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previousDeals) {
+        queryClient.setQueryData(queryKeys.deals.list(filters), context.previousDeals);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.pipelineStats() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.forecast() });
+    },
+  });
+
   return {
     // Data
     deals: dealsQuery.data ?? [],
@@ -188,12 +214,14 @@ export function useDeals(filters?: OpportunityFilters) {
     closeWon: (id: string, data?: CloseWonDto) => closeWonMutation.mutateAsync({ id, data }),
     closeLost: (id: string, data: CloseLostDto) => closeLostMutation.mutateAsync({ id, data }),
     analyze: (id: string) => analyzeMutation.mutateAsync(id),
+    bulkDelete: (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
 
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isAnalyzing: analyzeMutation.isPending,
+    isBulkDeleting: bulkDeleteMutation.isPending,
   };
 }
 

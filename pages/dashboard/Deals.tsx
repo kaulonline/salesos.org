@@ -9,6 +9,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useDeals } from '../../src/hooks/useDeals';
 import { useCompanies } from '../../src/hooks/useCompanies';
+import { AIInsightsBanner } from '../../src/components/AIInsightsBanner';
 import type { OpportunityStage, CreateOpportunityDto } from '../../src/types';
 
 const STAGES: { id: OpportunityStage; title: string; color: string; badge: 'blue' | 'red' | 'purple' | 'green' | 'yellow' | 'neutral' }[] = [
@@ -50,7 +51,7 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.accountId) {
-      setError('Deal name and account are required');
+      setError('Opportunity name and account are required');
       return;
     }
     setLoading(true);
@@ -73,7 +74,7 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-medium text-[#1A1A1A]">New Deal</h2>
+          <h2 className="text-2xl font-medium text-[#1A1A1A]">New Opportunity</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
@@ -88,13 +89,13 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-[#666] mb-1 block">Deal Name *</label>
+            <label className="text-xs font-medium text-[#666] mb-1 block">Opportunity Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
-              placeholder="Q1 Enterprise Deal"
+              placeholder="Q1 Enterprise Opportunity"
             />
           </div>
           <div>
@@ -147,7 +148,7 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
               className="flex-1 py-3 rounded-xl"
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Deal'}
+              {loading ? 'Creating...' : 'Create Opportunity'}
             </Button>
           </div>
         </form>
@@ -201,7 +202,7 @@ export const Deals: React.FC = () => {
   const handleCloseWon = async (dealId: string) => {
     try {
       await closeWon(dealId);
-      await fetchPipelineStats();
+      await Promise.all([fetchPipelineStats(), refetch()]);
       setActionMenuOpen(null);
     } catch (err) {
       console.error('Failed to close deal as won:', err);
@@ -211,8 +212,8 @@ export const Deals: React.FC = () => {
   const handleCloseLost = async (dealId: string) => {
     if (!closeLostReason.trim()) return;
     try {
-      await closeLost(dealId, { reason: closeLostReason });
-      await fetchPipelineStats();
+      await closeLost(dealId, { lossReason: closeLostReason });
+      await Promise.all([fetchPipelineStats(), refetch()]);
       setShowCloseLostModal(null);
       setCloseLostReason('');
     } catch (err) {
@@ -286,12 +287,16 @@ export const Deals: React.FC = () => {
             <p className="text-[#666]">
               {pipelineStats ? (
                 <>
-                  {formatCurrency(pipelineStats.totalValue)} total value across {pipelineStats.totalDeals} deals
+                  {formatCurrency(pipelineStats.totalValue)} total value across {pipelineStats.totalDeals} opportunities
                 </>
               ) : (
                 'Manage your opportunities and track revenue.'
               )}
             </p>
+            {/* AI Insights for Deals */}
+            <div className="mt-4">
+              <AIInsightsBanner maxInsights={2} showSummary={false} className="bg-transparent border-0 p-0" />
+            </div>
          </div>
 
          <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
@@ -340,7 +345,7 @@ export const Deals: React.FC = () => {
             {/* Search */}
             <div className="w-full md:w-64">
                 <SearchInput
-                    placeholder="Search deals..."
+                    placeholder="Search opportunities..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -391,7 +396,7 @@ export const Deals: React.FC = () => {
                               <Card padding="md" className="hover:border-[#EAD07D]/30 transition-all">
                                  <div className="flex justify-between items-start mb-3">
                                     <span className="text-xs font-bold text-[#999] uppercase tracking-wider">
-                                      {deal.account?.name || 'No Account'}
+                                      {deal.account?.name || 'No account'}
                                     </span>
                                     <button
                                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActionMenuOpen(actionMenuOpen === deal.id ? null : deal.id); }}
@@ -469,7 +474,7 @@ export const Deals: React.FC = () => {
                                   disabled={isDeleting}
                                   className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
                                 >
-                                  <Trash2 size={14} /> Delete Deal
+                                  <Trash2 size={14} /> Delete Opportunity
                                 </button>
                               </div>
                             )}
@@ -486,7 +491,7 @@ export const Deals: React.FC = () => {
                           onClick={() => setShowCreateModal(true)}
                           className="w-full py-3 rounded-[1.5rem] border-2 border-dashed border-[#1A1A1A]/5 text-[#1A1A1A]/40 font-medium hover:border-[#1A1A1A]/20 hover:text-[#1A1A1A]/60 transition-all flex items-center justify-center gap-2"
                         >
-                           <Plus size={16} /> Add Deal
+                           <Plus size={16} /> Add Opportunity
                         </button>
                      </div>
                   </div>
@@ -498,7 +503,7 @@ export const Deals: React.FC = () => {
           /* List View */
           <Card padding="none" className="flex-1 overflow-hidden flex flex-col">
               <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider bg-[#F9F9F9]">
-                  <div className="col-span-4">Deal Name</div>
+                  <div className="col-span-4">Opportunity Name</div>
                   <div className="col-span-2">Stage</div>
                   <div className="col-span-2">Value</div>
                   <div className="col-span-2">Probability</div>
@@ -512,7 +517,7 @@ export const Deals: React.FC = () => {
                             <Link to={`/dashboard/deals/${deal.id}`} key={deal.id} className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-gray-50 items-center hover:bg-[#F8F8F6] transition-colors group">
                                 <div className="col-span-4">
                                     <div className="font-bold text-[#1A1A1A] text-sm group-hover:text-[#EAD07D] transition-colors">{deal.name}</div>
-                                    <div className="text-xs text-[#666]">{deal.account?.name || 'No Account'}</div>
+                                    <div className="text-xs text-[#666]">{deal.account?.name || 'No account'}</div>
                                 </div>
                                 <div className="col-span-2">
                                     <Badge variant={stage?.badge || 'neutral'} size="sm">
@@ -558,7 +563,7 @@ export const Deals: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-medium text-[#1A1A1A]">Mark Deal as Lost</h2>
+              <h2 className="text-2xl font-medium text-[#1A1A1A]">Mark Opportunity as Lost</h2>
               <button onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }} className="text-[#666] hover:text-[#1A1A1A]">
                 <X size={24} />
               </button>

@@ -94,6 +94,22 @@ export const leadsApi = {
     const response = await client.post<ConvertLeadResult>(`/leads/${id}/convert`, data);
     return response.data;
   },
+
+  // Bulk Operations
+  bulkUpdate: async (ids: string[], updates: Partial<Lead>): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/leads/bulk/update', { ids, updates });
+    return response.data;
+  },
+
+  bulkDelete: async (ids: string[]): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/leads/bulk/delete', { ids });
+    return response.data;
+  },
+
+  bulkAssign: async (ids: string[], newOwnerId: string): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/leads/bulk/assign', { ids, newOwnerId });
+    return response.data;
+  },
 };
 
 export default leadsApi;

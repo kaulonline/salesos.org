@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Linkedin,
   MoreHorizontal,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -23,6 +24,8 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useContacts } from '../../src/hooks/useContacts';
 import { useCompanies } from '../../src/hooks/useCompanies';
+import { SmartCaptureModal } from '../../src/components/SmartCapture/SmartCaptureModal';
+import { VirtualList } from '../../src/components/VirtualList';
 import type { Contact, CreateContactDto, ContactRole, SeniorityLevel } from '../../src/types';
 
 const getRoleColor = (role?: ContactRole) => {
@@ -191,6 +194,7 @@ export const Contacts: React.FC = () => {
   const [view, setView] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSmartCapture, setShowSmartCapture] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -235,13 +239,22 @@ export const Contacts: React.FC = () => {
           <h1 className="text-3xl font-medium text-[#1A1A1A] mb-1">Contacts</h1>
           <p className="text-[#666]">Manage your contacts and relationships</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
-        >
-          <Plus size={18} />
-          Add Contact
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSmartCapture(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#EAD07D] text-[#1A1A1A] rounded-xl font-medium hover:bg-[#E5C973] transition-colors shadow-lg"
+          >
+            <Camera size={18} />
+            Smart Capture
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
+          >
+            <Plus size={18} />
+            Add Contact
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -403,61 +416,59 @@ export const Contacts: React.FC = () => {
         </div>
       ) : (
         <Card className="overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-[#FAFAF8] border-b border-gray-100">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Contact</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Account</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Title</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Email</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.map((contact) => (
-                <tr
-                  key={contact.id}
-                  className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/dashboard/contacts/${contact.id}`)}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={contact.avatarUrl || `https://ui-avatars.com/api/?name=${contact.firstName}+${contact.lastName}&background=random`}
-                        alt={`${contact.firstName} ${contact.lastName}`}
-                        size="md"
-                      />
-                      <div className="font-medium text-[#1A1A1A]">
-                        {contact.firstName} {contact.lastName}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-[#666]">{contact.account?.name || '-'}</td>
-                  <td className="px-6 py-4 text-sm text-[#666]">{contact.title || '-'}</td>
-                  <td className="px-6 py-4 text-sm text-[#666]">{contact.email || '-'}</td>
-                  <td className="px-6 py-4">
-                    {contact.role ? (
-                      <Badge className={getRoleColor(contact.role)} size="sm">
-                        {contact.role.replace('_', ' ').toLowerCase()}
-                      </Badge>
-                    ) : '-'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <MoreHorizontal size={16} className="text-[#666]" />
-                      </button>
-                      <ChevronRight size={16} className="text-[#999]" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-4 bg-[#FAFAF8] border-b border-gray-100 px-6 py-4">
+            <div className="col-span-3 text-xs font-bold text-[#999] uppercase tracking-wider">Contact</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Account</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Title</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Email</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Role</div>
+            <div className="col-span-1"></div>
+          </div>
+          {/* Virtualized Table Body */}
+          <VirtualList
+            items={filteredContacts}
+            itemHeight={64}
+            keyExtractor={(contact) => contact.id}
+            className="max-h-[calc(100vh-400px)]"
+            emptyMessage={searchQuery ? `No contacts found matching "${searchQuery}"` : 'No contacts yet. Add your first contact!'}
+            renderItem={(contact) => (
+              <div
+                className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors items-center"
+                onClick={() => navigate(`/dashboard/contacts/${contact.id}`)}
+              >
+                <div className="col-span-3 flex items-center gap-3">
+                  <Avatar
+                    src={contact.avatarUrl || `https://ui-avatars.com/api/?name=${contact.firstName}+${contact.lastName}&background=random`}
+                    alt={`${contact.firstName} ${contact.lastName}`}
+                    size="md"
+                  />
+                  <div className="font-medium text-[#1A1A1A]">
+                    {contact.firstName} {contact.lastName}
+                  </div>
+                </div>
+                <div className="col-span-2 text-sm text-[#666]">{contact.account?.name || '-'}</div>
+                <div className="col-span-2 text-sm text-[#666]">{contact.title || '-'}</div>
+                <div className="col-span-2 text-sm text-[#666] truncate">{contact.email || '-'}</div>
+                <div className="col-span-2">
+                  {contact.role ? (
+                    <Badge className={getRoleColor(contact.role)} size="sm">
+                      {contact.role.replace('_', ' ').toLowerCase()}
+                    </Badge>
+                  ) : '-'}
+                </div>
+                <div className="col-span-1 flex items-center justify-end gap-1">
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <MoreHorizontal size={16} className="text-[#666]" />
+                  </button>
+                  <ChevronRight size={16} className="text-[#999]" />
+                </div>
+              </div>
+            )}
+          />
         </Card>
       )}
 
@@ -466,6 +477,11 @@ export const Contacts: React.FC = () => {
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateContact}
         accounts={companies.map(c => ({ id: c.id, name: c.name }))}
+      />
+
+      <SmartCaptureModal
+        isOpen={showSmartCapture}
+        onClose={() => setShowSmartCapture(false)}
       />
     </div>
   );

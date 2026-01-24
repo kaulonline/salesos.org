@@ -112,6 +112,31 @@ export function useLeads(filters?: LeadFilters) {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => leadsApi.bulkDelete(ids),
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.leads.list(filters) });
+      const previousLeads = queryClient.getQueryData<Lead[]>(queryKeys.leads.list(filters));
+
+      queryClient.setQueryData<Lead[]>(
+        queryKeys.leads.list(filters),
+        (old) => old?.filter((l) => !ids.includes(l.id))
+      );
+
+      return { previousLeads };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(queryKeys.leads.list(filters), context.previousLeads);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats() });
+    },
+  });
+
   return {
     // Data
     leads: leadsQuery.data ?? [],
@@ -135,12 +160,14 @@ export function useLeads(filters?: LeadFilters) {
     remove: (id: string) => deleteMutation.mutateAsync(id),
     score: (id: string) => scoreMutation.mutateAsync(id),
     convert: (id: string, data: ConvertLeadDto) => convertMutation.mutateAsync({ id, data }),
+    bulkDelete: (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
 
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isConverting: convertMutation.isPending,
+    isBulkDeleting: bulkDeleteMutation.isPending,
   };
 }
 

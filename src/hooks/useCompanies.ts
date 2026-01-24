@@ -83,6 +83,31 @@ export function useCompanies(filters?: AccountFilters) {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => accountsApi.bulkDelete(ids),
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.companies.list(filters) });
+      const previousCompanies = queryClient.getQueryData<Account[]>(queryKeys.companies.list(filters));
+
+      queryClient.setQueryData<Account[]>(
+        queryKeys.companies.list(filters),
+        (old) => old?.filter((c) => !ids.includes(c.id))
+      );
+
+      return { previousCompanies };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(queryKeys.companies.list(filters), context.previousCompanies);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats() });
+    },
+  });
+
   return {
     // Data
     companies: companiesQuery.data ?? [],
@@ -104,11 +129,13 @@ export function useCompanies(filters?: AccountFilters) {
     create: (data: CreateAccountDto) => createMutation.mutateAsync(data),
     update: (id: string, data: UpdateAccountDto) => updateMutation.mutateAsync({ id, data }),
     remove: (id: string) => deleteMutation.mutateAsync(id),
+    bulkDelete: (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
 
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isBulkDeleting: bulkDeleteMutation.isPending,
   };
 }
 

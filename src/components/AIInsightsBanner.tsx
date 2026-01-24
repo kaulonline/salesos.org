@@ -71,14 +71,15 @@ export function AIInsightsBanner({
 
   if (isLoading) {
     return (
-      <div className={`bg-white rounded-xl border border-gray-200 p-4 ${className}`}>
+      <div className={`bg-white rounded-xl border border-gray-200 p-4 ${className}`} role="status" aria-live="polite" aria-label="Loading AI insights">
         <div className="flex items-center gap-3 animate-pulse">
-          <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+          <div className="w-8 h-8 bg-gray-200 rounded-lg" aria-hidden="true" />
           <div className="flex-1">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-            <div className="h-3 bg-gray-100 rounded w-2/3" />
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" aria-hidden="true" />
+            <div className="h-3 bg-gray-100 rounded w-2/3" aria-hidden="true" />
           </div>
         </div>
+        <span className="sr-only">Loading AI insights...</span>
       </div>
     );
   }
@@ -88,24 +89,28 @@ export function AIInsightsBanner({
   }
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+    <section
+      className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}
+      aria-labelledby="iris-insights-heading"
+      aria-live="polite"
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A]">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center" aria-hidden="true">
             <Sparkles className="w-4 h-4 text-[#EAD07D]" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-white">IRIS Insights</h3>
+            <h3 id="iris-insights-heading" className="text-sm font-medium text-white">IRIS Insights</h3>
             <p className="text-xs text-gray-400">AI-powered recommendations</p>
           </div>
         </div>
         <button
           onClick={() => refetch()}
           className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
-          title="Refresh insights"
+          aria-label="Refresh AI insights"
         >
-          <RefreshCw className="w-4 h-4 text-gray-400" />
+          <RefreshCw className="w-4 h-4 text-gray-400" aria-hidden="true" />
         </button>
       </div>
 
@@ -141,7 +146,7 @@ export function AIInsightsBanner({
 
       {/* Insights List */}
       {visibleInsights.length > 0 ? (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100" role="feed" aria-label="AI insights feed">
           {visibleInsights.map((insight) => (
             <InsightCard
               key={insight.id}
@@ -152,8 +157,8 @@ export function AIInsightsBanner({
           ))}
         </div>
       ) : (
-        <div className="px-4 py-8 text-center text-gray-500">
-          <Sparkles className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+        <div className="px-4 py-8 text-center text-gray-500" role="status">
+          <Sparkles className="w-8 h-8 mx-auto mb-2 text-gray-300" aria-hidden="true" />
           <p className="text-sm">No urgent insights right now</p>
           <p className="text-xs text-gray-400 mt-1">Check back later for AI recommendations</p>
         </div>
@@ -164,12 +169,13 @@ export function AIInsightsBanner({
         <button
           onClick={() => navigate('/dashboard/ai')}
           className="w-full px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-gray-50 flex items-center justify-center gap-1 border-t border-gray-100 transition-colors"
+          aria-label={`View all ${insights.length} AI insights`}
         >
           View all {insights.length} insights
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
         </button>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -186,12 +192,12 @@ function SummaryStat({
   color: string;
 }) {
   return (
-    <div className="px-3 py-2 text-center">
+    <div className="px-3 py-2 text-center" role="status" aria-label={`${label}: ${value}`}>
       <div className="flex items-center justify-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 ${color}`} />
-        <span className="text-lg font-semibold text-gray-900">{value}</span>
+        <Icon className={`w-3.5 h-3.5 ${color}`} aria-hidden="true" />
+        <span className="text-lg font-semibold text-gray-900" aria-hidden="true">{value}</span>
       </div>
-      <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>
+      <p className="text-[10px] text-gray-500 mt-0.5" aria-hidden="true">{label}</p>
     </div>
   );
 }
@@ -210,17 +216,17 @@ function InsightCard({
   const Icon = iconMap[style.icon] || Lightbulb;
 
   return (
-    <div className={`px-4 py-3 flex items-start gap-3 ${style.bgColor} bg-opacity-30`}>
-      <div className={`p-2 rounded-lg ${style.bgColor}`}>
+    <article className={`px-4 py-3 flex items-start gap-3 ${style.bgColor} bg-opacity-30`} aria-labelledby={`insight-${insight.id}`}>
+      <div className={`p-2 rounded-lg ${style.bgColor}`} aria-hidden="true">
         <Icon className={`w-4 h-4 ${style.textColor}`} />
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <h4 className="text-sm font-medium text-gray-900 truncate">
+          <h4 id={`insight-${insight.id}`} className="text-sm font-medium text-gray-900 truncate">
             {insight.title}
           </h4>
-          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getPriorityStyle(insight.priority)}`}>
+          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getPriorityStyle(insight.priority)}`} aria-label={`Priority: ${insight.priority}`}>
             {insight.priority}
           </span>
         </div>
@@ -233,7 +239,7 @@ function InsightCard({
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" role="group" aria-label="Insight actions">
         {insight.actionLabel && (
           <button
             onClick={onAction}
@@ -245,12 +251,12 @@ function InsightCard({
         <button
           onClick={onDismiss}
           className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-          title="Dismiss"
+          aria-label={`Dismiss insight: ${insight.title}`}
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-    </div>
+    </article>
   );
 }
 

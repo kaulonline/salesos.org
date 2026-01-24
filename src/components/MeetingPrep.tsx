@@ -178,7 +178,7 @@ export function MeetingPrep({
         {/* Deal Context */}
         {briefing.dealContext && (
           <CollapsibleSection
-            title="Deal Context"
+            title="Opportunity Context"
             icon={TrendingUp}
             expanded={expandedSections.has('deal')}
             onToggle={() => toggleSection('deal')}

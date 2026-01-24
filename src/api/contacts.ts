@@ -78,6 +78,22 @@ export const contactsApi = {
   delete: async (id: string): Promise<void> => {
     await client.delete(`/contacts/${id}`);
   },
+
+  // Bulk Operations
+  bulkUpdate: async (ids: string[], updates: Partial<Contact>): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/contacts/bulk/update', { ids, updates });
+    return response.data;
+  },
+
+  bulkDelete: async (ids: string[]): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/contacts/bulk/delete', { ids });
+    return response.data;
+  },
+
+  bulkAssign: async (ids: string[], newOwnerId: string): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/contacts/bulk/assign', { ids, newOwnerId });
+    return response.data;
+  },
 };
 
 export default contactsApi;

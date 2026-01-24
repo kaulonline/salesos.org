@@ -338,7 +338,7 @@ export const Team: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-lg font-bold text-[#1A1A1A]">{member.stats.opportunitiesCount}</div>
-                        <div className="text-[10px] text-[#666]">Deals</div>
+                        <div className="text-[10px] text-[#666]">Opportunities</div>
                       </div>
                       <div>
                         <div className="text-lg font-bold text-[#1A1A1A]">{member.stats.conversationsCount}</div>
@@ -370,7 +370,7 @@ export const Team: React.FC = () => {
                 <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Member</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Role</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Leads</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Deals</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Opportunities</th>
                 <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4"></th>
               </tr>

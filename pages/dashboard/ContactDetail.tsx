@@ -452,7 +452,7 @@ export const ContactDetail: React.FC = () => {
                   </p>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-6 border-t border-black/5 pt-6">
+                <div className="border-t border-black/5 pt-6 space-y-4">
                   {contact.email && (
                     <div>
                       <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Email</div>
@@ -519,12 +519,12 @@ export const ContactDetail: React.FC = () => {
                   <div className="text-xs text-[#999] uppercase font-bold tracking-wider">Since Contact</div>
                 </div>
               </Card>
-              <Card className="bg-[#999] text-white flex flex-col justify-between group hover:scale-[1.02] transition-transform">
+              <Card className="bg-[#1A1A1A] text-white flex flex-col justify-between group hover:scale-[1.02] transition-transform">
                 <div>
-                  <div className="text-xl font-medium text-white mb-1">
+                  <div className="text-lg font-bold text-white mb-1 leading-tight">
                     {getBuyingPowerLabel(contact.buyingPower)}
                   </div>
-                  <div className="text-xs text-white/70 uppercase font-bold tracking-wider">Buying Power</div>
+                  <div className="text-xs text-white/60 uppercase font-bold tracking-wider">Buying Power</div>
                 </div>
               </Card>
             </div>
@@ -779,7 +779,7 @@ export const ContactDetail: React.FC = () => {
                     <div className="text-4xl font-light text-[#1A1A1A] mb-2">
                       {opportunities?.length || 0}
                     </div>
-                    <div className="text-sm text-[#666]">Active Deals</div>
+                    <div className="text-sm text-[#666]">Active Opportunities</div>
                   </div>
                 </div>
               </Card>

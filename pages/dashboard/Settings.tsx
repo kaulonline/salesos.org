@@ -393,8 +393,8 @@ export const Settings: React.FC = () => {
                   {[
                     { key: 'newLeadAssigned', label: 'New lead assigned to me' },
                     { key: 'leadStatusChange', label: 'Lead status changes' },
-                    { key: 'dealStageChange', label: 'Deal stage changes' },
-                    { key: 'dealWonLost', label: 'Deal won or lost' },
+                    { key: 'dealStageChange', label: 'Opportunity stage changes' },
+                    { key: 'dealWonLost', label: 'Opportunity won or lost' },
                     { key: 'taskAssigned', label: 'Task assigned to me' },
                     { key: 'taskDueReminder', label: 'Task due reminders' },
                     { key: 'meetingReminder', label: 'Meeting reminders' },

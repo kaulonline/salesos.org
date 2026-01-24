@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Filter, Download, Plus, X, Sparkles, ArrowRightLeft, AlertCircle, ChevronRight } from 'lucide-react';
+import { Filter, Download, Plus, X, Sparkles, ArrowRightLeft, AlertCircle, ChevronRight, Camera, Upload } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
+import { VirtualList } from '../../src/components/VirtualList';
 import { useLeads } from '../../src/hooks/useLeads';
+import { AIInsightsBanner } from '../../src/components/AIInsightsBanner';
+import { SmartCaptureModal } from '../../src/components/SmartCapture/SmartCaptureModal';
+import { ImportModal } from '../../src/components/ImportExport/ImportModal';
+import { ExportModal } from '../../src/components/ImportExport/ExportModal';
+import { BulkActionsBar } from '../../src/components/BulkActions/BulkActionsBar';
 import type { Lead, CreateLeadDto, LeadStatus, LeadRating } from '../../src/types';
 
 const STATUS_COLORS: Record<LeadStatus, 'green' | 'yellow' | 'neutral' | 'outline'> = {
@@ -172,12 +178,54 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
 
 export const Leads: React.FC = () => {
   const navigate = useNavigate();
-  const { leads, stats, loading, error, refetch, fetchStats, create, score, convert } = useLeads();
+  const { leads, stats, loading, error, refetch, fetchStats, create, score, convert, bulkDelete } = useLeads();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<string | null>(null);
+  const [showSmartCapture, setShowSmartCapture] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [scoringLead, setScoringLead] = useState<string | null>(null);
   const [convertingLead, setConvertingLead] = useState<string | null>(null);
+
+  // Selection handlers
+  const toggleSelectLead = (leadId: string) => {
+    setSelectedLeads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLeads.size === filteredLeads.length) {
+      setSelectedLeads(new Set());
+    } else {
+      setSelectedLeads(new Set(filteredLeads.map(l => l.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedLeads(new Set());
+  };
+
+  // Bulk delete handler
+  const handleBulkDelete = async (ids: string[]) => {
+    if (bulkDelete) {
+      await bulkDelete(ids);
+      clearSelection();
+      await fetchStats();
+    }
+  };
+
+  // Handle export of selected leads
+  const handleExportSelected = () => {
+    setShowExportModal(true);
+  };
 
   useEffect(() => {
     fetchStats();
@@ -293,6 +341,11 @@ export const Leads: React.FC = () => {
          </div>
       </div>
 
+      {/* AI Insights for Leads */}
+      <div className="mb-6 animate-in fade-in slide-in-from-bottom-3 duration-500">
+        <AIInsightsBanner maxInsights={2} showSummary={false} />
+      </div>
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
           <AlertCircle size={20} />
@@ -322,15 +375,32 @@ export const Leads: React.FC = () => {
                   />
                </div>
                <button
+                 onClick={() => setShowSmartCapture(true)}
+                 className="w-10 h-10 rounded-full bg-[#EAD07D] flex items-center justify-center text-[#1A1A1A] hover:bg-[#E5C973] transition-colors shrink-0"
+                 title="Smart Capture"
+               >
+                  <Camera size={18} />
+               </button>
+               <button
                  onClick={() => setShowCreateModal(true)}
                  className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] hover:bg-[#EAD07D] transition-colors shrink-0"
+                 title="Add Lead"
                >
                   <Plus size={18} />
                </button>
                <button className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200 transition-colors shrink-0">
                   <Filter size={16} />
                </button>
-               <button className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50 shrink-0">
+               <button
+                 onClick={() => setShowImportModal(true)}
+                 className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50 shrink-0"
+               >
+                  <Upload size={14} /> Import
+               </button>
+               <button
+                 onClick={() => setShowExportModal(true)}
+                 className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50 shrink-0"
+               >
                   <Download size={14} /> Export
                </button>
             </div>
@@ -338,7 +408,27 @@ export const Leads: React.FC = () => {
 
          {/* Table Header */}
          <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider mb-2">
-             <div className="col-span-1"></div>
+             <div className="col-span-1 flex items-center justify-center">
+               <button
+                 onClick={toggleSelectAll}
+                 className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                   selectedLeads.size === filteredLeads.length && filteredLeads.length > 0
+                     ? 'border-[#1A1A1A] bg-[#1A1A1A] text-white'
+                     : selectedLeads.size > 0
+                     ? 'border-[#1A1A1A] bg-[#1A1A1A]/20'
+                     : 'border-gray-300 hover:border-gray-400'
+                 }`}
+               >
+                 {selectedLeads.size === filteredLeads.length && filteredLeads.length > 0 && (
+                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                     <polyline points="20 6 9 17 4 12" />
+                   </svg>
+                 )}
+                 {selectedLeads.size > 0 && selectedLeads.size < filteredLeads.length && (
+                   <div className="w-2 h-0.5 bg-[#1A1A1A]" />
+                 )}
+               </button>
+             </div>
              <div className="col-span-3">Name</div>
              <div className="col-span-2">Company</div>
              <div className="col-span-2">Email</div>
@@ -347,100 +437,132 @@ export const Leads: React.FC = () => {
              <div className="col-span-2 text-right">Actions</div>
          </div>
 
-         {/* Table Rows */}
-         <div className="space-y-2">
-            {filteredLeads.length > 0 ? (
-                filteredLeads.map((lead) => (
-                   <div
-                      key={lead.id}
-                      className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${
-                        selectedLead === lead.id ? 'bg-[#EAD07D] shadow-md scale-[1.01]' : 'hover:bg-[#F8F8F6]'
-                      }`}
-                      onClick={() => setSelectedLead(selectedLead === lead.id ? null : lead.id)}
-                      onDoubleClick={() => navigate(`/dashboard/leads/${lead.id}`)}
-                   >
-                      <div className="col-span-1 flex items-center justify-center">
-                         <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                           selectedLead === lead.id ? 'border-black bg-black text-white' : 'border-gray-300'
-                         }`}>
-                            {selectedLead === lead.id && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                         </div>
-                      </div>
-                      <div className="col-span-3 flex items-center gap-3">
-                         <Avatar
-                           src={`https://ui-avatars.com/api/?name=${lead.firstName}+${lead.lastName}&background=random`}
-                           alt={`${lead.firstName} ${lead.lastName}`}
-                           size="md"
-                         />
-                         <div>
-                           <span className="font-medium text-[#1A1A1A]">{lead.firstName} {lead.lastName}</span>
-                           {lead.title && <div className="text-xs text-[#666]">{lead.title}</div>}
-                         </div>
-                      </div>
-                      <div className="col-span-2 text-sm text-[#666]">{lead.company || '-'}</div>
-                      <div className="col-span-2 text-sm text-[#666] truncate">{lead.email || '-'}</div>
-                      <div className="col-span-1">
-                        {lead.leadScore !== undefined ? (
-                          <span className={`text-sm font-medium ${
-                            lead.leadScore >= 70 ? 'text-green-600' :
-                            lead.leadScore >= 40 ? 'text-yellow-600' : 'text-gray-500'
-                          }`}>
-                            {lead.leadScore}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-[#999]">-</span>
+         {/* Table Rows - Virtualized for performance */}
+         <VirtualList
+            items={filteredLeads}
+            itemHeight={72}
+            keyExtractor={(lead) => lead.id}
+            className="max-h-[calc(100vh-400px)]"
+            gap={8}
+            emptyMessage={searchQuery ? `No leads found matching "${searchQuery}"` : 'No leads yet. Create your first lead!'}
+            renderItem={(lead) => (
+               <div
+                  className={`grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl items-center transition-all cursor-pointer ${
+                    selectedLeads.has(lead.id) ? 'bg-[#EAD07D]/30 shadow-sm' : 'hover:bg-[#F8F8F6]'
+                  }`}
+                  onClick={() => navigate(`/dashboard/leads/${lead.id}`)}
+               >
+                  <div className="col-span-1 flex items-center justify-center">
+                     <button
+                       onClick={(e) => { e.stopPropagation(); toggleSelectLead(lead.id); }}
+                       className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                         selectedLeads.has(lead.id) ? 'border-[#1A1A1A] bg-[#1A1A1A] text-white' : 'border-gray-300 hover:border-gray-400'
+                       }`}
+                     >
+                        {selectedLeads.has(lead.id) && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
-                      </div>
-                      <div className="col-span-1">
-                         <Badge variant={STATUS_COLORS[lead.status] || 'neutral'} dot>
-                            {lead.status.toLowerCase()}
-                         </Badge>
-                      </div>
-                      <div className="col-span-2 flex justify-end gap-2">
-                         <button
-                           onClick={(e) => { e.stopPropagation(); handleScoreLead(lead.id); }}
-                           disabled={scoringLead === lead.id}
-                           className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
-                           title="AI Score"
-                         >
-                           <Sparkles size={16} className={scoringLead === lead.id ? 'animate-spin' : ''} />
-                         </button>
-                         {lead.status === 'QUALIFIED' && (
-                           <button
-                             onClick={(e) => { e.stopPropagation(); handleConvertLead(lead.id); }}
-                             disabled={convertingLead === lead.id}
-                             className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
-                             title="Convert to Account"
-                           >
-                             <ArrowRightLeft size={16} className={convertingLead === lead.id ? 'animate-pulse' : ''} />
-                           </button>
-                         )}
-                         <button
-                           onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/leads/${lead.id}`); }}
-                           className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors"
-                           title="View Details"
-                         >
-                           <ChevronRight size={16} />
-                         </button>
-                      </div>
-                   </div>
-                ))
-            ) : (
-                <div className="text-center py-20 text-[#666]">
-                    {searchQuery ? `No leads found matching "${searchQuery}"` : 'No leads yet. Create your first lead!'}
-                </div>
+                     </button>
+                  </div>
+                  <div className="col-span-3 flex items-center gap-3">
+                     <Avatar
+                       src={`https://ui-avatars.com/api/?name=${lead.firstName}+${lead.lastName}&background=random`}
+                       alt={`${lead.firstName} ${lead.lastName}`}
+                       size="md"
+                     />
+                     <div>
+                       <span className="font-medium text-[#1A1A1A]">{lead.firstName} {lead.lastName}</span>
+                       {lead.title && <div className="text-xs text-[#666]">{lead.title}</div>}
+                     </div>
+                  </div>
+                  <div className="col-span-2 text-sm text-[#666]">{lead.company || '-'}</div>
+                  <div className="col-span-2 text-sm text-[#666] truncate">{lead.email || '-'}</div>
+                  <div className="col-span-1">
+                    {lead.leadScore !== undefined ? (
+                      <span className={`text-sm font-medium ${
+                        lead.leadScore >= 70 ? 'text-green-600' :
+                        lead.leadScore >= 40 ? 'text-yellow-600' : 'text-gray-500'
+                      }`}>
+                        {lead.leadScore}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[#999]">-</span>
+                    )}
+                  </div>
+                  <div className="col-span-1">
+                     <Badge variant={STATUS_COLORS[lead.status] || 'neutral'} dot>
+                        {lead.status.toLowerCase()}
+                     </Badge>
+                  </div>
+                  <div className="col-span-2 flex justify-end gap-2">
+                     <button
+                       onClick={(e) => { e.stopPropagation(); handleScoreLead(lead.id); }}
+                       disabled={scoringLead === lead.id}
+                       className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+                       title="AI Score"
+                     >
+                       <Sparkles size={16} className={scoringLead === lead.id ? 'animate-spin' : ''} />
+                     </button>
+                     {lead.status === 'QUALIFIED' && (
+                       <button
+                         onClick={(e) => { e.stopPropagation(); handleConvertLead(lead.id); }}
+                         disabled={convertingLead === lead.id}
+                         className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+                         title="Convert to Account"
+                       >
+                         <ArrowRightLeft size={16} className={convertingLead === lead.id ? 'animate-pulse' : ''} />
+                       </button>
+                     )}
+                     <button
+                       onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/leads/${lead.id}`); }}
+                       className="p-2 rounded-lg hover:bg-white/50 text-[#666] hover:text-[#1A1A1A] transition-colors"
+                       title="View Details"
+                     >
+                       <ChevronRight size={16} />
+                     </button>
+                  </div>
+               </div>
             )}
-         </div>
+         />
       </Card>
 
       <CreateLeadModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateLead}
+      />
+
+      <SmartCaptureModal
+        isOpen={showSmartCapture}
+        onClose={() => setShowSmartCapture(false)}
+      />
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        entityType="LEAD"
+        onSuccess={() => {
+          refetch();
+          fetchStats();
+        }}
+      />
+
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        entityType="LEAD"
+        selectedIds={selectedLeads.size > 0 ? Array.from(selectedLeads) : undefined}
+      />
+
+      <BulkActionsBar
+        selectedCount={selectedLeads.size}
+        selectedIds={Array.from(selectedLeads)}
+        onClearSelection={clearSelection}
+        entityName="lead"
+        onDelete={handleBulkDelete}
+        onExport={handleExportSelected}
       />
     </div>
   );

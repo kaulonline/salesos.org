@@ -17,12 +17,12 @@
               body: ['Inter', 'sans-serif'],
             },
             colors: {
-              background: '#F2F1EA', // Warm beige background
-              surface: '#FFFFFF',     // White cards
-              primary: '#EAD07D',     // The signature yellow/gold
-              secondary: '#1A1A1A',   // Dark charcoal/black for strong contrast
+              background: '#F2F1EA',
+              surface: '#FFFFFF',
+              primary: '#EAD07D',
+              secondary: '#1A1A1A',
               muted: '#888888',
-              success: '#93C01F',     // Bright green for checkmarks
+              success: '#93C01F',
               'surface-hover': '#F8F8F6',
             },
             backgroundImage: {
@@ -88,22 +88,24 @@
         scrollbar-width: none;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.2.0,react-dom@18.2.0",
-    "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.error('SW registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

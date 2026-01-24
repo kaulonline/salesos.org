@@ -11,6 +11,7 @@ export { default as meetingsApi } from './meetings';
 export { default as dashboardApi } from './dashboard';
 export { default as adminApi } from './admin';
 export { default as usersApi } from './users';
+export { default as importExportApi } from './importExport';
 
 // Re-export filter types
 export type { LeadFilters } from './leads';
@@ -41,3 +42,17 @@ export type {
   QuotaProgress,
   StorageUsage,
 } from './users';
+
+// Re-export import/export types
+export type {
+  ImportEntityType,
+  ExportEntityType,
+  ExportFormat,
+  FieldMapping,
+  ImportOptions,
+  ImportPreviewResult,
+  ImportResult,
+  ExportRequest,
+  ExportResult,
+  ExportFieldDefinition,
+} from './importExport';

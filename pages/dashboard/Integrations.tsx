@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plug,
   Search,
@@ -19,12 +19,23 @@ import {
   Globe,
   Shield,
   ArrowRight,
-  ChevronRight,
+  Loader2,
+  Trash2,
   AlertCircle
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import {
+  emailIntegrationsApi,
+  calendarIntegrationsApi,
+  EmailConnection,
+  CalendarConnection,
+  EmailProvider,
+  CalendarProvider,
+  ConnectionStatus,
+} from '../../src/api/integrations';
 
 interface Integration {
   id: string;
@@ -36,23 +47,21 @@ interface Integration {
   lastSync?: string;
   dataPoints?: number;
   popular: boolean;
+  provider?: EmailProvider | CalendarProvider;
+  connectionId?: string;
+  configured?: boolean;
 }
 
-const INTEGRATIONS: Integration[] = [
-  // Connected
-  { id: 'gmail', name: 'Gmail', description: 'Sync emails, track opens, and log communications automatically.', logo: '📧', category: 'email', status: 'connected', lastSync: '2 min ago', dataPoints: 12450, popular: true },
-  { id: 'google-calendar', name: 'Google Calendar', description: 'Sync meetings, schedule calls, and never miss a follow-up.', logo: '📅', category: 'calendar', status: 'connected', lastSync: '5 min ago', dataPoints: 342, popular: true },
-  { id: 'slack', name: 'Slack', description: 'Get deal alerts, team notifications, and AI summaries in Slack.', logo: '💬', category: 'communication', status: 'connected', lastSync: '1 min ago', dataPoints: 8920, popular: true },
-  { id: 'stripe', name: 'Stripe', description: 'Sync payments, invoices, and revenue data automatically.', logo: '💳', category: 'payment', status: 'connected', lastSync: '15 min ago', dataPoints: 156, popular: true },
-
-  // Available
-  { id: 'outlook', name: 'Microsoft Outlook', description: 'Connect Outlook for email and calendar sync.', logo: '📬', category: 'email', status: 'disconnected', popular: true },
+// Static integrations that aren't yet implemented
+const STATIC_INTEGRATIONS: Integration[] = [
+  { id: 'slack', name: 'Slack', description: 'Get deal alerts, team notifications, and AI summaries in Slack.', logo: '💬', category: 'communication', status: 'disconnected', popular: true },
+  { id: 'stripe', name: 'Stripe', description: 'Sync payments, invoices, and revenue data automatically.', logo: '💳', category: 'payment', status: 'disconnected', popular: true },
   { id: 'hubspot', name: 'HubSpot', description: 'Two-way sync contacts, deals, and marketing data.', logo: '🔶', category: 'analytics', status: 'disconnected', popular: true },
   { id: 'salesforce', name: 'Salesforce', description: 'Import existing CRM data and sync bidirectionally.', logo: '☁️', category: 'analytics', status: 'disconnected', popular: true },
   { id: 'zoom', name: 'Zoom', description: 'Auto-log meetings, record calls, and generate AI transcripts.', logo: '📹', category: 'communication', status: 'disconnected', popular: true },
   { id: 'docusign', name: 'DocuSign', description: 'Send contracts and track e-signatures from within deals.', logo: '✍️', category: 'storage', status: 'disconnected', popular: false },
   { id: 'dropbox', name: 'Dropbox', description: 'Attach and share files directly from Dropbox.', logo: '📦', category: 'storage', status: 'disconnected', popular: false },
-  { id: 'linkedin', name: 'LinkedIn Sales Nav', description: 'Enrich contacts and track prospect activity.', logo: '💼', category: 'analytics', status: 'error', lastSync: 'Auth expired', popular: true },
+  { id: 'linkedin', name: 'LinkedIn Sales Nav', description: 'Enrich contacts and track prospect activity.', logo: '💼', category: 'analytics', status: 'disconnected', popular: true },
   { id: 'zapier', name: 'Zapier', description: 'Connect 5000+ apps with custom automations.', logo: '⚡', category: 'analytics', status: 'disconnected', popular: true },
   { id: 'intercom', name: 'Intercom', description: 'Sync customer conversations and support tickets.', logo: '💭', category: 'communication', status: 'disconnected', popular: false },
   { id: 'okta', name: 'Okta SSO', description: 'Enterprise single sign-on and user provisioning.', logo: '🔐', category: 'security', status: 'disconnected', popular: false },
@@ -71,19 +80,179 @@ const CATEGORIES = [
   { id: 'security', label: 'Security', icon: Shield },
 ];
 
+function formatLastSync(date: string | null): string {
+  if (!date) return 'Never';
+  const diff = Date.now() - new Date(date).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? 's' : ''} ago`;
+}
+
+function mapConnectionStatus(status: ConnectionStatus): 'connected' | 'disconnected' | 'error' {
+  switch (status) {
+    case ConnectionStatus.ACTIVE:
+      return 'connected';
+    case ConnectionStatus.ERROR:
+    case ConnectionStatus.EXPIRED:
+      return 'error';
+    default:
+      return 'disconnected';
+  }
+}
+
 export const IntegrationsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
 
+  // Real data from API
+  const [emailConnections, setEmailConnections] = useState<EmailConnection[]>([]);
+  const [calendarConnections, setCalendarConnections] = useState<CalendarConnection[]>([]);
+  const [availableEmailIntegrations, setAvailableEmailIntegrations] = useState<Integration[]>([]);
+  const [availableCalendarIntegrations, setAvailableCalendarIntegrations] = useState<Integration[]>([]);
+
+  // Action states
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Handle OAuth redirect result
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+    const provider = searchParams.get('provider');
+    const email = searchParams.get('email');
+
+    if (success === 'true' && provider) {
+      setNotification({
+        type: 'success',
+        message: `Successfully connected ${provider}${email ? ` (${email})` : ''}`,
+      });
+      // Clear URL params
+      window.history.replaceState({}, '', '/dashboard/integrations');
+      // Refresh data
+      loadData();
+    } else if (error) {
+      setNotification({
+        type: 'error',
+        message: `Connection failed: ${error}`,
+      });
+      window.history.replaceState({}, '', '/dashboard/integrations');
+    }
+  }, [searchParams]);
+
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [emailConns, calendarConns, emailAvailable, calendarAvailable] = await Promise.all([
+        emailIntegrationsApi.getConnections().catch(() => ({ connections: [] })),
+        calendarIntegrationsApi.getConnections().catch(() => ({ connections: [] })),
+        emailIntegrationsApi.getAvailable().catch(() => ({ integrations: [] })),
+        calendarIntegrationsApi.getAvailable().catch(() => ({ integrations: [] })),
+      ]);
+
+      setEmailConnections(emailConns.connections || []);
+      setCalendarConnections(calendarConns.connections || []);
+
+      // Map available email integrations
+      const emailIntegrations: Integration[] = (emailAvailable.integrations || []).map(int => ({
+        id: `email-${int.provider.toLowerCase()}`,
+        name: int.name,
+        description: int.description,
+        logo: int.provider === 'GMAIL' ? '📧' : '📬',
+        category: 'email' as const,
+        status: 'disconnected' as const,
+        popular: true,
+        provider: int.provider as EmailProvider,
+        configured: int.configured,
+      }));
+
+      // Map available calendar integrations
+      const calendarIntegrations: Integration[] = (calendarAvailable.integrations || []).map(int => ({
+        id: `calendar-${int.provider.toLowerCase()}`,
+        name: int.name,
+        description: int.description,
+        logo: int.provider === 'GOOGLE' ? '📅' : '📆',
+        category: 'calendar' as const,
+        status: 'disconnected' as const,
+        popular: true,
+        provider: int.provider as CalendarProvider,
+        configured: int.configured,
+      }));
+
+      setAvailableEmailIntegrations(emailIntegrations);
+      setAvailableCalendarIntegrations(calendarIntegrations);
+    } catch (error) {
+      console.error('Failed to load integrations:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const filteredIntegrations = INTEGRATIONS.filter(int => {
-    const matchesSearch = int.name.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Build integrations list with connected status
+  const integrations: Integration[] = [
+    // Connected email integrations
+    ...emailConnections.map(conn => ({
+      id: `email-conn-${conn.id}`,
+      name: conn.provider === EmailProvider.GMAIL ? 'Gmail' : 'Microsoft Outlook',
+      description: conn.email,
+      logo: conn.provider === EmailProvider.GMAIL ? '📧' : '📬',
+      category: 'email' as const,
+      status: mapConnectionStatus(conn.status),
+      lastSync: formatLastSync(conn.lastSyncAt),
+      dataPoints: conn.emailsSynced,
+      popular: true,
+      provider: conn.provider,
+      connectionId: conn.id,
+    })),
+    // Connected calendar integrations
+    ...calendarConnections.map(conn => ({
+      id: `calendar-conn-${conn.id}`,
+      name: conn.provider === CalendarProvider.GOOGLE ? 'Google Calendar' : 'Outlook Calendar',
+      description: conn.email,
+      logo: conn.provider === CalendarProvider.GOOGLE ? '📅' : '📆',
+      category: 'calendar' as const,
+      status: mapConnectionStatus(conn.status),
+      lastSync: formatLastSync(conn.lastSyncAt),
+      dataPoints: conn.eventsSynced,
+      popular: true,
+      provider: conn.provider,
+      connectionId: conn.id,
+    })),
+    // Available (disconnected) email integrations
+    ...availableEmailIntegrations.filter(int =>
+      !emailConnections.some(conn => conn.provider === int.provider)
+    ),
+    // Available (disconnected) calendar integrations
+    ...availableCalendarIntegrations.filter(int =>
+      !calendarConnections.some(conn => conn.provider === int.provider)
+    ),
+    // Static integrations
+    ...STATIC_INTEGRATIONS,
+  ];
+
+  const filteredIntegrations = integrations.filter(int => {
+    const matchesSearch = int.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          int.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || int.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'connected' && int.status === 'connected') ||
@@ -91,8 +260,90 @@ export const IntegrationsPage: React.FC = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const connectedCount = INTEGRATIONS.filter(i => i.status === 'connected').length;
-  const totalDataPoints = INTEGRATIONS.reduce((sum, i) => sum + (i.dataPoints || 0), 0);
+  const connectedCount = integrations.filter(i => i.status === 'connected').length;
+  const totalDataPoints = integrations.reduce((sum, i) => sum + (i.dataPoints || 0), 0);
+
+  const handleConnect = async (integration: Integration) => {
+    if (!integration.provider || !integration.configured) {
+      setNotification({
+        type: 'error',
+        message: integration.configured === false
+          ? `${integration.name} is not configured. Please configure OAuth credentials in the backend.`
+          : 'This integration is not yet available.',
+      });
+      return;
+    }
+
+    setConnecting(integration.id);
+    try {
+      let result;
+      if (integration.category === 'email') {
+        result = await emailIntegrationsApi.initiateOAuth(integration.provider as EmailProvider);
+      } else if (integration.category === 'calendar') {
+        result = await calendarIntegrationsApi.initiateOAuth(integration.provider as CalendarProvider);
+      }
+
+      if (result?.authUrl) {
+        // Redirect to OAuth provider
+        window.location.href = result.authUrl;
+      }
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to initiate connection',
+      });
+    } finally {
+      setConnecting(null);
+    }
+  };
+
+  const handleSync = async (integration: Integration) => {
+    if (!integration.connectionId) return;
+
+    setSyncing(integration.id);
+    try {
+      if (integration.category === 'email') {
+        await emailIntegrationsApi.triggerSync(integration.connectionId);
+      } else if (integration.category === 'calendar') {
+        await calendarIntegrationsApi.triggerSync(integration.connectionId);
+      }
+      setNotification({ type: 'success', message: 'Sync triggered successfully' });
+      loadData();
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to trigger sync',
+      });
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const handleDisconnect = async (integration: Integration) => {
+    if (!integration.connectionId) return;
+
+    if (!window.confirm(`Are you sure you want to disconnect ${integration.name}?`)) {
+      return;
+    }
+
+    setDisconnecting(integration.id);
+    try {
+      if (integration.category === 'email') {
+        await emailIntegrationsApi.deleteConnection(integration.connectionId);
+      } else if (integration.category === 'calendar') {
+        await calendarIntegrationsApi.deleteConnection(integration.connectionId);
+      }
+      setNotification({ type: 'success', message: `${integration.name} disconnected successfully` });
+      loadData();
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to disconnect',
+      });
+    } finally {
+      setDisconnecting(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -111,6 +362,28 @@ export const IntegrationsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center gap-3 ${
+          notification.type === 'success'
+            ? 'bg-green-50 border border-green-200 text-green-800'
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          {notification.type === 'success' ? (
+            <CheckCircle2 size={18} className="text-green-600" />
+          ) : (
+            <AlertCircle size={18} className="text-red-600" />
+          )}
+          <span className="font-medium text-sm">{notification.message}</span>
+          <button
+            onClick={() => setNotification(null)}
+            className="ml-2 text-gray-400 hover:text-gray-600"
+          >
+            <XCircle size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -144,7 +417,7 @@ export const IntegrationsPage: React.FC = () => {
             <Zap size={18} className="text-[#EAD07D]" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#1A1A1A]">{(totalDataPoints / 1000).toFixed(1)}K</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalDataPoints > 1000 ? `${(totalDataPoints / 1000).toFixed(1)}K` : totalDataPoints}</div>
             <div className="text-xs text-[#666]">Data Points Synced</div>
           </div>
         </Card>
@@ -162,7 +435,7 @@ export const IntegrationsPage: React.FC = () => {
             <Globe size={18} className="text-[#1A1A1A]" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#1A1A1A]">{INTEGRATIONS.length}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{integrations.length}</div>
             <div className="text-xs text-[#666]">Available</div>
           </div>
         </Card>
@@ -219,7 +492,7 @@ export const IntegrationsPage: React.FC = () => {
       </div>
 
       {/* Connected Integrations */}
-      {statusFilter !== 'disconnected' && INTEGRATIONS.filter(i => i.status === 'connected').length > 0 && (
+      {statusFilter !== 'disconnected' && filteredIntegrations.filter(i => i.status === 'connected').length > 0 && (
         <div className="mb-8">
           <h2 className="text-sm font-bold text-[#999] uppercase tracking-wider mb-4">Connected</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,7 +517,7 @@ export const IntegrationsPage: React.FC = () => {
                         <Clock size={12} />
                         Last sync: {integration.lastSync}
                       </div>
-                      {integration.dataPoints && (
+                      {integration.dataPoints !== undefined && (
                         <div className="flex items-center gap-1">
                           <Database size={12} />
                           {integration.dataPoints.toLocaleString()} records
@@ -253,11 +526,29 @@ export const IntegrationsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 rounded-lg hover:bg-white transition-colors">
-                      <RefreshCw size={16} className="text-[#666]" />
+                    <button
+                      onClick={() => handleSync(integration)}
+                      disabled={syncing === integration.id}
+                      className="p-2 rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+                      title="Sync now"
+                    >
+                      {syncing === integration.id ? (
+                        <Loader2 size={16} className="text-[#666] animate-spin" />
+                      ) : (
+                        <RefreshCw size={16} className="text-[#666]" />
+                      )}
                     </button>
-                    <button className="p-2 rounded-lg hover:bg-white transition-colors">
-                      <Settings size={16} className="text-[#666]" />
+                    <button
+                      onClick={() => handleDisconnect(integration)}
+                      disabled={disconnecting === integration.id}
+                      className="p-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                      title="Disconnect"
+                    >
+                      {disconnecting === integration.id ? (
+                        <Loader2 size={16} className="text-red-500 animate-spin" />
+                      ) : (
+                        <Trash2 size={16} className="text-red-500" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -268,7 +559,7 @@ export const IntegrationsPage: React.FC = () => {
       )}
 
       {/* Error Integrations */}
-      {INTEGRATIONS.filter(i => i.status === 'error').length > 0 && statusFilter !== 'connected' && (
+      {filteredIntegrations.filter(i => i.status === 'error').length > 0 && statusFilter !== 'connected' && (
         <div className="mb-8">
           <h2 className="text-sm font-bold text-[#999] uppercase tracking-wider mb-4">Needs Attention</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -286,10 +577,18 @@ export const IntegrationsPage: React.FC = () => {
                       <h3 className="font-bold text-[#1A1A1A]">{integration.name}</h3>
                       <Badge variant="neutral" size="sm" dot>Needs Attention</Badge>
                     </div>
-                    <p className="text-sm text-amber-600 mb-2">{integration.lastSync}</p>
+                    <p className="text-sm text-amber-600 mb-2">{integration.description}</p>
                   </div>
-                  <button className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors">
-                    Reconnect
+                  <button
+                    onClick={() => handleConnect(integration)}
+                    disabled={connecting === integration.id}
+                    className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-black transition-colors disabled:opacity-50"
+                  >
+                    {connecting === integration.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      'Reconnect'
+                    )}
                   </button>
                 </div>
               </Card>
@@ -317,12 +616,21 @@ export const IntegrationsPage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-[#1A1A1A] group-hover:text-[#EAD07D] transition-colors">{integration.name}</h3>
                       {integration.popular && <Badge variant="yellow" size="sm">Popular</Badge>}
+                      {integration.configured === false && <Badge variant="neutral" size="sm">Not Configured</Badge>}
                     </div>
                     <p className="text-sm text-[#666] line-clamp-2">{integration.description}</p>
                   </div>
                 </div>
-                <button className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all flex items-center justify-center gap-2 group-hover:bg-[#1A1A1A] group-hover:text-white group-hover:border-[#1A1A1A]">
-                  Connect <ArrowRight size={14} />
+                <button
+                  onClick={() => handleConnect(integration)}
+                  disabled={connecting === integration.id || integration.configured === false}
+                  className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group-hover:bg-[#1A1A1A] group-hover:text-white group-hover:border-[#1A1A1A]"
+                >
+                  {connecting === integration.id ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <>Connect <ArrowRight size={14} /></>
+                  )}
                 </button>
               </Card>
             ))}

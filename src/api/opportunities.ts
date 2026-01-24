@@ -123,6 +123,27 @@ export const opportunitiesApi = {
   addContact: async (id: string, data: AddContactToOpportunityDto): Promise<void> => {
     await client.post(`/opportunities/${id}/contacts`, data);
   },
+
+  // Bulk Operations
+  bulkUpdate: async (ids: string[], updates: Partial<Opportunity>): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/opportunities/bulk/update', { ids, updates });
+    return response.data;
+  },
+
+  bulkDelete: async (ids: string[]): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/opportunities/bulk/delete', { ids });
+    return response.data;
+  },
+
+  bulkAssign: async (ids: string[], newOwnerId: string): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/opportunities/bulk/assign', { ids, newOwnerId });
+    return response.data;
+  },
+
+  bulkUpdateStage: async (ids: string[], stage: string): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/opportunities/bulk/stage', { ids, stage });
+    return response.data;
+  },
 };
 
 export default opportunitiesApi;

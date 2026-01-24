@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, Sparkles, LogOut, User, Shield } from 'lucide-react';
+import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, Sparkles, LogOut, User, Shield, BarChart3, Search } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
+import { OfflineIndicator } from '../src/components/OfflineIndicator';
+import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
 import { useAuth } from '../src/context/AuthContext';
 
 export const DashboardLayout: React.FC = () => {
@@ -11,6 +13,7 @@ export const DashboardLayout: React.FC = () => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { user, logout } = useAuth();
+  const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
   const handleLogout = () => {
     logout();
@@ -27,12 +30,13 @@ export const DashboardLayout: React.FC = () => {
     { label: 'AI Chat', href: '/dashboard/ai', icon: Sparkles, highlight: true },
     { label: 'Leads', href: '/dashboard/leads' },
     { label: 'Contacts', href: '/dashboard/contacts', icon: User },
-    { label: 'Companies', href: '/dashboard/companies', icon: Building2 },
-    { label: 'Deals', href: '/dashboard/deals' },
+    { label: 'Accounts', href: '/dashboard/companies', icon: Building2 },
+    { label: 'Opportunities', href: '/dashboard/deals' },
   ];
 
   const secondaryNavItems = [
     { label: 'Analytics', href: '/dashboard/analytics' },
+    { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
@@ -44,6 +48,7 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F2F1EA] text-[#1A1A1A] font-sans selection:bg-[#EAD07D] selection:text-[#1A1A1A]">
       <CommandPalette />
+      <GlobalSearch isOpen={searchOpen} onClose={closeSearch} />
       
       {/* Fixed Frosted Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
@@ -128,6 +133,17 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Search Button */}
+          <button
+            onClick={openSearch}
+            className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm group"
+          >
+            <Search size={16} />
+            <span className="hidden sm:inline">Search</span>
+            <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-[10px] text-gray-500 font-mono group-hover:bg-gray-200 transition-colors">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </button>
           <Link to="/dashboard/settings" className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm">
             <Settings size={16} />
             <span className="hidden sm:inline">Settings</span>
@@ -206,6 +222,9 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Bottom Fade Gradient */}
       <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#F2F1EA] via-[#F2F1EA]/80 to-transparent pointer-events-none z-40" />
+
+      {/* Offline Status Indicator */}
+      <OfflineIndicator />
     </div>
   );
 };

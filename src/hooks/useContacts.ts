@@ -83,6 +83,31 @@ export function useContacts(filters?: ContactFilters) {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => contactsApi.bulkDelete(ids),
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.contacts.list(filters) });
+      const previousContacts = queryClient.getQueryData<Contact[]>(queryKeys.contacts.list(filters));
+
+      queryClient.setQueryData<Contact[]>(
+        queryKeys.contacts.list(filters),
+        (old) => old?.filter((c) => !ids.includes(c.id))
+      );
+
+      return { previousContacts };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previousContacts) {
+        queryClient.setQueryData(queryKeys.contacts.list(filters), context.previousContacts);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.stats() });
+    },
+  });
+
   return {
     // Data
     contacts: contactsQuery.data ?? [],
@@ -104,11 +129,13 @@ export function useContacts(filters?: ContactFilters) {
     create: (data: CreateContactDto) => createMutation.mutateAsync(data),
     update: (id: string, data: UpdateContactDto) => updateMutation.mutateAsync({ id, data }),
     remove: (id: string) => deleteMutation.mutateAsync(id),
+    bulkDelete: (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
 
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isBulkDeleting: bulkDeleteMutation.isPending,
   };
 }
 

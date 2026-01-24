@@ -29,7 +29,7 @@ const AGENTS = [
     },
     { 
         id: 'cls-01', 
-        name: 'Deal Architect', 
+        name: 'Opportunity Architect', 
         role: 'Closer Agent', 
         status: 'Paused', 
         description: 'Drafts proposals, handles objection handling, and suggests negotiation strategies.',

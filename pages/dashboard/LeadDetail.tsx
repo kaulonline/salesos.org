@@ -431,7 +431,7 @@ export const LeadDetail: React.FC = () => {
                   <p className="text-[#666] leading-relaxed text-sm mb-6 max-w-xl">{lead.description}</p>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-6 border-t border-black/5 pt-6">
+                <div className="border-t border-black/5 pt-6 space-y-4">
                   {lead.email && (
                     <div>
                       <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Email</div>
@@ -455,9 +455,10 @@ export const LeadDetail: React.FC = () => {
                         href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-bold text-[#1A1A1A] hover:text-[#EAD07D] flex items-center gap-1"
+                        className="text-sm font-bold text-[#1A1A1A] hover:text-[#EAD07D] inline-flex items-center gap-1"
                       >
-                        {lead.website} <ExternalLink size={12} />
+                        {lead.website.replace(/^https?:\/\//, '')}
+                        <ExternalLink size={12} />
                       </a>
                     </div>
                   )}
@@ -484,9 +485,9 @@ export const LeadDetail: React.FC = () => {
                 className="flex flex-col justify-between group hover:scale-[1.02] transition-transform"
               >
                 <div>
-                  <div className="text-3xl font-medium text-white mb-1">
-                    {daysSinceContact !== null ? daysSinceContact : '-'}
-                    {daysSinceContact !== null && <span className="text-lg text-white/50">d</span>}
+                  <div className="flex items-baseline text-white mb-1">
+                    <span className="text-3xl font-bold">{daysSinceContact !== null ? daysSinceContact : '-'}</span>
+                    {daysSinceContact !== null && <span className="text-xl font-bold text-white/60 ml-0.5">d</span>}
                   </div>
                   <div className="text-xs text-white/50 uppercase font-bold tracking-wider">Since Contact</div>
                 </div>
@@ -513,7 +514,7 @@ export const LeadDetail: React.FC = () => {
           {/* Middle Row: Content & Details */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
             {/* Accordions Column */}
-            <div className="lg:col-span-4 space-y-4">
+            <div className="lg:col-span-5 space-y-4">
               <Card padding="sm" className="px-6 py-4 border border-black/5">
                 <button
                   onClick={() => toggleSection('basic')}
@@ -629,7 +630,7 @@ export const LeadDetail: React.FC = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-8 space-y-6">
+            <div className="lg:col-span-7 space-y-6">
               {/* Score Breakdown */}
               <Card className="p-8">
                 <div className="flex justify-between items-start mb-6">
@@ -974,7 +975,7 @@ export const LeadDetail: React.FC = () => {
                   />
                   <div>
                     <div className="font-medium text-[#1A1A1A]">Create Opportunity</div>
-                    <div className="text-sm text-[#666]">Create a new deal/opportunity</div>
+                    <div className="text-sm text-[#666]">Create a new opportunity</div>
                   </div>
                 </label>
               </div>

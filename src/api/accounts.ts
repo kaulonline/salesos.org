@@ -87,6 +87,22 @@ export const accountsApi = {
   delete: async (id: string): Promise<void> => {
     await client.delete(`/accounts/${id}`);
   },
+
+  // Bulk Operations
+  bulkUpdate: async (ids: string[], updates: Partial<Account>): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/accounts/bulk/update', { ids, updates });
+    return response.data;
+  },
+
+  bulkDelete: async (ids: string[]): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/accounts/bulk/delete', { ids });
+    return response.data;
+  },
+
+  bulkAssign: async (ids: string[], newOwnerId: string): Promise<{ count: number }> => {
+    const response = await client.post<{ count: number }>('/accounts/bulk/assign', { ids, newOwnerId });
+    return response.data;
+  },
 };
 
 export default accountsApi;

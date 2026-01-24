@@ -22,6 +22,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useCompanies } from '../../src/hooks/useCompanies';
+import { VirtualList } from '../../src/components/VirtualList';
 import type { Account, CreateAccountDto, AccountType } from '../../src/types';
 
 const getHealthColor = (score?: number) => {
@@ -62,7 +63,7 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      setError('Company name is required');
+      setError('Account name is required');
       return;
     }
     setLoading(true);
@@ -73,7 +74,7 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
       setFormData({ name: '', type: 'PROSPECT', website: '', industry: '', phone: '' });
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setError(e.message || 'Failed to create company');
+      setError(e.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,7 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-medium text-[#1A1A1A]">New Company</h2>
+          <h2 className="text-2xl font-medium text-[#1A1A1A]">New Account</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
@@ -100,7 +101,7 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-[#666] mb-1 block">Company Name *</label>
+            <label className="text-xs font-medium text-[#666] mb-1 block">Account Name *</label>
             <input
               type="text"
               value={formData.name}
@@ -167,7 +168,7 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
               className="flex-1 py-3 rounded-xl"
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Company'}
+              {loading ? 'Creating...' : 'Create Account'}
             </Button>
           </div>
         </form>
@@ -231,7 +232,7 @@ export const Companies: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-medium text-[#1A1A1A] mb-1">Companies</h1>
+          <h1 className="text-3xl font-medium text-[#1A1A1A] mb-1">Accounts</h1>
           <p className="text-[#666]">Manage accounts and track customer health</p>
         </div>
         <button
@@ -239,7 +240,7 @@ export const Companies: React.FC = () => {
           className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
         >
           <Plus size={18} />
-          Add Company
+          Add Account
         </button>
       </div>
 
@@ -345,7 +346,7 @@ export const Companies: React.FC = () => {
       {/* Companies Grid/List */}
       {filteredCompanies.length === 0 ? (
         <div className="text-center py-20 text-[#666]">
-          {searchQuery ? `No companies found matching "${searchQuery}"` : 'No companies yet. Add your first company!'}
+          {searchQuery ? `No accounts found matching "${searchQuery}"` : 'No accounts yet. Add your first account!'}
         </div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -430,58 +431,57 @@ export const Companies: React.FC = () => {
         </div>
       ) : (
         <Card className="overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-[#FAFAF8] border-b border-gray-100">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Company</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Type</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Health</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Revenue</th>
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Industry</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCompanies.map((company) => {
-                const healthColors = getHealthColor(company.healthScore);
-                return (
-                  <tr key={company.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                          <Building2 size={18} className="text-[#666]" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-[#1A1A1A]">{company.name}</div>
-                          <div className="text-xs text-[#666]">{company.domain || company.website || '-'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge className={getTypeStyle(company.type)} size="sm">
-                        {company.type?.toLowerCase() || 'prospect'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full ${healthColors.fill} rounded-full`} style={{ width: `${company.healthScore || 0}%` }} />
-                        </div>
-                        <span className={`text-sm font-medium ${healthColors.text}`}>{company.healthScore || 0}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-[#1A1A1A]">{formatCurrency(company.annualRevenue)}</td>
-                    <td className="px-6 py-4 text-sm text-[#666]">{company.industry || '-'}</td>
-                    <td className="px-6 py-4">
-                      <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                        <ChevronRight size={16} className="text-[#666]" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-4 bg-[#FAFAF8] border-b border-gray-100 px-6 py-4">
+            <div className="col-span-3 text-xs font-bold text-[#999] uppercase tracking-wider">Account</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Type</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Health</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Revenue</div>
+            <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Industry</div>
+            <div className="col-span-1"></div>
+          </div>
+          {/* Virtualized Table Body */}
+          <VirtualList
+            items={filteredCompanies}
+            itemHeight={72}
+            keyExtractor={(company) => company.id}
+            className="max-h-[calc(100vh-400px)]"
+            emptyMessage={searchQuery ? `No accounts found matching "${searchQuery}"` : 'No accounts yet. Add your first account!'}
+            renderItem={(company) => {
+              const healthColors = getHealthColor(company.healthScore);
+              return (
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors items-center">
+                  <div className="col-span-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <Building2 size={18} className="text-[#666]" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-[#1A1A1A]">{company.name}</div>
+                      <div className="text-xs text-[#666]">{company.domain || company.website || '-'}</div>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <Badge className={getTypeStyle(company.type)} size="sm">
+                      {company.type?.toLowerCase() || 'prospect'}
+                    </Badge>
+                  </div>
+                  <div className="col-span-2 flex items-center gap-2">
+                    <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full ${healthColors.fill} rounded-full`} style={{ width: `${company.healthScore || 0}%` }} />
+                    </div>
+                    <span className={`text-sm font-medium ${healthColors.text}`}>{company.healthScore || 0}%</span>
+                  </div>
+                  <div className="col-span-2 font-medium text-[#1A1A1A]">{formatCurrency(company.annualRevenue)}</div>
+                  <div className="col-span-2 text-sm text-[#666]">{company.industry || '-'}</div>
+                  <div className="col-span-1 flex justify-end">
+                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                      <ChevronRight size={16} className="text-[#666]" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }}
+          />
         </Card>
       )}
 

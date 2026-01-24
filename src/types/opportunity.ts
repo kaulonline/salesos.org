@@ -134,12 +134,27 @@ export interface PipelineStats {
 }
 
 export interface SalesForecast {
-  period: string;
-  committed: number;
-  bestCase: number;
-  pipeline: number;
+  // Backend fields
+  quarterRevenue: number;
+  quarterBestCase: number;
+  quarterCommit: number;
+  confidence: string;
+  quarterName: string;
+  opportunityCount: number;
+  monthly: {
+    month: string;
+    bestCase: number;
+    mostLikely: number;
+    commit: number;
+    closed: number;
+  }[];
+  // Optional legacy fields for compatibility
+  period?: string;
+  committed?: number;
+  bestCase?: number;
+  pipeline?: number;
   quota?: number;
-  byMonth: {
+  byMonth?: {
     month: string;
     forecast: number;
     actual?: number;

@@ -7,6 +7,7 @@ interface ContactTimelineProps {
   opportunityId?: string;
   accountId?: string;
   contactId?: string;
+  leadId?: string;
   limit?: number;
 }
 
@@ -34,12 +35,14 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
   opportunityId,
   accountId,
   contactId,
+  leadId,
   limit = 10
 }) => {
   const { activities, loading, error, refetch } = useActivities({
     opportunityId,
     accountId,
     contactId,
+    leadId,
   });
 
   const displayActivities = activities.slice(0, limit);
@@ -74,14 +77,14 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
 
   if (loading) {
     return (
-      <div className="relative pl-4 space-y-6">
-        <div className="absolute top-2 bottom-0 left-[19px] w-0.5 bg-gray-100"></div>
+      <div className="relative pl-2 space-y-4">
+        <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-gray-100"></div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="relative flex gap-4">
-            <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <div key={i} className="relative flex gap-3">
+            <Skeleton className="w-7 h-7 rounded-full shrink-0" />
             <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-2 w-full" />
             </div>
           </div>
         ))}
@@ -114,32 +117,32 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
   }
 
   return (
-    <div className="relative pl-4 space-y-8">
+    <div className="relative pl-2 space-y-4">
       {/* Continuous Line */}
-      <div className="absolute top-2 bottom-0 left-[19px] w-0.5 bg-gray-100"></div>
+      <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-gray-100"></div>
 
       {displayActivities.map((activity) => (
-        <div key={activity.id} className="relative flex gap-4 group">
-          <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm ${getColor(activity.type)}`}>
+        <div key={activity.id} className="relative flex gap-3 group">
+          <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm ${getColor(activity.type)}`}>
             {getIcon(activity.type)}
           </div>
-          <div className="flex-1 bg-white p-4 rounded-2xl border border-black/5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#1A1A1A] text-sm">{activity.subject}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#999] bg-[#F8F8F6] px-1.5 py-0.5 rounded">
-                  {getTypeLabel(activity.type)}
+          <div className="flex-1 min-w-0 bg-white p-3 rounded-xl border border-black/5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col gap-1 mb-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-[#1A1A1A] text-sm truncate">{activity.subject}</span>
+                <span className="text-[10px] text-[#999] font-medium whitespace-nowrap shrink-0">
+                  {formatTimeAgo(activity.createdAt)}
                 </span>
               </div>
-              <span className="text-xs text-[#999] font-medium whitespace-nowrap">
-                {formatTimeAgo(activity.createdAt)} {' '} {formatTime(activity.createdAt)}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#999]">
+                {getTypeLabel(activity.type)}
               </span>
             </div>
             {activity.description && (
-              <p className="text-sm text-[#666] leading-relaxed">{activity.description}</p>
+              <p className="text-xs text-[#666] leading-relaxed line-clamp-2">{activity.description}</p>
             )}
             {activity.user && (
-              <p className="text-xs text-[#999] mt-2">
+              <p className="text-[10px] text-[#999] mt-1.5">
                 by {activity.user.name || activity.user.email}
               </p>
             )}
@@ -148,7 +151,7 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
       ))}
 
       {activities.length > limit && (
-        <button className="relative z-10 flex items-center gap-2 ml-1 text-xs font-bold text-[#999] hover:text-[#1A1A1A] bg-[#F2F1EA] px-3 py-1 rounded-full w-fit transition-colors">
+        <button className="relative z-10 flex items-center gap-2 ml-1 text-xs font-bold text-[#999] hover:text-[#1A1A1A] bg-[#F2F1EA] px-3 py-1.5 rounded-full w-fit transition-colors">
           Load older activity ({activities.length - limit} more) <ArrowRight size={12} />
         </button>
       )}

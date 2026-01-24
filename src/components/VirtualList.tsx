@@ -13,6 +13,9 @@ interface VirtualListProps<T> {
   emptyMessage?: string;
   loadingMore?: boolean;
   gap?: number;
+  // Accessibility props
+  ariaLabel?: string;
+  role?: 'list' | 'listbox' | 'grid';
 }
 
 export interface VirtualListRef {
@@ -34,6 +37,8 @@ function VirtualListInner<T>(
     emptyMessage = 'No items',
     loadingMore = false,
     gap = 0,
+    ariaLabel,
+    role = 'list',
   }: VirtualListProps<T>,
   ref: React.ForwardedRef<VirtualListRef>
 ) {
@@ -76,7 +81,11 @@ function VirtualListInner<T>(
 
   if (items.length === 0) {
     return (
-      <div className={`flex items-center justify-center h-64 text-gray-500 ${className}`}>
+      <div
+        className={`flex items-center justify-center h-64 text-gray-500 ${className}`}
+        role="status"
+        aria-live="polite"
+      >
         {emptyMessage}
       </div>
     );
@@ -87,6 +96,9 @@ function VirtualListInner<T>(
       ref={parentRef}
       className={`overflow-auto ${className}`}
       onScroll={handleScroll}
+      role={role}
+      aria-label={ariaLabel}
+      tabIndex={0}
     >
       <div
         style={{
@@ -104,6 +116,9 @@ function VirtualListInner<T>(
               key={key}
               data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
+              role={role === 'list' ? 'listitem' : role === 'listbox' ? 'option' : 'row'}
+              aria-setsize={items.length}
+              aria-posinset={virtualItem.index + 1}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -120,8 +135,9 @@ function VirtualListInner<T>(
 
       {/* Loading more indicator */}
       {loadingMore && (
-        <div className="flex items-center justify-center py-4">
-          <div className="w-6 h-6 border-2 border-[#EAD07D] border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-4" role="status" aria-live="polite">
+          <div className="w-6 h-6 border-2 border-[#EAD07D] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+          <span className="sr-only">Loading more items</span>
         </div>
       )}
     </div>
@@ -142,6 +158,7 @@ interface HorizontalVirtualListProps<T> {
   className?: string;
   overscan?: number;
   gap?: number;
+  ariaLabel?: string;
 }
 
 export function HorizontalVirtualList<T>({
@@ -152,6 +169,7 @@ export function HorizontalVirtualList<T>({
   className = '',
   overscan = 3,
   gap = 0,
+  ariaLabel,
 }: HorizontalVirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -172,6 +190,10 @@ export function HorizontalVirtualList<T>({
     <div
       ref={parentRef}
       className={`overflow-x-auto ${className}`}
+      role="list"
+      aria-label={ariaLabel}
+      aria-orientation="horizontal"
+      tabIndex={0}
     >
       <div
         style={{
@@ -187,6 +209,9 @@ export function HorizontalVirtualList<T>({
           return (
             <div
               key={key}
+              role="listitem"
+              aria-setsize={items.length}
+              aria-posinset={virtualItem.index + 1}
               style={{
                 position: 'absolute',
                 top: 0,

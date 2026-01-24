@@ -257,13 +257,13 @@ export const Revenue: React.FC = () => {
         {/* Main Deals Table */}
         <Card padding="lg" className="lg:col-span-8">
           <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <h2 className="text-xl font-bold">Deals & Opportunities</h2>
+            <h2 className="text-xl font-bold">Opportunities</h2>
             <div className="flex gap-2 w-full md:w-auto">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input
                   type="text"
-                  placeholder="Search deals or companies..."
+                  placeholder="Search opportunities or accounts..."
                   className="w-full pl-9 pr-4 py-2 bg-[#F8F8F6] rounded-full text-sm outline-none focus:ring-1 focus:ring-[#EAD07D]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -279,8 +279,8 @@ export const Revenue: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b border-gray-100">
-                  <th className="pb-4 pl-4 text-xs font-bold text-[#999] uppercase tracking-wider">Deal Name</th>
-                  <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Company</th>
+                  <th className="pb-4 pl-4 text-xs font-bold text-[#999] uppercase tracking-wider">Opportunity Name</th>
+                  <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Account</th>
                   <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Close Date</th>
                   <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Amount</th>
                   <th className="pb-4 text-right pr-4 text-xs font-bold text-[#999] uppercase tracking-wider">Status</th>
@@ -316,7 +316,7 @@ export const Revenue: React.FC = () => {
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-[#666]">
                       <DollarSign size={32} className="mx-auto mb-2 opacity-30" />
-                      <p>No deals found</p>
+                      <p>No opportunities found</p>
                     </td>
                   </tr>
                 )}

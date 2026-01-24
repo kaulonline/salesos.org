@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Phone, Mail, Printer, ArrowLeft, ChevronDown, ChevronUp, MapPin, AlertCircle, Building2, TrendingUp, Sparkles } from 'lucide-react';
+import { Phone, Mail, Printer, ArrowLeft, ChevronDown, ChevronUp, MapPin, AlertCircle, Building2, TrendingUp, Sparkles, Check, X, ArrowRight, Loader2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
@@ -8,6 +8,20 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { ContactTimeline } from '../../components/dashboard';
 import { useDeal, useDeals } from '../../src/hooks';
 import type { OpportunityStage, OpportunityAnalysis } from '../../src/types';
+
+// All available stages in order
+const STAGES: OpportunityStage[] = [
+  'PROSPECTING',
+  'QUALIFICATION',
+  'NEEDS_ANALYSIS',
+  'VALUE_PROPOSITION',
+  'DECISION_MAKERS_IDENTIFIED',
+  'PERCEPTION_ANALYSIS',
+  'PROPOSAL_PRICE_QUOTE',
+  'NEGOTIATION_REVIEW',
+  'CLOSED_WON',
+  'CLOSED_LOST',
+];
 
 const formatCurrency = (amount?: number) => {
   if (!amount) return '$0';
@@ -70,12 +84,25 @@ const calculateDaysInStage = (lastActivityDate?: string) => {
 export const DealDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deal, analysis, loading, error, fetchAnalysis } = useDeal(id);
-  const { deals: recentDeals, loading: dealsLoading } = useDeals();
+  const { deal, analysis, loading, error, fetchAnalysis, refetch } = useDeal(id);
+  const {
+    deals: recentDeals,
+    loading: dealsLoading,
+    update,
+    advanceStage,
+    closeWon,
+    closeLost,
+    isUpdating,
+  } = useDeals();
 
   const [openSection, setOpenSection] = useState<string | null>('basic');
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [analyzingDeal, setAnalyzingDeal] = useState(false);
+  const [showStageDropdown, setShowStageDropdown] = useState(false);
+  const [showCloseWonModal, setShowCloseWonModal] = useState(false);
+  const [showCloseLostModal, setShowCloseLostModal] = useState(false);
+  const [lostReason, setLostReason] = useState('');
+  const [stageUpdating, setStageUpdating] = useState(false);
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -89,6 +116,72 @@ export const DealDetail: React.FC = () => {
       setAnalyzingDeal(false);
     }
   };
+
+  // Handle stage change
+  const handleStageChange = async (newStage: OpportunityStage) => {
+    if (!deal || stageUpdating) return;
+    setStageUpdating(true);
+    setShowStageDropdown(false);
+    try {
+      await update(deal.id, { stage: newStage });
+      await refetch();
+    } catch (err) {
+      console.error('Failed to update stage:', err);
+    } finally {
+      setStageUpdating(false);
+    }
+  };
+
+  // Handle advance to next stage
+  const handleAdvanceStage = async () => {
+    if (!deal || stageUpdating) return;
+    const currentIndex = STAGES.indexOf(deal.stage);
+    // Don't advance if already at closed stages
+    if (currentIndex >= 7) return;
+    setStageUpdating(true);
+    try {
+      await advanceStage(deal.id);
+      await refetch();
+    } catch (err) {
+      console.error('Failed to advance stage:', err);
+    } finally {
+      setStageUpdating(false);
+    }
+  };
+
+  // Handle close won
+  const handleCloseWon = async () => {
+    if (!deal || stageUpdating) return;
+    setStageUpdating(true);
+    try {
+      await closeWon(deal.id, { actualCloseDate: new Date().toISOString() });
+      setShowCloseWonModal(false);
+      await refetch();
+    } catch (err) {
+      console.error('Failed to close won:', err);
+    } finally {
+      setStageUpdating(false);
+    }
+  };
+
+  // Handle close lost
+  const handleCloseLost = async () => {
+    if (!deal || stageUpdating || !lostReason.trim()) return;
+    setStageUpdating(true);
+    try {
+      await closeLost(deal.id, { lossReason: lostReason.trim() });
+      setShowCloseLostModal(false);
+      setLostReason('');
+      await refetch();
+    } catch (err) {
+      console.error('Failed to close lost:', err);
+    } finally {
+      setStageUpdating(false);
+    }
+  };
+
+  const isClosedStage = deal?.stage === 'CLOSED_WON' || deal?.stage === 'CLOSED_LOST';
+  const canAdvance = deal && !isClosedStage && STAGES.indexOf(deal.stage) < 7;
 
   // Get velocity data based on deal stage
   const velocityData = [
@@ -161,8 +254,8 @@ export const DealDetail: React.FC = () => {
       <div className="max-w-[1600px] mx-auto p-6">
         <div className="flex flex-col items-center justify-center py-20">
           <AlertCircle size={48} className="text-red-400 mb-4" />
-          <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Deal Not Found</h2>
-          <p className="text-[#666] mb-6">{error || 'This deal may have been deleted or you may not have access to it.'}</p>
+          <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Opportunity Not Found</h2>
+          <p className="text-[#666] mb-6">{error || 'This opportunity may have been deleted or you may not have access to it.'}</p>
           <button
             onClick={() => navigate('/dashboard/deals')}
             className="flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-[#333] transition-colors"
@@ -259,6 +352,38 @@ export const DealDetail: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Stage Action Buttons */}
+                {!isClosedStage && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {canAdvance && (
+                      <button
+                        onClick={handleAdvanceStage}
+                        disabled={stageUpdating}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-full text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+                      >
+                        {stageUpdating ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
+                        Advance Stage
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowCloseWonModal(true)}
+                      disabled={stageUpdating}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      <Check size={14} />
+                      Close Won
+                    </button>
+                    <button
+                      onClick={() => setShowCloseLostModal(true)}
+                      disabled={stageUpdating}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                      <X size={14} />
+                      Close Lost
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2 mb-6">
                   {tags.map((tag, i) => (
                     <Badge key={i} variant={i === 0 ? 'yellow' : i === 1 ? 'dark' : 'outline'} size="md" dot={i === 0}>
@@ -280,9 +405,9 @@ export const DealDetail: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-6 border-t border-black/5 pt-6">
+                <div className="border-t border-black/5 pt-6 space-y-4">
                   <div>
-                    <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Company</div>
+                    <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Account</div>
                     <div className="text-sm font-bold text-[#1A1A1A]">{deal.account?.name || 'Not specified'}</div>
                   </div>
                   <div>
@@ -292,7 +417,7 @@ export const DealDetail: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Deal Value</div>
+                    <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-1">Opportunity Value</div>
                     <div className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(deal.amount)}</div>
                   </div>
                 </div>
@@ -309,7 +434,7 @@ export const DealDetail: React.FC = () => {
                       {deal.amount ? (deal.amount / 1000).toFixed(0) + 'K' : '0'}
                     </span>
                   </div>
-                  <div className="text-xs text-[#1A1A1A]/60 uppercase font-bold tracking-wider">Deal Value</div>
+                  <div className="text-xs text-[#1A1A1A]/60 uppercase font-bold tracking-wider">Opportunity Value</div>
                 </div>
               </Card>
               <Card variant="dark" className="flex flex-col justify-between group hover:scale-[1.02] transition-transform">
@@ -351,14 +476,44 @@ export const DealDetail: React.FC = () => {
                 {openSection === 'basic' && (
                   <div className="mt-4 space-y-4 animate-in slide-in-from-top-2">
                     <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                      <span className="text-sm text-[#666]">Deal ID</span>
+                      <span className="text-sm text-[#666]">Opportunity ID</span>
                       <span className="text-sm font-bold text-[#1A1A1A] font-mono text-xs">
                         {deal.id.slice(0, 8)}...
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-50 relative">
                       <span className="text-sm text-[#666]">Stage</span>
-                      <span className="text-sm font-bold text-[#1A1A1A]">{getStageLabel(deal.stage)}</span>
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowStageDropdown(!showStageDropdown)}
+                          disabled={stageUpdating}
+                          className="flex items-center gap-1 text-sm font-bold text-[#1A1A1A] hover:text-[#EAD07D] transition-colors disabled:opacity-50"
+                        >
+                          {stageUpdating ? (
+                            <Loader2 size={12} className="animate-spin mr-1" />
+                          ) : null}
+                          {getStageLabel(deal.stage)}
+                          <ChevronDown size={14} className={`transition-transform ${showStageDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+                        {showStageDropdown && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setShowStageDropdown(false)} />
+                            <div className="absolute top-full right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 max-h-64 overflow-y-auto">
+                              {STAGES.map((stage) => (
+                                <button
+                                  key={stage}
+                                  onClick={() => handleStageChange(stage)}
+                                  className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F8F8F6] transition-colors ${
+                                    deal.stage === stage ? 'bg-[#EAD07D]/20 font-bold' : ''
+                                  }`}
+                                >
+                                  {getStageLabel(stage)}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-50">
                       <span className="text-sm text-[#666]">Close Date</span>
@@ -385,7 +540,7 @@ export const DealDetail: React.FC = () => {
                     {analysis ? (
                       <>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-[#666]">Deal Health</span>
+                          <span className="text-sm text-[#666]">Opportunity Health</span>
                           <Badge
                             variant={analysis.dealHealth === 'HEALTHY' ? 'success' : analysis.dealHealth === 'AT_RISK' ? 'warning' : 'danger'}
                             size="sm"
@@ -444,11 +599,11 @@ export const DealDetail: React.FC = () => {
               {/* Deal Velocity Chart */}
               <Card className="md:col-span-8 flex flex-col justify-between min-h-[320px] p-8">
                 <div className="flex justify-between items-start mb-6">
-                  <h3 className="text-xl font-medium text-[#1A1A1A]">Deal Velocity</h3>
+                  <h3 className="text-xl font-medium text-[#1A1A1A]">Opportunity Velocity</h3>
                   <div className="flex gap-4 text-xs font-medium">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#EAD07D]"></div>
-                      <span className="text-[#666]">This Deal</span>
+                      <span className="text-[#666]">This Opportunity</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#ccc]"></div>
@@ -569,6 +724,74 @@ export const DealDetail: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Close Won Modal */}
+      {showCloseWonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCloseWonModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-[#1A1A1A] mb-4">Mark as Won</h3>
+            <p className="text-[#666] mb-6">
+              Congratulations! Are you sure you want to mark "{deal?.name}" as closed won?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCloseWonModal(false)}
+                className="px-4 py-2 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloseWon}
+                disabled={stageUpdating}
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {stageUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Confirm Won
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Lost Modal */}
+      {showCloseLostModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCloseLostModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-[#1A1A1A] mb-4">Mark as Lost</h3>
+            <p className="text-[#666] mb-4">
+              Please provide a reason for losing "{deal?.name}":
+            </p>
+            <textarea
+              value={lostReason}
+              onChange={(e) => setLostReason(e.target.value)}
+              placeholder="e.g., Went with competitor, Budget constraints, Project cancelled..."
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EAD07D] resize-none mb-6"
+              rows={3}
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowCloseLostModal(false);
+                  setLostReason('');
+                }}
+                className="px-4 py-2 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloseLost}
+                disabled={stageUpdating || !lostReason.trim()}
+                className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-full font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {stageUpdating ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                Confirm Lost
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
