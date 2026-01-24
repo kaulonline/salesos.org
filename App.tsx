@@ -36,12 +36,6 @@ import { Messages } from './pages/dashboard/Messages';
 import { Settings } from './pages/dashboard/Settings';
 import { Products } from './pages/dashboard/Products';
 import { Documents } from './pages/dashboard/Documents';
-// New Enterprise CRM Pages
-import { AIAgents } from './pages/dashboard/AIAgents';
-import { Companies } from './pages/dashboard/Companies';
-import { Automations } from './pages/dashboard/Automations';
-import { IntegrationsPage } from './pages/dashboard/Integrations';
-import { Team } from './pages/dashboard/Team';
 
 const PricingPage = () => (
     <div className="pt-20">
@@ -87,10 +81,8 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="agents" element={<Agents />} />
-            <Route path="ai-agents" element={<AIAgents />} />
             <Route path="knowledge" element={<Knowledge />} />
             <Route path="leads" element={<Leads />} />
-            <Route path="companies" element={<Companies />} />
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />
             <Route path="products" element={<Products />} />
@@ -98,9 +90,6 @@ function App() {
             <Route path="revenue" element={<Revenue />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="analytics" element={<Analytics />} />
-            <Route path="automations" element={<Automations />} />
-            <Route path="integrations" element={<IntegrationsPage />} />
-            <Route path="team" element={<Team />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
           </Route>
