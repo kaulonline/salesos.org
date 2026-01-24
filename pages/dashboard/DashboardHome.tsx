@@ -75,7 +75,39 @@ export const DashboardHome: React.FC = () => {
           </div>
       </div>
 
-      {/* 2. AI INTELLIGENCE TICKER */}
+      {/* 2. FROSTED GLASS STATS STRIP */}
+      <div className="mb-6 flex flex-col md:flex-row justify-between items-center gap-6 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
+          {/* Pill-based Control Center */}
+          <div className="flex items-center gap-3 bg-white/60 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm">
+              <Badge variant="dark" size="md" className="px-5 py-2 shadow-lg">Pipeline</Badge>
+              <Badge variant="yellow" size="md" className="px-5 py-2 shadow-sm">Won</Badge>
+              <Badge variant="outline" size="md" className="px-4 py-1.5 border-black/10 bg-white/50">Lost</Badge>
+              <div className="w-32 h-2 bg-gray-200/50 rounded-full overflow-hidden relative ml-2">
+                  <div className="h-full bg-[#1A1A1A] w-[65%] rounded-full"></div>
+                  <div className="absolute top-0 left-[65%] h-full w-[20%] bg-[#EAD07D] rounded-full"></div>
+              </div>
+              <span className="text-xs font-bold text-[#666] ml-1">85%</span>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="flex gap-8 md:gap-12">
+              {[
+                  { label: 'Deals', val: '78', trend: '+12' },
+                  { label: 'Closed', val: '56', trend: '+8' },
+                  { label: 'Pipeline', val: '$2.4M', trend: '' }
+              ].map(stat => (
+                  <div key={stat.label} className="text-right">
+                      <div className="flex items-baseline gap-1 justify-end">
+                          <span className="text-3xl font-light text-[#1A1A1A]">{stat.val}</span>
+                          {stat.trend && <span className="text-xs font-bold text-green-500">{stat.trend}</span>}
+                      </div>
+                      <div className="text-[10px] uppercase font-bold text-[#999] tracking-wider mt-0.5">{stat.label}</div>
+                  </div>
+              ))}
+          </div>
+      </div>
+
+      {/* 3. AI INTELLIGENCE TICKER */}
       <div className="mb-8 bg-white rounded-2xl p-1 shadow-sm border border-black/5 flex items-center gap-2 pr-4 relative overflow-hidden group">
           <div className="bg-[#1A1A1A] text-white px-4 py-2 rounded-xl flex items-center gap-2 shrink-0 z-10">
               <Sparkles size={14} className="text-[#EAD07D]" />
@@ -91,7 +123,7 @@ export const DashboardHome: React.FC = () => {
           <button className="text-xs font-bold text-[#666] hover:text-[#1A1A1A] underline decoration-dotted">View All</button>
       </div>
 
-      {/* 3. MAIN COCKPIT GRID */}
+      {/* 4. MAIN COCKPIT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         
         {/* LEFT COLUMN: FOCUS DEAL (Hero) */}
