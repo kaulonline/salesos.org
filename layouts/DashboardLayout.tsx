@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
 import { useAuth } from '../src/context/AuthContext';
 import { FloatingChat } from '../components/FloatingChat';
+import { NotificationDropdown } from '../src/components/NotificationDropdown';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -194,10 +195,7 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
           
-          <button className="w-10 h-10 bg-white/60 border border-white/50 rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm text-[#1A1A1A] backdrop-blur-sm relative group">
-            <Bell size={18} className="group-hover:scale-110 transition-transform" />
-            <span className="absolute top-2.5 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <NotificationDropdown />
 
           {/* User Menu */}
           <div className="relative">

@@ -330,22 +330,22 @@ export const Leads: React.FC = () => {
             {/* Stats Strip */}
             <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
                <Badge variant="dark" className="px-6 py-2 shadow-lg">
-                 {stats?.total || leads.length} Total
+                 {stats?.totalLeads || leads.length} Total
                </Badge>
                <Badge variant="yellow" className="px-6 py-2 shadow-sm">
-                 {stats?.byStatus?.QUALIFIED || 0} Qualified
+                 {stats?.qualifiedLeads || 0} Qualified
                </Badge>
                <div className="w-32 h-2 bg-gray-200/50 rounded-full overflow-hidden relative">
                    <div
                      className="h-full bg-[#EAD07D] transition-all duration-500"
-                     style={{ width: `${stats?.total ? Math.round((stats.byStatus?.QUALIFIED || 0) / stats.total * 100) : 0}%` }}
+                     style={{ width: `${stats?.totalLeads ? Math.round((stats.qualifiedLeads || 0) / stats.totalLeads * 100) : 0}%` }}
                    />
                </div>
                <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">
-                 {stats?.byRating?.HOT || 0} Hot
+                 {stats?.highIntentLeads || 0} Hot
                </Badge>
                <Badge variant="outline" className="px-4 py-1.5 border-black/10 bg-white/50">
-                 Avg: {stats?.avgScore?.toFixed(0) || 0}
+                 Avg: {stats?.averageScore?.toFixed(0) || 0}
                </Badge>
             </div>
          </div>

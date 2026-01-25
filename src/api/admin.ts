@@ -154,13 +154,31 @@ export const adminApi = {
     role?: string;
     status?: string;
   }): Promise<PaginatedResponse<AdminUser>> => {
-    const response = await client.get<PaginatedResponse<AdminUser>>('/admin/users', { params });
-    return response.data;
+    const response = await client.get<PaginatedResponse<any>>('/admin/users', { params });
+    // Map backend field names to frontend expected structure
+    const mappedItems = response.data.items.map((user: any) => ({
+      ...user,
+      stats: {
+        conversationsCount: user.conversationCount ?? 0,
+        leadsCount: user.leadCount ?? 0,
+        opportunitiesCount: user.opportunityCount ?? 0,
+      },
+    }));
+    return { ...response.data, items: mappedItems };
   },
 
   getUser: async (id: string): Promise<AdminUser> => {
-    const response = await client.get<AdminUser>(`/admin/users/${id}`);
-    return response.data;
+    const response = await client.get<any>(`/admin/users/${id}`);
+    // Map backend field names to frontend expected structure
+    const user = response.data;
+    return {
+      ...user,
+      stats: {
+        conversationsCount: user.conversationCount ?? user._count?.conversations ?? 0,
+        leadsCount: user.leadCount ?? user._count?.leads ?? 0,
+        opportunitiesCount: user.opportunityCount ?? user._count?.opportunities ?? 0,
+      },
+    };
   },
 
   updateUser: async (id: string, data: Partial<AdminUser>): Promise<AdminUser> => {

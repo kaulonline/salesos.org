@@ -17,6 +17,7 @@
     "@tanstack/react-virtual": "^3.10.0",
     "axios": "^1.6.0",
     "cmdk": "^1.0.0",
+    "date-fns": "^4.1.0",
     "idb": "^8.0.0",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",

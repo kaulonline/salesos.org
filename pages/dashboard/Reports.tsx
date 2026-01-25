@@ -412,11 +412,14 @@ export const Reports: React.FC = () => {
     const data = reportData?.data as unknown as RevenueReport;
     if (!data) return null;
 
+    const byMonth = data.byMonth || [];
+    const byOwner = data.byOwner || [];
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <KPICard title="Closed Won" value={formatCurrency(data.closedWon)} change={data.growthRate} icon={DollarSign} />
-          <KPICard title="Deals Closed" value={data.closedWonCount} icon={Target} />
+          <KPICard title="Deals Closed" value={data.closedWonCount || 0} icon={Target} />
           <KPICard title="Pipeline Value" value={formatCurrency(data.pipeline)} icon={BarChart3} />
           <KPICard title="Forecast" value={formatCurrency(data.forecast)} icon={TrendingUp} />
         </div>
@@ -425,10 +428,10 @@ export const Reports: React.FC = () => {
           <h3 className="text-lg font-semibold mb-6">Revenue vs Forecast</h3>
           <SimpleLineChart
             data={{
-              labels: data.byMonth.map((m) => m.month),
+              labels: byMonth.map((m) => m.month),
               datasets: [
-                { name: 'Actual', data: data.byMonth.map((m) => m.actual), color: '#10B981' },
-                { name: 'Forecast', data: data.byMonth.map((m) => m.forecast), color: '#EAD07D' },
+                { name: 'Actual', data: byMonth.map((m) => m.actual), color: '#10B981' },
+                { name: 'Forecast', data: byMonth.map((m) => m.forecast), color: '#EAD07D' },
               ],
             }}
           />
@@ -437,7 +440,7 @@ export const Reports: React.FC = () => {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Revenue by Owner</h3>
           <SimpleBarChart
-            data={data.byOwner.map((o) => ({ label: o.name, value: o.closed }))}
+            data={byOwner.map((o) => ({ label: o.name, value: o.closed }))}
             color="#10B981"
           />
         </Card>
@@ -449,14 +452,17 @@ export const Reports: React.FC = () => {
     const data = reportData?.data as unknown as LeadConversionReport;
     if (!data) return null;
 
+    const bySource = data.bySource || [];
+    const byOwner = data.byOwner || [];
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <KPICard title="Conversion Rate" value={formatPercent(data.conversionRate)} icon={Target} />
-          <KPICard title="Avg Time to Convert" value={`${data.avgTimeToConvert} days`} icon={Calendar} />
+          <KPICard title="Avg Time to Convert" value={`${data.avgTimeToConvert || 0} days`} icon={Calendar} />
           <KPICard
             title="Total Converted"
-            value={data.bySource.reduce((sum, s) => sum + s.converted, 0)}
+            value={bySource.reduce((sum, s) => sum + (s.converted || 0), 0)}
             icon={Users}
           />
         </div>
@@ -465,7 +471,7 @@ export const Reports: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Conversion by Source</h3>
             <SimpleBarChart
-              data={data.bySource.map((s) => ({ label: s.source, value: s.rate, percentage: s.rate }))}
+              data={bySource.map((s) => ({ label: s.source, value: s.rate, percentage: s.rate }))}
               showPercentage
               maxValue={100}
               color="#8B5CF6"
@@ -475,7 +481,7 @@ export const Reports: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Conversion by Owner</h3>
             <SimpleBarChart
-              data={data.byOwner.map((o) => ({ label: o.name, value: o.rate, percentage: o.rate }))}
+              data={byOwner.map((o) => ({ label: o.name, value: o.rate, percentage: o.rate }))}
               showPercentage
               maxValue={100}
               color="#8B5CF6"
@@ -490,6 +496,9 @@ export const Reports: React.FC = () => {
     const data = reportData?.data as unknown as ForecastReport;
     if (!data) return null;
 
+    const byMonth = data.byMonth || [];
+    const byOwner = data.byOwner || [];
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -503,11 +512,11 @@ export const Reports: React.FC = () => {
           <h3 className="text-lg font-semibold mb-6">Forecast vs Actual by Month</h3>
           <SimpleLineChart
             data={{
-              labels: data.byMonth.map((m) => m.month),
+              labels: byMonth.map((m) => m.month),
               datasets: [
-                { name: 'Closed', data: data.byMonth.map((m) => m.closed), color: '#10B981' },
-                { name: 'Committed', data: data.byMonth.map((m) => m.committed), color: '#3B82F6' },
-                { name: 'Best Case', data: data.byMonth.map((m) => m.bestCase), color: '#EAD07D' },
+                { name: 'Closed', data: byMonth.map((m) => m.closed), color: '#10B981' },
+                { name: 'Committed', data: byMonth.map((m) => m.committed), color: '#3B82F6' },
+                { name: 'Best Case', data: byMonth.map((m) => m.bestCase), color: '#EAD07D' },
               ],
             }}
           />
@@ -527,7 +536,7 @@ export const Reports: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.byOwner.map((owner, idx) => (
+                {byOwner.map((owner, idx) => (
                   <tr key={idx} className="border-b last:border-0">
                     <td className="py-3 font-medium">{owner.name}</td>
                     <td className="py-3 text-right">{formatCurrency(owner.quota)}</td>

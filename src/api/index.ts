@@ -13,6 +13,9 @@ export { default as adminApi } from './admin';
 export { default as usersApi } from './users';
 export { default as importExportApi } from './importExport';
 export { default as campaignsApi } from './campaigns';
+export { default as productsApi } from './products';
+export { default as notificationsApi } from './notifications';
+export { default as teamMessagesApi } from './teamMessages';
 
 // Re-export filter types
 export type { LeadFilters } from './leads';
@@ -23,6 +26,8 @@ export type { TaskFilters } from './tasks';
 export type { MeetingFilters } from './meetings';
 export type { DashboardStats } from './dashboard';
 export type { CampaignFilters } from './campaigns';
+export type { ProductFilters, ProductStats, Product, CreateProductDto, UpdateProductDto, ProductType, ProductCategory, BillingFrequency } from './products';
+export type { Notification, NotificationFilters, NotificationType, NotificationPriority, NotificationStatus } from './notifications';
 
 // Re-export admin types
 export type {

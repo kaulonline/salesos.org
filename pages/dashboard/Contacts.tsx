@@ -281,33 +281,33 @@ export const Contacts: React.FC = () => {
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <User size={18} className="text-green-600" />
+              <Mail size={18} className="text-green-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.byRole?.DECISION_MAKER || 0}</div>
-              <div className="text-xs text-[#666]">Decision Makers</div>
+              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.withEmail || 0}</div>
+              <div className="text-xs text-[#666]">With Email</div>
             </div>
           </div>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
-              <User size={18} className="text-[#EAD07D]" />
+              <Phone size={18} className="text-[#EAD07D]" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.byRole?.CHAMPION || 0}</div>
-              <div className="text-xs text-[#666]">Champions</div>
+              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.withPhone || 0}</div>
+              <div className="text-xs text-[#666]">With Phone</div>
             </div>
           </div>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Mail size={18} className="text-blue-600" />
+              <Building2 size={18} className="text-blue-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.contactedThisWeek || 0}</div>
-              <div className="text-xs text-[#666]">Contacted This Week</div>
+              <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.byAccount?.length || 0}</div>
+              <div className="text-xs text-[#666]">Accounts</div>
             </div>
           </div>
         </Card>

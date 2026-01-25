@@ -108,8 +108,8 @@ export interface UpdateContactDto extends Partial<CreateContactDto> {
 
 export interface ContactStats {
   total: number;
-  byRole: Record<ContactRole, number>;
-  bySeniority: Record<SeniorityLevel, number>;
-  avgEngagementScore: number;
-  contactedThisWeek: number;
+  byAccount: Array<{ accountId: string; accountName: string; count: number }>;
+  withEmail: number;
+  withPhone: number;
+  topContacts: Array<{ id: string; firstName: string; lastName: string; email: string }>;
 }

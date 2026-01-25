@@ -188,10 +188,21 @@ export function useDeals(filters?: OpportunityFilters) {
     },
   });
 
+  // Map backend pipeline stats field names to frontend expected names
+  const rawStats = statsQuery.data as any;
+  const mappedPipelineStats = rawStats ? {
+    ...rawStats,
+    totalDeals: rawStats?.openOpportunities ?? rawStats?.totalDeals ?? 0,
+    totalValue: rawStats?.totalPipelineValue ?? rawStats?.totalValue ?? 0,
+    closedWonValue: rawStats?.wonValue ?? rawStats?.closedWonValue ?? 0,
+    totalOpportunities: rawStats?.openOpportunities ?? rawStats?.totalOpportunities ?? 0,
+    winRate: rawStats?.winRate ?? 0,
+  } : null;
+
   return {
     // Data
     deals: dealsQuery.data ?? [],
-    pipelineStats: statsQuery.data ?? null,
+    pipelineStats: mappedPipelineStats,
     forecast: forecastQuery.data ?? null,
 
     // Loading states

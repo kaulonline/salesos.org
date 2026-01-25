@@ -9,6 +9,9 @@ export { useChat } from './useChat';
 export { useDashboard } from './useDashboard';
 export { useMeetings, useMeeting, useCalendarMeetings } from './useMeetings';
 export { useCampaigns, useCampaign, useCampaignOpportunities, useCampaignLeads } from './useCampaigns';
+export { useProducts, useProduct } from './useProducts';
+export { useNotifications } from './useNotifications';
+export { useTeamChannels, useChannelMessages, useDirectConversations, useDirectMessages, useUserSearch } from './useTeamMessages';
 
 // Admin hooks
 export {

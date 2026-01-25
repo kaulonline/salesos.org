@@ -5,6 +5,7 @@ import type { AccountFilters } from '../api/accounts';
 import type { TaskFilters } from '../api/tasks';
 import type { MeetingFilters } from '../api/meetings';
 import type { CampaignFilters } from '../api/campaigns';
+import type { ProductFilters } from '../api/products';
 import type { ActivityFilters } from '../types';
 
 // Query keys factory for cache management
@@ -99,6 +100,16 @@ export const queryKeys = {
     performance: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'performance'] as const,
     opportunities: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'opportunities'] as const,
     leads: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'leads'] as const,
+  },
+
+  // Products
+  products: {
+    all: ['products'] as const,
+    lists: () => [...queryKeys.products.all, 'list'] as const,
+    list: (filters?: ProductFilters) => [...queryKeys.products.lists(), filters] as const,
+    details: () => [...queryKeys.products.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.products.details(), id] as const,
+    stats: () => [...queryKeys.products.all, 'stats'] as const,
   },
 
   // Dashboard

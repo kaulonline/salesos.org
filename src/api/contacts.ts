@@ -52,8 +52,19 @@ export const contactsApi = {
    * Get opportunities associated with a contact
    */
   getOpportunities: async (id: string): Promise<Opportunity[]> => {
-    const response = await client.get<Opportunity[]>(`/contacts/${id}/opportunities`);
-    return response.data;
+    const response = await client.get<any>(`/contacts/${id}/opportunities`);
+    // Backend returns { roles: [{ opportunity: {...}, isPrimary, role }] }
+    // Transform to flat array of opportunities with role info
+    const data = response.data;
+    if (data.roles && Array.isArray(data.roles)) {
+      return data.roles.map((r: any) => ({
+        ...r.opportunity,
+        contactRole: r.role,
+        isPrimaryContact: r.isPrimary,
+      }));
+    }
+    // Fallback if data is already an array (future-proofing)
+    return Array.isArray(data) ? data : [];
   },
 
   /**

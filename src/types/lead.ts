@@ -119,13 +119,13 @@ export interface ConvertLeadResult {
 }
 
 export interface LeadStats {
-  total: number;
-  byStatus: Record<LeadStatus, number>;
-  bySource: Record<LeadSource, number>;
-  byRating: Record<LeadRating, number>;
-  avgScore: number;
-  newThisWeek: number;
-  convertedThisMonth: number;
+  totalLeads: number;
+  newLeads: number;
+  qualifiedLeads: number;
+  convertedLeads: number;
+  averageScore: number;
+  highIntentLeads: number;
+  conversionRate: number;
 }
 
 export interface LeadScoreResult {
