@@ -16,6 +16,7 @@ export { default as campaignsApi } from './campaigns';
 export { default as productsApi } from './products';
 export { default as notificationsApi } from './notifications';
 export { default as teamMessagesApi } from './teamMessages';
+export { default as licensingApi } from './licensing';
 
 // Re-export filter types
 export type { LeadFilters } from './leads';
@@ -63,3 +64,17 @@ export type {
   ExportResult,
   ExportFieldDefinition,
 } from './importExport';
+
+// Re-export licensing types
+export type {
+  LicenseTier,
+  LicenseStatus,
+  PreGeneratedKeyStatus,
+  LicenseType,
+  LicenseFeature,
+  UserLicense,
+  PreGeneratedKey,
+  LicenseUsage,
+  LicenseAuditLog,
+  LicensingDashboard,
+} from './licensing';

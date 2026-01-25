@@ -57,6 +57,7 @@ const IntegrationsPage = lazy(() => import('./pages/dashboard/Integrations').the
 const Team = lazy(() => import('./pages/dashboard/Team').then(m => ({ default: m.Team })));
 const AIChat = lazy(() => import('./pages/dashboard/AIChat').then(m => ({ default: m.AIChat })));
 const Admin = lazy(() => import('./pages/dashboard/Admin').then(m => ({ default: m.Admin })));
+const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const Reports = lazy(() => import('./pages/dashboard/Reports').then(m => ({ default: m.Reports })));
 const Tasks = lazy(() => import('./pages/dashboard/Tasks').then(m => ({ default: m.Tasks })));
 const Campaigns = lazy(() => import('./pages/dashboard/Campaigns').then(m => ({ default: m.Campaigns })));
@@ -94,6 +95,7 @@ function AppContent() {
   const { pathname } = useLocation();
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isDashboard = pathname.startsWith('/dashboard');
+  const isAdmin = pathname.startsWith('/admin');
 
   // Scroll to top on route change
   React.useEffect(() => {
@@ -102,7 +104,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
-      {!isAuthPage && !isDashboard && <Navbar />}
+      {!isAuthPage && !isDashboard && !isAdmin && <Navbar />}
       <main>
         <Routes>
           {/* Public Routes */}
@@ -360,11 +362,77 @@ function AppContent() {
             } />
           </Route>
 
+          {/* Admin Routes - Protected with AdminLayout */}
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <AdminLayout />
+              </Suspense>
+            </ProtectedRoute>
+          }>
+            <Route index element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="users" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="billing" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="features" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="audit" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="system" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="api-keys" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+          </Route>
+
           {/* Catch-all route */}
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      {!isAuthPage && !isDashboard && <Footer />}
+      {!isAuthPage && !isDashboard && !isAdmin && <Footer />}
     </div>
   );
 }

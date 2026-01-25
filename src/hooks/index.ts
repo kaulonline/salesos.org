@@ -23,6 +23,17 @@ export {
   useIntegrations,
 } from './useAdmin';
 
+// Licensing/Billing hooks
+export {
+  useLicensingDashboard,
+  useLicenseTypes,
+  useLicenseFeatures,
+  useUserLicenses,
+  usePreGeneratedKeys,
+  useLicenseAuditLogs,
+  useMyLicense,
+} from './useLicensing';
+
 // User settings hooks
 export {
   useUserProfile,

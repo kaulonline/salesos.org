@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -44,12 +44,20 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Messages', href: '/dashboard/messages' },
   ];
 
+  // Check if user is admin (handle potential case differences)
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+
   const settingsNavItems = [
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
+    // Admin-only items
+    ...(isAdmin ? [
+      { label: 'Admin Console', href: '/dashboard/admin', icon: Shield },
+      { label: 'Billing', href: '/dashboard/admin?tab=billing', icon: CreditCard },
+    ] : []),
   ];
 
   return (
@@ -225,13 +233,13 @@ export const DashboardLayout: React.FC = () => {
 
                   {/* Menu Items */}
                   <div className="py-1">
-                    {user?.role === 'ADMIN' && (
+                    {isAdmin && (
                       <Link
                         to="/dashboard/admin"
                         onClick={() => setShowUserMenu(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A] transition-colors"
                       >
-                        <Shield size={16} className="text-[#999]" />
+                        <Shield size={16} className="text-[#EAD07D]" />
                         Admin Console
                       </Link>
                     )}

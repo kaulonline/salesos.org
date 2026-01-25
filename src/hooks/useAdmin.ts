@@ -61,11 +61,13 @@ export function useAdminUsers(initialParams?: {
         role: params?.role,
         status: params?.status,
       });
-      setUsers(response.data);
-      setTotal(response.total);
+      // Handle both 'items' and 'data' response formats
+      setUsers(response.items || response.data || []);
+      setTotal(response.total || 0);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load users');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -245,11 +247,13 @@ export function useAuditLogs(initialParams?: {
         limit: params?.limit || 50,
         ...params,
       });
-      setLogs(response.data);
-      setTotal(response.total);
+      // Handle both 'items' and 'data' response formats
+      setLogs(response.items || response.data || []);
+      setTotal(response.total || 0);
     } catch (err) {
       console.error('Failed to fetch audit logs:', err);
       setError('Failed to load audit logs');
+      setLogs([]);
     } finally {
       setLoading(false);
     }

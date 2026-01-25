@@ -155,16 +155,25 @@ export const adminApi = {
     status?: string;
   }): Promise<PaginatedResponse<AdminUser>> => {
     const response = await client.get<PaginatedResponse<any>>('/admin/users', { params });
-    // Map backend field names to frontend expected structure
-    const mappedItems = response.data.items.map((user: any) => ({
+    // Handle both 'items' and 'data' response formats, with safety checks
+    const rawItems = response.data?.items || response.data?.data || [];
+    const mappedItems = rawItems.map((user: any) => ({
       ...user,
       stats: {
-        conversationsCount: user.conversationCount ?? 0,
-        leadsCount: user.leadCount ?? 0,
-        opportunitiesCount: user.opportunityCount ?? 0,
+        conversationsCount: user.conversationCount ?? user._count?.conversations ?? 0,
+        leadsCount: user.leadCount ?? user._count?.leads ?? 0,
+        opportunitiesCount: user.opportunityCount ?? user._count?.opportunities ?? 0,
       },
     }));
-    return { ...response.data, items: mappedItems };
+    return {
+      ...response.data,
+      items: mappedItems,
+      data: mappedItems, // Provide both for compatibility
+      total: response.data?.total || 0,
+      page: response.data?.page || 1,
+      limit: response.data?.limit || response.data?.pageSize || 20,
+      totalPages: response.data?.totalPages || 1,
+    };
   },
 
   getUser: async (id: string): Promise<AdminUser> => {
@@ -251,7 +260,17 @@ export const adminApi = {
     endDate?: string;
   }): Promise<PaginatedResponse<AuditLog>> => {
     const response = await client.get<PaginatedResponse<AuditLog>>('/admin/audit-logs', { params });
-    return response.data;
+    // Handle both 'items' and 'data' response formats
+    const items = response.data?.items || response.data?.data || [];
+    return {
+      ...response.data,
+      items,
+      data: items,
+      total: response.data?.total || 0,
+      page: response.data?.page || 1,
+      limit: response.data?.limit || response.data?.pageSize || 50,
+      totalPages: response.data?.totalPages || 1,
+    };
   },
 
   // Application Logs
