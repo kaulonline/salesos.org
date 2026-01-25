@@ -4,8 +4,6 @@ import { Check, X, Sparkles, Zap, Crown, ArrowRight, Shield, Clock, Users } from
 import { useLicenseTypes, useCheckout } from '../src/hooks';
 import { useAuth } from '../src/context/AuthContext';
 import { PRICING_TIERS } from '../constants';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 import type { LicenseType } from '../src/api/licensing';
@@ -390,7 +388,6 @@ export const PricingPage: React.FC = () => {
     <>
     <SEOHead {...SEO_CONFIGS.pricing} />
     <div className="min-h-screen bg-[#F2F1EA]">
-      <Navbar />
 
       <section className="py-20 md:py-32 relative overflow-hidden">
         {/* Background Glow */}
@@ -520,7 +517,6 @@ export const PricingPage: React.FC = () => {
         </div>
       </section>
 
-      <Footer />
     </div>
     </>
   );
