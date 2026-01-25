@@ -26,8 +26,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { TaskDetailModal } from '../../components/TaskDetailModal';
 import { useDashboard, useDeals, useMeetings, useActivities, useTasks } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
+import type { Task } from '../../src/types/task';
 
 // Accordion Item Component
 const AccordionItem: React.FC<{
@@ -89,11 +91,17 @@ export const DashboardHome: React.FC = () => {
   } = useDashboard();
 
   const { deals, loading: dealsLoading } = useDeals();
-  const { meetings } = useMeetings({ limit: 10 });
-  const { activities } = useActivities({ limit: 10 });
-  const { tasks } = useTasks({ limit: 8 });
+  const { meetings } = useMeetings({ limit: 20 });
+  const { activities } = useActivities({ limit: 50 });
+  const { tasks, complete: completeTask } = useTasks({ limit: 10 });
 
-  const userName = user?.firstName || user?.email?.split('@')[0] || 'there';
+  // State for task detail modal
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Extract name - backend returns 'name' field, may also have firstName/lastName
+  const userName = user?.firstName || user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+  const userFullName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : userName);
+  const userTitle = user?.role === 'ADMIN' ? 'Sales Manager' : 'Sales Representative';
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -112,26 +120,34 @@ export const DashboardHome: React.FC = () => {
     return openDeals.sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 3);
   }, [deals]);
 
-  // This week's meetings for calendar
+  // This week's meetings for calendar - use consistent week calculation
   const thisWeekMeetings = useMemo(() => {
     const now = new Date();
+    // Start from Monday of current week
     const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
+    const dayOfWeek = now.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Monday start
+    startOfWeek.setDate(now.getDate() + diff);
     startOfWeek.setHours(0, 0, 0, 0);
+
     const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
 
     return meetings.filter(m => {
       const meetingDate = new Date(m.startTime);
-      return meetingDate >= startOfWeek && meetingDate < endOfWeek;
+      return meetingDate >= startOfWeek && meetingDate <= endOfWeek;
     });
   }, [meetings]);
 
-  // Get week dates
+  // Get week dates - Monday to Saturday
   const weekDates = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+    const dayOfWeek = now.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startOfWeek.setDate(now.getDate() + diff);
+    startOfWeek.setHours(0, 0, 0, 0);
 
     return Array.from({ length: 6 }, (_, i) => {
       const date = new Date(startOfWeek);
@@ -140,38 +156,51 @@ export const DashboardHome: React.FC = () => {
     });
   }, []);
 
-  // Daily activity breakdown (calls, emails, meetings per day) - LAST 30 DAYS
+  // Daily activity breakdown - last 7 days
   const dailyActivities = useMemo(() => {
+    const days = [];
     const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(now.getDate() - 30);
 
-    const counts = Array.from({ length: 7 }, () => ({ calls: 0, emails: 0, meetings: 0, total: 0 }));
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
 
-    activities.forEach(activity => {
-      const activityDate = new Date(activity.createdAt);
-      // Count activities from last 30 days, grouped by day of week
-      if (activityDate >= thirtyDaysAgo) {
-        const day = activityDate.getDay();
-        if (activity.type === 'CALL') counts[day].calls++;
-        else if (activity.type === 'EMAIL') counts[day].emails++;
-        else if (activity.type === 'MEETING') counts[day].meetings++;
-        counts[day].total++;
-      }
-    });
+      const dayActivities = activities.filter(a => {
+        const actDate = new Date(a.createdAt);
+        return actDate >= date && actDate < nextDay;
+      });
 
-    return counts;
+      days.push({
+        date,
+        label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()],
+        calls: dayActivities.filter(a => a.type === 'CALL').length,
+        emails: dayActivities.filter(a => a.type === 'EMAIL').length,
+        meetings: dayActivities.filter(a => a.type === 'MEETING').length,
+        total: dayActivities.length,
+        isToday: i === 0
+      });
+    }
+    return days;
   }, [activities]);
 
   const maxDailyActivity = Math.max(...dailyActivities.map(d => d.total), 1);
-  const totalMonthlyActivities = dailyActivities.reduce((sum, d) => sum + d.total, 0);
+  const totalMonthlyActivities = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    return activities.filter(a => new Date(a.createdAt) >= thirtyDaysAgo).length;
+  }, [activities]);
 
-  // Completed vs total tasks
-  const completedTasks = useMemo(() => {
-    return tasks.filter(t => t.status === 'COMPLETED').length;
+  // Pending vs completed tasks
+  const pendingTasks = useMemo(() => {
+    return tasks.filter(t => t.status !== 'COMPLETED');
   }, [tasks]);
 
-  // Sales tasks only (filter for relevant ones)
+  const completedTaskCount = tasks.filter(t => t.status === 'COMPLETED').length;
+
+  // Sales tasks for display
   const salesTasks = useMemo(() => {
     return tasks.slice(0, 5);
   }, [tasks]);
@@ -181,16 +210,16 @@ export const DashboardHome: React.FC = () => {
   const prevMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long' });
   const nextMonth = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('en-US', { month: 'long' });
 
-  // Deal velocity - average days to close (calculated from real deal data)
+  // Deal velocity - average days to close
   const dealVelocity = useMemo(() => {
     const closedWonDeals = deals.filter(d => d.isClosed && d.isWon && d.closedDate && d.createdAt);
-    if (closedWonDeals.length === 0) return 0;
+    if (closedWonDeals.length === 0) return null;
 
     const totalDays = closedWonDeals.reduce((sum, deal) => {
       const created = new Date(deal.createdAt);
       const closed = new Date(deal.closedDate!);
       const diffDays = Math.floor((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-      return sum + Math.max(diffDays, 0);
+      return sum + Math.max(diffDays, 1);
     }, 0);
 
     return Math.round(totalDays / closedWonDeals.length);
@@ -209,7 +238,7 @@ export const DashboardHome: React.FC = () => {
   // Loading state
   if (isLoading || dealsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FEFCF3] via-[#FDF8E8] to-[#F5F0DC] p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-[1600px] mx-auto space-y-6">
           <Skeleton className="h-12 w-64 rounded-2xl" />
           <div className="flex gap-3">
@@ -227,7 +256,7 @@ export const DashboardHome: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FEFCF3] via-[#FDF8E8] to-[#F5F0DC] p-6 lg:p-8">
+    <div className="min-h-screen p-6 lg:p-8">
       <div className="max-w-[1600px] mx-auto">
 
         {/* Header Section */}
@@ -294,10 +323,10 @@ export const DashboardHome: React.FC = () => {
 
           {/* Sales Rep Profile Card - Left Column */}
           <div className="lg:col-span-3">
-            <div className="bg-gradient-to-br from-[#F5EED6] to-[#EDE4C5] rounded-[32px] p-6 shadow-sm">
+            <div className="rounded-[32px] p-6">
               {/* Profile Image */}
               <div className="relative mb-4">
-                <div className="w-full aspect-square rounded-[24px] overflow-hidden bg-[#E5DCC3]">
+                <div className="w-full aspect-square rounded-[24px] overflow-hidden bg-[#E5DCC3] shadow-inner relative">
                   {user?.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -311,6 +340,8 @@ export const DashboardHome: React.FC = () => {
                       </span>
                     </div>
                   )}
+                  {/* Frosted glass overlay at bottom 15% of image */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-white/30 backdrop-blur-md border-t border-white/30" />
                 </div>
                 {/* Commission Badge */}
                 <div className="absolute bottom-4 right-4 px-4 py-2 bg-[#EAD07D] rounded-full text-sm font-semibold text-[#1A1A1A] shadow-lg">
@@ -320,9 +351,9 @@ export const DashboardHome: React.FC = () => {
 
               {/* Name & Role */}
               <h2 className="text-xl font-semibold text-[#1A1A1A] mb-1">
-                {user?.firstName} {user?.lastName}
+                {userFullName}
               </h2>
-              <p className="text-sm text-[#666] mb-6">{user?.role || 'Sales Representative'}</p>
+              <p className="text-sm text-[#666] mb-6">{userTitle}</p>
 
               {/* Accordion Sections */}
               <div className="bg-white/60 rounded-2xl px-4">
@@ -410,7 +441,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#666]">Avg Deal Cycle</span>
-                      <span className="font-medium">{dealVelocity} days</span>
+                      <span className="font-medium">{dealVelocity !== null ? `${dealVelocity} days` : '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#666]">Quota Attainment</span>
@@ -444,27 +475,25 @@ export const DashboardHome: React.FC = () => {
                 {/* Weekly Activity Bar Chart */}
                 {totalMonthlyActivities > 0 ? (
                   <div className="flex items-end justify-between h-32 gap-2">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
-                      const height = maxDailyActivity > 0 ? (dailyActivities[i].total / maxDailyActivity) * 100 : 0;
-                      const isHighest = dailyActivities[i].total === maxDailyActivity && maxDailyActivity > 0;
-                      const today = new Date().getDay();
-                      const isToday = i === today;
+                    {dailyActivities.map((day, i) => {
+                      const height = maxDailyActivity > 0 ? (day.total / maxDailyActivity) * 100 : 0;
+                      const isHighest = day.total === maxDailyActivity && maxDailyActivity > 0 && day.total > 0;
 
                       return (
-                        <div key={day} className="flex-1 flex flex-col items-center gap-2">
-                          {isHighest && dailyActivities[i].total > 0 && (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                          {isHighest && (
                             <div className="text-xs font-medium text-[#1A1A1A] bg-[#EAD07D] px-2 py-0.5 rounded-full whitespace-nowrap">
-                              {dailyActivities[i].total}
+                              {day.total}
                             </div>
                           )}
                           <div
                             className={`w-full rounded-xl transition-all ${
-                              isHighest && dailyActivities[i].total > 0 ? 'bg-[#EAD07D]' : isToday ? 'bg-[#1A1A1A]' : 'bg-[#F0EBD8]'
+                              isHighest ? 'bg-[#EAD07D]' : day.isToday ? 'bg-[#1A1A1A]' : 'bg-[#F0EBD8]'
                             }`}
                             style={{ height: `${Math.max(height, 8)}%` }}
                           />
-                          <span className={`text-xs font-medium ${isToday ? 'text-[#1A1A1A]' : 'text-[#999]'}`}>
-                            {day}
+                          <span className={`text-xs font-medium ${day.isToday ? 'text-[#1A1A1A]' : 'text-[#999]'}`}>
+                            {day.label}
                           </span>
                         </div>
                       );
@@ -516,8 +545,12 @@ export const DashboardHome: React.FC = () => {
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-3xl font-light text-[#1A1A1A]">{dealVelocity > 0 ? dealVelocity : 'N/A'}</span>
-                      <span className="text-xs text-[#999]">{dealVelocity > 0 ? 'days avg' : 'no closed deals'}</span>
+                      <span className="text-3xl font-light text-[#1A1A1A]">
+                        {dealVelocity !== null ? dealVelocity : '—'}
+                      </span>
+                      <span className="text-xs text-[#999]">
+                        {dealVelocity !== null ? 'days avg' : 'no data yet'}
+                      </span>
                     </div>
                   </div>
 
@@ -562,14 +595,18 @@ export const DashboardHome: React.FC = () => {
               {/* Week Header */}
               <div className="grid grid-cols-7 gap-4 mb-4">
                 <div className="col-span-1"></div>
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-                  <div key={day} className="text-center">
-                    <p className="text-sm font-medium text-[#999]">{day}</p>
-                    <p className="text-lg font-medium text-[#1A1A1A]">
-                      {weekDates[i]?.getDate()}
-                    </p>
-                  </div>
-                ))}
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => {
+                  const date = weekDates[i];
+                  const isToday = date?.toDateString() === new Date().toDateString();
+                  return (
+                    <div key={day} className="text-center">
+                      <p className={`text-sm font-medium ${isToday ? 'text-[#1A1A1A]' : 'text-[#999]'}`}>{day}</p>
+                      <p className={`text-lg font-medium ${isToday ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>
+                        {date?.getDate()}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Time Slots */}
@@ -582,10 +619,10 @@ export const DashboardHome: React.FC = () => {
                       {weekDates.map((date, dayIndex) => {
                         const slotMeetings = thisWeekMeetings.filter(m => {
                           const meetingDate = new Date(m.startTime);
-                          const meetingHour = meetingDate.getUTCHours();
                           return (
-                            meetingDate.getUTCDate() === date.getDate() &&
-                            meetingHour === hours[timeIndex]
+                            meetingDate.getDate() === date.getDate() &&
+                            meetingDate.getMonth() === date.getMonth() &&
+                            meetingDate.getHours() === hours[timeIndex]
                           );
                         });
 
@@ -631,55 +668,60 @@ export const DashboardHome: React.FC = () => {
 
           {/* Right Column */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Pipeline Health Card */}
+            {/* Pipeline Summary Card */}
             <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#1A1A1A]">Pipeline Health</h3>
-                <span className="text-3xl font-light text-[#1A1A1A]">{quotaAttainment}%</span>
+                <h3 className="font-semibold text-[#1A1A1A]">Pipeline Summary</h3>
+                <Link to="/dashboard/deals" className="text-[#999] hover:text-[#1A1A1A]">
+                  <ArrowUpRight size={18} />
+                </Link>
               </div>
 
-              {/* Mini Progress Bars */}
-              <div className="space-y-3 mb-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#666]">Win Rate</span>
-                    <span className="font-medium">{Math.round(winRate)}%</span>
+              {/* Key Pipeline Stats */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/30 flex items-center justify-center">
+                      <Target size={16} className="text-[#1A1A1A]" />
+                    </div>
+                    <span className="text-sm text-[#666]">Open Deals</span>
                   </div>
-                  <div className="h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#EAD07D] rounded-full transition-all" style={{ width: `${winRate}%` }} />
-                  </div>
+                  <span className="text-lg font-semibold text-[#1A1A1A]">{totalDeals}</span>
                 </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#666]">Quota Progress</span>
-                    <span className="font-medium">{quotaAttainment}%</span>
-                  </div>
-                  <div className="h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#1A1A1A] rounded-full transition-all" style={{ width: `${Math.min(quotaAttainment, 100)}%` }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#666]">Deal Conversion</span>
-                    <span className="font-medium">{conversionRate}%</span>
-                  </div>
-                  <div className="h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${conversionRate}%` }} />
-                  </div>
-                </div>
-              </div>
 
-              {/* Activity Type Pills */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1.5 bg-[#EAD07D] rounded-full text-xs font-semibold text-[#1A1A1A] flex items-center gap-1">
-                  <PhoneCall size={12} /> Calls
-                </span>
-                <span className="px-3 py-1.5 bg-[#1A1A1A] rounded-full text-xs font-semibold text-white flex items-center gap-1">
-                  <Mail size={12} /> Emails
-                </span>
-                <span className="px-3 py-1.5 bg-[#F0EBD8] rounded-full text-xs font-semibold text-[#666] flex items-center gap-1">
-                  <Video size={12} /> Meetings
-                </span>
+                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                      <CheckCircle2 size={16} className="text-green-600" />
+                    </div>
+                    <span className="text-sm text-[#666]">Closed Won</span>
+                  </div>
+                  <span className="text-lg font-semibold text-[#1A1A1A]">{closedWonThisMonth}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center">
+                      <DollarSign size={16} className="text-white" />
+                    </div>
+                    <span className="text-sm text-[#666]">Avg Deal Size</span>
+                  </div>
+                  <span className="text-lg font-semibold text-[#1A1A1A]">
+                    {formatCurrency(totalPipeline / (pipelineStats?.totalOpportunities || 1))}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#EAD07D] flex items-center justify-center">
+                      <Clock size={16} className="text-[#1A1A1A]" />
+                    </div>
+                    <span className="text-sm text-[#666]">Deal Cycle</span>
+                  </div>
+                  <span className="text-lg font-semibold text-[#1A1A1A]">
+                    {dealVelocity !== null ? `${dealVelocity}d` : '—'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -688,13 +730,13 @@ export const DashboardHome: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-semibold text-white">Action Items</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-light text-white">{completedTasks}</span>
+                  <span className="text-3xl font-light text-white">{completedTaskCount}</span>
                   <span className="text-lg text-white/50">/{tasks.length}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                {salesTasks.map((task) => {
+                {salesTasks.length > 0 ? salesTasks.map((task) => {
                   const getTaskIcon = () => {
                     const subject = task.subject.toLowerCase();
                     if (subject.includes('call') || subject.includes('phone')) return <PhoneCall size={14} />;
@@ -705,10 +747,13 @@ export const DashboardHome: React.FC = () => {
                     return <CheckCircle2 size={14} />;
                   };
 
+                  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
+
                   return (
-                    <div
+                    <button
                       key={task.id}
-                      className="flex items-center gap-3 group"
+                      onClick={() => setSelectedTask(task)}
+                      className="w-full flex items-center gap-3 group p-2 -mx-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer text-left"
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         task.status === 'COMPLETED'
@@ -730,7 +775,7 @@ export const DashboardHome: React.FC = () => {
                           {task.subject}
                         </p>
                         {task.dueDate && (
-                          <p className="text-xs text-white/40">
+                          <p className={`text-xs ${isOverdue ? 'text-red-400' : 'text-white/40'}`}>
                             {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             {task.lead && ` • ${task.lead.firstName} ${task.lead.lastName}`}
                           </p>
@@ -742,11 +787,9 @@ export const DashboardHome: React.FC = () => {
                       {task.priority === 'HIGH' && task.status !== 'COMPLETED' && (
                         <AlertCircle size={16} className="text-[#EAD07D] flex-shrink-0" />
                       )}
-                    </div>
+                    </button>
                   );
-                })}
-
-                {tasks.length === 0 && (
+                }) : (
                   <div className="text-center py-8">
                     <CheckCircle2 size={32} className="text-white/20 mx-auto mb-2" />
                     <p className="text-white/50 text-sm">All caught up!</p>
@@ -786,7 +829,7 @@ export const DashboardHome: React.FC = () => {
 
           <div className="flex items-baseline gap-4 mb-8">
             <span className="text-5xl font-light text-[#1A1A1A]">
-              {formatCurrency(forecast?.quarterBestCase || 0)}
+              {formatCurrency(forecast?.quarterBestCase || totalPipeline)}
             </span>
             <span className="text-sm text-[#666]">projected revenue</span>
             {(forecast?.quarterCommit ?? 0) > 0 && (
@@ -801,10 +844,11 @@ export const DashboardHome: React.FC = () => {
             <div className="flex items-end justify-between h-40 gap-6">
               {(() => {
                 const maxValue = Math.max(
-                  ...forecast.monthly.map(m => Math.max(m.mostLikely || 0, m.commit || 0, m.bestCase || 0))
+                  ...forecast.monthly.map(m => Math.max(m.mostLikely || 0, m.commit || 0, m.bestCase || 0)),
+                  1
                 );
                 return forecast.monthly.map((monthData, i) => {
-                  const forecastHeight = maxValue > 0 ? ((monthData.mostLikely || 0) / maxValue) * 100 : 0;
+                  const forecastHeight = maxValue > 0 ? ((monthData.mostLikely || monthData.bestCase || 0) / maxValue) * 100 : 0;
                   const commitHeight = maxValue > 0 ? ((monthData.commit || 0) / maxValue) * 100 : 0;
 
                   return (
@@ -842,6 +886,18 @@ export const DashboardHome: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onMarkComplete={async (taskId) => {
+          if (completeTask) {
+            await completeTask(taskId);
+          }
+        }}
+      />
     </div>
   );
 };

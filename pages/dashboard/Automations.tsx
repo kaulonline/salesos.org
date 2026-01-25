@@ -186,36 +186,49 @@ export const Automations: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [workflows, setWorkflows] = useState<WorkflowType[]>([]);
   const [stats, setStats] = useState<WorkflowStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [workflowsLoading, setWorkflowsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<AutomationTemplate | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'templates'>('templates');
 
+  // Fetch workflows and stats in parallel but independently
   const fetchWorkflows = useCallback(async () => {
     try {
-      setLoading(true);
-      const [workflowsData, statsData] = await Promise.all([
-        workflowsApi.getAll(),
-        workflowsApi.getStats(),
-      ]);
+      setWorkflowsLoading(true);
+      const workflowsData = await workflowsApi.getAll();
       setWorkflows(workflowsData.workflows);
-      setStats(statsData);
     } catch (error) {
       console.error('Failed to fetch workflows:', error);
     } finally {
-      setLoading(false);
+      setWorkflowsLoading(false);
+    }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setStatsLoading(true);
+      const statsData = await workflowsApi.getStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to fetch workflow stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // Fetch in parallel but don't block on each other
     fetchWorkflows();
-  }, [fetchWorkflows]);
+    fetchStats();
+  }, [fetchWorkflows, fetchStats]);
 
+  // Default to enabled, only disable if explicitly set to false
   const automationsEnabled = useMemo(() => {
-    if (!featureFlags) return true;
+    if (flagsLoading || !featureFlags) return true; // Show content while loading
     const flag = featureFlags.find((f: { key: string }) => f.key === 'automations_enabled');
     return flag?.enabled ?? true;
-  }, [featureFlags]);
+  }, [featureFlags, flagsLoading]);
 
   const filteredTemplates = useMemo(() => {
     return TEMPLATES.filter((t) => {
@@ -283,24 +296,9 @@ export const Automations: React.FC = () => {
     }
   };
 
-  if (flagsLoading || loading) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Skeleton className="h-10 w-64 mb-2" />
-        <Skeleton className="h-6 w-96 mb-8" />
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
-          ))}
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Only show full-page loading if we're on the active tab and workflows are loading
+  // Templates tab can render immediately since templates are static
+  const showFullPageLoading = activeTab === 'active' && workflowsLoading && workflows.length === 0;
 
   if (!automationsEnabled) {
     return (
@@ -350,7 +348,11 @@ export const Automations: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="p-5 flex items-center justify-between">
           <div>
-            <div className="text-3xl font-bold text-[#1A1A1A]">{stats?.activeWorkflows || 0}</div>
+            {statsLoading ? (
+              <Skeleton className="h-9 w-12 mb-1" />
+            ) : (
+              <div className="text-3xl font-bold text-[#1A1A1A]">{stats?.activeWorkflows || 0}</div>
+            )}
             <div className="text-sm text-[#666]">Active Automations</div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
@@ -359,7 +361,11 @@ export const Automations: React.FC = () => {
         </Card>
         <Card className="p-5 flex items-center justify-between">
           <div>
-            <div className="text-3xl font-bold text-[#1A1A1A]">{stats?.totalExecutions || 0}</div>
+            {statsLoading ? (
+              <Skeleton className="h-9 w-12 mb-1" />
+            ) : (
+              <div className="text-3xl font-bold text-[#1A1A1A]">{stats?.totalExecutions || 0}</div>
+            )}
             <div className="text-sm text-[#666]">Total Runs</div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
@@ -368,11 +374,15 @@ export const Automations: React.FC = () => {
         </Card>
         <Card className="p-5 flex items-center justify-between">
           <div>
-            <div className="text-3xl font-bold text-[#1A1A1A]">
-              {stats && stats.totalExecutions > 0
-                ? `${((stats.successfulExecutions / stats.totalExecutions) * 100).toFixed(0)}%`
-                : '--'}
-            </div>
+            {statsLoading ? (
+              <Skeleton className="h-9 w-16 mb-1" />
+            ) : (
+              <div className="text-3xl font-bold text-[#1A1A1A]">
+                {stats && stats.totalExecutions > 0
+                  ? `${((stats.successfulExecutions / stats.totalExecutions) * 100).toFixed(0)}%`
+                  : '--'}
+              </div>
+            )}
             <div className="text-sm text-[#666]">Success Rate</div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
@@ -408,7 +418,12 @@ export const Automations: React.FC = () => {
       {activeTab === 'active' ? (
         /* Active Workflows */
         <div className="space-y-4">
-          {filteredWorkflows.length === 0 ? (
+          {workflowsLoading ? (
+            // Inline loading for workflows
+            [1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-2xl" />
+            ))
+          ) : filteredWorkflows.length === 0 ? (
             <Card className="p-12 text-center border-dashed border-2 border-gray-200">
               <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
                 <Sparkles size={28} className="text-[#EAD07D]" />

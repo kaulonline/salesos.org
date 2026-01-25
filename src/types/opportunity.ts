@@ -163,6 +163,56 @@ export interface SalesForecast {
 
 export interface AddContactToOpportunityDto {
   contactId: string;
-  role: string;
+  role: OpportunityContactRole;
   isPrimary?: boolean;
+}
+
+// Opportunity Contact Junction - Buyer Committee
+export type OpportunityContactRole =
+  | 'DECISION_MAKER'
+  | 'ECONOMIC_BUYER'
+  | 'CHAMPION'
+  | 'INFLUENCER'
+  | 'TECHNICAL_BUYER'
+  | 'END_USER'
+  | 'BLOCKER'
+  | 'EVALUATOR'
+  | 'GATEKEEPER'
+  | 'LEGAL'
+  | 'PROCUREMENT'
+  | 'OTHER';
+
+export interface OpportunityContact {
+  id: string;
+  opportunityId: string;
+  contactId: string;
+  role: OpportunityContactRole;
+  isPrimary: boolean;
+  influence?: 'HIGH' | 'MEDIUM' | 'LOW';
+  sentiment?: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'UNKNOWN';
+  engagementLevel?: 'HIGHLY_ENGAGED' | 'ENGAGED' | 'PASSIVE' | 'DISENGAGED';
+  notes?: string;
+  lastContactedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Populated contact details
+  contact?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    title?: string;
+    avatarUrl?: string;
+    accountId?: string;
+  };
+}
+
+export interface UpdateOpportunityContactDto {
+  role?: OpportunityContactRole;
+  isPrimary?: boolean;
+  influence?: 'HIGH' | 'MEDIUM' | 'LOW';
+  sentiment?: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'UNKNOWN';
+  engagementLevel?: 'HIGHLY_ENGAGED' | 'ENGAGED' | 'PASSIVE' | 'DISENGAGED';
+  notes?: string;
 }

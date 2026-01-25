@@ -1,6 +1,6 @@
 // Core data hooks (TanStack Query powered)
 export { useLeads, useLead } from './useLeads';
-export { useDeals, useDeal } from './useDeals';
+export { useDeals, useDeal, useOpportunityContacts } from './useDeals';
 export { useCompanies, useCompany } from './useCompanies';
 export { useContacts, useContact } from './useContacts';
 export { useTasks } from './useTasks';
@@ -8,6 +8,7 @@ export { useActivities } from './useActivities';
 export { useChat } from './useChat';
 export { useDashboard } from './useDashboard';
 export { useMeetings, useMeeting, useCalendarMeetings } from './useMeetings';
+export { useCampaigns, useCampaign, useCampaignOpportunities, useCampaignLeads } from './useCampaigns';
 
 // Admin hooks
 export {

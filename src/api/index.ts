@@ -12,6 +12,7 @@ export { default as dashboardApi } from './dashboard';
 export { default as adminApi } from './admin';
 export { default as usersApi } from './users';
 export { default as importExportApi } from './importExport';
+export { default as campaignsApi } from './campaigns';
 
 // Re-export filter types
 export type { LeadFilters } from './leads';
@@ -21,6 +22,7 @@ export type { ContactFilters } from './contacts';
 export type { TaskFilters } from './tasks';
 export type { MeetingFilters } from './meetings';
 export type { DashboardStats } from './dashboard';
+export type { CampaignFilters } from './campaigns';
 
 // Re-export admin types
 export type {

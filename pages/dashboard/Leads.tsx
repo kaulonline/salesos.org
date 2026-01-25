@@ -9,6 +9,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { VirtualList } from '../../src/components/VirtualList';
 import { useLeads } from '../../src/hooks/useLeads';
+import { useCampaigns } from '../../src/hooks/useCampaigns';
 import { AIInsightsBanner } from '../../src/components/AIInsightsBanner';
 import { SmartCaptureModal } from '../../src/components/SmartCapture/SmartCaptureModal';
 import { ImportModal } from '../../src/components/ImportExport/ImportModal';
@@ -36,9 +37,10 @@ interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: CreateLeadDto) => Promise<void>;
+  campaigns: { id: string; name: string }[];
 }
 
-const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCreate }) => {
+const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCreate, campaigns }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateLeadDto>({
@@ -48,6 +50,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
     phone: '',
     company: '',
     title: '',
+    campaignId: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +157,21 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
               />
             </div>
           </div>
+          {campaigns.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Campaign (Optional)</label>
+              <select
+                value={formData.campaignId || ''}
+                onChange={(e) => setFormData({ ...formData, campaignId: e.target.value || undefined })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+              >
+                <option value="">No campaign</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -179,6 +197,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
 export const Leads: React.FC = () => {
   const navigate = useNavigate();
   const { leads, stats, loading, error, refetch, fetchStats, create, score, convert, bulkDelete } = useLeads();
+  const { campaigns } = useCampaigns({ isActive: true });
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSmartCapture, setShowSmartCapture] = useState(false);
@@ -532,6 +551,7 @@ export const Leads: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateLead}
+        campaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
       />
 
       <SmartCaptureModal

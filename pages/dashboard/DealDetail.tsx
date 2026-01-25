@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Phone, Mail, Printer, ArrowLeft, ChevronDown, ChevronUp, MapPin, AlertCircle, Building2, TrendingUp, Sparkles, Check, X, ArrowRight, Loader2 } from 'lucide-react';
+import { Phone, Mail, Printer, ArrowLeft, ChevronDown, ChevronUp, MapPin, AlertCircle, Building2, TrendingUp, Sparkles, Check, X, ArrowRight, Loader2, Users, Plus, UserPlus, Trash2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ContactTimeline } from '../../components/dashboard';
-import { useDeal, useDeals } from '../../src/hooks';
-import type { OpportunityStage, OpportunityAnalysis } from '../../src/types';
+import { useDeal, useDeals, useOpportunityContacts, useContacts } from '../../src/hooks';
+import type { OpportunityStage, OpportunityAnalysis, OpportunityContactRole } from '../../src/types';
 
 // All available stages in order
 const STAGES: OpportunityStage[] = [
@@ -81,6 +81,40 @@ const calculateDaysInStage = (lastActivityDate?: string) => {
   return diffDays;
 };
 
+// Buyer Committee role labels
+const getRoleLabel = (role: OpportunityContactRole) => {
+  const labels: Record<OpportunityContactRole, string> = {
+    'DECISION_MAKER': 'Decision Maker',
+    'ECONOMIC_BUYER': 'Economic Buyer',
+    'CHAMPION': 'Champion',
+    'INFLUENCER': 'Influencer',
+    'TECHNICAL_BUYER': 'Technical Buyer',
+    'END_USER': 'End User',
+    'BLOCKER': 'Blocker',
+    'EVALUATOR': 'Evaluator',
+    'GATEKEEPER': 'Gatekeeper',
+    'LEGAL': 'Legal',
+    'PROCUREMENT': 'Procurement',
+    'OTHER': 'Other',
+  };
+  return labels[role] || role;
+};
+
+const OPPORTUNITY_CONTACT_ROLES: OpportunityContactRole[] = [
+  'DECISION_MAKER',
+  'ECONOMIC_BUYER',
+  'CHAMPION',
+  'INFLUENCER',
+  'TECHNICAL_BUYER',
+  'END_USER',
+  'EVALUATOR',
+  'GATEKEEPER',
+  'LEGAL',
+  'PROCUREMENT',
+  'BLOCKER',
+  'OTHER',
+];
+
 export const DealDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -95,6 +129,22 @@ export const DealDetail: React.FC = () => {
     isUpdating,
   } = useDeals();
 
+  // Buyer Committee (Opportunity Contacts)
+  const {
+    contacts: buyerCommittee,
+    loading: buyerCommitteeLoading,
+    addContact,
+    removeContact,
+    setPrimary,
+    isAdding: isAddingContact,
+    isRemoving: isRemovingContact,
+  } = useOpportunityContacts(id);
+
+  // Available contacts for adding to buyer committee
+  const { contacts: availableContacts, loading: contactsLoading } = useContacts(
+    deal?.accountId ? { accountId: deal.accountId } : undefined
+  );
+
   const [openSection, setOpenSection] = useState<string | null>('basic');
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [analyzingDeal, setAnalyzingDeal] = useState(false);
@@ -103,6 +153,9 @@ export const DealDetail: React.FC = () => {
   const [showCloseLostModal, setShowCloseLostModal] = useState(false);
   const [lostReason, setLostReason] = useState('');
   const [stageUpdating, setStageUpdating] = useState(false);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState('');
+  const [selectedRole, setSelectedRole] = useState<OpportunityContactRole>('INFLUENCER');
 
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
@@ -179,6 +232,37 @@ export const DealDetail: React.FC = () => {
       setStageUpdating(false);
     }
   };
+
+  // Handle add contact to buyer committee
+  const handleAddToBuyerCommittee = async () => {
+    if (!selectedContactId || !selectedRole) return;
+    try {
+      await addContact({
+        contactId: selectedContactId,
+        role: selectedRole,
+        isPrimary: buyerCommittee.length === 0, // First contact is primary
+      });
+      setShowAddContactModal(false);
+      setSelectedContactId('');
+      setSelectedRole('INFLUENCER');
+    } catch (err) {
+      console.error('Failed to add contact to buyer committee:', err);
+    }
+  };
+
+  // Handle remove contact from buyer committee
+  const handleRemoveFromBuyerCommittee = async (contactId: string) => {
+    try {
+      await removeContact(contactId);
+    } catch (err) {
+      console.error('Failed to remove contact from buyer committee:', err);
+    }
+  };
+
+  // Get contacts not already in buyer committee
+  const contactsNotInCommittee = availableContacts.filter(
+    (c) => !buyerCommittee.some((bc) => bc.contactId === c.id)
+  );
 
   const isClosedStage = deal?.stage === 'CLOSED_WON' || deal?.stage === 'CLOSED_LOST';
   const canAdvance = deal && !isClosedStage && STAGES.indexOf(deal.stage) < 7;
@@ -553,7 +637,7 @@ export const DealDetail: React.FC = () => {
                             <div className="text-xs font-bold text-[#999] uppercase tracking-wide mb-2">Risk Factors</div>
                             {analysis.riskFactors.slice(0, 2).map((risk, i) => (
                               <div key={i} className="text-xs text-[#666] mb-1">
-                                {risk.severity === 'HIGH' ? '!' : ''}  {risk.factor}
+                                {risk.severity === 'HIGH' ? '!' : ''} {risk.factor}
                               </div>
                             ))}
                           </div>
@@ -582,6 +666,97 @@ export const DealDetail: React.FC = () => {
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+              </Card>
+
+              {/* Buyer Committee Section */}
+              <Card padding="md" className="border border-black/5">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
+                    <Users size={16} />
+                    Buyer Committee
+                  </h3>
+                  <button
+                    onClick={() => setShowAddContactModal(true)}
+                    className="flex items-center gap-1 text-xs font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
+                  >
+                    <Plus size={14} />
+                    Add
+                  </button>
+                </div>
+
+                {buyerCommitteeLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : buyerCommittee.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Users size={32} className="mx-auto mb-2 text-[#999] opacity-40" />
+                    <p className="text-sm text-[#666] mb-3">No stakeholders added yet</p>
+                    <button
+                      onClick={() => setShowAddContactModal(true)}
+                      className="text-xs font-bold text-[#1A1A1A] bg-[#EAD07D] px-4 py-2 rounded-full hover:bg-[#E5C973] transition-colors"
+                    >
+                      Add Stakeholder
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {buyerCommittee.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl group hover:bg-[#F2F1EA] transition-colors"
+                      >
+                        <Avatar
+                          src={member.contact?.avatarUrl}
+                          className="w-9 h-9"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/dashboard/contacts/${member.contactId}`}
+                              className="text-sm font-medium text-[#1A1A1A] hover:underline truncate"
+                            >
+                              {member.contact?.firstName} {member.contact?.lastName}
+                            </Link>
+                            {member.isPrimary && (
+                              <Badge variant="yellow" size="sm">Primary</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-[#666]">
+                            <span>{getRoleLabel(member.role)}</span>
+                            {member.contact?.title && (
+                              <>
+                                <span className="text-[#ccc]">|</span>
+                                <span className="truncate">{member.contact.title}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!member.isPrimary && (
+                            <button
+                              onClick={() => setPrimary(member.contactId)}
+                              className="p-1.5 text-[#666] hover:text-[#1A1A1A] hover:bg-white rounded-lg transition-colors"
+                              title="Set as primary"
+                            >
+                              <Check size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleRemoveFromBuyerCommittee(member.contactId)}
+                            disabled={isRemovingContact}
+                            className="p-1.5 text-[#666] hover:text-red-500 hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                            title="Remove from committee"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </Card>
@@ -789,6 +964,95 @@ export const DealDetail: React.FC = () => {
                 Confirm Lost
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Contact to Buyer Committee Modal */}
+      {showAddContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddContactModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+              <UserPlus size={20} />
+              Add to Buyer Committee
+            </h3>
+
+            {contactsLoading ? (
+              <div className="py-8 flex justify-center">
+                <Loader2 size={24} className="animate-spin text-[#999]" />
+              </div>
+            ) : contactsNotInCommittee.length === 0 ? (
+              <div className="text-center py-6">
+                <Users size={32} className="mx-auto mb-2 text-[#999] opacity-40" />
+                <p className="text-sm text-[#666] mb-3">
+                  {availableContacts.length === 0
+                    ? 'No contacts found for this account'
+                    : 'All contacts are already in the buyer committee'}
+                </p>
+                <Link
+                  to={`/dashboard/contacts?accountId=${deal?.accountId}`}
+                  className="text-xs font-bold text-[#1A1A1A] bg-[#EAD07D] px-4 py-2 rounded-full hover:bg-[#E5C973] transition-colors inline-block"
+                >
+                  Add New Contact
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#666] mb-2">Select Contact</label>
+                  <select
+                    value={selectedContactId}
+                    onChange={(e) => setSelectedContactId(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EAD07D] bg-white"
+                  >
+                    <option value="">Choose a contact...</option>
+                    {contactsNotInCommittee.map((contact) => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.firstName} {contact.lastName}
+                        {contact.title ? ` - ${contact.title}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-[#666] mb-2">Role in Deal</label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as OpportunityContactRole)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EAD07D] bg-white"
+                  >
+                    {OPPORTUNITY_CONTACT_ROLES.map((role) => (
+                      <option key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => {
+                      setShowAddContactModal(false);
+                      setSelectedContactId('');
+                      setSelectedRole('INFLUENCER');
+                    }}
+                    className="px-4 py-2 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddToBuyerCommittee}
+                    disabled={isAddingContact || !selectedContactId}
+                    className="flex items-center gap-2 px-6 py-2 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+                  >
+                    {isAddingContact ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    Add to Committee
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

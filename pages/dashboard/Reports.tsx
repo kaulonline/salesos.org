@@ -87,7 +87,7 @@ const KPICard: React.FC<KPICardProps> = ({ title, value, change, icon: Icon, loa
         <div className="w-10 h-10 rounded-full bg-[#F2F1EA] flex items-center justify-center">
           <Icon size={20} className="text-[#1A1A1A]" />
         </div>
-        {change !== undefined && (
+        {change !== undefined && change !== null && !isNaN(change) && (
           <div className={`flex items-center text-sm font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <span className="ml-1">{Math.abs(change).toFixed(1)}%</span>
@@ -108,7 +108,8 @@ interface BarChartProps {
 }
 
 const SimpleBarChart: React.FC<BarChartProps> = ({ data, maxValue, showPercentage, color = '#1A1A1A' }) => {
-  const max = maxValue || Math.max(...data.map((d) => d.value));
+  const values = data.map((d) => d.value).filter((v) => v !== undefined && v !== null && !isNaN(v));
+  const max = maxValue || Math.max(...values, 1);
 
   return (
     <div className="space-y-3">
@@ -121,17 +122,17 @@ const SimpleBarChart: React.FC<BarChartProps> = ({ data, maxValue, showPercentag
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
-                width: `${(item.value / max) * 100}%`,
+                width: `${((item.value || 0) / max) * 100}%`,
                 backgroundColor: color,
               }}
             />
           </div>
           <div className="w-20 text-sm text-right font-medium">
-            {showPercentage && item.percentage !== undefined
-              ? `${item.percentage.toFixed(1)}%`
+            {showPercentage && item.percentage !== undefined && item.percentage !== null
+              ? `${(item.percentage || 0).toFixed(1)}%`
               : typeof item.value === 'number' && item.value >= 1000
-              ? `$${(item.value / 1000).toFixed(0)}k`
-              : item.value}
+              ? `$${((item.value || 0) / 1000).toFixed(0)}k`
+              : item.value ?? 0}
           </div>
         </div>
       ))}
@@ -145,16 +146,20 @@ interface LineChartData {
 }
 
 const SimpleLineChart: React.FC<{ data: LineChartData }> = ({ data }) => {
-  const allValues = data.datasets.flatMap((d) => d.data);
+  const allValues = data.datasets.flatMap((d) => d.data).filter((v) => v !== undefined && v !== null && !isNaN(v));
+  if (allValues.length === 0) {
+    return <div className="h-64 flex items-center justify-center text-[#666]">No data available</div>;
+  }
   const maxValue = Math.max(...allValues);
   const minValue = Math.min(...allValues);
   const range = maxValue - minValue || 1;
 
   const getPath = (values: number[]) => {
-    if (values.length === 0) return '';
-    const points = values.map((val, i) => {
-      const x = (i / (values.length - 1)) * 100;
-      const y = 100 - ((val - minValue) / range) * 80 - 10;
+    const cleanValues = values.filter((v) => v !== undefined && v !== null && !isNaN(v));
+    if (cleanValues.length === 0) return '';
+    const points = cleanValues.map((val, i) => {
+      const x = (i / Math.max(cleanValues.length - 1, 1)) * 100;
+      const y = 100 - (((val || 0) - minValue) / range) * 80 - 10;
       return [x, y];
     });
 
@@ -203,13 +208,17 @@ const SimpleLineChart: React.FC<{ data: LineChartData }> = ({ data }) => {
   );
 };
 
-const formatCurrency = (value: number): string => {
+const formatCurrency = (value: number | undefined | null): string => {
+  if (value === undefined || value === null || isNaN(value)) return '$0';
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
   if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
   return `$${value.toFixed(0)}`;
 };
 
-const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
+const formatPercent = (value: number | undefined | null): string => {
+  if (value === undefined || value === null || isNaN(value)) return '0%';
+  return `${value.toFixed(1)}%`;
+};
 
 export const Reports: React.FC = () => {
   const [activeReport, setActiveReport] = useState<ReportType>(ReportType.PIPELINE);
@@ -273,7 +282,7 @@ export const Reports: React.FC = () => {
       <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <KPICard title="Total Pipeline" value={formatCurrency(data.totalValue)} icon={DollarSign} />
-          <KPICard title="Open Deals" value={data.totalCount} icon={BarChart3} />
+          <KPICard title="Open Deals" value={data.totalCount || 0} icon={BarChart3} />
           <KPICard title="Avg Deal Size" value={formatCurrency(data.avgDealSize)} icon={Target} />
           <KPICard title="Expected Revenue" value={formatCurrency(data.expectedRevenue)} icon={TrendingUp} />
         </div>
@@ -281,7 +290,7 @@ export const Reports: React.FC = () => {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Pipeline by Stage</h3>
           <SimpleBarChart
-            data={data.byStage.map((s) => ({ label: s.stage, value: s.amount, percentage: s.percentage }))}
+            data={(data.byStage || []).map((s) => ({ label: s.stage, value: s.amount, percentage: s.percentage }))}
             showPercentage
             color="#EAD07D"
           />
@@ -294,21 +303,24 @@ export const Reports: React.FC = () => {
     const data = reportData?.data as unknown as WinRateReport;
     if (!data) return null;
 
+    const byPeriod = data.byPeriod || [];
+    const byOwner = data.byOwner || [];
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <KPICard title="Overall Win Rate" value={formatPercent(data.overall)} icon={Target} />
           <KPICard
             title="Deals Won"
-            value={data.byPeriod.reduce((sum, p) => sum + p.won, 0)}
+            value={byPeriod.reduce((sum, p) => sum + (p.won || 0), 0)}
             icon={TrendingUp}
           />
           <KPICard
             title="Deals Lost"
-            value={data.byPeriod.reduce((sum, p) => sum + p.lost, 0)}
+            value={byPeriod.reduce((sum, p) => sum + (p.lost || 0), 0)}
             icon={TrendingDown}
           />
-          <KPICard title="Avg Cycle Time" value={`${data.avgCycleTime} days`} icon={Calendar} />
+          <KPICard title="Avg Cycle Time" value={`${data.avgCycleTime || 0} days`} icon={Calendar} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -316,8 +328,8 @@ export const Reports: React.FC = () => {
             <h3 className="text-lg font-semibold mb-6">Win Rate by Period</h3>
             <SimpleLineChart
               data={{
-                labels: data.byPeriod.map((p) => p.period),
-                datasets: [{ name: 'Win Rate', data: data.byPeriod.map((p) => p.winRate), color: '#10B981' }],
+                labels: byPeriod.map((p) => p.period),
+                datasets: [{ name: 'Win Rate', data: byPeriod.map((p) => p.winRate), color: '#10B981' }],
               }}
             />
           </Card>
@@ -325,7 +337,7 @@ export const Reports: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Win Rate by Owner</h3>
             <SimpleBarChart
-              data={data.byOwner.map((o) => ({ label: o.name, value: o.winRate, percentage: o.winRate }))}
+              data={byOwner.map((o) => ({ label: o.name, value: o.winRate, percentage: o.winRate }))}
               showPercentage
               maxValue={100}
               color="#10B981"
@@ -340,23 +352,27 @@ export const Reports: React.FC = () => {
     const data = reportData?.data as unknown as ActivityReport;
     if (!data) return null;
 
+    const byType = data.byType || [];
+    const byOwner = data.byOwner || [];
+    const byDay = data.byDay || [];
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <KPICard title="Total Activities" value={data.totalActivities} icon={Activity} />
+          <KPICard title="Total Activities" value={data.totalActivities || 0} icon={Activity} />
           <KPICard
             title="Calls"
-            value={data.byType.find((t) => t.type === 'CALL')?.count || 0}
+            value={byType.find((t) => t.type === 'CALL')?.count || 0}
             icon={Activity}
           />
           <KPICard
             title="Emails"
-            value={data.byType.find((t) => t.type === 'EMAIL')?.count || 0}
+            value={byType.find((t) => t.type === 'EMAIL')?.count || 0}
             icon={Activity}
           />
           <KPICard
             title="Meetings"
-            value={data.byType.find((t) => t.type === 'MEETING')?.count || 0}
+            value={byType.find((t) => t.type === 'MEETING')?.count || 0}
             icon={Activity}
           />
         </div>
@@ -365,7 +381,7 @@ export const Reports: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Activity by Type</h3>
             <SimpleBarChart
-              data={data.byType.map((t) => ({ label: t.type, value: t.count }))}
+              data={byType.map((t) => ({ label: t.type, value: t.count }))}
               color="#6366F1"
             />
           </Card>
@@ -373,7 +389,7 @@ export const Reports: React.FC = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Activity by Owner</h3>
             <SimpleBarChart
-              data={data.byOwner.map((o) => ({ label: o.name, value: o.total }))}
+              data={byOwner.map((o) => ({ label: o.name, value: o.total }))}
               color="#6366F1"
             />
           </Card>
@@ -383,8 +399,8 @@ export const Reports: React.FC = () => {
           <h3 className="text-lg font-semibold mb-6">Activity Over Time</h3>
           <SimpleLineChart
             data={{
-              labels: data.byDay.map((d) => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-              datasets: [{ name: 'Activities', data: data.byDay.map((d) => d.count), color: '#6366F1' }],
+              labels: byDay.map((d) => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+              datasets: [{ name: 'Activities', data: byDay.map((d) => d.count), color: '#6366F1' }],
             }}
           />
         </Card>

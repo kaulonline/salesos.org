@@ -9,7 +9,6 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useDeals } from '../../src/hooks/useDeals';
 import { useCompanies } from '../../src/hooks/useCompanies';
-import { AIInsightsBanner } from '../../src/components/AIInsightsBanner';
 import type { OpportunityStage, CreateOpportunityDto } from '../../src/types';
 
 const STAGES: { id: OpportunityStage; title: string; color: string; badge: 'blue' | 'red' | 'purple' | 'green' | 'yellow' | 'neutral' }[] = [
@@ -293,10 +292,6 @@ export const Deals: React.FC = () => {
                 'Manage your opportunities and track revenue.'
               )}
             </p>
-            {/* AI Insights for Deals */}
-            <div className="mt-4">
-              <AIInsightsBanner maxInsights={2} showSummary={false} className="bg-transparent border-0 p-0" />
-            </div>
          </div>
 
          <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">

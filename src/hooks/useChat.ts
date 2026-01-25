@@ -12,7 +12,7 @@ interface UseChatReturn {
   fetchConversations: () => Promise<void>;
   createConversation: (data?: CreateConversationDto) => Promise<Conversation>;
   selectConversation: (id: string) => Promise<void>;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, conversationId?: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   clearCurrentConversation: () => void;
 }
@@ -24,7 +24,7 @@ export function useChat(): UseChatReturn {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchConversations = useCallback(async () => {
     setLoading(true);
@@ -63,8 +63,11 @@ export function useChat(): UseChatReturn {
     }
   }, []);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!currentConversation) {
+  const sendMessage = useCallback(async (content: string, conversationId?: string) => {
+    // Use provided conversationId or fall back to currentConversation
+    const targetConversationId = conversationId || currentConversation?.id;
+
+    if (!targetConversationId) {
       setError('No conversation selected');
       return;
     }
@@ -72,7 +75,7 @@ export function useChat(): UseChatReturn {
     // Add user message to UI immediately
     const userMessage: Message = {
       id: `temp-${Date.now()}`,
-      conversationId: currentConversation.id,
+      conversationId: targetConversationId,
       role: 'user',
       content,
       createdAt: new Date().toISOString(),
@@ -83,7 +86,7 @@ export function useChat(): UseChatReturn {
     const assistantMessageId = `temp-assistant-${Date.now()}`;
     const assistantMessage: Message = {
       id: assistantMessageId,
-      conversationId: currentConversation.id,
+      conversationId: targetConversationId,
       role: 'assistant',
       content: '',
       createdAt: new Date().toISOString(),
@@ -94,52 +97,49 @@ export function useChat(): UseChatReturn {
     setError(null);
 
     try {
-      // Use streaming endpoint
-      const eventSource = conversationsApi.streamMessage(currentConversation.id, content);
-      eventSourceRef.current = eventSource;
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.delta) {
+      // Use streaming endpoint with callbacks
+      // Backend SSE format: { type: 'start'|'text'|'done'|'error', text?: string, assistantMessageId?: string }
+      await conversationsApi.streamMessage(
+        targetConversationId,
+        content,
+        // onChunk callback
+        (data) => {
+          // Handle text chunks
+          if (data.type === 'text' && data.text) {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMessageId
-                  ? { ...m, content: m.content + data.delta }
+                  ? { ...m, content: m.content + data.text }
                   : m
               )
             );
           }
-          if (data.done) {
-            eventSource.close();
-            eventSourceRef.current = null;
+          // Handle completion
+          if (data.type === 'done') {
             setStreaming(false);
-            // Update message with final content if provided
-            if (data.fullContent) {
+            // Update message ID with the real one from backend
+            if (data.assistantMessageId) {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMessageId
-                    ? { ...m, content: data.fullContent, id: data.id || m.id }
+                    ? { ...m, id: data.assistantMessageId }
                     : m
                 )
               );
             }
           }
-        } catch {
-          // Ignore parse errors for keepalive messages
+          // Handle errors from backend
+          if (data.type === 'error') {
+            setStreaming(false);
+            setError(data.error || 'An error occurred');
+          }
+        },
+        // onError callback (network/fetch errors)
+        (err) => {
+          setStreaming(false);
+          setError(err.message || 'Connection lost. Please try again.');
         }
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        eventSourceRef.current = null;
-        setStreaming(false);
-        // If we got some content, don't show error
-        const assistantMsg = messages.find((m) => m.id === assistantMessageId);
-        if (!assistantMsg || !assistantMsg.content) {
-          setError('Connection lost. Please try again.');
-        }
-      };
+      );
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
       setError(e.response?.data?.message || e.message || 'Failed to send message');
@@ -147,7 +147,7 @@ export function useChat(): UseChatReturn {
       // Remove the empty assistant message on error
       setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
     }
-  }, [currentConversation, messages]);
+  }, [currentConversation]);
 
   const deleteConversation = useCallback(async (id: string) => {
     await conversationsApi.delete(id);
@@ -159,9 +159,9 @@ export function useChat(): UseChatReturn {
   }, [currentConversation]);
 
   const clearCurrentConversation = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     setCurrentConversation(null);
     setMessages([]);

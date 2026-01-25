@@ -22,7 +22,7 @@ export const authApi = {
    * Get the current authenticated user's profile
    */
   getProfile: async (): Promise<User> => {
-    const response = await client.get<User>('/auth/profile');
+    const response = await client.get<User>('/auth/me');
     return response.data;
   },
 

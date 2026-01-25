@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, Sparkles, LogOut, User, Shield, BarChart3, Search } from 'lucide-react';
+import { Command, Bell, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
 import { useAuth } from '../src/context/AuthContext';
+import { FloatingChat } from '../components/FloatingChat';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -12,6 +13,7 @@ export const DashboardLayout: React.FC = () => {
   const path = location.pathname;
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const { user, logout } = useAuth();
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
@@ -27,7 +29,6 @@ export const DashboardLayout: React.FC = () => {
 
   const primaryNavItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'AI Chat', href: '/dashboard/ai', icon: Sparkles, highlight: true },
     { label: 'Leads', href: '/dashboard/leads' },
     { label: 'Contacts', href: '/dashboard/contacts', icon: User },
     { label: 'Accounts', href: '/dashboard/companies', icon: Building2 },
@@ -36,13 +37,18 @@ export const DashboardLayout: React.FC = () => {
 
   const secondaryNavItems = [
     { label: 'Analytics', href: '/dashboard/analytics' },
+    { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone },
+    { label: 'Revenue', href: '/dashboard/revenue' },
+    { label: 'Calendar', href: '/dashboard/calendar' },
+    { label: 'Messages', href: '/dashboard/messages' },
+  ];
+
+  const settingsNavItems = [
+    { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
-    { label: 'Revenue', href: '/dashboard/revenue' },
-    { label: 'Calendar', href: '/dashboard/calendar' },
-    { label: 'Messages', href: '/dashboard/messages' },
   ];
 
   return (
@@ -144,10 +150,49 @@ export const DashboardLayout: React.FC = () => {
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
-          <Link to="/dashboard/settings" className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm">
-            <Settings size={16} />
-            <span className="hidden sm:inline">Settings</span>
-          </Link>
+          {/* Settings Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${
+                settingsNavItems.some(item => path.startsWith(item.href))
+                  ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                  : showSettingsMenu
+                  ? 'bg-white text-[#1A1A1A] border-gray-200'
+                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
+              }`}
+            >
+              <Settings size={16} />
+              <span className="hidden sm:inline">Settings</span>
+              <ChevronDown size={14} className={`transition-transform duration-200 ${showSettingsMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showSettingsMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowSettingsMenu(false)} />
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {settingsNavItems.map((item) => {
+                    const isActive = path === item.href || (item.href !== '/dashboard/settings' && path.startsWith(item.href));
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setShowSettingsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-[#F8F8F6] text-[#1A1A1A]'
+                            : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
+                        }`}
+                      >
+                        {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
           
           <button className="w-10 h-10 bg-white/60 border border-white/50 rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm text-[#1A1A1A] backdrop-blur-sm relative group">
             <Bell size={18} className="group-hover:scale-110 transition-transform" />
@@ -192,14 +237,6 @@ export const DashboardLayout: React.FC = () => {
                         Admin Console
                       </Link>
                     )}
-                    <Link
-                      to="/dashboard/settings"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A] transition-colors"
-                    >
-                      <Settings size={16} className="text-[#999]" />
-                      Settings
-                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
@@ -216,7 +253,7 @@ export const DashboardLayout: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="animate-in fade-in slide-in-from-bottom-4 duration-700 pt-[180px] md:pt-32 pb-24 px-4 md:px-8 max-w-[1920px] mx-auto">
+      <main className="pt-[180px] md:pt-32 pb-24 px-4 md:px-8 max-w-[1920px] mx-auto">
         <Outlet />
       </main>
 
@@ -225,6 +262,9 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Offline Status Indicator */}
       <OfflineIndicator />
+
+      {/* Floating AI Chat */}
+      <FloatingChat />
     </div>
   );
 };

@@ -77,7 +77,7 @@ export interface Contact {
 }
 
 export interface CreateContactDto {
-  accountId: string;
+  accountId?: string;
   firstName: string;
   lastName: string;
   salutation?: string;

@@ -10,6 +10,9 @@ import type {
   PipelineStats,
   SalesForecast,
   OpportunityAnalysis,
+  OpportunityContact,
+  AddContactToOpportunityDto,
+  UpdateOpportunityContactDto,
 } from '../types';
 
 // Hook for listing deals with caching and background refresh
@@ -280,5 +283,121 @@ export function usePrefetchDeal() {
       queryFn: () => opportunitiesApi.getById(id),
       staleTime: 30 * 1000,
     });
+  };
+}
+
+// Hook for managing opportunity contacts (buyer committee)
+export function useOpportunityContacts(opportunityId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  // Query for contacts on this opportunity
+  const contactsQuery = useQuery({
+    queryKey: queryKeys.deals.contacts(opportunityId!),
+    queryFn: () => opportunitiesApi.getContacts(opportunityId!),
+    enabled: !!opportunityId,
+  });
+
+  // Add contact mutation
+  const addContactMutation = useMutation({
+    mutationFn: (data: AddContactToOpportunityDto) =>
+      opportunitiesApi.addContact(opportunityId!, data),
+    onSuccess: (newContact) => {
+      queryClient.setQueryData<OpportunityContact[]>(
+        queryKeys.deals.contacts(opportunityId!),
+        (old) => (old ? [...old, newContact] : [newContact])
+      );
+    },
+  });
+
+  // Update contact mutation
+  const updateContactMutation = useMutation({
+    mutationFn: ({
+      contactId,
+      data,
+    }: {
+      contactId: string;
+      data: UpdateOpportunityContactDto;
+    }) => opportunitiesApi.updateContact(opportunityId!, contactId, data),
+    onSuccess: (updatedContact) => {
+      queryClient.setQueryData<OpportunityContact[]>(
+        queryKeys.deals.contacts(opportunityId!),
+        (old) =>
+          old?.map((c) => (c.contactId === updatedContact.contactId ? updatedContact : c))
+      );
+    },
+  });
+
+  // Remove contact mutation
+  const removeContactMutation = useMutation({
+    mutationFn: (contactId: string) =>
+      opportunitiesApi.removeContact(opportunityId!, contactId),
+    onMutate: async (contactId) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.deals.contacts(opportunityId!),
+      });
+      const previousContacts = queryClient.getQueryData<OpportunityContact[]>(
+        queryKeys.deals.contacts(opportunityId!)
+      );
+
+      queryClient.setQueryData<OpportunityContact[]>(
+        queryKeys.deals.contacts(opportunityId!),
+        (old) => old?.filter((c) => c.contactId !== contactId)
+      );
+
+      return { previousContacts };
+    },
+    onError: (_err, _contactId, context) => {
+      if (context?.previousContacts) {
+        queryClient.setQueryData(
+          queryKeys.deals.contacts(opportunityId!),
+          context.previousContacts
+        );
+      }
+    },
+  });
+
+  // Set primary contact mutation
+  const setPrimaryMutation = useMutation({
+    mutationFn: (contactId: string) =>
+      opportunitiesApi.setPrimaryContact(opportunityId!, contactId),
+    onSuccess: (updatedContact) => {
+      queryClient.setQueryData<OpportunityContact[]>(
+        queryKeys.deals.contacts(opportunityId!),
+        (old) =>
+          old?.map((c) => ({
+            ...c,
+            isPrimary: c.contactId === updatedContact.contactId,
+          }))
+      );
+    },
+  });
+
+  return {
+    // Data
+    contacts: contactsQuery.data ?? [],
+    primaryContact: contactsQuery.data?.find((c) => c.isPrimary) ?? null,
+
+    // Loading states
+    loading: contactsQuery.isLoading,
+    isRefetching: contactsQuery.isRefetching,
+
+    // Error states
+    error: contactsQuery.error?.message ?? null,
+
+    // Actions
+    refetch: contactsQuery.refetch,
+
+    // Mutations
+    addContact: (data: AddContactToOpportunityDto) => addContactMutation.mutateAsync(data),
+    updateContact: (contactId: string, data: UpdateOpportunityContactDto) =>
+      updateContactMutation.mutateAsync({ contactId, data }),
+    removeContact: (contactId: string) => removeContactMutation.mutateAsync(contactId),
+    setPrimary: (contactId: string) => setPrimaryMutation.mutateAsync(contactId),
+
+    // Mutation states
+    isAdding: addContactMutation.isPending,
+    isUpdating: updateContactMutation.isPending,
+    isRemoving: removeContactMutation.isPending,
+    isSettingPrimary: setPrimaryMutation.isPending,
   };
 }

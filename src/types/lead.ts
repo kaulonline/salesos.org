@@ -29,6 +29,7 @@ export type BuyingIntent = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
 export interface Lead {
   id: string;
   ownerId: string;
+  campaignId?: string;
   firstName: string;
   lastName: string;
   salutation?: string;
@@ -77,6 +78,7 @@ export interface CreateLeadDto {
   phone?: string;
   website?: string;
   leadSource?: LeadSource;
+  campaignId?: string;
   status?: LeadStatus;
   rating?: LeadRating;
   industry?: string;

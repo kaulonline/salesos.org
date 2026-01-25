@@ -44,13 +44,72 @@ export const conversationsApi = {
 
   /**
    * Send a message and get streaming response
-   * Returns an EventSource for SSE streaming
+   * Uses fetch with POST for SSE streaming
+   * Backend SSE format: { type: 'text'|'done'|'error', text?: string, assistantMessageId?: string, error?: string }
    */
-  streamMessage: (conversationId: string, content: string): EventSource => {
+  streamMessage: async (
+    conversationId: string,
+    content: string,
+    onChunk: (data: {
+      type: string;
+      text?: string;
+      assistantMessageId?: string;
+      error?: string;
+      suggestedFollowUps?: string[];
+    }) => void,
+    onError: (error: Error) => void
+  ): Promise<void> => {
     const token = localStorage.getItem('token');
     const baseUrl = import.meta.env.VITE_API_URL || '/api';
-    const url = `${baseUrl}/conversations/${conversationId}/messages/stream?content=${encodeURIComponent(content)}&token=${token}`;
-    return new EventSource(url);
+    const url = `${baseUrl}/conversations/${conversationId}/messages/stream`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              onChunk(data);
+              if (data.type === 'done' || data.type === 'error') {
+                return;
+              }
+            } catch {
+              // Ignore parse errors for keepalive messages
+            }
+          }
+        }
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error('Stream failed'));
+    }
   },
 
   /**

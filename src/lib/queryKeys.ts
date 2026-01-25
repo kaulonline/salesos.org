@@ -4,6 +4,7 @@ import type { ContactFilters } from '../api/contacts';
 import type { AccountFilters } from '../api/accounts';
 import type { TaskFilters } from '../api/tasks';
 import type { MeetingFilters } from '../api/meetings';
+import type { CampaignFilters } from '../api/campaigns';
 import type { ActivityFilters } from '../types';
 
 // Query keys factory for cache management
@@ -21,6 +22,8 @@ export const queryKeys = {
     pipelineStats: () => [...queryKeys.deals.all, 'pipelineStats'] as const,
     forecast: () => [...queryKeys.deals.all, 'forecast'] as const,
     analysis: (id: string) => [...queryKeys.deals.all, 'analysis', id] as const,
+    // Opportunity Contacts (Buyer Committee)
+    contacts: (opportunityId: string) => [...queryKeys.deals.detail(opportunityId), 'contacts'] as const,
   },
 
   // Leads
@@ -82,6 +85,20 @@ export const queryKeys = {
     all: ['activities'] as const,
     lists: () => [...queryKeys.activities.all, 'list'] as const,
     list: (filters?: ActivityFilters) => [...queryKeys.activities.lists(), filters] as const,
+  },
+
+  // Campaigns
+  campaigns: {
+    all: ['campaigns'] as const,
+    lists: () => [...queryKeys.campaigns.all, 'list'] as const,
+    list: (filters?: CampaignFilters) => [...queryKeys.campaigns.lists(), filters] as const,
+    details: () => [...queryKeys.campaigns.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.campaigns.details(), id] as const,
+    stats: () => [...queryKeys.campaigns.all, 'stats'] as const,
+    members: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'members'] as const,
+    performance: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'performance'] as const,
+    opportunities: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'opportunities'] as const,
+    leads: (campaignId: string) => [...queryKeys.campaigns.detail(campaignId), 'leads'] as const,
   },
 
   // Dashboard

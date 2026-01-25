@@ -10,6 +10,8 @@ import type {
   PipelineStats,
   SalesForecast,
   AddContactToOpportunityDto,
+  UpdateOpportunityContactDto,
+  OpportunityContact,
   QueryFilters,
 } from '../types';
 
@@ -117,11 +119,53 @@ export const opportunitiesApi = {
     return response.data;
   },
 
+  // Opportunity Contacts (Buyer Committee)
   /**
-   * Add contact to opportunity
+   * Get all contacts associated with an opportunity
    */
-  addContact: async (id: string, data: AddContactToOpportunityDto): Promise<void> => {
-    await client.post(`/opportunities/${id}/contacts`, data);
+  getContacts: async (id: string): Promise<OpportunityContact[]> => {
+    const response = await client.get<OpportunityContact[]>(`/opportunities/${id}/contacts`);
+    return response.data;
+  },
+
+  /**
+   * Add contact to opportunity (buyer committee)
+   */
+  addContact: async (id: string, data: AddContactToOpportunityDto): Promise<OpportunityContact> => {
+    const response = await client.post<OpportunityContact>(`/opportunities/${id}/contacts`, data);
+    return response.data;
+  },
+
+  /**
+   * Update contact role/details on opportunity
+   */
+  updateContact: async (
+    opportunityId: string,
+    contactId: string,
+    data: UpdateOpportunityContactDto
+  ): Promise<OpportunityContact> => {
+    const response = await client.patch<OpportunityContact>(
+      `/opportunities/${opportunityId}/contacts/${contactId}`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Remove contact from opportunity
+   */
+  removeContact: async (opportunityId: string, contactId: string): Promise<void> => {
+    await client.delete(`/opportunities/${opportunityId}/contacts/${contactId}`);
+  },
+
+  /**
+   * Set primary contact for opportunity
+   */
+  setPrimaryContact: async (opportunityId: string, contactId: string): Promise<OpportunityContact> => {
+    const response = await client.post<OpportunityContact>(
+      `/opportunities/${opportunityId}/contacts/${contactId}/set-primary`
+    );
+    return response.data;
   },
 
   // Bulk Operations

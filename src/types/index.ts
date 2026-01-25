@@ -8,6 +8,7 @@ export * from './contact';
 export * from './opportunity';
 export * from './task';
 export * from './activity';
+export * from './campaign';
 
 // AI and communication types
 export * from './conversation';

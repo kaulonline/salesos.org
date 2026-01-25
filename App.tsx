@@ -58,6 +58,8 @@ const Team = lazy(() => import('./pages/dashboard/Team').then(m => ({ default: m
 const AIChat = lazy(() => import('./pages/dashboard/AIChat').then(m => ({ default: m.AIChat })));
 const Admin = lazy(() => import('./pages/dashboard/Admin').then(m => ({ default: m.Admin })));
 const Reports = lazy(() => import('./pages/dashboard/Reports').then(m => ({ default: m.Reports })));
+const Tasks = lazy(() => import('./pages/dashboard/Tasks').then(m => ({ default: m.Tasks })));
+const Campaigns = lazy(() => import('./pages/dashboard/Campaigns').then(m => ({ default: m.Campaigns })));
 
 // Loading fallback component
 function PageLoadingFallback() {
@@ -339,6 +341,20 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="tasks" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Tasks />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="campaigns" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Campaigns />
                 </Suspense>
               </PageErrorBoundary>
             } />

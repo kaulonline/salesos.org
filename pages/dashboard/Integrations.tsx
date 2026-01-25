@@ -345,21 +345,7 @@ export const IntegrationsPage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Skeleton className="h-10 w-64 mb-2" />
-        <Skeleton className="h-6 w-96 mb-8" />
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}
-        </div>
-        <div className="grid grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
-
+  // Show page immediately with static integrations, load dynamic data in background
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Notification */}
@@ -408,7 +394,11 @@ export const IntegrationsPage: React.FC = () => {
             <CheckCircle2 size={18} className="text-[#1A1A1A]" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#1A1A1A]">{connectedCount}</div>
+            {isLoading ? (
+              <Skeleton className="h-7 w-8 mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-[#1A1A1A]">{connectedCount}</div>
+            )}
             <div className="text-xs text-[#666]">Connected</div>
           </div>
         </Card>
@@ -417,7 +407,11 @@ export const IntegrationsPage: React.FC = () => {
             <Zap size={18} className="text-[#EAD07D]" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#1A1A1A]">{totalDataPoints > 1000 ? `${(totalDataPoints / 1000).toFixed(1)}K` : totalDataPoints}</div>
+            {isLoading ? (
+              <Skeleton className="h-7 w-12 mb-1" />
+            ) : (
+              <div className="text-2xl font-bold text-[#1A1A1A]">{totalDataPoints > 1000 ? `${(totalDataPoints / 1000).toFixed(1)}K` : totalDataPoints}</div>
+            )}
             <div className="text-xs text-[#666]">Data Points Synced</div>
           </div>
         </Card>
@@ -492,7 +486,15 @@ export const IntegrationsPage: React.FC = () => {
       </div>
 
       {/* Connected Integrations */}
-      {statusFilter !== 'disconnected' && filteredIntegrations.filter(i => i.status === 'connected').length > 0 && (
+      {statusFilter !== 'disconnected' && isLoading && (
+        <div className="mb-8">
+          <h2 className="text-sm font-bold text-[#999] uppercase tracking-wider mb-4">Connected</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+          </div>
+        </div>
+      )}
+      {statusFilter !== 'disconnected' && !isLoading && filteredIntegrations.filter(i => i.status === 'connected').length > 0 && (
         <div className="mb-8">
           <h2 className="text-sm font-bold text-[#999] uppercase tracking-wider mb-4">Connected</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
