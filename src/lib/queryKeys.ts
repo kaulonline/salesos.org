@@ -27,6 +27,17 @@ export const queryKeys = {
     contacts: (opportunityId: string) => [...queryKeys.deals.detail(opportunityId), 'contacts'] as const,
   },
 
+  // Pipelines
+  pipelines: {
+    all: ['pipelines'] as const,
+    lists: () => [...queryKeys.pipelines.all, 'list'] as const,
+    list: () => [...queryKeys.pipelines.lists()] as const,
+    details: () => [...queryKeys.pipelines.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.pipelines.details(), id] as const,
+    default: () => [...queryKeys.pipelines.all, 'default'] as const,
+    stages: (pipelineId: string) => [...queryKeys.pipelines.detail(pipelineId), 'stages'] as const,
+  },
+
   // Leads
   leads: {
     all: ['leads'] as const,

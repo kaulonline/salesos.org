@@ -2,6 +2,7 @@ export { default as client } from './client';
 export { default as authApi } from './auth';
 export { default as leadsApi } from './leads';
 export { default as opportunitiesApi } from './opportunities';
+export { default as pipelinesApi } from './pipelines';
 export { default as accountsApi } from './accounts';
 export { default as contactsApi } from './contacts';
 export { default as tasksApi } from './tasks';

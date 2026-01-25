@@ -6,6 +6,7 @@ export * from './lead';
 export * from './account';
 export * from './contact';
 export * from './opportunity';
+export * from './pipeline';
 export * from './task';
 export * from './activity';
 export * from './campaign';

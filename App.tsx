@@ -65,6 +65,7 @@ const Reports = lazy(() => import('./pages/dashboard/Reports').then(m => ({ defa
 const Tasks = lazy(() => import('./pages/dashboard/Tasks').then(m => ({ default: m.Tasks })));
 const Campaigns = lazy(() => import('./pages/dashboard/Campaigns').then(m => ({ default: m.Campaigns })));
 const Subscription = lazy(() => import('./pages/dashboard/Subscription').then(m => ({ default: m.Subscription })));
+const PipelineSettings = lazy(() => import('./pages/dashboard/PipelineSettings').then(m => ({ default: m.PipelineSettings })));
 
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
@@ -394,6 +395,13 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <Subscription />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="pipelines" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PipelineSettings />
                 </Suspense>
               </PageErrorBoundary>
             } />

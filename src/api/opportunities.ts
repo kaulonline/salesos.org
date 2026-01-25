@@ -18,6 +18,7 @@ import type {
 export interface OpportunityFilters extends QueryFilters {
   stage?: string;
   accountId?: string;
+  pipelineId?: string;
   isClosed?: boolean;
   minAmount?: number;
   source?: 'salesforce' | 'local';

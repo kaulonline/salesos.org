@@ -34,6 +34,8 @@ export interface Opportunity {
   accountId: string;
   ownerId: string;
   campaignId?: string;
+  pipelineId?: string;
+  stageId?: string;
   name: string;
   opportunitySource?: OpportunitySource;
   type?: OpportunityType;
@@ -70,6 +72,8 @@ export interface Opportunity {
 export interface CreateOpportunityDto {
   accountId: string;
   name: string;
+  pipelineId?: string;
+  stageId?: string;
   stage?: OpportunityStage;
   amount?: number;
   probability?: number;
@@ -81,6 +85,8 @@ export interface CreateOpportunityDto {
 }
 
 export interface UpdateOpportunityDto extends Partial<CreateOpportunityDto> {
+  pipelineId?: string;
+  stageId?: string;
   competitors?: string[];
   needsAnalysis?: string;
   proposedSolution?: string;

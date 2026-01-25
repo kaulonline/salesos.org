@@ -1,6 +1,7 @@
 // Core data hooks (TanStack Query powered)
 export { useLeads, useLead } from './useLeads';
 export { useDeals, useDeal, useOpportunityContacts } from './useDeals';
+export { usePipelines, usePipeline } from './usePipelines';
 export { useCompanies, useCompany } from './useCompanies';
 export { useContacts, useContact } from './useContacts';
 export { useTasks } from './useTasks';
