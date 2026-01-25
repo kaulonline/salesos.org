@@ -10,6 +10,7 @@ import { ErrorBoundary, PageErrorBoundary } from './src/components/ErrorBoundary
 import { FeatureProvider } from './src/components/FeatureGate';
 import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
+import { NoiseOverlay } from './components/ui/NoiseOverlay';
 
 // Initialize error tracking
 initErrorTracking();
@@ -112,6 +113,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
+      {/* Global subtle noise overlay for premium feel */}
+      <NoiseOverlay opacity={0.02} blend="soft-light" />
       {!isAuthPage && !isDashboard && !isAdmin && !isBilling && <Navbar />}
       <main>
         <Routes>

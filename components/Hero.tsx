@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, PlayCircle, Search, Bell } from 'lucide-react';
 import { Button } from './ui/Button';
+import { GradientText } from './ui/GradientText';
+import { RippleButton } from './ui/RippleButton';
 
 export const Hero: React.FC = () => {
   const [mounted, setMounted] = useState(false);
@@ -33,7 +35,14 @@ export const Hero: React.FC = () => {
 
           <h1 className={`text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
             The Operating System for <br />
-            <span className="text-[#666]">Revenue Growth</span>
+            <GradientText
+              colors={['#888888', '#EAD07D', '#666666', '#EAD07D', '#888888']}
+              animate
+              animationDuration={4}
+              className="font-extrabold"
+            >
+              Revenue Growth
+            </GradientText>
           </h1>
           
           <p className={`text-lg md:text-xl text-[#666] mb-10 max-w-2xl leading-relaxed ${getTransition(0)}`} style={{ transitionDelay: '200ms' }}>
