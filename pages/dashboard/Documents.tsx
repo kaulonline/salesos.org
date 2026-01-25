@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight, AlertCircle, File, FilePlus2 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useDeals } from '../../src/hooks';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 import type { Opportunity } from '../../src/types';
 
 // Map deal stages to document types/statuses
@@ -157,6 +158,7 @@ export const Documents: React.FC = () => {
   }
 
   return (
+    <FeatureGate feature={Features.DOCUMENTS_MANAGEMENT}>
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10">
         <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Documents</h1>
@@ -302,5 +304,6 @@ export const Documents: React.FC = () => {
         </div>
       </div>
     </div>
+    </FeatureGate>
   );
 };

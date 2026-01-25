@@ -6,6 +6,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { reportsApi, type RevenueReport, type ForecastReport, DateRange } from '../../src/api/reports';
 import { useDashboard } from '../../src/hooks';
+import { FeatureGate, Features, useCanAccess } from '../../src/components/FeatureGate';
 
 export const Analytics: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -144,6 +145,7 @@ export const Analytics: React.FC = () => {
   const totalLeads = leadStats?.total || 0;
 
   return (
+    <FeatureGate feature={Features.BASIC_ANALYTICS}>
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="mb-10">
         <h1 className="text-4xl font-medium text-[#1A1A1A]">Analytics</h1>
@@ -370,5 +372,6 @@ export const Analytics: React.FC = () => {
 
       </div>
     </div>
+    </FeatureGate>
   );
 };

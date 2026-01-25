@@ -26,6 +26,7 @@ import { useContacts } from '../../src/hooks/useContacts';
 import { useCompanies } from '../../src/hooks/useCompanies';
 import { SmartCaptureModal } from '../../src/components/SmartCapture/SmartCaptureModal';
 import { VirtualList } from '../../src/components/VirtualList';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 import type { Contact, CreateContactDto, ContactRole, SeniorityLevel } from '../../src/types';
 
 const getRoleColor = (role?: ContactRole) => {
@@ -232,6 +233,7 @@ export const Contacts: React.FC = () => {
   }
 
   return (
+    <FeatureGate feature={Features.CONTACTS_MANAGEMENT}>
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -484,5 +486,6 @@ export const Contacts: React.FC = () => {
         onClose={() => setShowSmartCapture(false)}
       />
     </div>
+    </FeatureGate>
   );
 };

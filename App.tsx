@@ -7,6 +7,7 @@ import { Footer } from './components/Footer';
 import { AuthProvider } from './src/context/AuthContext';
 import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { ErrorBoundary, PageErrorBoundary } from './src/components/ErrorBoundary';
+import { FeatureProvider } from './src/components/FeatureGate';
 import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
 
@@ -30,7 +31,8 @@ const Careers = lazy(() => import('./pages/Careers').then(m => ({ default: m.Car
 const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
-const Pricing = lazy(() => import('./components/Pricing').then(m => ({ default: m.Pricing })));
+const PricingLanding = lazy(() => import('./components/Pricing').then(m => ({ default: m.Pricing })));
+const DynamicPricingPage = lazy(() => import('./pages/Pricing').then(m => ({ default: m.PricingPage })));
 
 // Lazy-loaded Dashboard Pages (code splitting for performance)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
@@ -61,6 +63,13 @@ const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ defa
 const Reports = lazy(() => import('./pages/dashboard/Reports').then(m => ({ default: m.Reports })));
 const Tasks = lazy(() => import('./pages/dashboard/Tasks').then(m => ({ default: m.Tasks })));
 const Campaigns = lazy(() => import('./pages/dashboard/Campaigns').then(m => ({ default: m.Campaigns })));
+const Subscription = lazy(() => import('./pages/dashboard/Subscription').then(m => ({ default: m.Subscription })));
+
+// Billing Pages
+const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
+const CheckoutCancel = lazy(() => import('./pages/billing/Cancel').then(m => ({ default: m.CheckoutCancel })));
+const BillingPortalPage = lazy(() => import('./pages/billing/Portal').then(m => ({ default: m.BillingPortalPage })));
+const PricingTablePage = lazy(() => import('./components/billing/PricingTable').then(m => ({ default: m.PricingTable })));
 
 // Loading fallback component
 function PageLoadingFallback() {
@@ -83,12 +92,10 @@ function DashboardLoadingFallback() {
   );
 }
 
-const PricingPage = () => (
-  <div className="pt-20">
-    <Suspense fallback={<PageLoadingFallback />}>
-      <Pricing />
-    </Suspense>
-  </div>
+const PricingPageWrapper = () => (
+  <Suspense fallback={<PageLoadingFallback />}>
+    <DynamicPricingPage />
+  </Suspense>
 );
 
 function AppContent() {
@@ -96,6 +103,7 @@ function AppContent() {
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isDashboard = pathname.startsWith('/dashboard');
   const isAdmin = pathname.startsWith('/admin');
+  const isBilling = pathname.startsWith('/billing');
 
   // Scroll to top on route change
   React.useEffect(() => {
@@ -104,7 +112,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
-      {!isAuthPage && !isDashboard && !isAdmin && <Navbar />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && <Navbar />}
       <main>
         <Routes>
           {/* Public Routes */}
@@ -129,7 +137,7 @@ function AppContent() {
               <Enterprise />
             </Suspense>
           } />
-          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/pricing" element={<PricingPageWrapper />} />
           <Route path="/changelog" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <Changelog />
@@ -163,6 +171,25 @@ function AppContent() {
           <Route path="/terms" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <Terms />
+            </Suspense>
+          } />
+
+          {/* Billing Routes */}
+          <Route path="/billing" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <BillingPortalPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/billing/success" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <CheckoutSuccess />
+            </Suspense>
+          } />
+          <Route path="/billing/cancel" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <CheckoutCancel />
             </Suspense>
           } />
 
@@ -360,6 +387,13 @@ function AppContent() {
                 </Suspense>
               </PageErrorBoundary>
             } />
+            <Route path="subscription" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Subscription />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
           </Route>
 
           {/* Admin Routes - Protected with AdminLayout */}
@@ -432,7 +466,7 @@ function AppContent() {
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      {!isAuthPage && !isDashboard && !isAdmin && <Footer />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && <Footer />}
     </div>
   );
 }
@@ -442,7 +476,9 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AppContent />
+          <FeatureProvider>
+            <AppContent />
+          </FeatureProvider>
         </AuthProvider>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>

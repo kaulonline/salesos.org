@@ -17,6 +17,7 @@ export { default as productsApi } from './products';
 export { default as notificationsApi } from './notifications';
 export { default as teamMessagesApi } from './teamMessages';
 export { default as licensingApi } from './licensing';
+export { default as paymentsApi, adminPaymentsApi } from './payments';
 
 // Re-export filter types
 export type { LeadFilters } from './leads';
@@ -78,3 +79,25 @@ export type {
   LicenseAuditLog,
   LicensingDashboard,
 } from './licensing';
+
+// Re-export payment types
+export type {
+  PaymentGateway,
+  SubscriptionStatus,
+  InvoiceStatus,
+  PaymentStatus,
+  DiscountType,
+  CouponDuration,
+  BillingAddress,
+  BillingCustomer,
+  Subscription,
+  Invoice,
+  InvoiceLineItem,
+  Payment,
+  PaymentMethod,
+  Coupon,
+  CheckoutSession,
+  CustomerPortalSession,
+  CouponValidation,
+  PaymentsDashboard,
+} from './payments';

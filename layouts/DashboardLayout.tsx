@@ -49,6 +49,7 @@ export const DashboardLayout: React.FC = () => {
 
   const settingsNavItems = [
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+    { label: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
     { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
@@ -56,7 +57,7 @@ export const DashboardLayout: React.FC = () => {
     // Admin-only items
     ...(isAdmin ? [
       { label: 'Admin Console', href: '/dashboard/admin', icon: Shield },
-      { label: 'Billing', href: '/dashboard/admin?tab=billing', icon: CreditCard },
+      { label: 'Billing Admin', href: '/dashboard/admin?tab=billing', icon: BarChart3 },
     ] : []),
   ];
 

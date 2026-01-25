@@ -9,6 +9,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useDeals } from '../../src/hooks/useDeals';
 import { useCompanies } from '../../src/hooks/useCompanies';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 import type { OpportunityStage, CreateOpportunityDto } from '../../src/types';
 
 const STAGES: { id: OpportunityStage; title: string; color: string; badge: 'blue' | 'red' | 'purple' | 'green' | 'yellow' | 'neutral' }[] = [
@@ -279,6 +280,7 @@ export const Deals: React.FC = () => {
   }
 
   return (
+    <FeatureGate feature={Features.OPPORTUNITIES_MANAGEMENT}>
     <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
       <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
          <div>
@@ -596,5 +598,6 @@ export const Deals: React.FC = () => {
         <div className="fixed inset-0 z-20" onClick={() => setActionMenuOpen(null)} />
       )}
     </div>
+    </FeatureGate>
   );
 };

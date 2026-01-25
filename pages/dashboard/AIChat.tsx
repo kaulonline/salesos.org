@@ -13,6 +13,7 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useChat } from '../../src/hooks/useChat';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 
 export const AIChat: React.FC = () => {
   const {
@@ -70,6 +71,7 @@ export const AIChat: React.FC = () => {
   };
 
   return (
+    <FeatureGate feature={Features.AI_CHAT}>
     <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex gap-6 animate-in fade-in duration-500">
       {/* Sidebar - Conversations List */}
       <div className="w-80 flex-shrink-0 flex flex-col">
@@ -259,5 +261,6 @@ export const AIChat: React.FC = () => {
         </div>
       </Card>
     </div>
+    </FeatureGate>
   );
 };

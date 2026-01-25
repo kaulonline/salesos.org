@@ -77,13 +77,13 @@ export const SignUp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F2F1EA] flex p-4 md:p-6 relative overflow-hidden">
-      {/* Background Gradient Effect */}
+      {/* Background Gradient Effect for Left Side */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Close Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-gray-100 transition-colors shadow-sm"
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
       >
         <X size={20} />
       </button>
@@ -211,8 +211,10 @@ export const SignUp: React.FC = () => {
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-black/10"></div>
 
-          {/* Floating Cards */}
-          <div className="absolute top-[15%] left-[10%] bg-[#1A1A1A]/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl min-w-[220px] animate-float">
+          {/* Floating Cards - Positioned to match design */}
+
+          {/* Top Yellow/Dark Card - Frosted Dark */}
+          <div className="absolute top-[15%] left-[10%] bg-[#1A1A1A]/80 backdrop-blur-md p-4 rounded-2xl shadow-2xl min-w-[220px] animate-float border border-white/10">
              <div className="bg-[#EAD07D] text-[#1A1A1A] p-3 rounded-xl mb-3 relative">
                 <div className="flex justify-between items-start">
                    <span className="text-sm font-bold">Task Review With Team</span>
@@ -223,7 +225,8 @@ export const SignUp: React.FC = () => {
              <div className="text-white/40 text-xs px-1">09:30am-10:00am</div>
           </div>
 
-          <div className="absolute top-[50%] right-[10%] left-[20%] h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-between px-6 text-white border border-white/10">
+          {/* Calendar Strip (Simulated) - Frosted White */}
+          <div className="absolute top-[50%] right-[10%] left-[20%] h-24 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-between px-6 text-white border border-white/20 shadow-lg">
              {[
                {d: '22', day: 'Sun'},
                {d: '23', day: 'Mon'},
@@ -241,7 +244,8 @@ export const SignUp: React.FC = () => {
              ))}
           </div>
 
-          <div className="absolute bottom-[20%] left-[15%] bg-white p-5 rounded-3xl shadow-2xl min-w-[260px] animate-float" style={{ animationDelay: '1.5s' }}>
+          {/* Bottom White Card - Frosted White */}
+          <div className="absolute bottom-[20%] left-[15%] bg-white/90 backdrop-blur-md p-5 rounded-3xl shadow-2xl min-w-[260px] animate-float border border-white/40" style={{ animationDelay: '1.5s' }}>
              <div className="flex justify-between items-start mb-4">
                 <div>
                   <h4 className="font-bold text-[#1A1A1A]">Daily Meeting</h4>

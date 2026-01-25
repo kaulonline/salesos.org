@@ -29,6 +29,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useFeatureFlags } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 
 interface AIAgentConfig {
   id: string;
@@ -152,6 +153,7 @@ export const AIAgents: React.FC = () => {
   }
 
   return (
+    <FeatureGate feature={Features.CUSTOM_AGENTS}>
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Header */}
       <div className="mb-8">
@@ -389,5 +391,6 @@ export const AIAgents: React.FC = () => {
         </div>
       </Card>
     </div>
+    </FeatureGate>
   );
 };

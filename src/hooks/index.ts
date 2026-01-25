@@ -34,6 +34,19 @@ export {
   useMyLicense,
 } from './useLicensing';
 
+// Payment & Billing hooks
+export {
+  useBillingCustomer,
+  useSubscriptions,
+  useInvoices,
+  usePaymentMethods,
+  useCheckout,
+  usePaymentsDashboard,
+  useTransactions,
+  useCoupons,
+  useGatewayConfigs,
+} from './useBilling';
+
 // User settings hooks
 export {
   useUserProfile,

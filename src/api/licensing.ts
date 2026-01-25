@@ -129,6 +129,8 @@ export interface LicensingDashboard {
   activeLicenses: number;
   trialLicenses: number;
   expiredLicenses: number;
+  expiringLicenses?: number;
+  recentAssignments?: number;
   revenue: {
     monthly: number;
     yearly: number;
@@ -136,6 +138,8 @@ export interface LicensingDashboard {
   };
   byTier: Record<LicenseTier, number>;
   byStatus: Record<LicenseStatus, number>;
+  tierBreakdown?: Array<{ tier: LicenseTier; count: number; name?: string }>;
+  statusBreakdown?: Array<{ status: LicenseStatus; count: number }>;
   recentActivity: LicenseAuditLog[];
 }
 
@@ -151,13 +155,52 @@ export interface PaginatedResponse<T> {
 export const licensingApi = {
   // Dashboard
   getDashboard: async (): Promise<LicensingDashboard> => {
-    const response = await client.get<LicensingDashboard>('/licensing/dashboard');
-    return response.data;
+    const response = await client.get<any>('/licensing/dashboard');
+    const data = response.data;
+
+    // Transform tierBreakdown array to byTier record
+    const byTier: Record<LicenseTier, number> = {
+      FREE: 0, STARTER: 0, PROFESSIONAL: 0, ENTERPRISE: 0, CUSTOM: 0
+    };
+    if (data.tierBreakdown && Array.isArray(data.tierBreakdown)) {
+      data.tierBreakdown.forEach((item: { tier: LicenseTier; count: number }) => {
+        if (item.tier && byTier.hasOwnProperty(item.tier)) {
+          byTier[item.tier] = item.count || 0;
+        }
+      });
+    }
+
+    // Transform statusBreakdown array to byStatus record
+    const byStatus: Record<LicenseStatus, number> = {
+      ACTIVE: 0, EXPIRED: 0, SUSPENDED: 0, CANCELLED: 0, PENDING: 0, TRIAL: 0
+    };
+    if (data.statusBreakdown && Array.isArray(data.statusBreakdown)) {
+      data.statusBreakdown.forEach((item: { status: LicenseStatus; count: number }) => {
+        if (item.status && byStatus.hasOwnProperty(item.status)) {
+          byStatus[item.status] = item.count || 0;
+        }
+      });
+    }
+
+    return {
+      totalLicenses: data.totalLicenses || 0,
+      activeLicenses: data.activeLicenses || 0,
+      trialLicenses: data.trialLicenses || 0,
+      expiredLicenses: data.expiredLicenses || 0,
+      expiringLicenses: data.expiringLicenses || 0,
+      recentAssignments: data.recentAssignments || 0,
+      revenue: data.revenue || { monthly: 0, yearly: 0, total: 0 },
+      byTier,
+      byStatus,
+      tierBreakdown: data.tierBreakdown || [],
+      statusBreakdown: data.statusBreakdown || [],
+      recentActivity: data.recentActivity || [],
+    };
   },
 
-  // License Types (Plans)
+  // License Types (Plans) - Uses public endpoint for unauthenticated access
   getLicenseTypes: async (): Promise<LicenseType[]> => {
-    const response = await client.get<LicenseType[]>('/licensing/types');
+    const response = await client.get<LicenseType[]>('/licensing/public/types');
     return response.data;
   },
 
@@ -210,10 +253,25 @@ export const licensingApi = {
     licenseTypeId?: string;
     search?: string;
   }): Promise<PaginatedResponse<UserLicense>> => {
-    const response = await client.get<PaginatedResponse<UserLicense>>('/licensing/user-licenses', { params });
-    // Handle both 'data' and 'items' response formats
-    const items = response.data.data || response.data.items || [];
-    return { ...response.data, data: items, items };
+    // Backend expects 'pageSize' not 'limit'
+    const backendParams = {
+      page: params?.page,
+      pageSize: params?.limit,
+      status: params?.status,
+      search: params?.search,
+    };
+    const response = await client.get<any>('/licensing/user-licenses', { params: backendParams });
+    // Backend returns { licenses, pagination: { page, pageSize, total, totalPages } }
+    const items = response.data.licenses || response.data.data || response.data.items || [];
+    const pagination = response.data.pagination || {};
+    return {
+      data: items,
+      items,
+      total: pagination.total || response.data.total || 0,
+      page: pagination.page || response.data.page || 1,
+      limit: pagination.pageSize || response.data.limit || 20,
+      totalPages: pagination.totalPages || response.data.totalPages || 1,
+    };
   },
 
   getUserLicense: async (id: string): Promise<UserLicense> => {
@@ -273,9 +331,27 @@ export const licensingApi = {
     status?: PreGeneratedKeyStatus;
     licenseTypeId?: string;
   }): Promise<PaginatedResponse<PreGeneratedKey>> => {
-    const response = await client.get<PaginatedResponse<PreGeneratedKey>>('/licensing/pre-generated-keys', { params });
-    const items = response.data.data || response.data.items || [];
-    return { ...response.data, data: items, items };
+    // Backend only supports status and licenseTypeId filters, returns plain array
+    const backendParams = {
+      status: params?.status,
+      licenseTypeId: params?.licenseTypeId,
+    };
+    const response = await client.get<any>('/licensing/pre-generated-keys', { params: backendParams });
+    // Backend returns a plain array, not paginated
+    const items = Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
+    // Apply client-side pagination
+    const page = params?.page || 1;
+    const limit = params?.limit || 20;
+    const start = (page - 1) * limit;
+    const paginatedItems = items.slice(start, start + limit);
+    return {
+      data: paginatedItems,
+      items: paginatedItems,
+      total: items.length,
+      page,
+      limit,
+      totalPages: Math.ceil(items.length / limit),
+    };
   },
 
   generateKeys: async (data: {
@@ -344,9 +420,25 @@ export const licensingApi = {
     action?: string;
     entityType?: string;
   }): Promise<PaginatedResponse<LicenseAuditLog>> => {
-    const response = await client.get<PaginatedResponse<LicenseAuditLog>>('/licensing/audit-logs', { params });
-    const items = response.data.data || response.data.items || [];
-    return { ...response.data, data: items, items };
+    // Backend expects 'pageSize' not 'limit'
+    const backendParams = {
+      page: params?.page,
+      pageSize: params?.limit,
+      action: params?.action,
+      entityType: params?.entityType,
+    };
+    const response = await client.get<any>('/licensing/audit-logs', { params: backendParams });
+    // Backend returns { logs, pagination: { page, pageSize, total, totalPages } }
+    const items = response.data.logs || response.data.data || response.data.items || [];
+    const pagination = response.data.pagination || {};
+    return {
+      data: items,
+      items,
+      total: pagination.total || response.data.total || 0,
+      page: pagination.page || response.data.page || 1,
+      limit: pagination.pageSize || response.data.limit || 50,
+      totalPages: pagination.totalPages || response.data.totalPages || 1,
+    };
   },
 
   // Revenue Forecast

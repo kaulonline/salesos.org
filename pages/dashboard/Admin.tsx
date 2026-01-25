@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Edit, Eye, Copy, AlertTriangle, Crown, Star, Sparkles,
   ToggleLeft, ToggleRight, ChevronDown, X, Loader2, Check, Filter,
   Download, Upload, Calendar, Mail, UserPlus, ArrowUpRight, ArrowDownRight,
-  BarChart3, PieChart, FileText, Lock
+  BarChart3, PieChart, FileText, Lock, Bell
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -23,12 +23,17 @@ import {
   useLicenseTypes,
   useUserLicenses,
   usePreGeneratedKeys,
+  useCoupons,
+  useTransactions,
+  usePaymentsDashboard,
+  useGatewayConfigs,
 } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import type { LicenseStatus, LicenseTier, PreGeneratedKeyStatus } from '../../src/api/licensing';
+import type { Coupon, Payment, DiscountType, CouponDuration, PaymentStatus, GatewayConfig, PaymentGateway } from '../../src/api/payments';
 
 type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit';
-type BillingSubTab = 'overview' | 'plans' | 'licenses' | 'keys';
+type BillingSubTab = 'overview' | 'plans' | 'licenses' | 'keys' | 'coupons' | 'transactions';
 
 const formatNumber = (num?: number) => {
   if (!num) return '0';
@@ -140,6 +145,36 @@ export const Admin: React.FC = () => {
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
   const [showAssignLicenseModal, setShowAssignLicenseModal] = useState(false);
   const [showGenerateKeysModal, setShowGenerateKeysModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    tier: 'STARTER' as 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE' | 'CUSTOM',
+    priceMonthly: 0,
+    priceYearly: 0,
+    currency: 'USD',
+    maxUsers: 5,
+    maxConversations: 1000,
+    maxLeads: 500,
+    maxDocuments: 100,
+    isActive: true,
+    isPublic: true,
+  });
+  const [generateKeysForm, setGenerateKeysForm] = useState({
+    licenseTypeId: '',
+    count: 5,
+    durationDays: 365,
+    isTrial: false,
+    notes: '',
+  });
+  const [assignLicenseForm, setAssignLicenseForm] = useState({
+    userEmail: '',
+    licenseTypeId: '',
+    isTrial: false,
+    durationDays: 365,
+  });
+  const [formSubmitting, setFormSubmitting] = useState(false);
 
   // Check if user is admin (handle case sensitivity)
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
@@ -194,12 +229,75 @@ export const Admin: React.FC = () => {
     refetch: refetchKeys,
   } = usePreGeneratedKeys();
 
+  // Payment Hooks
+  const {
+    coupons,
+    loading: couponsLoading,
+    createCoupon,
+    updateCoupon,
+    deleteCoupon,
+    refetch: refetchCoupons,
+  } = useCoupons();
+  const {
+    transactions,
+    loading: transactionsLoading,
+    refundPayment,
+    refetch: refetchTransactions,
+  } = useTransactions();
+  const { dashboard: paymentsDashboard } = usePaymentsDashboard();
+  const { configs: gatewayConfigs, loading: gatewaysLoading, updateConfig: updateGatewayConfig, testConnection: testGatewayConnection, testing: testingGateway, refetch: refetchGateways } = useGatewayConfigs();
+
+  // Gateway config editing state
+  const [editingGateway, setEditingGateway] = useState<PaymentGateway | null>(null);
+  const [gatewayForm, setGatewayForm] = useState({
+    publicKey: '',
+    secretKey: '',
+    webhookSecret: '',
+    testMode: true,
+    isActive: false,
+  });
+
+  // Coupon form state
+  const [showCreateCouponModal, setShowCreateCouponModal] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    name: '',
+    description: '',
+    discountType: 'PERCENTAGE' as DiscountType,
+    discountValue: 10,
+    duration: 'ONCE' as CouponDuration,
+    durationMonths: 3,
+    maxRedemptions: undefined as number | undefined,
+    expiresAt: '',
+    syncToStripe: true,
+  });
+
   // Refetch users when search/filters change
   useEffect(() => {
     if (activeTab === 'users') {
       refetchUsers({ search: searchQuery, role: selectedRole, status: selectedStatus });
     }
   }, [searchQuery, selectedRole, selectedStatus]);
+
+  // Calculate revenue from license types
+  const calculatedRevenue = useMemo(() => {
+    const safeTypes = licenseTypes || [];
+    let monthlyRevenue = 0;
+    let yearlyRevenue = 0;
+
+    safeTypes.forEach(type => {
+      const userCount = type._count?.userLicenses || type.userCount || 0;
+      monthlyRevenue += (type.priceMonthly || 0) * userCount;
+      yearlyRevenue += (type.priceYearly || 0) * userCount;
+    });
+
+    return {
+      monthly: monthlyRevenue,
+      yearly: yearlyRevenue,
+      projected: monthlyRevenue * 12,
+    };
+  }, [licenseTypes]);
 
   if (!isAdmin) {
     return (
@@ -231,6 +329,8 @@ export const Admin: React.FC = () => {
     { id: 'plans', label: 'Plans', icon: Package },
     { id: 'licenses', label: 'Licenses', icon: FileText },
     { id: 'keys', label: 'Keys', icon: Key },
+    { id: 'coupons', label: 'Coupons', icon: Star },
+    { id: 'transactions', label: 'Transactions', icon: CreditCard },
   ];
 
   return (
@@ -314,21 +414,25 @@ export const Admin: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-6 border border-[#F2F1EA] relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2F1EA]/50 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <button
+                  onClick={() => handleTabChange('billing')}
+                  className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform text-left w-full"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center mb-4">
-                      <DollarSign size={20} className="text-[#666]" />
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                      <DollarSign size={20} className="text-white" />
                     </div>
-                    <p className="text-3xl font-light text-[#1A1A1A] mb-1">
-                      {formatCurrency((stats?.crm.pipelineValue || 0) * 100, true)}
+                    <p className="text-3xl font-light text-white mb-1">
+                      {formatCurrency(paymentsDashboard?.totalRevenue || calculatedRevenue.monthly, true)}
                     </p>
-                    <p className="text-xs font-bold text-[#999] uppercase tracking-wider">Pipeline Value</p>
-                    <p className="text-xs text-[#666] mt-2">
-                      {stats?.crm.opportunities || 0} opportunities
+                    <p className="text-xs font-bold text-white/60 uppercase tracking-wider">Subscription Revenue</p>
+                    <p className="text-xs text-white/80 mt-2 flex items-center gap-1">
+                      <ArrowUpRight size={12} />
+                      {paymentsDashboard?.activeSubscriptions || 0} active subscriptions
                     </p>
                   </div>
-                </div>
+                </button>
 
                 <div className="bg-[#888] rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -672,11 +776,10 @@ export const Admin: React.FC = () => {
                         <div>
                           <p className="text-[10px] font-bold text-green-600/70 uppercase tracking-wider">Monthly Revenue</p>
                           <p className="text-2xl font-light text-green-700 mt-1">
-                            {formatCurrency(licensingDashboard?.revenue?.monthly)}
+                            {formatCurrency(calculatedRevenue.monthly)}
                           </p>
-                          <p className="text-xs text-green-600/70 mt-2 flex items-center gap-1">
-                            <ArrowUpRight size={12} />
-                            +12% vs last month
+                          <p className="text-xs text-green-600/70 mt-2">
+                            {licensingDashboard?.activeLicenses || 0} active licenses
                           </p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
@@ -690,10 +793,10 @@ export const Admin: React.FC = () => {
                         <div>
                           <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Annual Revenue</p>
                           <p className="text-2xl font-light text-[#1A1A1A] mt-1">
-                            {formatCurrency(licensingDashboard?.revenue?.yearly)}
+                            {formatCurrency(calculatedRevenue.yearly)}
                           </p>
                           <p className="text-xs text-[#666] mt-2">
-                            Projected: {formatCurrency((licensingDashboard?.revenue?.monthly || 0) * 12)}
+                            Projected: {formatCurrency(calculatedRevenue.projected)}
                           </p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center">
@@ -722,11 +825,13 @@ export const Admin: React.FC = () => {
                     <Card className="p-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Total Revenue</p>
+                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Total Licenses</p>
                           <p className="text-2xl font-light text-[#1A1A1A] mt-1">
-                            {formatCurrency(licensingDashboard?.revenue?.total)}
+                            {licensingDashboard?.totalLicenses || 0}
                           </p>
-                          <p className="text-xs text-[#666] mt-2">All time</p>
+                          <p className="text-xs text-[#666] mt-2">
+                            {licensingDashboard?.expiredLicenses || 0} expired
+                          </p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
                           <BarChart3 size={18} className="text-[#1A1A1A]" />
@@ -808,7 +913,16 @@ export const Admin: React.FC = () => {
                   <p className="text-sm text-[#666]">Manage your pricing tiers and features</p>
                 </div>
                 <button
-                  onClick={() => setShowCreatePlanModal(true)}
+                  onClick={() => {
+                    setEditingPlan(null);
+                    setPlanForm({
+                      name: '', slug: '', description: '', tier: 'STARTER',
+                      priceMonthly: 0, priceYearly: 0, currency: 'USD',
+                      maxUsers: 5, maxConversations: 1000, maxLeads: 500, maxDocuments: 100,
+                      isActive: true, isPublic: true,
+                    });
+                    setShowCreatePlanModal(true);
+                  }}
                   className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Plus size={14} />
@@ -880,19 +994,49 @@ export const Admin: React.FC = () => {
                           {plan._count?.userLicenses || 0} active
                         </span>
                         <div className="flex gap-1">
-                          <button className={`p-1.5 rounded-lg transition-colors ${
+                          <button
+                            onClick={() => {
+                              setEditingPlan(plan);
+                              setPlanForm({
+                                name: plan.name || '',
+                                slug: plan.slug || '',
+                                description: plan.description || '',
+                                tier: plan.tier || 'STARTER',
+                                priceMonthly: plan.priceMonthly || 0,
+                                priceYearly: plan.priceYearly || 0,
+                                currency: plan.currency || 'USD',
+                                maxUsers: plan.maxUsers ?? 5,
+                                maxConversations: plan.maxConversations ?? 1000,
+                                maxLeads: plan.maxLeads ?? 500,
+                                maxDocuments: plan.maxDocuments ?? 100,
+                                isActive: plan.isActive ?? true,
+                                isPublic: plan.isPublic ?? true,
+                              });
+                              setShowCreatePlanModal(true);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${
                             plan.tier === 'ENTERPRISE'
                               ? 'hover:bg-white/10 text-white/60'
                               : 'hover:bg-[#F2F1EA] text-[#888]'
-                          }`}>
+                          }`}
+                            title="Edit Plan"
+                          >
                             <Edit size={12} />
                           </button>
-                          <button className={`p-1.5 rounded-lg transition-colors ${
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete "${plan.name}"? This cannot be undone.`)) {
+                                deleteType(plan.id);
+                              }
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${
                             plan.tier === 'ENTERPRISE'
                               ? 'hover:bg-white/10 text-white/60'
-                              : 'hover:bg-[#F2F1EA] text-[#888]'
-                          }`}>
-                            <MoreHorizontal size={12} />
+                              : 'hover:bg-red-50 text-[#888] hover:text-red-600'
+                          }`}
+                            title="Delete Plan"
+                          >
+                            <Trash2 size={12} />
                           </button>
                         </div>
                       </div>
@@ -1143,6 +1287,354 @@ export const Admin: React.FC = () => {
               </Card>
             </div>
           )}
+
+          {/* Coupons Management */}
+          {billingSubTab === 'coupons' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Discount Coupons</h3>
+                  <p className="text-sm text-[#666]">Manage promotional codes and discounts</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setCouponForm({
+                      code: '',
+                      name: '',
+                      description: '',
+                      discountType: 'PERCENTAGE',
+                      discountValue: 10,
+                      duration: 'ONCE',
+                      durationMonths: 3,
+                      maxRedemptions: undefined,
+                      expiresAt: '',
+                      syncToStripe: true,
+                    });
+                    setEditingCoupon(null);
+                    setShowCreateCouponModal(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <Plus size={14} />
+                  New Coupon
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Active</p>
+                  <p className="text-2xl font-light text-green-600">
+                    {(coupons || []).filter(c => c.isActive).length}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Total Redemptions</p>
+                  <p className="text-2xl font-light text-[#EAD07D]">
+                    {(coupons || []).reduce((sum, c) => sum + (c.timesRedeemed || 0), 0)}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Expired</p>
+                  <p className="text-2xl font-light text-[#888]">
+                    {(coupons || []).filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Total Coupons</p>
+                  <p className="text-2xl font-light text-[#1A1A1A]">
+                    {(coupons || []).length}
+                  </p>
+                </Card>
+              </div>
+
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
+                      <tr>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Code</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Discount</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Duration</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Redemptions</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F2F1EA]">
+                      {couponsLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i}>
+                            <td colSpan={6} className="py-4 px-6">
+                              <Skeleton className="h-12 rounded-xl" />
+                            </td>
+                          </tr>
+                        ))
+                      ) : (coupons || []).length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-12 text-center text-[#666]">
+                            No coupons created yet
+                          </td>
+                        </tr>
+                      ) : (
+                        (coupons || []).map((coupon) => (
+                          <tr key={coupon.id} className="hover:bg-[#FAFAFA] transition-colors">
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-2">
+                                <code className="text-sm font-mono font-bold bg-[#EAD07D]/20 text-[#1A1A1A] px-2 py-1 rounded">
+                                  {coupon.code}
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText(coupon.code)}
+                                  className="p-1 rounded hover:bg-[#F2F1EA] text-[#888] hover:text-[#1A1A1A] transition-colors"
+                                  title="Copy"
+                                >
+                                  <Copy size={12} />
+                                </button>
+                              </div>
+                              {coupon.name && (
+                                <p className="text-xs text-[#666] mt-1">{coupon.name}</p>
+                              )}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="font-bold text-[#1A1A1A]">
+                                {coupon.discountType === 'PERCENTAGE'
+                                  ? `${coupon.discountValue}%`
+                                  : formatCurrency(coupon.discountValue)}
+                              </span>
+                              <span className="text-xs text-[#666] ml-1">off</span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <Badge variant="outline" size="sm">
+                                {coupon.duration === 'ONCE' && 'One-time'}
+                                {coupon.duration === 'FOREVER' && 'Forever'}
+                                {coupon.duration === 'REPEATING' && `${coupon.durationMonths || 0} months`}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="text-sm text-[#666]">
+                                {coupon.timesRedeemed || 0}
+                                {coupon.maxRedemptions && ` / ${coupon.maxRedemptions}`}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              {coupon.isActive ? (
+                                coupon.expiresAt && new Date(coupon.expiresAt) < new Date() ? (
+                                  <Badge variant="outline" size="sm">Expired</Badge>
+                                ) : coupon.maxRedemptions && (coupon.timesRedeemed || 0) >= coupon.maxRedemptions ? (
+                                  <Badge variant="yellow" size="sm">Maxed Out</Badge>
+                                ) : (
+                                  <Badge variant="green" size="sm">Active</Badge>
+                                )
+                              ) : (
+                                <Badge variant="outline" size="sm">Inactive</Badge>
+                              )}
+                              {coupon.stripeCouponId && (
+                                <Badge variant="dark" size="sm" className="ml-1">Stripe</Badge>
+                              )}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => {
+                                    setEditingCoupon(coupon);
+                                    setCouponForm({
+                                      code: coupon.code,
+                                      name: coupon.name || '',
+                                      description: coupon.description || '',
+                                      discountType: coupon.discountType,
+                                      discountValue: coupon.discountValue,
+                                      duration: coupon.duration,
+                                      durationMonths: coupon.durationMonths || 3,
+                                      maxRedemptions: coupon.maxRedemptions,
+                                      expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : '',
+                                      syncToStripe: !!coupon.stripeCouponId,
+                                    });
+                                    setShowCreateCouponModal(true);
+                                  }}
+                                  className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] hover:text-[#1A1A1A] transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to delete coupon "${coupon.code}"?`)) {
+                                      deleteCoupon(coupon.id);
+                                    }
+                                  }}
+                                  className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Transactions History */}
+          {billingSubTab === 'transactions' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Transaction History</h3>
+                  <p className="text-sm text-[#666]">View all payment transactions</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => refetchTransactions()}
+                    className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
+                    <RefreshCw size={14} />
+                    Refresh
+                  </button>
+                  <button className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium">
+                    <Download size={14} />
+                    Export
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50">
+                  <p className="text-xs font-bold text-green-600/70 uppercase tracking-wider mb-1">Successful</p>
+                  <p className="text-2xl font-light text-green-700">
+                    {(transactions || []).filter(t => t.status === 'SUCCEEDED').length}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Pending</p>
+                  <p className="text-2xl font-light text-[#EAD07D]">
+                    {(transactions || []).filter(t => t.status === 'PENDING').length}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Failed</p>
+                  <p className="text-2xl font-light text-red-500">
+                    {(transactions || []).filter(t => t.status === 'FAILED').length}
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Refunded</p>
+                  <p className="text-2xl font-light text-[#888]">
+                    {(transactions || []).filter(t => t.status === 'REFUNDED').length}
+                  </p>
+                </Card>
+              </div>
+
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
+                      <tr>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Transaction ID</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Customer</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Amount</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Gateway</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Date</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F2F1EA]">
+                      {transactionsLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i}>
+                            <td colSpan={7} className="py-4 px-6">
+                              <Skeleton className="h-12 rounded-xl" />
+                            </td>
+                          </tr>
+                        ))
+                      ) : (transactions || []).length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-[#666]">
+                            No transactions yet
+                          </td>
+                        </tr>
+                      ) : (
+                        (transactions || []).map((transaction) => (
+                          <tr key={transaction.id} className="hover:bg-[#FAFAFA] transition-colors">
+                            <td className="py-4 px-6">
+                              <code className="text-xs font-mono bg-[#F8F8F6] px-2 py-1 rounded">
+                                {transaction.id.slice(0, 12)}...
+                              </code>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div>
+                                <p className="text-sm font-medium text-[#1A1A1A]">
+                                  {transaction.customer?.user?.name || transaction.customer?.user?.email || 'Unknown'}
+                                </p>
+                                <p className="text-xs text-[#666]">{transaction.customer?.user?.email}</p>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="font-bold text-[#1A1A1A]">
+                                {formatCurrency(transaction.amount)}
+                              </span>
+                              <span className="text-xs text-[#666] ml-1 uppercase">{transaction.currency}</span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <Badge
+                                variant={transaction.gateway === 'STRIPE' ? 'dark' : 'yellow'}
+                                size="sm"
+                              >
+                                {transaction.gateway}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-6">
+                              <Badge
+                                variant={
+                                  transaction.status === 'SUCCEEDED' ? 'green' :
+                                  transaction.status === 'PENDING' ? 'yellow' :
+                                  transaction.status === 'REFUNDED' ? 'outline' : 'red'
+                                }
+                                size="sm"
+                              >
+                                {transaction.status}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-6 text-sm text-[#666]">
+                              {formatDate(transaction.createdAt)}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-1">
+                                {transaction.status === 'SUCCEEDED' && (
+                                  <button
+                                    onClick={() => {
+                                      if (confirm('Are you sure you want to refund this payment?')) {
+                                        refundPayment(transaction.id);
+                                      }
+                                    }}
+                                    className="p-2 rounded-lg hover:bg-yellow-50 text-[#666] hover:text-yellow-600 transition-colors"
+                                    title="Refund"
+                                  >
+                                    <RefreshCw size={14} />
+                                  </button>
+                                )}
+                                <button
+                                  className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
@@ -1212,120 +1704,455 @@ export const Admin: React.FC = () => {
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <Settings size={18} className="text-[#EAD07D]" />
-                General Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Application Name</p>
-                    <p className="text-xs text-[#666]">The name displayed across the platform</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">SalesOS</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Support Email</p>
-                    <p className="text-xs text-[#666]">Contact email for support inquiries</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">support@salesos.org</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Default Timezone</p>
-                    <p className="text-xs text-[#666]">System default timezone</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">UTC</span>
-                </div>
-              </div>
-            </Card>
+          {configsLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-64 rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Group configs by category */}
+              {(() => {
+                const safeConfigs = configs || [];
+                const categories = [...new Set(safeConfigs.map(c => c.category || 'general'))];
+                const categoryIcons: Record<string, React.ReactNode> = {
+                  general: <Settings size={18} className="text-[#EAD07D]" />,
+                  security: <Lock size={18} className="text-[#EAD07D]" />,
+                  ai: <Zap size={18} className="text-[#EAD07D]" />,
+                  email: <Mail size={18} className="text-[#EAD07D]" />,
+                  notifications: <Bell size={18} className="text-[#EAD07D]" />,
+                  integrations: <Database size={18} className="text-[#EAD07D]" />,
+                };
+                const categoryLabels: Record<string, string> = {
+                  general: 'General Settings',
+                  security: 'Security Settings',
+                  ai: 'AI Configuration',
+                  email: 'Email Settings',
+                  notifications: 'Notification Settings',
+                  integrations: 'Integration Settings',
+                };
 
-            <Card className="p-6">
-              <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <Lock size={18} className="text-[#EAD07D]" />
-                Security Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Session Timeout</p>
-                    <p className="text-xs text-[#666]">Auto logout after inactivity</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">30 min</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Two-Factor Auth</p>
-                    <p className="text-xs text-[#666]">Require 2FA for all users</p>
-                  </div>
-                  <Badge variant="green" size="sm">Enabled</Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Password Policy</p>
-                    <p className="text-xs text-[#666]">Minimum password requirements</p>
-                  </div>
-                  <Badge variant="dark" size="sm">Strong</Badge>
-                </div>
-              </div>
-            </Card>
+                if (categories.length === 0) {
+                  // Show defaults if no configs
+                  return (
+                    <>
+                      <Card className="p-6">
+                        <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+                          <Settings size={18} className="text-[#EAD07D]" />
+                          General Settings
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Application Name</p>
+                              <p className="text-xs text-[#666]">The name displayed across the platform</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">SalesOS</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Support Email</p>
+                              <p className="text-xs text-[#666]">Contact email for support inquiries</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">support@salesos.org</span>
+                          </div>
+                        </div>
+                      </Card>
+                      <Card className="p-6">
+                        <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+                          <Lock size={18} className="text-[#EAD07D]" />
+                          Security Settings
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Session Timeout</p>
+                              <p className="text-xs text-[#666]">Auto logout after inactivity</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">30 min</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Two-Factor Auth</p>
+                              <p className="text-xs text-[#666]">Require 2FA for all users</p>
+                            </div>
+                            <Badge variant="green" size="sm">Enabled</Badge>
+                          </div>
+                        </div>
+                      </Card>
+                      <Card className="p-6">
+                        <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+                          <Zap size={18} className="text-[#EAD07D]" />
+                          AI Configuration
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Default Model</p>
+                              <p className="text-xs text-[#666]">AI model for conversations</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">claude-sonnet</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">Max Tokens</p>
+                              <p className="text-xs text-[#666]">Maximum response length</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">4,096</span>
+                          </div>
+                        </div>
+                      </Card>
+                      <Card className="p-6">
+                        <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+                          <Mail size={18} className="text-[#EAD07D]" />
+                          Email Settings
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">SMTP Provider</p>
+                              <p className="text-xs text-[#666]">Email delivery service</p>
+                            </div>
+                            <Badge variant="green" size="sm">Connected</Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">From Address</p>
+                              <p className="text-xs text-[#666]">Default sender email</p>
+                            </div>
+                            <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">noreply@salesos.org</span>
+                          </div>
+                        </div>
+                      </Card>
+                    </>
+                  );
+                }
 
-            <Card className="p-6">
-              <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <Zap size={18} className="text-[#EAD07D]" />
-                AI Configuration
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Default Model</p>
-                    <p className="text-xs text-[#666]">AI model for conversations</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">claude-sonnet</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Max Tokens</p>
-                    <p className="text-xs text-[#666]">Maximum response length</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">4,096</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">Rate Limit</p>
-                    <p className="text-xs text-[#666]">Requests per minute</p>
-                  </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">60</span>
-                </div>
-              </div>
-            </Card>
+                return categories.map(category => {
+                  const categoryConfigs = safeConfigs.filter(c => (c.category || 'general') === category);
+                  return (
+                    <Card key={category} className="p-6">
+                      <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+                        {categoryIcons[category] || <Settings size={18} className="text-[#EAD07D]" />}
+                        {categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1)}
+                      </h3>
+                      <div className="space-y-4">
+                        {categoryConfigs.map(config => (
+                          <div key={config.key} className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                            <div>
+                              <p className="font-medium text-[#1A1A1A] text-sm">
+                                {config.key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')}
+                              </p>
+                              {config.description && (
+                                <p className="text-xs text-[#666]">{config.description}</p>
+                              )}
+                            </div>
+                            {config.isSecret ? (
+                              <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">••••••••</span>
+                            ) : config.value === 'true' || config.value === 'false' ? (
+                              <Badge variant={config.value === 'true' ? 'green' : 'outline'} size="sm">
+                                {config.value === 'true' ? 'Enabled' : 'Disabled'}
+                              </Badge>
+                            ) : (
+                              <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA] max-w-[200px] truncate">
+                                {config.value}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
+          )}
 
-            <Card className="p-6">
-              <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <Mail size={18} className="text-[#EAD07D]" />
-                Email Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                  <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">SMTP Provider</p>
-                    <p className="text-xs text-[#666]">Email delivery service</p>
-                  </div>
-                  <Badge variant="green" size="sm">Connected</Badge>
+          {/* Payment Gateways - Always shown */}
+          <Card className="p-6">
+            <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+              <CreditCard size={18} className="text-[#EAD07D]" />
+              Payment Gateways
+            </h3>
+            <p className="text-sm text-[#666] mb-6">
+              Configure payment gateway credentials for Stripe (US/Global) and Razorpay (India).
+            </p>
+
+            {gatewaysLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Skeleton className="h-32 rounded-xl" />
+                <Skeleton className="h-32 rounded-xl" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Stripe Configuration */}
+                {(() => {
+                  const stripeConfig = gatewayConfigs?.find(c => c.provider === 'STRIPE');
+                  return (
+                    <div className="border border-[#F2F1EA] rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between p-4 bg-[#F8F8F6]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#635BFF] flex items-center justify-center p-2">
+                            <svg viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                              <path fillRule="evenodd" clipRule="evenodd" d="M59.64 12.776c0-4.12-1.996-7.372-5.816-7.372-3.836 0-6.156 3.252-6.156 7.34 0 4.844 2.74 7.292 6.672 7.292 1.916 0 3.364-.436 4.46-1.048v-3.22c-1.096.548-2.356.888-3.956.888-1.568 0-2.96-.548-3.14-2.452h7.912c0-.208.024-1.044.024-1.428zm-8-1.54c0-1.82 1.112-2.58 2.128-2.58.984 0 2.032.76 2.032 2.58h-4.16zM41.32 5.404c-1.584 0-2.604.744-3.172 1.26l-.212-.996h-3.54v19.06l4.024-.856.008-4.628c.584.424 1.444 1.024 2.868 1.024 2.9 0 5.54-2.332 5.54-7.468-.016-4.696-2.692-7.396-5.516-7.396zm-.972 11.372c-.956 0-1.52-.34-1.912-.76l-.016-6.004c.424-.468.996-.792 1.928-.792 1.476 0 2.496 1.656 2.496 3.772 0 2.164-1.004 3.784-2.496 3.784zM28.144 4.24l4.04-.868V0l-4.04.856v3.384zM28.144 5.66h4.04v14.048h-4.04V5.66zM23.78 6.9l-.252-1.24h-3.48v14.048h4.024V10.06c.952-1.24 2.56-1.012 3.064-.836V5.66c-.52-.192-2.42-.548-3.356 1.24zM15.884 1.74l-3.928.836-.016 12.864c0 2.376 1.784 4.128 4.16 4.128 1.316 0 2.28-.244 2.812-.532v-3.268c-.516.208-3.06.948-3.06-1.428V8.932h3.06V5.66h-3.06l.032-3.92zM4.04 10.284c0-.632.52-.872 1.38-.872 1.236 0 2.796.372 4.032 1.04V6.596c-1.348-.54-2.68-.752-4.032-.752C2.168 5.844 0 7.532 0 10.476c0 4.56 6.276 3.832 6.276 5.8 0 .748-.652 1.004-1.564 1.004-1.356 0-3.088-.556-4.46-1.308v3.912c1.52.656 3.06.936 4.46.936 3.324 0 5.608-1.64 5.608-4.632-.016-4.924-6.32-4.052-6.32-5.904h.04z" fill="white"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-[#1A1A1A]">Stripe</h4>
+                            <p className="text-xs text-[#666]">US & Global payments</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {stripeConfig?.connectionStatus === 'connected' && (
+                            <Badge variant="green" size="sm">Connected</Badge>
+                          )}
+                          {stripeConfig?.connectionStatus === 'error' && (
+                            <Badge variant="red" size="sm">Error</Badge>
+                          )}
+                          {(!stripeConfig?.connectionStatus || stripeConfig?.connectionStatus === 'untested') && (
+                            <Badge variant="outline" size="sm">Not Configured</Badge>
+                          )}
+                          {stripeConfig?.testMode && (
+                            <Badge variant="yellow" size="sm">Test Mode</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <button
+                          onClick={() => {
+                            setEditingGateway('STRIPE' as PaymentGateway);
+                            setGatewayForm({
+                              publicKey: stripeConfig?.publicKey || '',
+                              secretKey: '',
+                              webhookSecret: '',
+                              testMode: stripeConfig?.testMode ?? true,
+                              isActive: stripeConfig?.isActive ?? false,
+                            });
+                          }}
+                          className="w-full px-4 py-2 text-sm font-medium text-[#1A1A1A] bg-[#F8F8F6] hover:bg-[#F2F1EA] rounded-lg transition-colors"
+                        >
+                          Configure Stripe
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Razorpay Configuration */}
+                {(() => {
+                  const razorpayConfig = gatewayConfigs?.find(c => c.provider === 'RAZORPAY');
+                  return (
+                    <div className="border border-[#F2F1EA] rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between p-4 bg-[#F8F8F6]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#072654] flex items-center justify-center p-2">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                              <path d="M22.436 0H14.06l-2.5 6.5h6.49L9.472 24h2.972l9.992-24z" fill="#3395FF"/>
+                              <path d="M14.06 0H5.62L0 14.5h6.5L1.563 24h2.973L14.06 0z" fill="white"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-[#1A1A1A]">Razorpay</h4>
+                            <p className="text-xs text-[#666]">India payments</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {razorpayConfig?.connectionStatus === 'connected' && (
+                            <Badge variant="green" size="sm">Connected</Badge>
+                          )}
+                          {razorpayConfig?.connectionStatus === 'error' && (
+                            <Badge variant="red" size="sm">Error</Badge>
+                          )}
+                          {(!razorpayConfig?.connectionStatus || razorpayConfig?.connectionStatus === 'untested') && (
+                            <Badge variant="outline" size="sm">Not Configured</Badge>
+                          )}
+                          {razorpayConfig?.testMode && (
+                            <Badge variant="yellow" size="sm">Test Mode</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <button
+                          onClick={() => {
+                            setEditingGateway('RAZORPAY' as PaymentGateway);
+                            setGatewayForm({
+                              publicKey: razorpayConfig?.publicKey || '',
+                              secretKey: '',
+                              webhookSecret: '',
+                              testMode: razorpayConfig?.testMode ?? true,
+                              isActive: razorpayConfig?.isActive ?? false,
+                            });
+                          }}
+                          className="w-full px-4 py-2 text-sm font-medium text-[#1A1A1A] bg-[#F8F8F6] hover:bg-[#F2F1EA] rounded-lg transition-colors"
+                        >
+                          Configure Razorpay
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </Card>
+
+          {/* Gateway Configuration Modal */}
+          {editingGateway && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+                <div className="flex items-center justify-between p-6 border-b border-[#F2F1EA]">
+                  <h3 className="font-bold text-[#1A1A1A] flex items-center gap-3">
+                    {editingGateway === 'STRIPE' ? (
+                      <div className="w-8 h-8 rounded-lg bg-[#635BFF] flex items-center justify-center p-1.5">
+                        <svg viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                          <path fillRule="evenodd" clipRule="evenodd" d="M59.64 12.776c0-4.12-1.996-7.372-5.816-7.372-3.836 0-6.156 3.252-6.156 7.34 0 4.844 2.74 7.292 6.672 7.292 1.916 0 3.364-.436 4.46-1.048v-3.22c-1.096.548-2.356.888-3.956.888-1.568 0-2.96-.548-3.14-2.452h7.912c0-.208.024-1.044.024-1.428zm-8-1.54c0-1.82 1.112-2.58 2.128-2.58.984 0 2.032.76 2.032 2.58h-4.16zM41.32 5.404c-1.584 0-2.604.744-3.172 1.26l-.212-.996h-3.54v19.06l4.024-.856.008-4.628c.584.424 1.444 1.024 2.868 1.024 2.9 0 5.54-2.332 5.54-7.468-.016-4.696-2.692-7.396-5.516-7.396zm-.972 11.372c-.956 0-1.52-.34-1.912-.76l-.016-6.004c.424-.468.996-.792 1.928-.792 1.476 0 2.496 1.656 2.496 3.772 0 2.164-1.004 3.784-2.496 3.784zM28.144 4.24l4.04-.868V0l-4.04.856v3.384zM28.144 5.66h4.04v14.048h-4.04V5.66zM23.78 6.9l-.252-1.24h-3.48v14.048h4.024V10.06c.952-1.24 2.56-1.012 3.064-.836V5.66c-.52-.192-2.42-.548-3.356 1.24zM15.884 1.74l-3.928.836-.016 12.864c0 2.376 1.784 4.128 4.16 4.128 1.316 0 2.28-.244 2.812-.532v-3.268c-.516.208-3.06.948-3.06-1.428V8.932h3.06V5.66h-3.06l.032-3.92zM4.04 10.284c0-.632.52-.872 1.38-.872 1.236 0 2.796.372 4.032 1.04V6.596c-1.348-.54-2.68-.752-4.032-.752C2.168 5.844 0 7.532 0 10.476c0 4.56 6.276 3.832 6.276 5.8 0 .748-.652 1.004-1.564 1.004-1.356 0-3.088-.556-4.46-1.308v3.912c1.52.656 3.06.936 4.46.936 3.324 0 5.608-1.64 5.608-4.632-.016-4.924-6.32-4.052-6.32-5.904h.04z" fill="white"/>
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-[#072654] flex items-center justify-center p-1.5">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                          <path d="M22.436 0H14.06l-2.5 6.5h6.49L9.472 24h2.972l9.992-24z" fill="#3395FF"/>
+                          <path d="M14.06 0H5.62L0 14.5h6.5L1.563 24h2.973L14.06 0z" fill="white"/>
+                        </svg>
+                      </div>
+                    )}
+                    Configure {editingGateway === 'STRIPE' ? 'Stripe' : 'Razorpay'}
+                  </h3>
+                  <button
+                    onClick={() => setEditingGateway(null)}
+                    className="p-2 hover:bg-[#F8F8F6] rounded-lg transition-colors"
+                  >
+                    <X size={18} className="text-[#666]" />
+                  </button>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                <div className="p-6 space-y-4">
                   <div>
-                    <p className="font-medium text-[#1A1A1A] text-sm">From Address</p>
-                    <p className="text-xs text-[#666]">Default sender email</p>
+                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                      {editingGateway === 'STRIPE' ? 'Publishable Key' : 'Key ID'}
+                    </label>
+                    <input
+                      type="text"
+                      value={gatewayForm.publicKey}
+                      onChange={(e) => setGatewayForm(f => ({ ...f, publicKey: e.target.value }))}
+                      placeholder={editingGateway === 'STRIPE' ? 'pk_test_...' : 'rzp_test_...'}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                    />
                   </div>
-                  <span className="text-sm font-mono bg-white px-3 py-1.5 rounded-lg border border-[#F2F1EA]">noreply@salesos.org</span>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                      {editingGateway === 'STRIPE' ? 'Secret Key' : 'Key Secret'}
+                      {(() => {
+                        const config = gatewayConfigs?.find(c => c.provider === editingGateway);
+                        return config?.hasSecretKey ? (
+                          <span className="text-[#666] font-normal ml-1">(already set)</span>
+                        ) : null;
+                      })()}
+                    </label>
+                    <input
+                      type="password"
+                      value={gatewayForm.secretKey}
+                      onChange={(e) => setGatewayForm(f => ({ ...f, secretKey: e.target.value }))}
+                      placeholder={(() => {
+                        const config = gatewayConfigs?.find(c => c.provider === editingGateway);
+                        if (config?.hasSecretKey) return '••••••••';
+                        return editingGateway === 'STRIPE' ? 'sk_test_...' : 'Enter key secret';
+                      })()}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                      Webhook Secret
+                      {(() => {
+                        const config = gatewayConfigs?.find(c => c.provider === editingGateway);
+                        return config?.hasWebhookSecret ? (
+                          <span className="text-[#666] font-normal ml-1">(already set)</span>
+                        ) : null;
+                      })()}
+                    </label>
+                    <input
+                      type="password"
+                      value={gatewayForm.webhookSecret}
+                      onChange={(e) => setGatewayForm(f => ({ ...f, webhookSecret: e.target.value }))}
+                      placeholder={(() => {
+                        const config = gatewayConfigs?.find(c => c.provider === editingGateway);
+                        if (config?.hasWebhookSecret) return '••••••••';
+                        return editingGateway === 'STRIPE' ? 'whsec_...' : 'Enter webhook secret';
+                      })()}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                    />
+                  </div>
+                  <div className="flex items-center gap-6 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={gatewayForm.testMode}
+                        onChange={(e) => setGatewayForm(f => ({ ...f, testMode: e.target.checked }))}
+                        className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                      />
+                      <span className="text-sm text-[#666]">Test Mode</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={gatewayForm.isActive}
+                        onChange={(e) => setGatewayForm(f => ({ ...f, isActive: e.target.checked }))}
+                        className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                      />
+                      <span className="text-sm text-[#666]">Enable Gateway</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-6 border-t border-[#F2F1EA] bg-[#FAFAF8]">
+                  <button
+                    onClick={async () => {
+                      if (!editingGateway) return;
+                      const result = await testGatewayConnection(editingGateway);
+                      alert(result.message);
+                    }}
+                    disabled={testingGateway === editingGateway}
+                    className="px-4 py-2 bg-[#F8F8F6] text-[#666] rounded-lg text-sm font-medium hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {testingGateway === editingGateway ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={14} />
+                    )}
+                    Test Connection
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingGateway(null)}
+                      className="px-4 py-2 text-[#666] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!editingGateway) return;
+                        try {
+                          await updateGatewayConfig(editingGateway, {
+                            publicKey: gatewayForm.publicKey || undefined,
+                            secretKey: gatewayForm.secretKey || undefined,
+                            webhookSecret: gatewayForm.webhookSecret || undefined,
+                            testMode: gatewayForm.testMode,
+                            isActive: gatewayForm.isActive,
+                          });
+                          setEditingGateway(null);
+                          refetchGateways();
+                        } catch (err) {
+                          alert('Failed to save configuration');
+                        }
+                      }}
+                      className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-[#333] transition-colors"
+                    >
+                      Save Configuration
+                    </button>
+                  </div>
                 </div>
               </div>
-            </Card>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1398,37 +2225,229 @@ export const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* Create Plan Modal Placeholder */}
+      {/* Create/Edit Plan Modal */}
       {showCreatePlanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreatePlanModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowCreatePlanModal(false); setEditingPlan(null); }} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-[#1A1A1A]">Create New Plan</h3>
-              <button onClick={() => setShowCreatePlanModal(false)} className="p-2 rounded-lg hover:bg-[#F8F8F6]">
+              <h3 className="text-lg font-bold text-[#1A1A1A]">
+                {editingPlan ? 'Edit Plan' : 'Create New Plan'}
+              </h3>
+              <button onClick={() => { setShowCreatePlanModal(false); setEditingPlan(null); }} className="p-2 rounded-lg hover:bg-[#F8F8F6]">
                 <X size={18} className="text-[#666]" />
               </button>
             </div>
-            <p className="text-sm text-[#666] mb-6">Plan creation form coming soon...</p>
-            <div className="flex gap-3">
+
+            <div className="space-y-4">
+              {/* Name & Slug */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Plan Name *</label>
+                  <input
+                    type="text"
+                    value={planForm.name}
+                    onChange={(e) => setPlanForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g., Professional"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Slug *</label>
+                  <input
+                    type="text"
+                    value={planForm.slug}
+                    onChange={(e) => setPlanForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+                    placeholder="e.g., professional"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Description</label>
+                <textarea
+                  value={planForm.description}
+                  onChange={(e) => setPlanForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Brief description of this plan"
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
+                />
+              </div>
+
+              {/* Tier */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Tier *</label>
+                <select
+                  value={planForm.tier}
+                  onChange={(e) => setPlanForm(f => ({ ...f, tier: e.target.value as any }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                >
+                  <option value="FREE">Free</option>
+                  <option value="STARTER">Starter</option>
+                  <option value="PROFESSIONAL">Professional</option>
+                  <option value="ENTERPRISE">Enterprise</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </div>
+
+              {/* Pricing */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Monthly (cents)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planForm.priceMonthly}
+                    onChange={(e) => setPlanForm(f => ({ ...f, priceMonthly: parseInt(e.target.value) || 0 }))}
+                    placeholder="2900"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                  <p className="text-xs text-[#999] mt-1">${(planForm.priceMonthly / 100).toFixed(2)}/mo</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Yearly (cents)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={planForm.priceYearly}
+                    onChange={(e) => setPlanForm(f => ({ ...f, priceYearly: parseInt(e.target.value) || 0 }))}
+                    placeholder="29000"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                  <p className="text-xs text-[#999] mt-1">${(planForm.priceYearly / 100).toFixed(2)}/yr</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Currency</label>
+                  <select
+                    value={planForm.currency}
+                    onChange={(e) => setPlanForm(f => ({ ...f, currency: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="INR">INR</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Limits */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Users</label>
+                  <input
+                    type="number"
+                    min="-1"
+                    value={planForm.maxUsers}
+                    onChange={(e) => setPlanForm(f => ({ ...f, maxUsers: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                  <p className="text-xs text-[#999] mt-1">-1 for unlimited</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max AI Conversations</label>
+                  <input
+                    type="number"
+                    min="-1"
+                    value={planForm.maxConversations}
+                    onChange={(e) => setPlanForm(f => ({ ...f, maxConversations: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                  <p className="text-xs text-[#999] mt-1">-1 for unlimited</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Leads</label>
+                  <input
+                    type="number"
+                    min="-1"
+                    value={planForm.maxLeads}
+                    onChange={(e) => setPlanForm(f => ({ ...f, maxLeads: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Documents</label>
+                  <input
+                    type="number"
+                    min="-1"
+                    value={planForm.maxDocuments}
+                    onChange={(e) => setPlanForm(f => ({ ...f, maxDocuments: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Flags */}
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={planForm.isActive}
+                    onChange={(e) => setPlanForm(f => ({ ...f, isActive: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                  />
+                  <span className="text-sm text-[#666]">Active</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={planForm.isPublic}
+                    onChange={(e) => setPlanForm(f => ({ ...f, isPublic: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                  />
+                  <span className="text-sm text-[#666]">Public (show on pricing page)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowCreatePlanModal(false)}
+                onClick={() => { setShowCreatePlanModal(false); setEditingPlan(null); }}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => setShowCreatePlanModal(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors"
+                onClick={async () => {
+                  if (!planForm.name || !planForm.slug) {
+                    alert('Please fill in name and slug');
+                    return;
+                  }
+                  try {
+                    setFormSubmitting(true);
+                    if (editingPlan) {
+                      await updateType(editingPlan.id, planForm);
+                    } else {
+                      await createType(planForm);
+                    }
+                    setShowCreatePlanModal(false);
+                    setEditingPlan(null);
+                    setPlanForm({
+                      name: '', slug: '', description: '', tier: 'STARTER',
+                      priceMonthly: 0, priceYearly: 0, currency: 'USD',
+                      maxUsers: 5, maxConversations: 1000, maxLeads: 500, maxDocuments: 100,
+                      isActive: true, isPublic: true,
+                    });
+                  } catch (err) {
+                    alert('Failed to save plan');
+                  } finally {
+                    setFormSubmitting(false);
+                  }
+                }}
+                disabled={formSubmitting || !planForm.name || !planForm.slug}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Create
+                {formSubmitting && <Loader2 size={14} className="animate-spin" />}
+                {editingPlan ? 'Save Changes' : 'Create Plan'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Assign License Modal Placeholder */}
+      {/* Assign License Modal */}
       {showAssignLicenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAssignLicenseModal(false)} />
@@ -1439,8 +2458,56 @@ export const Admin: React.FC = () => {
                 <X size={18} className="text-[#666]" />
               </button>
             </div>
-            <p className="text-sm text-[#666] mb-6">License assignment form coming soon...</p>
-            <div className="flex gap-3">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">User (select from list) *</label>
+                <select
+                  value={assignLicenseForm.userEmail}
+                  onChange={(e) => setAssignLicenseForm(f => ({ ...f, userEmail: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                >
+                  <option value="">Select a user...</option>
+                  {(users || []).map((u) => (
+                    <option key={u.id} value={u.id}>{u.name || u.email} ({u.email})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">License Type *</label>
+                <select
+                  value={assignLicenseForm.licenseTypeId}
+                  onChange={(e) => setAssignLicenseForm(f => ({ ...f, licenseTypeId: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                >
+                  <option value="">Select a plan...</option>
+                  {(licenseTypes || []).map((type) => (
+                    <option key={type.id} value={type.id}>{type.name} ({type.tier})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Duration (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={assignLicenseForm.durationDays}
+                  onChange={(e) => setAssignLicenseForm(f => ({ ...f, durationDays: parseInt(e.target.value) || 365 }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={assignLicenseForm.isTrial}
+                    onChange={(e) => setAssignLicenseForm(f => ({ ...f, isTrial: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                  />
+                  <span className="text-sm text-[#666]">Trial License</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAssignLicenseModal(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
@@ -1448,17 +2515,44 @@ export const Admin: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={() => setShowAssignLicenseModal(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors"
+                onClick={async () => {
+                  if (!assignLicenseForm.userEmail || !assignLicenseForm.licenseTypeId) {
+                    alert('Please select a user and license type');
+                    return;
+                  }
+                  try {
+                    setFormSubmitting(true);
+                    const startDate = new Date().toISOString();
+                    const endDate = new Date(Date.now() + assignLicenseForm.durationDays * 24 * 60 * 60 * 1000).toISOString();
+                    await assignLicense({
+                      userId: assignLicenseForm.userEmail,
+                      licenseTypeId: assignLicenseForm.licenseTypeId,
+                      startDate,
+                      endDate,
+                      isTrial: assignLicenseForm.isTrial,
+                      autoRenew: !assignLicenseForm.isTrial,
+                    });
+                    setShowAssignLicenseModal(false);
+                    setAssignLicenseForm({ userEmail: '', licenseTypeId: '', isTrial: false, durationDays: 365 });
+                    refetchLicenses();
+                  } catch (err) {
+                    alert('Failed to assign license');
+                  } finally {
+                    setFormSubmitting(false);
+                  }
+                }}
+                disabled={formSubmitting || !assignLicenseForm.userEmail || !assignLicenseForm.licenseTypeId}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Assign
+                {formSubmitting && <Loader2 size={14} className="animate-spin" />}
+                Assign License
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Generate Keys Modal Placeholder */}
+      {/* Generate Keys Modal */}
       {showGenerateKeysModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowGenerateKeysModal(false)} />
@@ -1469,8 +2563,66 @@ export const Admin: React.FC = () => {
                 <X size={18} className="text-[#666]" />
               </button>
             </div>
-            <p className="text-sm text-[#666] mb-6">Key generation form coming soon...</p>
-            <div className="flex gap-3">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">License Type *</label>
+                <select
+                  value={generateKeysForm.licenseTypeId}
+                  onChange={(e) => setGenerateKeysForm(f => ({ ...f, licenseTypeId: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                >
+                  <option value="">Select a plan...</option>
+                  {(licenseTypes || []).map((type) => (
+                    <option key={type.id} value={type.id}>{type.name} ({type.tier})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Number of Keys *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={generateKeysForm.count}
+                    onChange={(e) => setGenerateKeysForm(f => ({ ...f, count: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Duration (days)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={generateKeysForm.durationDays}
+                    onChange={(e) => setGenerateKeysForm(f => ({ ...f, durationDays: parseInt(e.target.value) || 365 }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={generateKeysForm.isTrial}
+                    onChange={(e) => setGenerateKeysForm(f => ({ ...f, isTrial: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                  />
+                  <span className="text-sm text-[#666]">Trial Keys</span>
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Notes (optional)</label>
+                <input
+                  type="text"
+                  value={generateKeysForm.notes}
+                  onChange={(e) => setGenerateKeysForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="e.g., For marketing campaign"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowGenerateKeysModal(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
@@ -1478,10 +2630,237 @@ export const Admin: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={() => setShowGenerateKeysModal(false)}
+                onClick={async () => {
+                  if (!generateKeysForm.licenseTypeId) {
+                    alert('Please select a license type');
+                    return;
+                  }
+                  try {
+                    setFormSubmitting(true);
+                    await generateKeys({
+                      licenseTypeId: generateKeysForm.licenseTypeId,
+                      count: generateKeysForm.count,
+                      durationDays: generateKeysForm.durationDays,
+                      isTrial: generateKeysForm.isTrial,
+                      notes: generateKeysForm.notes || undefined,
+                    });
+                    setShowGenerateKeysModal(false);
+                    setGenerateKeysForm({ licenseTypeId: '', count: 5, durationDays: 365, isTrial: false, notes: '' });
+                    refetchKeys();
+                  } catch (err) {
+                    alert('Failed to generate keys');
+                  } finally {
+                    setFormSubmitting(false);
+                  }
+                }}
+                disabled={formSubmitting || !generateKeysForm.licenseTypeId}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {formSubmitting && <Loader2 size={14} className="animate-spin" />}
+                Generate {generateKeysForm.count} Keys
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Coupon Modal */}
+      {showCreateCouponModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateCouponModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-[#1A1A1A]">
+                {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
+              </h3>
+              <button onClick={() => setShowCreateCouponModal(false)} className="p-2 rounded-lg hover:bg-[#F8F8F6]">
+                <X size={18} className="text-[#666]" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Code */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Coupon Code *</label>
+                <input
+                  type="text"
+                  value={couponForm.code}
+                  onChange={(e) => setCouponForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  placeholder="e.g., SAVE20"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
+                  disabled={!!editingCoupon}
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Display Name</label>
+                <input
+                  type="text"
+                  value={couponForm.name}
+                  onChange={(e) => setCouponForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g., 20% Off First Month"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Description</label>
+                <textarea
+                  value={couponForm.description}
+                  onChange={(e) => setCouponForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Internal description..."
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
+                />
+              </div>
+
+              {/* Discount Type & Value */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Discount Type</label>
+                  <select
+                    value={couponForm.discountType}
+                    onChange={(e) => setCouponForm(f => ({ ...f, discountType: e.target.value as DiscountType }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                    {couponForm.discountType === 'PERCENTAGE' ? 'Percentage' : 'Amount (cents)'}
+                  </label>
+                  <input
+                    type="number"
+                    value={couponForm.discountValue}
+                    onChange={(e) => setCouponForm(f => ({ ...f, discountValue: parseInt(e.target.value) || 0 }))}
+                    min={0}
+                    max={couponForm.discountType === 'PERCENTAGE' ? 100 : undefined}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Duration</label>
+                  <select
+                    value={couponForm.duration}
+                    onChange={(e) => setCouponForm(f => ({ ...f, duration: e.target.value as CouponDuration }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                  >
+                    <option value="ONCE">One-time</option>
+                    <option value="FOREVER">Forever</option>
+                    <option value="REPEATING">Repeating (months)</option>
+                  </select>
+                </div>
+                {couponForm.duration === 'REPEATING' && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Months</label>
+                    <input
+                      type="number"
+                      value={couponForm.durationMonths}
+                      onChange={(e) => setCouponForm(f => ({ ...f, durationMonths: parseInt(e.target.value) || 1 }))}
+                      min={1}
+                      max={36}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Limits */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Redemptions</label>
+                  <input
+                    type="number"
+                    value={couponForm.maxRedemptions || ''}
+                    onChange={(e) => setCouponForm(f => ({
+                      ...f,
+                      maxRedemptions: e.target.value ? parseInt(e.target.value) : undefined
+                    }))}
+                    placeholder="Unlimited"
+                    min={1}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Expires On</label>
+                  <input
+                    type="date"
+                    value={couponForm.expiresAt}
+                    onChange={(e) => setCouponForm(f => ({ ...f, expiresAt: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Sync to Stripe */}
+              {!editingCoupon && (
+                <div className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl">
+                  <input
+                    type="checkbox"
+                    id="syncToStripe"
+                    checked={couponForm.syncToStripe}
+                    onChange={(e) => setCouponForm(f => ({ ...f, syncToStripe: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                  />
+                  <label htmlFor="syncToStripe" className="text-sm text-[#666]">
+                    Sync this coupon to Stripe for online payments
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowCreateCouponModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!couponForm.code) {
+                    alert('Please enter a coupon code');
+                    return;
+                  }
+                  try {
+                    if (editingCoupon) {
+                      await updateCoupon(editingCoupon.id, {
+                        name: couponForm.name || undefined,
+                        description: couponForm.description || undefined,
+                        maxRedemptions: couponForm.maxRedemptions,
+                        expiresAt: couponForm.expiresAt ? new Date(couponForm.expiresAt).toISOString() : undefined,
+                      });
+                    } else {
+                      await createCoupon({
+                        code: couponForm.code,
+                        name: couponForm.name || undefined,
+                        description: couponForm.description || undefined,
+                        discountType: couponForm.discountType,
+                        discountValue: couponForm.discountValue,
+                        duration: couponForm.duration,
+                        durationMonths: couponForm.duration === 'REPEATING' ? couponForm.durationMonths : undefined,
+                        maxRedemptions: couponForm.maxRedemptions,
+                        expiresAt: couponForm.expiresAt ? new Date(couponForm.expiresAt).toISOString() : undefined,
+                        syncToStripe: couponForm.syncToStripe,
+                      });
+                    }
+                    setShowCreateCouponModal(false);
+                    refetchCoupons();
+                  } catch (err) {
+                    alert('Failed to save coupon. Please try again.');
+                  }
+                }}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors"
               >
-                Generate
+                {editingCoupon ? 'Update' : 'Create'}
               </button>
             </div>
           </div>

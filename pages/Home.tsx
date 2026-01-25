@@ -3,7 +3,6 @@ import { Hero } from '../components/Hero';
 import { SocialProof } from '../components/SocialProof';
 import { Features } from '../components/Features';
 import { WhySalesOS } from '../components/WhySalesOS';
-import { Pricing } from '../components/Pricing';
 import { CTA } from '../components/CTA';
 
 export const Home: React.FC = () => {
@@ -13,7 +12,6 @@ export const Home: React.FC = () => {
       <SocialProof />
       <Features />
       <WhySalesOS />
-      <Pricing />
       <CTA />
     </>
   );

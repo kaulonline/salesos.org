@@ -15,6 +15,7 @@ import { SmartCaptureModal } from '../../src/components/SmartCapture/SmartCaptur
 import { ImportModal } from '../../src/components/ImportExport/ImportModal';
 import { ExportModal } from '../../src/components/ImportExport/ExportModal';
 import { BulkActionsBar } from '../../src/components/BulkActions/BulkActionsBar';
+import { FeatureGate, Features } from '../../src/components/FeatureGate';
 import type { Lead, CreateLeadDto, LeadStatus, LeadRating } from '../../src/types';
 
 const STATUS_COLORS: Record<LeadStatus, 'green' | 'yellow' | 'neutral' | 'outline'> = {
@@ -322,6 +323,7 @@ export const Leads: React.FC = () => {
   }
 
   return (
+    <FeatureGate feature={Features.LEADS_MANAGEMENT}>
     <div className="max-w-7xl mx-auto">
       <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
          <div>
@@ -585,5 +587,6 @@ export const Leads: React.FC = () => {
         onExport={handleExportSelected}
       />
     </div>
+    </FeatureGate>
   );
 };
