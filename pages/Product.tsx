@@ -2,9 +2,15 @@ import React from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { Button } from '../components/ui/Button';
 import { ArrowRight, BarChart3, Zap, Users, TrendingUp, Target, Mail } from 'lucide-react';
+import { ScrollReveal } from '../components/ui/ScrollReveal';
+import { AnimatedCounter } from '../components/ui/AnimatedCounter';
+import { TiltCard } from '../components/ui/TiltCard';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 export const Product: React.FC = () => {
   return (
+    <>
+    <SEOHead {...SEO_CONFIGS.product} />
     <PageLayout
       title="The Product"
       subtitle="Built for speed, designed for revenue. See how SalesOS powers the world's fastest growing sales teams."
@@ -20,16 +26,22 @@ export const Product: React.FC = () => {
 
         {/* Frosted Stats Cards */}
         <div className="absolute bottom-8 left-8 right-8 flex flex-wrap gap-4">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white">
-            <div className="text-3xl font-bold text-[#EAD07D]">3.2x</div>
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-default">
+            <div className="text-3xl font-bold text-[#EAD07D]">
+              <AnimatedCounter end={3.2} decimals={1} suffix="x" duration={2000} />
+            </div>
             <div className="text-sm text-white/70">Pipeline Growth</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white">
-            <div className="text-3xl font-bold text-[#EAD07D]">47%</div>
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-default">
+            <div className="text-3xl font-bold text-[#EAD07D]">
+              <AnimatedCounter end={47} suffix="%" duration={2000} />
+            </div>
             <div className="text-sm text-white/70">Faster Close Rate</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white">
-            <div className="text-3xl font-bold text-[#EAD07D]">89%</div>
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-default">
+            <div className="text-3xl font-bold text-[#EAD07D]">
+              <AnimatedCounter end={89} suffix="%" duration={2000} />
+            </div>
             <div className="text-sm text-white/70">Forecast Accuracy</div>
           </div>
         </div>
@@ -44,7 +56,7 @@ export const Product: React.FC = () => {
 
       {/* Pipeline Intelligence Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-32">
-        <div className="order-2 md:order-1">
+        <ScrollReveal animation="fade-right" className="order-2 md:order-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-6">
             <BarChart3 size={14} />
             Pipeline Intelligence
@@ -54,39 +66,43 @@ export const Product: React.FC = () => {
             Stop guessing. Our AI engine analyzes thousands of signals—from email sentiment to stakeholder engagement—to give you a dynamic close probability score for every deal in your pipeline.
           </p>
           <ul className="space-y-4 mb-8">
-             {['Real-time sentiment analysis', 'Stakeholder mapping', 'Risk alerts'].map(item => (
-                <li key={item} className="flex items-center gap-3 text-[#1A1A1A] font-medium">
+             {['Real-time sentiment analysis', 'Stakeholder mapping', 'Risk alerts'].map((item, idx) => (
+                <li key={item} className="flex items-center gap-3 text-[#1A1A1A] font-medium" style={{ animationDelay: `${idx * 100}ms` }}>
                   <div className="w-5 h-5 rounded-full bg-[#EAD07D] flex items-center justify-center text-xs">✓</div>
                   {item}
                 </li>
              ))}
           </ul>
-          <Button className="group">
+          <Button className="group hover:scale-105 active:scale-95 transition-transform">
             Explore Pipeline Features
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
-        </div>
-        <div className="order-1 md:order-2 relative">
-          <div className="rounded-[2rem] overflow-hidden shadow-2xl">
-            <img
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
-              alt="Analytics Dashboard"
-              className="w-full h-auto"
-            />
-          </div>
-          {/* Floating frosted card */}
-          <div className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[#1A1A1A]">Win Rate Up</div>
-                <div className="text-xs text-green-600 font-medium">+23% this quarter</div>
+        </ScrollReveal>
+        <ScrollReveal animation="fade-left" delay={200} className="order-1 md:order-2">
+          <TiltCard className="relative" maxTilt={5} scale={1.01} glare glareMaxOpacity={0.1}>
+            <div className="rounded-[2rem] overflow-hidden shadow-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
+                alt="Analytics Dashboard"
+                className="w-full h-auto"
+              />
+            </div>
+            {/* Floating frosted card */}
+            <div className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 shadow-xl animate-float">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">
+                  <TrendingUp size={20} />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-[#1A1A1A]">Win Rate Up</div>
+                  <div className="text-xs text-green-600 font-medium">
+                    +<AnimatedCounter end={23} suffix="%" /> this quarter
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </TiltCard>
+        </ScrollReveal>
       </div>
 
       {/* Automated Outreach Section */}
@@ -181,5 +197,6 @@ export const Product: React.FC = () => {
         </div>
       </div>
     </PageLayout>
+    </>
   );
 };

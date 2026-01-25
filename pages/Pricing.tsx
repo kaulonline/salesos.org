@@ -7,6 +7,7 @@ import { PRICING_TIERS } from '../constants';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { Button } from '../components/ui/Button';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 import type { LicenseType } from '../src/api/licensing';
 import type { CouponValidation } from '../src/api/payments';
 
@@ -386,6 +387,8 @@ export const PricingPage: React.FC = () => {
   };
 
   return (
+    <>
+    <SEOHead {...SEO_CONFIGS.pricing} />
     <div className="min-h-screen bg-[#F2F1EA]">
       <Navbar />
 
@@ -519,6 +522,7 @@ export const PricingPage: React.FC = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

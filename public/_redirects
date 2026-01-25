@@ -1,0 +1,5 @@
+# Netlify _redirects file
+# Static files are served automatically before these rules
+
+# SPA fallback - serves index.html for all routes not matching static files
+/*    /index.html   200

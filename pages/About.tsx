@@ -1,6 +1,10 @@
 import React from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { MapPin, Users, Target, Award } from 'lucide-react';
+import { ScrollReveal } from '../components/ui/ScrollReveal';
+import { AnimatedCounter } from '../components/ui/AnimatedCounter';
+import { TiltCard } from '../components/ui/TiltCard';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 const TEAM_MEMBERS = [
   {
@@ -30,14 +34,16 @@ const TEAM_MEMBERS = [
 ];
 
 const STATS = [
-  { value: '2,000+', label: 'Companies', icon: Users },
-  { value: '$2B+', label: 'Pipeline Managed', icon: Target },
-  { value: '50+', label: 'Countries', icon: MapPin },
-  { value: '4.9/5', label: 'Customer Rating', icon: Award },
+  { value: 2000, suffix: '+', label: 'Companies', icon: Users },
+  { value: 2, prefix: '$', suffix: 'B+', label: 'Pipeline Managed', icon: Target },
+  { value: 50, suffix: '+', label: 'Countries', icon: MapPin },
+  { value: 4.9, suffix: '/5', decimals: 1, label: 'Customer Rating', icon: Award },
 ];
 
 export const About: React.FC = () => {
   return (
+    <>
+    <SEOHead {...SEO_CONFIGS.about} />
     <PageLayout
       title="About Us"
       subtitle="We're on a mission to fix the broken sales model. Less admin, more closing."
@@ -55,9 +61,21 @@ export const About: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {STATS.map((stat, i) => (
-              <div key={i} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-center">
+              <div
+                key={i}
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-center hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-default"
+                style={{ transitionDelay: `${i * 50}ms` }}
+              >
                 <stat.icon className="w-6 h-6 text-[#EAD07D] mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-2xl font-bold text-white">
+                  <AnimatedCounter
+                    end={stat.value}
+                    prefix={stat.prefix}
+                    suffix={stat.suffix}
+                    decimals={stat.decimals || 0}
+                    duration={2000}
+                  />
+                </div>
                 <div className="text-sm text-white/60">{stat.label}</div>
               </div>
             ))}
@@ -67,54 +85,60 @@ export const About: React.FC = () => {
 
       {/* Story Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 items-center">
-         <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-6">
-              Our Story
-            </div>
-            <h3 className="text-3xl font-bold text-[#1A1A1A] mb-6">Built by salespeople, for salespeople.</h3>
-            <div className="space-y-4 text-[#666] leading-relaxed">
-                <p>
-                    SalesOS began in 2021 when our founders, frustrated by the bloat and complexity of legacy CRMs, decided to build something better.
-                </p>
-                <p>
-                    We believe that sales software should work for the rep, not the other way around. It should be fast, intuitive, and actually help you sell—rather than just being a database for your manager.
-                </p>
-                <p>
-                    Today, we serve over 2,000 high-growth revenue teams across the globe, processing millions of dollars in pipeline every single day.
-                </p>
-            </div>
-         </div>
-         <div className="relative">
-           <div className="bg-white p-3 rounded-[2rem] shadow-xl">
-             <img
-               src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&q=80&w=800"
-               alt="Sales team collaborating"
-               className="rounded-[1.5rem] w-full h-auto"
-             />
+         <ScrollReveal animation="fade-right">
+           <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-6">
+                Our Story
+              </div>
+              <h3 className="text-3xl font-bold text-[#1A1A1A] mb-6">Built by salespeople, for salespeople.</h3>
+              <div className="space-y-4 text-[#666] leading-relaxed">
+                  <p>
+                      SalesOS began in 2021 when our founders, frustrated by the bloat and complexity of legacy CRMs, decided to build something better.
+                  </p>
+                  <p>
+                      We believe that sales software should work for the rep, not the other way around. It should be fast, intuitive, and actually help you sell—rather than just being a database for your manager.
+                  </p>
+                  <p>
+                      Today, we serve over 2,000 high-growth revenue teams across the globe, processing millions of dollars in pipeline every single day.
+                  </p>
+              </div>
            </div>
-           {/* Floating frosted card */}
-           <div className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 shadow-xl">
-             <div className="flex items-center gap-3">
-               <div className="w-12 h-12 rounded-full bg-[#EAD07D] flex items-center justify-center text-[#1A1A1A] font-bold text-lg">
-                 5Y
-               </div>
-               <div>
-                 <div className="text-sm font-bold text-[#1A1A1A]">Founded in 2021</div>
-                 <div className="text-xs text-[#666]">San Francisco, CA</div>
+         </ScrollReveal>
+         <ScrollReveal animation="fade-left" delay={200}>
+           <TiltCard className="relative" maxTilt={5} scale={1.01} glare glareMaxOpacity={0.1}>
+             <div className="bg-white p-3 rounded-[2rem] shadow-xl">
+               <img
+                 src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&q=80&w=800"
+                 alt="Sales team collaborating"
+                 className="rounded-[1.5rem] w-full h-auto"
+               />
+             </div>
+             {/* Floating frosted card */}
+             <div className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 shadow-xl animate-float">
+               <div className="flex items-center gap-3">
+                 <div className="w-12 h-12 rounded-full bg-[#EAD07D] flex items-center justify-center text-[#1A1A1A] font-bold text-lg">
+                   5Y
+                 </div>
+                 <div>
+                   <div className="text-sm font-bold text-[#1A1A1A]">Founded in 2021</div>
+                   <div className="text-xs text-[#666]">San Francisco, CA</div>
+                 </div>
                </div>
              </div>
-           </div>
-         </div>
+           </TiltCard>
+         </ScrollReveal>
       </div>
 
       {/* Values Section */}
       <div className="mb-24">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-4">
-            Our Values
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-4">
+              Our Values
+            </div>
+            <h3 className="text-3xl font-bold text-[#1A1A1A]">What drives us forward</h3>
           </div>
-          <h3 className="text-3xl font-bold text-[#1A1A1A]">What drives us forward</h3>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
@@ -157,31 +181,35 @@ export const About: React.FC = () => {
 
       {/* Team Section */}
       <div className="mb-20">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-4">
-            Leadership
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-4">
+              Leadership
+            </div>
+            <h3 className="text-3xl font-bold text-[#1A1A1A]">Meet the team</h3>
           </div>
-          <h3 className="text-3xl font-bold text-[#1A1A1A]">Meet the team</h3>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {TEAM_MEMBERS.map((member, i) => (
-                <div key={i} className="group">
-                    <div className="relative mb-4 overflow-hidden rounded-2xl">
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className="w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-100 group-hover:scale-105"
-                        />
-                        {/* Frosted location badge */}
-                        <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-[#1A1A1A] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MapPin size={12} />
-                          {member.location}
-                        </div>
-                    </div>
-                    <h4 className="font-bold text-[#1A1A1A]">{member.name}</h4>
-                    <p className="text-sm text-[#666]">{member.role}</p>
-                </div>
+                <ScrollReveal key={i} animation="fade-up" delay={i * 100}>
+                  <TiltCard className="group" maxTilt={8} scale={1.03} glare glareMaxOpacity={0.15}>
+                      <div className="relative mb-4 overflow-hidden rounded-2xl">
+                          <img
+                            src={member.image}
+                            alt={member.name}
+                            className="w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-100 group-hover:scale-105"
+                          />
+                          {/* Frosted location badge */}
+                          <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-[#1A1A1A] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MapPin size={12} />
+                            {member.location}
+                          </div>
+                      </div>
+                      <h4 className="font-bold text-[#1A1A1A]">{member.name}</h4>
+                      <p className="text-sm text-[#666]">{member.role}</p>
+                  </TiltCard>
+                </ScrollReveal>
             ))}
         </div>
       </div>
@@ -260,5 +288,6 @@ export const About: React.FC = () => {
         </div>
       </div>
     </PageLayout>
+    </>
   );
 };

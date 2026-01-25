@@ -26,6 +26,11 @@ import {
   LineChart
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { ScrollReveal } from '../components/ui/ScrollReveal';
+import { TiltCard } from '../components/ui/TiltCard';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
+import { AnimatedCounter } from '../components/ui/AnimatedCounter';
+import { GradientText } from '../components/ui/GradientText';
 
 const MAIN_FEATURES = [
   {
@@ -148,6 +153,8 @@ export const FeaturesPage: React.FC = () => {
   };
 
   return (
+    <>
+    <SEOHead {...SEO_CONFIGS.features} />
     <div className="bg-[#F2F1EA]">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
@@ -194,42 +201,46 @@ export const FeaturesPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {MAIN_FEATURES.map((feature, index) => (
-              <div
-                key={feature.id}
-                className={`group relative bg-white rounded-[2rem] p-8 shadow-sm border border-black/5 hover:shadow-xl hover:border-[#EAD07D]/30 transition-all duration-300 ${getTransition(0)}`}
-                style={{ transitionDelay: `${400 + index * 100}ms` }}
-              >
-                {/* Hover Gradient */}
-                <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+              <ScrollReveal key={feature.id} animation="fade-up" delay={index * 100}>
+                <TiltCard
+                  className="group relative bg-white rounded-[2rem] p-8 shadow-sm border border-black/5 hover:shadow-xl hover:border-[#EAD07D]/30 transition-all duration-300 h-full"
+                  maxTilt={6}
+                  scale={1.02}
+                  glare
+                  glareMaxOpacity={0.15}
+                >
+                  {/* Hover Gradient */}
+                  <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
-                <div className="relative z-10">
-                  {/* Icon */}
-                  <div className="mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#F8F7F4] border border-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] group-hover:scale-110 group-hover:bg-[#EAD07D] transition-all duration-300 shadow-sm">
-                      <feature.icon size={26} strokeWidth={1.5} />
+                  <div className="relative z-10">
+                    {/* Icon */}
+                    <div className="mb-6">
+                      <div className="w-14 h-14 rounded-2xl bg-[#F8F7F4] border border-[#EAD07D]/20 flex items-center justify-center text-[#1A1A1A] group-hover:scale-110 group-hover:bg-[#EAD07D] transition-all duration-300 shadow-sm">
+                        <feature.icon size={26} strokeWidth={1.5} />
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{feature.title}</h3>
+
+                    {/* Description */}
+                    <p className="text-[#666] leading-relaxed text-[15px] mb-6">{feature.description}</p>
+
+                    {/* Highlights */}
+                    <div className="flex flex-wrap gap-2">
+                      {feature.highlights.map((highlight) => (
+                        <span
+                          key={highlight}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8F7F4] text-xs font-medium text-[#1A1A1A]"
+                        >
+                          <CheckCircle2 size={12} className="text-[#EAD07D]" />
+                          {highlight}
+                        </span>
+                      ))}
                     </div>
                   </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">{feature.title}</h3>
-
-                  {/* Description */}
-                  <p className="text-[#666] leading-relaxed text-[15px] mb-6">{feature.description}</p>
-
-                  {/* Highlights */}
-                  <div className="flex flex-wrap gap-2">
-                    {feature.highlights.map((highlight) => (
-                      <span
-                        key={highlight}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8F7F4] text-xs font-medium text-[#1A1A1A]"
-                      >
-                        <CheckCircle2 size={12} className="text-[#EAD07D]" />
-                        {highlight}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                </TiltCard>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -238,23 +249,24 @@ export const FeaturesPage: React.FC = () => {
       {/* Quick Features Bar */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">And so much more</h2>
-            <p className="text-[#666] text-lg">Every tool your sales team needs, in one place.</p>
-          </div>
+          <ScrollReveal animation="fade-up">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">And so much more</h2>
+              <p className="text-[#666] text-lg">Every tool your sales team needs, in one place.</p>
+            </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {QUICK_FEATURES.map((item, i) => (
-              <div
-                key={i}
-                className="group bg-[#F8F7F4] hover:bg-[#1A1A1A] rounded-2xl p-5 transition-all duration-300"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white group-hover:bg-[#EAD07D] flex items-center justify-center text-[#1A1A1A] mb-4 transition-colors shadow-sm">
-                  <item.icon size={20} strokeWidth={1.5} />
+              <ScrollReveal key={i} animation="fade-up" delay={i * 75}>
+                <div className="group bg-[#F8F7F4] hover:bg-[#1A1A1A] rounded-2xl p-5 transition-all duration-300 hover:scale-105 cursor-pointer h-full">
+                  <div className="w-10 h-10 rounded-xl bg-white group-hover:bg-[#EAD07D] flex items-center justify-center text-[#1A1A1A] mb-4 transition-colors shadow-sm group-hover:scale-110">
+                    <item.icon size={20} strokeWidth={1.5} />
+                  </div>
+                  <h4 className="font-semibold text-[#1A1A1A] group-hover:text-white mb-1 transition-colors">{item.label}</h4>
+                  <p className="text-sm text-[#666] group-hover:text-gray-400 transition-colors">{item.description}</p>
                 </div>
-                <h4 className="font-semibold text-[#1A1A1A] group-hover:text-white mb-1 transition-colors">{item.label}</h4>
-                <p className="text-sm text-[#666] group-hover:text-gray-400 transition-colors">{item.description}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -355,5 +367,6 @@ export const FeaturesPage: React.FC = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
