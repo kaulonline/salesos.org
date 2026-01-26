@@ -319,8 +319,15 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
   );
 };
 
-const formatCurrency = (amount?: number) => {
+const formatCurrency = (amount?: number, compact = true) => {
   if (!amount) return '-';
+  if (compact && Math.abs(amount) >= 1000) {
+    const absAmount = Math.abs(amount);
+    if (absAmount >= 1e12) return `$${(amount / 1e12).toFixed(1)}T`;
+    if (absAmount >= 1e9) return `$${(amount / 1e9).toFixed(1)}B`;
+    if (absAmount >= 1e6) return `$${(amount / 1e6).toFixed(1)}M`;
+    if (absAmount >= 1e3) return `$${(amount / 1e3).toFixed(1)}K`;
+  }
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
 };
 

@@ -88,13 +88,13 @@ const getRatingLabel = (rating?: LeadRating): string => {
 };
 
 const getRatingColor = (rating?: LeadRating): string => {
-  if (!rating) return 'bg-gray-100 text-gray-600';
+  if (!rating) return 'bg-[#F8F8F6] text-[#666]';
   const colors: Record<LeadRating, string> = {
-    HOT: 'bg-red-100 text-red-700',
-    WARM: 'bg-orange-100 text-orange-700',
-    COLD: 'bg-blue-100 text-blue-700',
+    HOT: 'bg-[#EAD07D] text-[#1A1A1A]',
+    WARM: 'bg-[#EAD07D]/40 text-[#1A1A1A]',
+    COLD: 'bg-[#1A1A1A]/10 text-[#1A1A1A]',
   };
-  return colors[rating] || 'bg-gray-100 text-gray-600';
+  return colors[rating] || 'bg-[#F8F8F6] text-[#666]';
 };
 
 const getSourceLabel = (source?: LeadSource): string => {
@@ -696,18 +696,18 @@ export const LeadDetail: React.FC = () => {
                     <div className="mt-4 flex items-center gap-2">
                       {lead.leadScore && lead.leadScore >= 70 ? (
                         <>
-                          <TrendingUp size={16} className="text-green-500" />
-                          <span className="text-sm font-medium text-green-600">High Priority</span>
+                          <TrendingUp size={16} className="text-[#93C01F]" />
+                          <span className="text-sm font-medium text-[#1A1A1A]">High Priority</span>
                         </>
                       ) : lead.leadScore && lead.leadScore >= 40 ? (
                         <>
-                          <Target size={16} className="text-yellow-500" />
-                          <span className="text-sm font-medium text-yellow-600">Medium Priority</span>
+                          <Target size={16} className="text-[#EAD07D]" />
+                          <span className="text-sm font-medium text-[#1A1A1A]">Medium Priority</span>
                         </>
                       ) : (
                         <>
-                          <Clock size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-500">Nurture</span>
+                          <Clock size={16} className="text-[#999]" />
+                          <span className="text-sm font-medium text-[#666]">Nurture</span>
                         </>
                       )}
                     </div>

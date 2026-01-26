@@ -42,6 +42,331 @@ interface CreateTemplateModalProps {
   onCreate: (data: CreateEmailTemplateDto) => Promise<void>;
 }
 
+// Edit Template Modal
+interface EditTemplateModalProps {
+  isOpen: boolean;
+  template: EmailTemplate | null;
+  onClose: () => void;
+  onUpdate: (id: string, data: Partial<CreateEmailTemplateDto>) => Promise<void>;
+}
+
+const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template, onClose, onUpdate }) => {
+  const { mergeFields } = useMergeFields();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
+  const [formData, setFormData] = useState<CreateEmailTemplateDto>({
+    name: '',
+    subject: '',
+    body: '',
+    category: 'CUSTOM',
+    isShared: false,
+  });
+
+  // Sample data for preview
+  const sampleData: Record<string, string> = {
+    '{{contact.firstName}}': 'John',
+    '{{contact.lastName}}': 'Smith',
+    '{{contact.email}}': 'john.smith@example.com',
+    '{{contact.phone}}': '+1 (555) 123-4567',
+    '{{contact.company}}': 'Acme Corporation',
+    '{{account.name}}': 'Acme Corporation',
+    '{{account.website}}': 'www.acme.com',
+    '{{opportunity.name}}': 'Enterprise Deal Q1',
+    '{{opportunity.amount}}': '$50,000',
+    '{{user.name}}': 'Sarah Johnson',
+    '{{user.email}}': 'sarah@company.com',
+    '{{user.phone}}': '+1 (555) 987-6543',
+  };
+
+  // Replace merge fields with sample data for preview
+  const getPreviewContent = (content: string) => {
+    let preview = content;
+    Object.entries(sampleData).forEach(([field, value]) => {
+      preview = preview.replace(new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+    });
+    // Also handle variations without spaces
+    Object.entries(sampleData).forEach(([field, value]) => {
+      const noSpaceField = field.replace(/\s/g, '');
+      preview = preview.replace(new RegExp(noSpaceField.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
+    });
+    return preview;
+  };
+
+  // Update form when template changes
+  React.useEffect(() => {
+    if (template) {
+      setFormData({
+        name: template.name || '',
+        subject: template.subject || '',
+        body: template.bodyHtml || template.body || '',
+        category: template.category || 'CUSTOM',
+        isShared: template.isShared || false,
+      });
+    }
+  }, [template]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!template) return;
+    if (!formData.name || !formData.subject || !formData.body) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await onUpdate(template.id, formData);
+      onClose();
+    } catch (err) {
+      setError((err as Error).message || 'Failed to update template');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const insertMergeField = (field: string) => {
+    const textarea = document.getElementById('edit-template-body') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newBody = formData.body.substring(0, start) + field + formData.body.substring(end);
+      setFormData({ ...formData, body: newBody });
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + field.length, start + field.length);
+      }, 0);
+    } else {
+      setFormData({ ...formData, body: formData.body + field });
+    }
+  };
+
+  if (!isOpen || !template) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-4xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-4 shrink-0">
+          <h2 className="text-2xl font-medium text-[#1A1A1A]">Edit Email Template</h2>
+          <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-8 border-b border-gray-100">
+          <button
+            type="button"
+            onClick={() => setActiveTab('edit')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'edit'
+                ? 'bg-[#F8F8F6] text-[#1A1A1A] border-b-2 border-[#EAD07D]'
+                : 'text-[#666] hover:text-[#1A1A1A]'
+            }`}
+          >
+            <Edit3 size={14} className="inline mr-1.5" />
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('preview')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'preview'
+                ? 'bg-[#F8F8F6] text-[#1A1A1A] border-b-2 border-[#EAD07D]'
+                : 'text-[#666] hover:text-[#1A1A1A]'
+            }`}
+          >
+            <Eye size={14} className="inline mr-1.5" />
+            Preview
+          </button>
+        </div>
+
+        {activeTab === 'edit' ? (
+          <form onSubmit={handleSubmit} className="p-8 pt-6 overflow-y-auto flex-1">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm mb-4 flex items-center gap-2">
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-[#666] mb-1 block">Template Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Welcome Email"
+                    className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#666] mb-1 block">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as TemplateCategory })}
+                    className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  >
+                    {Object.entries(TEMPLATE_CATEGORY_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Subject Line *</label>
+                <input
+                  type="text"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="Hello {{contact.firstName}}!"
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-[#666]">Email Body *</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-[#888]">Insert:</span>
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        className="text-xs text-[#EAD07D] hover:underline flex items-center gap-1"
+                      >
+                        <Sparkles size={12} />
+                        Merge Field
+                      </button>
+                      <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-xl shadow-lg border border-gray-100 p-2 hidden group-hover:block z-10 max-h-48 overflow-y-auto">
+                        {mergeFields.slice(0, 10).map(field => (
+                          <button
+                            key={field.key}
+                            type="button"
+                            onClick={() => insertMergeField(field.key)}
+                            className="w-full text-left px-2 py-1.5 text-sm hover:bg-gray-50 rounded-lg"
+                          >
+                            <span className="font-medium">{field.label}</span>
+                            <span className="text-[#888] ml-2 text-xs">{field.key}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <textarea
+                  id="edit-template-body"
+                  value={formData.body}
+                  onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+                  placeholder="Hi {{contact.firstName}},&#10;&#10;Thank you for your interest in..."
+                  rows={8}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none resize-none font-mono text-sm"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isShared}
+                  onChange={(e) => setFormData({ ...formData, isShared: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                />
+                <span className="text-sm text-[#666]">Share with team</span>
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-6 mt-6 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 rounded-full border border-gray-200 text-[#666] hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-4 py-3 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="p-8 pt-6 overflow-y-auto flex-1">
+            {/* Preview Header */}
+            <div className="mb-4 p-4 bg-[#F8F8F6] rounded-xl">
+              <div className="flex items-center gap-2 text-xs text-[#888] mb-2">
+                <Mail size={14} />
+                Email Preview
+              </div>
+              <div className="text-sm">
+                <span className="text-[#666]">Subject: </span>
+                <span className="font-medium text-[#1A1A1A]">{getPreviewContent(formData.subject) || '(No subject)'}</span>
+              </div>
+            </div>
+
+            {/* Preview Body */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                <span className="text-xs text-[#888]">Email Body Preview</span>
+                <span className="text-xs text-[#888]">Merge fields replaced with sample data</span>
+              </div>
+              <div className="p-6 bg-white min-h-[300px]">
+                {formData.body ? (
+                  <div
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: getPreviewContent(formData.body) }}
+                  />
+                ) : (
+                  <p className="text-[#888] text-center py-12">No content to preview</p>
+                )}
+              </div>
+            </div>
+
+            {/* Sample Data Reference */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+              <p className="text-xs font-medium text-blue-700 mb-2">Sample Data Used for Preview:</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                {Object.entries(sampleData).slice(0, 8).map(([field, value]) => (
+                  <div key={field} className="flex items-center gap-2">
+                    <code className="text-blue-600">{field}</code>
+                    <span className="text-blue-500">=</span>
+                    <span className="text-blue-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-6 mt-6 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setActiveTab('edit')}
+                className="flex-1 px-4 py-3 rounded-full border border-gray-200 text-[#666] hover:bg-gray-50 transition-colors font-medium"
+              >
+                Back to Edit
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e as any)}
+                disabled={loading}
+                className="flex-1 px-4 py-3 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ isOpen, onClose, onCreate }) => {
   const { mergeFields } = useMergeFields();
   const [loading, setLoading] = useState(false);
@@ -226,6 +551,12 @@ export default function EmailTemplatesPage() {
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
+
+  // Edit modal state
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; template: EmailTemplate | null }>({
+    isOpen: false,
+    template: null,
+  });
 
   // Confirmation modal state
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; template: EmailTemplate | null }>({
@@ -420,6 +751,13 @@ export default function EmailTemplatesPage() {
                 </span>
                 <div className="flex items-center gap-1">
                   <button
+                    onClick={() => setEditModal({ isOpen: true, template })}
+                    className="p-1.5 hover:bg-gray-100 rounded-lg text-[#666] transition-colors"
+                    title="Edit"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button
                     onClick={() => handleToggleActive(template)}
                     className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                     title={template.isActive ? 'Deactivate' : 'Activate'}
@@ -469,6 +807,13 @@ export default function EmailTemplatesPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={create}
+      />
+
+      <EditTemplateModal
+        isOpen={editModal.isOpen}
+        template={editModal.template}
+        onClose={() => setEditModal({ isOpen: false, template: null })}
+        onUpdate={update}
       />
 
       <AIBuilderModal

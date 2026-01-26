@@ -40,11 +40,11 @@ const getRoleStyle = (role: string) => {
 
 const getStatusStyle = (status: string) => {
   switch (status) {
-    case 'ACTIVE': return 'bg-emerald-500';
-    case 'PENDING': return 'bg-amber-500';
-    case 'SUSPENDED': return 'bg-red-500';
-    case 'INACTIVE': return 'bg-gray-400';
-    default: return 'bg-gray-400';
+    case 'ACTIVE': return 'bg-[#93C01F]';
+    case 'PENDING': return 'bg-[#EAD07D]';
+    case 'SUSPENDED': return 'bg-[#666]';
+    case 'INACTIVE': return 'bg-[#999]';
+    default: return 'bg-[#999]';
   }
 };
 
@@ -287,7 +287,7 @@ export const Team: React.FC = () => {
                           {member.status === 'ACTIVE' ? (
                             <button
                               onClick={() => handleAction('suspend', member.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#666] hover:bg-[#F8F8F6]"
                             >
                               <Ban size={14} />
                               Suspend User
@@ -295,7 +295,7 @@ export const Team: React.FC = () => {
                           ) : (
                             <button
                               onClick={() => handleAction('activate', member.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#93C01F] hover:bg-[#93C01F]/10"
                             >
                               <CheckCircle size={14} />
                               Activate User
@@ -404,8 +404,8 @@ export const Team: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 text-xs font-medium capitalize ${
                         member.status === 'ACTIVE' ? 'text-[#1A1A1A]' :
-                        member.status === 'PENDING' ? 'text-amber-600' :
-                        member.status === 'SUSPENDED' ? 'text-red-600' : 'text-gray-500'
+                        member.status === 'PENDING' ? 'text-[#1A1A1A]' :
+                        member.status === 'SUSPENDED' ? 'text-[#666]' : 'text-[#999]'
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${getStatusStyle(member.status)}`} />
                         {member.status.toLowerCase()}

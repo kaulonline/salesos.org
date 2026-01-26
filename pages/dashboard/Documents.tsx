@@ -178,11 +178,11 @@ export const Documents: React.FC = () => {
 
           <div className="dash-card p-6 flex flex-col justify-between">
             <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+              <div className="w-10 h-10 rounded-full bg-[#93C01F]/20 flex items-center justify-center text-[#1A1A1A]">
                 <CheckCircle2 size={18} />
               </div>
               {stats.winRate > 0 && (
-                <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded">
+                <span className="text-xs font-bold text-[#1A1A1A] bg-[#93C01F]/20 px-2 py-1 rounded">
                   +{stats.winRate}%
                 </span>
               )}
@@ -193,7 +193,7 @@ export const Documents: React.FC = () => {
 
           <div className="dash-card p-6 flex flex-col justify-between">
             <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+              <div className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#1A1A1A]">
                 <File size={18} />
               </div>
             </div>
@@ -281,9 +281,9 @@ export const Documents: React.FC = () => {
                     <td className="py-4 pr-4 text-right rounded-r-xl">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5
                         ${doc.status === 'Signed' ? 'bg-[#EAD07D] text-[#1A1A1A]' :
-                          doc.status === 'Sent' ? 'bg-blue-100 text-blue-700' :
-                          doc.status === 'Viewed' ? 'bg-purple-100 text-purple-700' :
-                          'bg-gray-100 text-gray-500'}`}>
+                          doc.status === 'Sent' ? 'bg-[#1A1A1A]/10 text-[#1A1A1A]' :
+                          doc.status === 'Viewed' ? 'bg-[#1A1A1A] text-white' :
+                          'bg-[#F8F8F6] text-[#666]'}`}>
                         {doc.status === 'Signed' && <CheckCircle2 size={12} />}
                         {doc.status}
                       </span>

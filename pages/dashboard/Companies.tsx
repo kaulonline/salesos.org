@@ -14,7 +14,9 @@ import {
   List,
   DollarSign,
   X,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  Loader2,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -23,12 +25,12 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { useCompanies } from '../../src/hooks/useCompanies';
 import { VirtualList } from '../../src/components/VirtualList';
-import type { Account, CreateAccountDto, AccountType } from '../../src/types';
+import type { Account, CreateAccountDto, UpdateAccountDto, AccountType } from '../../src/types';
 
 const getHealthColor = (score?: number) => {
   if (!score) return { bg: 'bg-gray-100', text: 'text-[#666]', fill: 'bg-gray-300' };
   if (score >= 80) return { bg: 'bg-[#EAD07D]/20', text: 'text-[#1A1A1A]', fill: 'bg-[#EAD07D]' };
-  if (score >= 60) return { bg: 'bg-amber-100', text: 'text-amber-600', fill: 'bg-amber-500' };
+  if (score >= 60) return { bg: 'bg-[#EAD07D]/30', text: 'text-[#1A1A1A]', fill: 'bg-[#EAD07D]' };
   return { bg: 'bg-gray-200', text: 'text-[#666]', fill: 'bg-[#999]' };
 };
 
@@ -37,8 +39,8 @@ const getTypeStyle = (type?: AccountType) => {
     case 'CUSTOMER': return 'bg-[#EAD07D]/20 text-[#1A1A1A]';
     case 'PROSPECT': return 'bg-[#F8F8F6] text-[#666]';
     case 'PARTNER': return 'bg-[#1A1A1A] text-white';
-    case 'RESELLER': return 'bg-blue-100 text-blue-700';
-    case 'COMPETITOR': return 'bg-red-100 text-red-700';
+    case 'RESELLER': return 'bg-[#1A1A1A]/10 text-[#1A1A1A]';
+    case 'COMPETITOR': return 'bg-[#666]/20 text-[#666]';
     default: return 'bg-gray-100 text-gray-700';
   }
 };
@@ -179,17 +181,222 @@ const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({ isOpen, onClose
   );
 };
 
-const formatCurrency = (amount?: number) => {
+// Edit Company Modal
+interface EditCompanyModalProps {
+  isOpen: boolean;
+  company: Account | null;
+  onClose: () => void;
+  onUpdate: (id: string, data: UpdateAccountDto) => Promise<void>;
+  isUpdating: boolean;
+}
+
+const EditCompanyModal: React.FC<EditCompanyModalProps> = ({ isOpen, company, onClose, onUpdate, isUpdating }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<UpdateAccountDto>({
+    name: '',
+    type: 'PROSPECT',
+    website: '',
+    industry: '',
+    phone: '',
+    numberOfEmployees: undefined,
+    annualRevenue: undefined,
+    description: '',
+  });
+
+  useEffect(() => {
+    if (company) {
+      setFormData({
+        name: company.name || '',
+        type: company.type || 'PROSPECT',
+        website: company.website || '',
+        industry: company.industry || '',
+        phone: company.phone || '',
+        numberOfEmployees: company.numberOfEmployees,
+        annualRevenue: company.annualRevenue,
+        description: company.description || '',
+      });
+    }
+  }, [company]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!company || !formData.name) {
+      setError('Account name is required');
+      return;
+    }
+    setError(null);
+    try {
+      await onUpdate(company.id, formData);
+      onClose();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setError(e.message || 'Failed to update account');
+    }
+  };
+
+  if (!isOpen || !company) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
+          <h2 className="text-2xl font-medium text-[#1A1A1A]">Edit Account</h2>
+          <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Account Name *</label>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="Acme Corporation"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Type</label>
+                <select
+                  value={formData.type || 'PROSPECT'}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as AccountType })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                >
+                  <option value="PROSPECT">Prospect</option>
+                  <option value="CUSTOMER">Customer</option>
+                  <option value="PARTNER">Partner</option>
+                  <option value="RESELLER">Reseller</option>
+                  <option value="COMPETITOR">Competitor</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Industry</label>
+                <input
+                  type="text"
+                  value={formData.industry || ''}
+                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  placeholder="Technology"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Website</label>
+              <input
+                type="text"
+                value={formData.website || ''}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="www.acme.com"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Phone</label>
+              <input
+                type="tel"
+                value={formData.phone || ''}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                placeholder="+1 555 123 4567"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Employees</label>
+                <input
+                  type="number"
+                  value={formData.numberOfEmployees || ''}
+                  onChange={(e) => setFormData({ ...formData, numberOfEmployees: parseInt(e.target.value) || undefined })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Annual Revenue</label>
+                <input
+                  type="number"
+                  value={formData.annualRevenue || ''}
+                  onChange={(e) => setFormData({ ...formData, annualRevenue: parseFloat(e.target.value) || undefined })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  placeholder="1000000"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Description</label>
+              <textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none resize-none"
+                placeholder="About the company..."
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className="flex-1 px-4 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const formatCurrency = (amount?: number, compact = true) => {
   if (!amount) return '$0';
+  if (compact && Math.abs(amount) >= 1000) {
+    const absAmount = Math.abs(amount);
+    if (absAmount >= 1e12) {
+      return `$${(amount / 1e12).toFixed(1)}T`;
+    } else if (absAmount >= 1e9) {
+      return `$${(amount / 1e9).toFixed(1)}B`;
+    } else if (absAmount >= 1e6) {
+      return `$${(amount / 1e6).toFixed(1)}M`;
+    } else if (absAmount >= 1e3) {
+      return `$${(amount / 1e3).toFixed(1)}K`;
+    }
+  }
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
 };
 
 export const Companies: React.FC = () => {
-  const { companies, stats, loading, error, refetch, fetchStats, create } = useCompanies();
+  const { companies, stats, loading, error, refetch, fetchStats, create, update, isUpdating } = useCompanies();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Account | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -289,14 +496,14 @@ export const Companies: React.FC = () => {
             </div>
           </div>
         </Card>
-        <Card className="p-4 bg-amber-50/50 border-amber-100">
+        <Card className="p-4 bg-[#EAD07D]/10 border-[#EAD07D]/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <AlertTriangle size={18} className="text-amber-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/30 flex items-center justify-center">
+              <AlertTriangle size={18} className="text-[#1A1A1A]" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">{atRiskCount}</div>
-              <div className="text-xs text-amber-600/70">At Risk</div>
+              <div className="text-2xl font-bold text-[#1A1A1A]">{atRiskCount}</div>
+              <div className="text-xs text-[#666]">At Risk</div>
             </div>
           </div>
         </Card>
@@ -375,9 +582,21 @@ export const Companies: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <Badge className={getTypeStyle(company.type)} size="sm">
-                    {company.type?.toLowerCase() || 'prospect'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingCompany(company);
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-[#F8F8F6] text-[#666] hover:text-[#1A1A1A] transition-colors opacity-0 group-hover:opacity-100"
+                      title="Edit Account"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <Badge className={getTypeStyle(company.type)} size="sm">
+                      {company.type?.toLowerCase() || 'prospect'}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Health Score */}
@@ -475,7 +694,17 @@ export const Companies: React.FC = () => {
                   </div>
                   <div className="col-span-2 font-medium text-[#1A1A1A]">{formatCurrency(company.annualRevenue)}</div>
                   <div className="col-span-2 text-sm text-[#666]">{company.industry || '-'}</div>
-                  <div className="col-span-1 flex justify-end">
+                  <div className="col-span-1 flex justify-end gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingCompany(company);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      title="Edit Account"
+                    >
+                      <Edit2 size={16} className="text-[#666]" />
+                    </button>
                     <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                       <ChevronRight size={16} className="text-[#666]" />
                     </button>
@@ -491,6 +720,14 @@ export const Companies: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={handleCreateCompany}
+      />
+
+      <EditCompanyModal
+        isOpen={!!editingCompany}
+        company={editingCompany}
+        onClose={() => setEditingCompany(null)}
+        onUpdate={update}
+        isUpdating={isUpdating}
       />
     </div>
   );

@@ -90,8 +90,11 @@ export default function CPQAnalytics() {
   const { exportData, isExporting } = useExportCPQAnalytics();
 
   const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
+    const absAmount = Math.abs(amount);
+    if (absAmount >= 1e12) return `$${(amount / 1e12).toFixed(1)}T`;
+    if (absAmount >= 1e9) return `$${(amount / 1e9).toFixed(1)}B`;
+    if (absAmount >= 1e6) return `$${(amount / 1e6).toFixed(1)}M`;
+    if (absAmount >= 1e3) return `$${(amount / 1e3).toFixed(1)}K`;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

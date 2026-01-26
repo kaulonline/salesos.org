@@ -32,11 +32,11 @@ import type { Contact, CreateContactDto, ContactRole, SeniorityLevel } from '../
 const getRoleColor = (role?: ContactRole) => {
   switch (role) {
     case 'CHAMPION': return 'bg-[#EAD07D]/20 text-[#1A1A1A]';
-    case 'DECISION_MAKER': return 'bg-green-100 text-green-700';
-    case 'ECONOMIC_BUYER': return 'bg-blue-100 text-blue-700';
-    case 'INFLUENCER': return 'bg-purple-100 text-purple-700';
-    case 'BLOCKER': return 'bg-red-100 text-red-700';
-    default: return 'bg-gray-100 text-gray-700';
+    case 'DECISION_MAKER': return 'bg-[#93C01F]/20 text-[#1A1A1A]';
+    case 'ECONOMIC_BUYER': return 'bg-[#1A1A1A]/10 text-[#1A1A1A]';
+    case 'INFLUENCER': return 'bg-[#1A1A1A] text-white';
+    case 'BLOCKER': return 'bg-[#666]/20 text-[#666]';
+    default: return 'bg-[#F8F8F6] text-[#666]';
   }
 };
 
@@ -284,8 +284,8 @@ export const Contacts: React.FC = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Mail size={18} className="text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
+              <Mail size={18} className="text-[#1A1A1A]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.withEmail || 0}</div>
@@ -306,8 +306,8 @@ export const Contacts: React.FC = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Building2 size={18} className="text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
+              <Building2 size={18} className="text-[#1A1A1A]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#1A1A1A]">{stats?.byAccount?.length || 0}</div>

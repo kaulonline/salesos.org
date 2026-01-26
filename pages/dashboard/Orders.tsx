@@ -33,28 +33,28 @@ import type { Order, OrderStatus, PaymentStatus, FulfillmentStatus, OrderFilters
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ReactNode }> = {
   DRAFT: { label: 'Draft', color: 'bg-[#F8F8F6] text-[#666]', icon: <FileText className="w-3.5 h-3.5" /> },
   PENDING: { label: 'Pending', color: 'bg-[#EAD07D]/20 text-[#1A1A1A]', icon: <Clock className="w-3.5 h-3.5" /> },
-  CONFIRMED: { label: 'Confirmed', color: 'bg-blue-100 text-blue-700', icon: <CheckCircle className="w-3.5 h-3.5" /> },
+  CONFIRMED: { label: 'Confirmed', color: 'bg-[#1A1A1A]/10 text-[#1A1A1A]', icon: <CheckCircle className="w-3.5 h-3.5" /> },
   PROCESSING: { label: 'Processing', color: 'bg-[#EAD07D]/30 text-[#1A1A1A]', icon: <Package className="w-3.5 h-3.5" /> },
-  SHIPPED: { label: 'Shipped', color: 'bg-purple-100 text-purple-700', icon: <Truck className="w-3.5 h-3.5" /> },
+  SHIPPED: { label: 'Shipped', color: 'bg-[#1A1A1A] text-white', icon: <Truck className="w-3.5 h-3.5" /> },
   DELIVERED: { label: 'Delivered', color: 'bg-[#93C01F]/20 text-[#93C01F]', icon: <CheckCircle className="w-3.5 h-3.5" /> },
   COMPLETED: { label: 'Completed', color: 'bg-[#93C01F]/20 text-[#93C01F]', icon: <CheckCircle className="w-3.5 h-3.5" /> },
-  CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: <XCircle className="w-3.5 h-3.5" /> },
-  RETURNED: { label: 'Returned', color: 'bg-orange-100 text-orange-700', icon: <Package className="w-3.5 h-3.5" /> },
+  CANCELLED: { label: 'Cancelled', color: 'bg-red-100 text-red-600', icon: <XCircle className="w-3.5 h-3.5" /> },
+  RETURNED: { label: 'Returned', color: 'bg-[#EAD07D]/40 text-[#1A1A1A]', icon: <Package className="w-3.5 h-3.5" /> },
 };
 
 const paymentStatusConfig: Record<PaymentStatus, { label: string; color: string }> = {
   PENDING: { label: 'Pending', color: 'bg-[#EAD07D]/20 text-[#1A1A1A]' },
-  PARTIAL: { label: 'Partial', color: 'bg-blue-100 text-blue-700' },
+  PARTIAL: { label: 'Partial', color: 'bg-[#1A1A1A]/10 text-[#1A1A1A]' },
   PAID: { label: 'Paid', color: 'bg-[#93C01F]/20 text-[#93C01F]' },
-  REFUNDED: { label: 'Refunded', color: 'bg-orange-100 text-orange-700' },
-  FAILED: { label: 'Failed', color: 'bg-red-100 text-red-700' },
+  REFUNDED: { label: 'Refunded', color: 'bg-[#EAD07D]/40 text-[#1A1A1A]' },
+  FAILED: { label: 'Failed', color: 'bg-red-100 text-red-600' },
 };
 
 const fulfillmentStatusConfig: Record<FulfillmentStatus, { label: string; color: string }> = {
   UNFULFILLED: { label: 'Unfulfilled', color: 'bg-[#F8F8F6] text-[#666]' },
   PARTIAL: { label: 'Partial', color: 'bg-[#EAD07D]/20 text-[#1A1A1A]' },
   FULFILLED: { label: 'Fulfilled', color: 'bg-[#93C01F]/20 text-[#93C01F]' },
-  RETURNED: { label: 'Returned', color: 'bg-orange-100 text-orange-700' },
+  RETURNED: { label: 'Returned', color: 'bg-[#EAD07D]/40 text-[#1A1A1A]' },
 };
 
 export default function Orders() {
@@ -105,9 +105,14 @@ export default function Orders() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
+  const formatCurrency = (amount: number, compact = true) => {
+    if (compact && Math.abs(amount) >= 1000) {
+      const absAmount = Math.abs(amount);
+      if (absAmount >= 1e12) return `$${(amount / 1e12).toFixed(1)}T`;
+      if (absAmount >= 1e9) return `$${(amount / 1e9).toFixed(1)}B`;
+      if (absAmount >= 1e6) return `$${(amount / 1e6).toFixed(1)}M`;
+      if (absAmount >= 1e3) return `$${(amount / 1e3).toFixed(1)}K`;
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -264,9 +269,9 @@ export default function Orders() {
                 </thead>
                 <tbody>
                   {orders.map((order) => {
-                    const statusCfg = statusConfig[order.status];
-                    const paymentCfg = paymentStatusConfig[order.paymentStatus];
-                    const fulfillmentCfg = fulfillmentStatusConfig[order.fulfillmentStatus];
+                    const statusCfg = statusConfig[order.status] || { label: order.status || 'Unknown', color: 'bg-gray-100 text-gray-700', icon: null };
+                    const paymentCfg = paymentStatusConfig[order.paymentStatus] || { label: order.paymentStatus || 'Unknown', color: 'bg-gray-100 text-gray-700' };
+                    const fulfillmentCfg = fulfillmentStatusConfig[order.fulfillmentStatus] || { label: order.fulfillmentStatus || 'Unknown', color: 'bg-gray-100 text-gray-700' };
 
                     return (
                       <tr

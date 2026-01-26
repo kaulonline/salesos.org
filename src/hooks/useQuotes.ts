@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { quotesApi, QuoteFilters } from '../api/quotes';
+import { quotesApi, QuoteFilters, QuoteDocument } from '../api/quotes';
 import { queryKeys } from '../lib/queryKeys';
 import type {
   Quote,
   CreateQuoteDto,
   UpdateQuoteDto,
-  QuoteLineItem,
   CreateQuoteLineItemDto,
   UpdateQuoteLineItemDto,
   SendQuoteDto,
@@ -177,6 +176,15 @@ export function useQuote(id: string | undefined) {
     },
   });
 
+  // Update quote details mutation
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateQuoteDto) => quotesApi.update(id!, data),
+    onSuccess: (updatedQuote) => {
+      queryClient.setQueryData(queryKeys.quotes.detail(id!), updatedQuote);
+      queryClient.invalidateQueries({ queryKey: queryKeys.quotes.lists() });
+    },
+  });
+
   return {
     quote: quoteQuery.data ?? null,
     loading: quoteQuery.isLoading,
@@ -190,6 +198,7 @@ export function useQuote(id: string | undefined) {
     deleteLineItem: (lineItemId: string) => deleteLineItemMutation.mutateAsync(lineItemId),
 
     // Quote actions
+    update: (data: UpdateQuoteDto) => updateMutation.mutateAsync(data),
     send: (data: SendQuoteDto) => sendMutation.mutateAsync(data),
     approve: (data?: ApproveQuoteDto) => approveMutation.mutateAsync(data),
     reject: (data: RejectQuoteDto) => rejectMutation.mutateAsync(data),
@@ -199,6 +208,7 @@ export function useQuote(id: string | undefined) {
     recalculate: () => recalculateMutation.mutateAsync(),
 
     // Loading states
+    isUpdating: updateMutation.isPending,
     isSending: sendMutation.isPending,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
@@ -224,5 +234,59 @@ export function useCreateQuoteFromOpportunity() {
     createFromOpportunity: mutation.mutateAsync,
     isCreating: mutation.isPending,
     error: mutation.error?.message ?? null,
+  };
+}
+
+// ========== QUOTE DOCUMENTS ==========
+
+export function useQuoteDocuments(quoteId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  const documentsQuery = useQuery({
+    queryKey: ['quote-documents', quoteId],
+    queryFn: () => quotesApi.getDocuments(quoteId!),
+    enabled: !!quoteId,
+    refetchInterval: (query) => {
+      // Poll every 3s if any document is still processing
+      const docs = query.state.data as QuoteDocument[] | undefined;
+      const hasProcessing = docs?.some(d => d.status === 'PENDING' || d.status === 'PROCESSING');
+      return hasProcessing ? 3000 : false;
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => quotesApi.uploadDocument(quoteId!, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quote-documents', quoteId] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (docId: string) => quotesApi.deleteDocument(docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quote-documents', quoteId] });
+    },
+  });
+
+  const reprocessMutation = useMutation({
+    mutationFn: (docId: string) => quotesApi.reprocessDocument(docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quote-documents', quoteId] });
+    },
+  });
+
+  return {
+    documents: documentsQuery.data ?? [],
+    loading: documentsQuery.isLoading,
+    error: documentsQuery.error?.message ?? null,
+    refetch: documentsQuery.refetch,
+
+    upload: (file: File) => uploadMutation.mutateAsync(file),
+    deleteDocument: (docId: string) => deleteMutation.mutateAsync(docId),
+    reprocess: (docId: string) => reprocessMutation.mutateAsync(docId),
+
+    isUploading: uploadMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isReprocessing: reprocessMutation.isPending,
   };
 }

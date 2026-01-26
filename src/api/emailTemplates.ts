@@ -28,8 +28,8 @@ export interface EmailTrackingFilters extends QueryFilters {
   dateTo?: string;
 }
 
-// Base path for email templates API (under admin/email)
-const TEMPLATES_BASE = '/admin/email/templates';
+// Base path for email templates API (user-accessible)
+const TEMPLATES_BASE = '/email-templates';
 
 // Response type from backend for paginated templates
 interface PaginatedTemplatesResponse {
@@ -77,16 +77,8 @@ export const emailTemplatesApi = {
    * Get email template statistics
    */
   getStats: async (): Promise<EmailTemplateStats> => {
-    const response = await client.get<DashboardResponse>('/admin/email/dashboard');
-    // Transform dashboard response to expected stats format
-    const templates = response.data.templates;
-    return {
-      total: templates?.total || 0,
-      active: templates?.total || 0, // Backend doesn't separate active/inactive in dashboard
-      shared: 0, // Not tracked in dashboard
-      byCategory: {},
-      topTemplates: [],
-    };
+    const response = await client.get<EmailTemplateStats>(`${TEMPLATES_BASE}/stats`);
+    return response.data;
   },
 
   /**
@@ -124,7 +116,7 @@ export const emailTemplatesApi = {
    * Clone an email template
    */
   clone: async (id: string, name?: string): Promise<EmailTemplate> => {
-    const response = await client.post<EmailTemplate>(`${TEMPLATES_BASE}/${id}/duplicate`, { name });
+    const response = await client.post<EmailTemplate>(`${TEMPLATES_BASE}/${id}/clone`, { name });
     return response.data;
   },
 

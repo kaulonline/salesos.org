@@ -401,7 +401,7 @@ export default function ProfilesPage() {
             <p className="text-sm text-[#666]">Total Profiles</p>
           </Card>
           <Card className="p-4">
-            <p className="text-2xl font-semibold text-blue-600">{stats.system}</p>
+            <p className="text-2xl font-semibold text-[#1A1A1A]">{stats.system}</p>
             <p className="text-sm text-[#666]">System Profiles</p>
           </Card>
           <Card className="p-4">
@@ -409,7 +409,7 @@ export default function ProfilesPage() {
             <p className="text-sm text-[#666]">Custom Profiles</p>
           </Card>
           <Card className="p-4">
-            <p className="text-2xl font-semibold text-green-600">{stats.totalUsers}</p>
+            <p className="text-2xl font-semibold text-[#93C01F]">{stats.totalUsers}</p>
             <p className="text-sm text-[#666]">Total Users</p>
           </Card>
         </div>
@@ -467,10 +467,10 @@ export default function ProfilesPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    profile.isSystem ? 'bg-blue-100' : 'bg-[#EAD07D]/20'
+                    profile.isSystem ? 'bg-[#1A1A1A]/10' : 'bg-[#EAD07D]/20'
                   }`}>
                     {profile.isSystem ? (
-                      <Lock size={24} className="text-blue-600" />
+                      <Lock size={24} className="text-[#1A1A1A]" />
                     ) : (
                       <Shield size={24} className="text-[#1A1A1A]" />
                     )}

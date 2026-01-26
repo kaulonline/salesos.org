@@ -363,13 +363,13 @@ export const IntegrationsPage: React.FC = () => {
       {notification && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg flex items-center gap-3 ${
           notification.type === 'success'
-            ? 'bg-green-50 border border-green-200 text-green-800'
-            : 'bg-red-50 border border-red-200 text-red-800'
+            ? 'bg-[#93C01F]/20 border border-[#93C01F]/30 text-[#1A1A1A]'
+            : 'bg-[#EAD07D]/20 border border-[#EAD07D]/30 text-[#1A1A1A]'
         }`}>
           {notification.type === 'success' ? (
-            <CheckCircle2 size={18} className="text-green-600" />
+            <CheckCircle2 size={18} className="text-[#93C01F]" />
           ) : (
-            <AlertCircle size={18} className="text-red-600" />
+            <AlertCircle size={18} className="text-[#1A1A1A]" />
           )}
           <span className="font-medium text-sm">{notification.message}</span>
           <button
@@ -554,13 +554,13 @@ export const IntegrationsPage: React.FC = () => {
                     <button
                       onClick={() => handleDisconnect(integration)}
                       disabled={disconnecting === integration.id}
-                      className="p-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                      className="p-2 rounded-lg hover:bg-[#F8F8F6] transition-colors disabled:opacity-50"
                       title="Disconnect"
                     >
                       {disconnecting === integration.id ? (
-                        <Loader2 size={16} className="text-red-500 animate-spin" />
+                        <Loader2 size={16} className="text-[#666] animate-spin" />
                       ) : (
-                        <Trash2 size={16} className="text-red-500" />
+                        <Trash2 size={16} className="text-[#666]" />
                       )}
                     </button>
                   </div>
@@ -579,7 +579,7 @@ export const IntegrationsPage: React.FC = () => {
             {filteredIntegrations.filter(i => i.status === 'error').map((integration) => (
               <Card
                 key={integration.id}
-                className="p-5 border-amber-200 bg-amber-50/30"
+                className="p-5 border-[#EAD07D]/30 bg-[#EAD07D]/10"
               >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm">
@@ -590,7 +590,7 @@ export const IntegrationsPage: React.FC = () => {
                       <h3 className="font-bold text-[#1A1A1A]">{integration.name}</h3>
                       <Badge variant="neutral" size="sm" dot>Needs Attention</Badge>
                     </div>
-                    <p className="text-sm text-amber-600 mb-2">{integration.description}</p>
+                    <p className="text-sm text-[#666] mb-2">{integration.description}</p>
                   </div>
                   <button
                     onClick={() => handleConnect(integration)}

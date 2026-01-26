@@ -160,12 +160,12 @@ const SetupModal: React.FC<SetupModalProps> = ({ isOpen, onClose, setupData, onV
 
           {step === 'backup' && (
             <>
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl mb-6">
+              <div className="p-4 bg-[#EAD07D]/20 border border-[#EAD07D]/40 rounded-xl mb-6">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="text-yellow-600 shrink-0 mt-0.5" size={18} />
+                  <AlertCircle className="text-[#1A1A1A] shrink-0 mt-0.5" size={18} />
                   <div>
-                    <p className="text-yellow-800 font-medium text-sm">Save these backup codes</p>
-                    <p className="text-yellow-700 text-sm mt-1">
+                    <p className="text-[#1A1A1A] font-medium text-sm">Save these backup codes</p>
+                    <p className="text-[#666] text-sm mt-1">
                       Each code can only be used once. Store them somewhere safe.
                     </p>
                   </div>
@@ -398,10 +398,10 @@ export default function SecurityPage() {
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              status?.enabled ? 'bg-green-100' : 'bg-[#F8F8F6]'
+              status?.enabled ? 'bg-[#93C01F]/20' : 'bg-[#F8F8F6]'
             }`}>
               {status?.enabled ? (
-                <Lock size={24} className="text-green-600" />
+                <Lock size={24} className="text-[#1A1A1A]" />
               ) : (
                 <Unlock size={24} className="text-[#666]" />
               )}
@@ -430,7 +430,7 @@ export default function SecurityPage() {
               <button
                 onClick={handleDisable}
                 disabled={disabling}
-                className="px-4 py-2 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-full border border-[#EAD07D]/40 text-[#666] hover:bg-[#EAD07D]/10 transition-colors text-sm font-medium disabled:opacity-50"
               >
                 {disabling ? 'Disabling...' : 'Disable'}
               </button>
@@ -481,8 +481,8 @@ export default function SecurityPage() {
         <Card className="p-6">
           <div className="mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Smartphone size={24} className="text-blue-600" />
+              <div className="w-12 h-12 rounded-xl bg-[#1A1A1A]/10 flex items-center justify-center">
+                <Smartphone size={24} className="text-[#1A1A1A]" />
               </div>
               <div>
                 <h3 className="text-lg font-medium text-[#1A1A1A]">Trusted Devices</h3>
@@ -523,7 +523,7 @@ export default function SecurityPage() {
                   </div>
                   <button
                     onClick={() => handleRemoveDevice(device.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg text-[#666] hover:text-red-500 transition-colors"
+                    className="p-2 hover:bg-[#F8F8F6] rounded-lg text-[#666] hover:text-[#1A1A1A] transition-colors"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -544,19 +544,19 @@ export default function SecurityPage() {
         <h3 className="text-lg font-medium text-[#1A1A1A] mb-4">Security Tips</h3>
         <ul className="space-y-3">
           <li className="flex items-start gap-3 text-sm text-[#666]">
-            <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
+            <Check size={18} className="text-[#93C01F] shrink-0 mt-0.5" />
             <span>Use a strong, unique password that you don't use elsewhere</span>
           </li>
           <li className="flex items-start gap-3 text-sm text-[#666]">
-            <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
+            <Check size={18} className="text-[#93C01F] shrink-0 mt-0.5" />
             <span>Enable two-factor authentication for additional security</span>
           </li>
           <li className="flex items-start gap-3 text-sm text-[#666]">
-            <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
+            <Check size={18} className="text-[#93C01F] shrink-0 mt-0.5" />
             <span>Keep your backup codes in a safe place</span>
           </li>
           <li className="flex items-start gap-3 text-sm text-[#666]">
-            <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
+            <Check size={18} className="text-[#93C01F] shrink-0 mt-0.5" />
             <span>Regularly review your trusted devices and remove any you don't recognize</span>
           </li>
         </ul>

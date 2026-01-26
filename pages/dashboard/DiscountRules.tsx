@@ -36,11 +36,11 @@ import type {
 } from '../../src/types/discountRule';
 
 const RULE_TYPE_CONFIG: Record<DiscountRuleType, { icon: React.ElementType; color: string; bg: string }> = {
-  VOLUME: { icon: Layers, color: 'text-blue-600', bg: 'bg-blue-100' },
-  PROMO_CODE: { icon: Tag, color: 'text-purple-600', bg: 'bg-purple-100' },
-  CUSTOMER_SEGMENT: { icon: Users, color: 'text-green-600', bg: 'bg-green-100' },
-  TIME_LIMITED: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-  BUNDLE: { icon: Layers, color: 'text-pink-600', bg: 'bg-pink-100' },
+  VOLUME: { icon: Layers, color: 'text-[#1A1A1A]', bg: 'bg-[#1A1A1A]/10' },
+  PROMO_CODE: { icon: Tag, color: 'text-[#1A1A1A]', bg: 'bg-[#EAD07D]/30' },
+  CUSTOMER_SEGMENT: { icon: Users, color: 'text-[#1A1A1A]', bg: 'bg-[#93C01F]/20' },
+  TIME_LIMITED: { icon: Clock, color: 'text-[#1A1A1A]', bg: 'bg-[#EAD07D]/20' },
+  BUNDLE: { icon: Layers, color: 'text-[#1A1A1A]', bg: 'bg-[#F8F8F6]' },
 };
 
 const RULE_TYPE_LABELS: Record<DiscountRuleType, string> = {
@@ -79,10 +79,10 @@ function getRuleStatus(rule: DiscountRule): 'active' | 'inactive' | 'expired' | 
 }
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  active: { label: 'Active', className: 'bg-green-100 text-green-700' },
-  inactive: { label: 'Inactive', className: 'bg-gray-100 text-gray-600' },
-  expired: { label: 'Expired', className: 'bg-red-100 text-red-700' },
-  scheduled: { label: 'Scheduled', className: 'bg-blue-100 text-blue-700' },
+  active: { label: 'Active', className: 'bg-[#93C01F]/20 text-[#1A1A1A]' },
+  inactive: { label: 'Inactive', className: 'bg-[#F8F8F6] text-[#666]' },
+  expired: { label: 'Expired', className: 'bg-[#666]/20 text-[#666]' },
+  scheduled: { label: 'Scheduled', className: 'bg-[#1A1A1A]/10 text-[#1A1A1A]' },
 };
 
 export const DiscountRules: React.FC = () => {
@@ -234,8 +234,8 @@ export const DiscountRules: React.FC = () => {
             </div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Check size={18} className="text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
+              <Check size={18} className="text-[#93C01F]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#1A1A1A]">{stats.active}</div>
@@ -359,7 +359,7 @@ export const DiscountRules: React.FC = () => {
                       <button
                         onClick={() => handleToggleActive(rule.id)}
                         className={`p-2 rounded-lg transition-colors ${
-                          rule.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'
+                          rule.isActive ? 'text-[#93C01F] hover:bg-[#93C01F]/10' : 'text-[#999] hover:bg-[#F8F8F6]'
                         }`}
                         title={rule.isActive ? 'Deactivate' : 'Activate'}
                       >
@@ -414,8 +414,8 @@ export const DiscountRules: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertCircle size={20} className="text-red-600" />
+              <div className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center">
+                <AlertCircle size={20} className="text-[#1A1A1A]" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-[#1A1A1A]">Delete Discount Rule</h3>
@@ -432,7 +432,7 @@ export const DiscountRules: React.FC = () => {
               <button
                 onClick={() => handleDeleteRule(deleteConfirm)}
                 disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#666] text-white rounded-xl text-sm font-medium hover:bg-[#555] transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 Delete

@@ -32,12 +32,12 @@ import type {
 } from '../../src/types/taxRate';
 
 const TAX_TYPE_LABELS: Record<TaxType, { label: string; color: string; bg: string }> = {
-  SALES: { label: 'Sales Tax', color: 'text-blue-600', bg: 'bg-blue-100' },
-  VAT: { label: 'VAT', color: 'text-purple-600', bg: 'bg-purple-100' },
-  GST: { label: 'GST', color: 'text-green-600', bg: 'bg-green-100' },
-  HST: { label: 'HST', color: 'text-orange-600', bg: 'bg-orange-100' },
-  PST: { label: 'PST', color: 'text-pink-600', bg: 'bg-pink-100' },
-  CUSTOM: { label: 'Custom', color: 'text-gray-600', bg: 'bg-gray-100' },
+  SALES: { label: 'Sales Tax', color: 'text-[#1A1A1A]', bg: 'bg-[#1A1A1A]/10' },
+  VAT: { label: 'VAT', color: 'text-[#1A1A1A]', bg: 'bg-[#EAD07D]/30' },
+  GST: { label: 'GST', color: 'text-[#1A1A1A]', bg: 'bg-[#93C01F]/20' },
+  HST: { label: 'HST', color: 'text-[#1A1A1A]', bg: 'bg-[#EAD07D]/20' },
+  PST: { label: 'PST', color: 'text-[#1A1A1A]', bg: 'bg-[#F8F8F6]' },
+  CUSTOM: { label: 'Custom', color: 'text-[#666]', bg: 'bg-[#F8F8F6]' },
 };
 
 const COUNTRIES = [
@@ -283,8 +283,8 @@ export const TaxRates: React.FC = () => {
             </div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Check size={18} className="text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
+              <Check size={18} className="text-[#93C01F]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#1A1A1A]">{stats.active}</div>
@@ -396,7 +396,7 @@ export const TaxRates: React.FC = () => {
                       <button
                         onClick={() => handleToggleActive(rate.id)}
                         className={`p-2 rounded-lg transition-colors ${
-                          rate.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-50'
+                          rate.isActive ? 'text-[#93C01F] hover:bg-[#93C01F]/10' : 'text-[#999] hover:bg-[#F8F8F6]'
                         }`}
                         title={rate.isActive ? 'Deactivate' : 'Activate'}
                       >
@@ -454,8 +454,8 @@ export const TaxRates: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertCircle size={20} className="text-red-600" />
+              <div className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center">
+                <AlertCircle size={20} className="text-[#1A1A1A]" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-[#1A1A1A]">Delete Tax Rate</h3>
@@ -472,7 +472,7 @@ export const TaxRates: React.FC = () => {
               <button
                 onClick={() => handleDeleteRate(deleteConfirm)}
                 disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#666] text-white rounded-xl text-sm font-medium hover:bg-[#555] transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 Delete

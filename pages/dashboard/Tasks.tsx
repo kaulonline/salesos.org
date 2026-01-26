@@ -25,17 +25,17 @@ import { useTasks } from '../../src/hooks';
 import type { Task, TaskStatus, TaskPriority, TaskType } from '../../src/types';
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; icon: React.ElementType }> = {
-  NOT_STARTED: { label: 'Not Started', color: 'bg-gray-100 text-gray-600', icon: Circle },
-  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-600', icon: Clock },
-  COMPLETED: { label: 'Completed', color: 'bg-green-100 text-green-600', icon: CheckCircle2 },
-  WAITING: { label: 'Waiting', color: 'bg-yellow-100 text-yellow-600', icon: Clock },
-  DEFERRED: { label: 'Deferred', color: 'bg-gray-100 text-gray-500', icon: Circle },
+  NOT_STARTED: { label: 'Not Started', color: 'bg-[#F8F8F6] text-[#666]', icon: Circle },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-[#1A1A1A]/10 text-[#1A1A1A]', icon: Clock },
+  COMPLETED: { label: 'Completed', color: 'bg-[#93C01F]/20 text-[#1A1A1A]', icon: CheckCircle2 },
+  WAITING: { label: 'Waiting', color: 'bg-[#EAD07D]/30 text-[#1A1A1A]', icon: Clock },
+  DEFERRED: { label: 'Deferred', color: 'bg-[#F8F8F6] text-[#666]', icon: Circle },
 };
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> = {
-  HIGH: { label: 'High', color: 'text-red-500' },
-  NORMAL: { label: 'Normal', color: 'text-gray-500' },
-  LOW: { label: 'Low', color: 'text-blue-500' },
+  HIGH: { label: 'High', color: 'text-[#EAD07D]' },
+  NORMAL: { label: 'Normal', color: 'text-[#666]' },
+  LOW: { label: 'Low', color: 'text-[#999]' },
 };
 
 const TYPE_ICONS: Record<TaskType, React.ElementType> = {
@@ -165,10 +165,10 @@ export const Tasks: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-[#666]">Completed</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{stats.completed}</p>
+              <p className="text-3xl font-bold text-[#93C01F] mt-1">{stats.completed}</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-              <CheckCircle2 size={24} className="text-green-600" />
+            <div className="w-12 h-12 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
+              <CheckCircle2 size={24} className="text-[#93C01F]" />
             </div>
           </div>
         </Card>
@@ -176,10 +176,10 @@ export const Tasks: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-[#666]">Overdue</p>
-              <p className="text-3xl font-bold text-red-600 mt-1">{stats.overdue}</p>
+              <p className="text-3xl font-bold text-[#1A1A1A] mt-1">{stats.overdue}</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
-              <AlertCircle size={24} className="text-red-600" />
+            <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/30 flex items-center justify-center">
+              <AlertCircle size={24} className="text-[#1A1A1A]" />
             </div>
           </div>
         </Card>
@@ -346,7 +346,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onComplete, isCompleting }) =
           disabled={isCompleting || task.status === 'COMPLETED'}
           className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
             task.status === 'COMPLETED'
-              ? 'bg-green-500 border-green-500'
+              ? 'bg-[#93C01F] border-[#93C01F]'
               : 'border-gray-300 hover:border-[#EAD07D] hover:bg-[#EAD07D]/10'
           }`}
         >

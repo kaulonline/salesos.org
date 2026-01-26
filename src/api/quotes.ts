@@ -217,6 +217,75 @@ export const quotesApi = {
     const response = await client.post<Quote>(`/quotes/${id}/recalculate`);
     return response.data;
   },
+
+  // ========== QUOTE DOCUMENTS ==========
+
+  /**
+   * Upload a document to a quote with AI processing
+   */
+  uploadDocument: async (quoteId: string, file: File): Promise<QuoteDocument> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post<QuoteDocument>(
+      `/quotes/${quoteId}/documents`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get all documents for a quote
+   */
+  getDocuments: async (quoteId: string): Promise<QuoteDocument[]> => {
+    const response = await client.get<QuoteDocument[]>(`/quotes/${quoteId}/documents`);
+    return response.data;
+  },
+
+  /**
+   * Get a single document with AI summary
+   */
+  getDocument: async (docId: string): Promise<QuoteDocument> => {
+    const response = await client.get<QuoteDocument>(`/quotes/documents/${docId}`);
+    return response.data;
+  },
+
+  /**
+   * Delete a document
+   */
+  deleteDocument: async (docId: string): Promise<void> => {
+    await client.delete(`/quotes/documents/${docId}`);
+  },
+
+  /**
+   * Reprocess a document with AI
+   */
+  reprocessDocument: async (docId: string): Promise<{ message: string }> => {
+    const response = await client.post<{ message: string }>(`/quotes/documents/${docId}/reprocess`);
+    return response.data;
+  },
 };
+
+// QuoteDocument type
+export interface QuoteDocument {
+  id: string;
+  quoteId: string;
+  filename: string;
+  fileUrl: string;
+  mimeType: string;
+  sizeBytes?: number;
+  summary?: string;
+  extractedText?: string;
+  keyTerms?: string[];
+  tableCount?: number;
+  pageCount?: number;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETE' | 'ERROR';
+  processedAt?: string;
+  errorMessage?: string;
+  uploadedBy: string;
+  uploader?: { id: string; name: string | null; email: string };
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default quotesApi;

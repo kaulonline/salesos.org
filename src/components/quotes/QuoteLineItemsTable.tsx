@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, GripVertical, Plus, Edit2, Check, X, Loader2, Package } from 'lucide-react';
+import { Trash2, GripVertical, Plus, Edit2, Check, X, Loader2, Package, Percent, DollarSign } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { QuoteLineItem, UpdateQuoteLineItemDto } from '../../types/quote';
 
@@ -22,10 +22,13 @@ const formatCurrency = (amount: number, currency: string = 'USD') => {
   }).format(amount);
 };
 
+type EditField = 'quantity' | 'unitPrice' | 'discount' | 'discountPercent' | 'productName' | 'description';
+
 interface EditState {
   lineItemId: string;
-  field: 'quantity' | 'unitPrice' | 'discount' | 'discountPercent';
+  field: EditField;
   value: string;
+  discountType?: 'percent' | 'fixed'; // For discount field
 }
 
 export function QuoteLineItemsTable({
@@ -45,11 +48,17 @@ export function QuoteLineItemsTable({
 
   const sortedItems = [...lineItems].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const handleStartEdit = (lineItemId: string, field: EditState['field'], currentValue: number | undefined) => {
+  const handleStartEdit = (
+    lineItemId: string,
+    field: EditField,
+    currentValue: number | string | undefined,
+    discountType?: 'percent' | 'fixed'
+  ) => {
     setEditState({
       lineItemId,
       field,
-      value: currentValue?.toString() || '0',
+      value: currentValue?.toString() || (field === 'productName' || field === 'description' ? '' : '0'),
+      discountType,
     });
   };
 
@@ -60,13 +69,30 @@ export function QuoteLineItemsTable({
   const handleSaveEdit = async () => {
     if (!editState || !onUpdateLineItem) return;
 
-    const numValue = parseFloat(editState.value) || 0;
     setSavingId(editState.lineItemId);
 
     try {
-      await onUpdateLineItem(editState.lineItemId, {
-        [editState.field]: numValue,
-      });
+      const updateData: UpdateQuoteLineItemDto = {};
+
+      if (editState.field === 'productName') {
+        updateData.productName = editState.value;
+      } else if (editState.field === 'description') {
+        updateData.description = editState.value;
+      } else if (editState.field === 'discount') {
+        const numValue = parseFloat(editState.value) || 0;
+        if (editState.discountType === 'percent') {
+          updateData.discountPercent = numValue;
+          updateData.discount = 0; // Clear fixed discount
+        } else {
+          updateData.discount = numValue;
+          updateData.discountPercent = 0; // Clear percent discount
+        }
+      } else {
+        const numValue = parseFloat(editState.value) || 0;
+        updateData[editState.field as 'quantity' | 'unitPrice'] = numValue;
+      }
+
+      await onUpdateLineItem(editState.lineItemId, updateData);
       setEditState(null);
     } catch (err) {
       console.error('Failed to update line item:', err);
@@ -86,6 +112,18 @@ export function QuoteLineItemsTable({
       console.error('Failed to delete line item:', err);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleStartDiscountEdit = (item: QuoteLineItem) => {
+    // Determine current discount type and value
+    if (item.discountPercent && item.discountPercent > 0) {
+      handleStartEdit(item.id, 'discount', item.discountPercent, 'percent');
+    } else if (item.discount && item.discount > 0) {
+      handleStartEdit(item.id, 'discount', item.discount, 'fixed');
+    } else {
+      // Default to percent for new discounts
+      handleStartEdit(item.id, 'discount', 0, 'percent');
     }
   };
 
@@ -127,14 +165,15 @@ export function QuoteLineItemsTable({
           const isEditing = editState?.lineItemId === item.id;
           const isBeingDeleted = deletingId === item.id;
           const isConfirmingDelete = deleteConfirm === item.id;
+          const productName = item.productName || item.product?.name || item.description || 'Unnamed Item';
 
           return (
             <div
               key={item.id}
               className={cn(
                 'grid grid-cols-12 gap-4 px-5 py-4 items-center group transition-colors',
-                isBeingDeleted && 'opacity-50 bg-red-50',
-                isConfirmingDelete && 'bg-red-50'
+                isBeingDeleted && 'opacity-50 bg-[#EAD07D]/20',
+                isConfirmingDelete && 'bg-[#EAD07D]/20'
               )}
             >
               {/* Product Info */}
@@ -147,13 +186,91 @@ export function QuoteLineItemsTable({
                 <div className="w-9 h-9 rounded-lg bg-[#F2F1EA] flex items-center justify-center flex-shrink-0">
                   <Package size={14} className="text-[#666]" />
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-[#1A1A1A] truncate">
-                    {item.product?.name || item.description || 'Unnamed Item'}
-                  </div>
-                  <div className="text-[10px] text-[#888]">
-                    {item.product?.code || `Item ${index + 1}`}
-                  </div>
+                <div className="min-w-0 flex-1">
+                  {isEditing && editState.field === 'productName' ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={editState.value}
+                        onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                        className="flex-1 px-2 py-1 text-sm border border-[#EAD07D] rounded focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                        placeholder="Product name"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                      />
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={savingId === item.id}
+                        className="p-1 text-[#93C01F] hover:bg-[#93C01F]/10 rounded"
+                      >
+                        {savingId === item.id ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Check size={12} />
+                        )}
+                      </button>
+                      <button onClick={handleCancelEdit} className="p-1 text-[#888] hover:bg-gray-100 rounded">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : isEditing && editState.field === 'description' ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={editState.value}
+                        onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                        className="flex-1 px-2 py-1 text-xs border border-[#EAD07D] rounded focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                        placeholder="Description or SKU"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                      />
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={savingId === item.id}
+                        className="p-1 text-[#93C01F] hover:bg-[#93C01F]/10 rounded"
+                      >
+                        {savingId === item.id ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Check size={12} />
+                        )}
+                      </button>
+                      <button onClick={handleCancelEdit} className="p-1 text-[#888] hover:bg-gray-100 rounded">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => !readOnly && handleStartEdit(item.id, 'productName', productName)}
+                        disabled={readOnly}
+                        className={cn(
+                          'text-sm font-medium text-[#1A1A1A] truncate block text-left w-full',
+                          !readOnly && 'hover:text-[#EAD07D] cursor-pointer'
+                        )}
+                        title={readOnly ? productName : 'Click to edit product name'}
+                      >
+                        {productName}
+                      </button>
+                      <button
+                        onClick={() => !readOnly && handleStartEdit(item.id, 'description', item.description || item.product?.code || '')}
+                        disabled={readOnly}
+                        className={cn(
+                          'text-[10px] text-[#888] truncate block text-left w-full',
+                          !readOnly && 'hover:text-[#666] cursor-pointer'
+                        )}
+                        title={readOnly ? undefined : 'Click to edit description'}
+                      >
+                        {item.description || item.product?.code || `Item ${index + 1}`}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -177,7 +294,7 @@ export function QuoteLineItemsTable({
                     <button
                       onClick={handleSaveEdit}
                       disabled={savingId === item.id}
-                      className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                      className="p-1 text-[#93C01F] hover:bg-[#93C01F]/10 rounded"
                     >
                       {savingId === item.id ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -222,7 +339,7 @@ export function QuoteLineItemsTable({
                     <button
                       onClick={handleSaveEdit}
                       disabled={savingId === item.id}
-                      className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                      className="p-1 text-[#93C01F] hover:bg-[#93C01F]/10 rounded"
                     >
                       {savingId === item.id ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -250,14 +367,83 @@ export function QuoteLineItemsTable({
 
               {/* Discount */}
               <div className="col-span-2 text-right">
-                {item.discount || item.discountPercent ? (
-                  <span className="text-sm text-emerald-600">
-                    {item.discountPercent
-                      ? `-${item.discountPercent}%`
-                      : `-${formatCurrency(item.discount || 0, currency)}`}
-                  </span>
+                {isEditing && editState.field === 'discount' ? (
+                  <div className="flex items-center justify-end gap-1">
+                    {/* Discount Type Toggle */}
+                    <div className="flex items-center border border-[#F2F1EA] rounded overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setEditState({ ...editState, discountType: 'percent' })}
+                        className={cn(
+                          'p-1 transition-colors',
+                          editState.discountType === 'percent'
+                            ? 'bg-[#EAD07D] text-[#1A1A1A]'
+                            : 'bg-white text-[#888] hover:bg-[#F8F8F6]'
+                        )}
+                        title="Percentage discount"
+                      >
+                        <Percent size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditState({ ...editState, discountType: 'fixed' })}
+                        className={cn(
+                          'p-1 transition-colors',
+                          editState.discountType === 'fixed'
+                            ? 'bg-[#EAD07D] text-[#1A1A1A]'
+                            : 'bg-white text-[#888] hover:bg-[#F8F8F6]'
+                        )}
+                        title="Fixed amount discount"
+                      >
+                        <DollarSign size={12} />
+                      </button>
+                    </div>
+                    <input
+                      type="number"
+                      value={editState.value}
+                      onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                      className="w-16 px-2 py-1 text-sm text-right border border-[#EAD07D] rounded focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                      min="0"
+                      step={editState.discountType === 'percent' ? '1' : '0.01'}
+                      max={editState.discountType === 'percent' ? '100' : undefined}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                    />
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={savingId === item.id}
+                      className="p-1 text-[#93C01F] hover:bg-[#93C01F]/10 rounded"
+                    >
+                      {savingId === item.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Check size={12} />
+                      )}
+                    </button>
+                    <button onClick={handleCancelEdit} className="p-1 text-[#888] hover:bg-gray-100 rounded">
+                      <X size={12} />
+                    </button>
+                  </div>
                 ) : (
-                  <span className="text-sm text-[#CCC]">—</span>
+                  <button
+                    onClick={() => !readOnly && handleStartDiscountEdit(item)}
+                    disabled={readOnly}
+                    className={cn(
+                      'text-sm',
+                      item.discount || item.discountPercent ? 'text-[#93C01F] font-medium' : 'text-[#CCC]',
+                      !readOnly && 'hover:text-[#EAD07D] cursor-pointer'
+                    )}
+                    title={readOnly ? undefined : 'Click to edit discount'}
+                  >
+                    {item.discountPercent && item.discountPercent > 0
+                      ? `-${item.discountPercent}%`
+                      : item.discount && item.discount > 0
+                      ? `-${formatCurrency(item.discount, currency)}`
+                      : '—'}
+                  </button>
                 )}
               </div>
 
@@ -275,7 +461,7 @@ export function QuoteLineItemsTable({
                         <button
                           onClick={() => handleDelete(item.id)}
                           disabled={isBeingDeleted}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg text-[10px] font-medium"
+                          className="p-1.5 text-[#666] hover:bg-[#EAD07D]/20 rounded-lg text-[10px] font-medium"
                         >
                           {isBeingDeleted ? (
                             <Loader2 size={12} className="animate-spin" />
@@ -293,7 +479,7 @@ export function QuoteLineItemsTable({
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(item.id)}
-                        className="p-1.5 text-[#888] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-[#888] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-lg transition-colors"
                         title="Remove item"
                       >
                         <Trash2 size={14} />

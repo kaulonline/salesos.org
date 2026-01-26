@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -21,6 +21,12 @@ import {
   MoreHorizontal,
   ExternalLink,
   Pencil,
+  Upload,
+  Trash2,
+  Sparkles,
+  File,
+  Table,
+  Tag,
 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import {
@@ -29,13 +35,205 @@ import {
   QuoteLineItemsTable,
   AddLineItemModal,
   SendQuoteModal,
+  ConvertToOrderModal,
 } from '../../src/components/quotes';
-import { useQuote } from '../../src/hooks/useQuotes';
-import { quotesApi } from '../../src/api/quotes';
+import { useQuote, useQuoteDocuments } from '../../src/hooks/useQuotes';
+import { quotesApi, QuoteDocument } from '../../src/api/quotes';
 import { printQuote } from '../../src/utils/quotePdfGenerator';
-import type { CreateQuoteLineItemDto, UpdateQuoteLineItemDto } from '../../src/types/quote';
+import type { CreateQuoteLineItemDto, UpdateQuoteLineItemDto, UpdateQuoteDto } from '../../src/types/quote';
 
 type TabType = 'line-items' | 'info' | 'activity' | 'documents';
+
+// Edit Quote Modal
+interface EditQuoteModalProps {
+  isOpen: boolean;
+  quote: any;
+  onClose: () => void;
+  onUpdate: (data: UpdateQuoteDto) => Promise<void>;
+  isUpdating: boolean;
+}
+
+const EditQuoteModal: React.FC<EditQuoteModalProps> = ({ isOpen, quote, onClose, onUpdate, isUpdating }) => {
+  const [formData, setFormData] = React.useState({
+    name: '',
+    expirationDate: '',
+    paymentTerms: '',
+    notes: '',
+    discount: 0,
+    tax: 0,
+    shippingHandling: 0,
+  });
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (quote) {
+      setFormData({
+        name: quote.name || '',
+        expirationDate: quote.expirationDate ? quote.expirationDate.split('T')[0] : '',
+        paymentTerms: quote.paymentTerms || '',
+        notes: quote.notes || '',
+        discount: quote.discount || 0,
+        tax: quote.tax || 0,
+        shippingHandling: quote.shippingHandling || 0,
+      });
+    }
+  }, [quote]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      await onUpdate({
+        name: formData.name,
+        expirationDate: formData.expirationDate || undefined,
+        paymentTerms: formData.paymentTerms || undefined,
+        notes: formData.notes || undefined,
+        discount: formData.discount || undefined,
+        tax: formData.tax || undefined,
+        shippingHandling: formData.shippingHandling || undefined,
+      });
+      onClose();
+    } catch (err) {
+      setError((err as Error).message || 'Failed to update quote');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-6 pb-0 shrink-0">
+          <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Quote</h2>
+          <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm mb-4 flex items-center gap-2">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Quote Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Expiration Date</label>
+              <input
+                type="date"
+                value={formData.expirationDate}
+                onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Payment Terms</label>
+              <select
+                value={formData.paymentTerms}
+                onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+              >
+                <option value="">Select payment terms</option>
+                <option value="Net 15">Net 15</option>
+                <option value="Net 30">Net 30</option>
+                <option value="Net 45">Net 45</option>
+                <option value="Net 60">Net 60</option>
+                <option value="Due on Receipt">Due on Receipt</option>
+                <option value="50% Upfront">50% Upfront</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Discount</label>
+                <input
+                  type="number"
+                  value={formData.discount}
+                  onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Tax</label>
+                <input
+                  type="number"
+                  value={formData.tax}
+                  onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#666] mb-1 block">Shipping</label>
+                <input
+                  type="number"
+                  value={formData.shippingHandling}
+                  onChange={(e) => setFormData({ ...formData, shippingHandling: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[#666] mb-1 block">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none resize-none"
+                placeholder="Additional notes for the quote..."
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-6 mt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 rounded-full border border-gray-200 text-[#666] hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isUpdating}
+              className="flex-1 px-4 py-3 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const formatCurrency = (amount?: number, currency: string = 'USD') => {
   if (amount === undefined || amount === null) return '-';
@@ -78,19 +276,36 @@ export function QuoteDetail() {
     addLineItem,
     updateLineItem,
     deleteLineItem,
+    update,
     send,
     clone,
     isSending,
+    isUpdating,
   } = useQuote(id);
+
+  const {
+    documents,
+    loading: documentsLoading,
+    upload: uploadDocument,
+    deleteDocument,
+    reprocess: reprocessDocument,
+    isUploading,
+    isDeleting,
+    isReprocessing,
+  } = useQuoteDocuments(id);
 
   const [activeTab, setActiveTab] = useState<TabType>('line-items');
   const [showAddLineItemModal, setShowAddLineItemModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showConvertToOrderModal, setShowConvertToOrderModal] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -260,6 +475,17 @@ export function QuoteDetail() {
 
               {/* Actions */}
               <div className="flex items-center gap-2">
+                {/* Edit Button */}
+                {isEditable && (
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-[#F2F1EA] text-[#1A1A1A] rounded-xl text-sm font-medium hover:bg-[#E5E5E5] transition-colors"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
+                )}
+
                 {/* Download PDF */}
                 <button
                   onClick={handleDownloadPdf}
@@ -275,7 +501,7 @@ export function QuoteDetail() {
                   <button
                     onClick={() => setShowSendModal(true)}
                     disabled={isSending}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
                   >
                     {isSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                     Send
@@ -288,7 +514,7 @@ export function QuoteDetail() {
                     <button
                       onClick={handleAccept}
                       disabled={isAccepting}
-                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#93C01F] text-[#1A1A1A] rounded-xl text-sm font-medium hover:bg-[#85B01A] transition-colors disabled:opacity-50"
                     >
                       {isAccepting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                       Accept
@@ -296,7 +522,7 @@ export function QuoteDetail() {
                     <button
                       onClick={() => setShowRejectModal(true)}
                       disabled={isRejecting}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#666] text-white rounded-xl text-sm font-medium hover:bg-[#555] transition-colors disabled:opacity-50"
                     >
                       <X size={14} />
                       Reject
@@ -317,6 +543,18 @@ export function QuoteDetail() {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
                       <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                        {(quote.status === 'ACCEPTED' || quote.status === 'SENT') && (
+                          <button
+                            onClick={() => {
+                              setShowConvertToOrderModal(true);
+                              setShowActionsMenu(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[#93C01F] hover:bg-[#93C01F]/10 font-medium"
+                          >
+                            <Package size={14} />
+                            Convert to Order
+                          </button>
+                        )}
                         <button
                           onClick={handleClone}
                           disabled={isCloning}
@@ -533,12 +771,177 @@ export function QuoteDetail() {
               )}
 
               {activeTab === 'documents' && (
-                <div className="py-8 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
-                    <FileText size={24} className="text-[#999]" />
+                <div className="space-y-4">
+                  {/* Upload Area */}
+                  <div className="border-2 border-dashed border-[#E5E5E5] rounded-xl p-6 text-center hover:border-[#EAD07D] transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadDocument(file);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <div className="w-12 h-12 rounded-xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-3">
+                      {isUploading ? (
+                        <Loader2 size={20} className="text-[#EAD07D] animate-spin" />
+                      ) : (
+                        <Upload size={20} className="text-[#666]" />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="text-sm font-medium text-[#1A1A1A] hover:text-[#EAD07D] transition-colors disabled:opacity-50"
+                    >
+                      {isUploading ? 'Uploading...' : 'Upload Document'}
+                    </button>
+                    <p className="text-xs text-[#888] mt-1">
+                      PDF documents will be processed with AI to extract summaries
+                    </p>
                   </div>
-                  <h4 className="text-base font-semibold text-[#1A1A1A] mb-2">Documents</h4>
-                  <p className="text-sm text-[#666]">Document attachments coming soon</p>
+
+                  {/* Documents List */}
+                  {documentsLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2].map((i) => (
+                        <Skeleton key={i} className="h-24 rounded-xl" />
+                      ))}
+                    </div>
+                  ) : documents.length === 0 ? (
+                    <div className="py-8 text-center text-[#666] text-sm">
+                      No documents attached yet
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {documents.map((doc: QuoteDocument) => (
+                        <div
+                          key={doc.id}
+                          className="bg-[#F8F8F6] rounded-xl p-4 hover:bg-[#F2F1EA] transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
+                              <File size={18} className="text-[#666]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                  {doc.filename}
+                                </span>
+                                {doc.status === 'PROCESSING' && (
+                                  <span className="px-2 py-0.5 text-[10px] font-medium bg-[#1A1A1A]/10 text-[#1A1A1A] rounded-full flex items-center gap-1">
+                                    <Loader2 size={10} className="animate-spin" />
+                                    Processing
+                                  </span>
+                                )}
+                                {doc.status === 'COMPLETE' && (
+                                  <span className="px-2 py-0.5 text-[10px] font-medium bg-[#93C01F]/20 text-[#1A1A1A] rounded-full flex items-center gap-1">
+                                    <Sparkles size={10} />
+                                    AI Ready
+                                  </span>
+                                )}
+                                {doc.status === 'ERROR' && (
+                                  <span className="px-2 py-0.5 text-[10px] font-medium bg-[#EAD07D]/30 text-[#1A1A1A] rounded-full">
+                                    Error
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Document Stats */}
+                              <div className="flex items-center gap-3 text-xs text-[#888]">
+                                {doc.pageCount && (
+                                  <span>{doc.pageCount} pages</span>
+                                )}
+                                {doc.tableCount && doc.tableCount > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <Table size={10} />
+                                    {doc.tableCount} tables
+                                  </span>
+                                )}
+                                {doc.sizeBytes && (
+                                  <span>{(doc.sizeBytes / 1024).toFixed(0)} KB</span>
+                                )}
+                              </div>
+
+                              {/* AI Summary */}
+                              {doc.status === 'COMPLETE' && doc.summary && (
+                                <div className="mt-3">
+                                  <button
+                                    onClick={() => setExpandedDocId(expandedDocId === doc.id ? null : doc.id)}
+                                    className="text-xs font-medium text-[#EAD07D] hover:text-[#D4BA6A] flex items-center gap-1"
+                                  >
+                                    <Sparkles size={12} />
+                                    {expandedDocId === doc.id ? 'Hide AI Summary' : 'View AI Summary'}
+                                  </button>
+                                  {expandedDocId === doc.id && (
+                                    <div className="mt-2 p-3 bg-white rounded-lg border border-[#EAD07D]/30">
+                                      <p className="text-sm text-[#1A1A1A] whitespace-pre-wrap">
+                                        {doc.summary}
+                                      </p>
+                                      {doc.keyTerms && doc.keyTerms.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-[#F2F1EA]">
+                                          <div className="flex items-center gap-1 mb-1.5">
+                                            <Tag size={10} className="text-[#888]" />
+                                            <span className="text-[10px] font-medium text-[#888] uppercase">Key Terms</span>
+                                          </div>
+                                          <div className="flex flex-wrap gap-1">
+                                            {doc.keyTerms.map((term, i) => (
+                                              <span
+                                                key={i}
+                                                className="px-2 py-0.5 text-xs bg-[#F8F8F6] text-[#666] rounded-full"
+                                              >
+                                                {term}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Error Message */}
+                              {doc.status === 'ERROR' && doc.errorMessage && (
+                                <p className="mt-2 text-xs text-red-500">{doc.errorMessage}</p>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-1">
+                              {doc.status === 'ERROR' && (
+                                <button
+                                  onClick={() => reprocessDocument(doc.id)}
+                                  disabled={isReprocessing}
+                                  className="p-1.5 text-[#888] hover:text-[#1A1A1A] hover:bg-white rounded-lg transition-colors"
+                                  title="Retry processing"
+                                >
+                                  <RefreshCw size={14} className={isReprocessing ? 'animate-spin' : ''} />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm('Delete this document?')) {
+                                    deleteDocument(doc.id);
+                                  }
+                                }}
+                                disabled={isDeleting}
+                                className="p-1.5 text-[#888] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete document"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -566,7 +969,7 @@ export function QuoteDetail() {
               </div>
               {quote.sentAt && (
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                  <div className="w-2 h-2 rounded-full bg-[#EAD07D] mt-2" />
                   <div>
                     <div className="text-sm font-medium text-[#1A1A1A]">Sent</div>
                     <div className="text-xs text-[#888]">{formatDateTime(quote.sentAt)}</div>
@@ -575,7 +978,7 @@ export function QuoteDetail() {
               )}
               {quote.viewedAt && (
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
+                  <div className="w-2 h-2 rounded-full bg-[#1A1A1A] mt-2" />
                   <div>
                     <div className="text-sm font-medium text-[#1A1A1A]">Viewed</div>
                     <div className="text-xs text-[#888]">{formatDateTime(quote.viewedAt)}</div>
@@ -584,7 +987,7 @@ export function QuoteDetail() {
               )}
               {quote.acceptedAt && (
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2" />
+                  <div className="w-2 h-2 rounded-full bg-[#93C01F] mt-2" />
                   <div>
                     <div className="text-sm font-medium text-[#1A1A1A]">Accepted</div>
                     <div className="text-xs text-[#888]">{formatDateTime(quote.acceptedAt)}</div>
@@ -593,7 +996,7 @@ export function QuoteDetail() {
               )}
               {quote.rejectedAt && (
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-500 mt-2" />
+                  <div className="w-2 h-2 rounded-full bg-[#666] mt-2" />
                   <div>
                     <div className="text-sm font-medium text-[#1A1A1A]">Rejected</div>
                     <div className="text-xs text-[#888]">{formatDateTime(quote.rejectedAt)}</div>
@@ -664,8 +1067,8 @@ export function QuoteDetail() {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowRejectModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                <X size={24} className="text-red-500" />
+              <div className="w-12 h-12 rounded-full bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
+                <X size={24} className="text-[#666]" />
               </div>
               <h3 className="text-lg font-semibold text-[#1A1A1A] text-center mb-2">Reject Quote</h3>
               <p className="text-sm text-[#666] text-center mb-4">
@@ -691,7 +1094,7 @@ export function QuoteDetail() {
                 <button
                   onClick={handleReject}
                   disabled={isRejecting || !rejectReason.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#666] text-white rounded-xl font-medium hover:bg-[#555] transition-colors disabled:opacity-50"
                 >
                   {isRejecting ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
                   Reject
@@ -701,6 +1104,22 @@ export function QuoteDetail() {
           </div>
         </div>
       )}
+
+      {/* Edit Quote Modal */}
+      <EditQuoteModal
+        isOpen={showEditModal}
+        quote={quote}
+        onClose={() => setShowEditModal(false)}
+        onUpdate={update}
+        isUpdating={isUpdating}
+      />
+
+      {/* Convert to Order Modal */}
+      <ConvertToOrderModal
+        quote={quote}
+        isOpen={showConvertToOrderModal}
+        onClose={() => setShowConvertToOrderModal(false)}
+      />
     </div>
   );
 }
