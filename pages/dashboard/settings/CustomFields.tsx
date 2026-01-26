@@ -23,6 +23,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useCustomFields } from '../../../src/hooks/useCustomFields';
 import type {
   CustomField,
@@ -292,6 +293,13 @@ export default function CustomFieldsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; field: CustomField | null }>({
+    isOpen: false,
+    field: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Handle AI-generated custom fields
   const handleAIFieldsApply = async (config: Record<string, any>) => {
     try {
@@ -373,14 +381,20 @@ export default function CustomFieldsPage() {
     }
   };
 
-  const handleDelete = async (field: CustomField) => {
-    if (!confirm(`Are you sure you want to delete "${field.label}"? This cannot be undone.`)) {
-      return;
-    }
+  const handleDelete = (field: CustomField) => {
+    setDeleteModal({ isOpen: true, field });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.field) return;
+    setDeleteLoading(true);
     try {
-      await remove(field.id);
+      await remove(deleteModal.field.id);
     } catch (err) {
       console.error('Failed to delete field:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, field: null });
     }
   };
 
@@ -542,6 +556,17 @@ export default function CustomFieldsPage() {
         entityType={AIBuilderEntityType.CUSTOM_FIELDS}
         entityLabel="Custom Fields"
         onApply={handleAIFieldsApply}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, field: null })}
+        onConfirm={confirmDelete}
+        title="Delete Custom Field"
+        message={`Are you sure you want to delete "${deleteModal.field?.label}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

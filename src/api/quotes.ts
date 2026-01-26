@@ -193,22 +193,10 @@ export const quotesApi = {
 
   // PDF
   /**
-   * Generate PDF for quote
+   * Get quote data for PDF generation
    */
-  generatePdf: async (id: string, options?: QuotePdfOptions): Promise<Blob> => {
-    const response = await client.post<Blob>(
-      `/quotes/${id}/pdf`,
-      options || {},
-      { responseType: 'blob' }
-    );
-    return response.data;
-  },
-
-  /**
-   * Get PDF download URL
-   */
-  getPdfUrl: async (id: string): Promise<{ url: string }> => {
-    const response = await client.get<{ url: string }>(`/quotes/${id}/pdf-url`);
+  getPdfData: async (id: string): Promise<{ quote: Quote; generatedAt: string }> => {
+    const response = await client.get<{ quote: Quote; generatedAt: string }>(`/quotes/${id}/pdf`);
     return response.data;
   },
 

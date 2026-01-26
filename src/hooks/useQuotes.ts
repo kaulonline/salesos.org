@@ -154,6 +154,29 @@ export function useQuote(id: string | undefined) {
     },
   });
 
+  const markAcceptedMutation = useMutation({
+    mutationFn: () => quotesApi.markAccepted(id!),
+    onSuccess: (updatedQuote) => {
+      queryClient.setQueryData(queryKeys.quotes.detail(id!), updatedQuote);
+      queryClient.invalidateQueries({ queryKey: queryKeys.quotes.lists() });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (reason?: string) => quotesApi.cancel(id!, reason),
+    onSuccess: (updatedQuote) => {
+      queryClient.setQueryData(queryKeys.quotes.detail(id!), updatedQuote);
+      queryClient.invalidateQueries({ queryKey: queryKeys.quotes.lists() });
+    },
+  });
+
+  const recalculateMutation = useMutation({
+    mutationFn: () => quotesApi.recalculate(id!),
+    onSuccess: (updatedQuote) => {
+      queryClient.setQueryData(queryKeys.quotes.detail(id!), updatedQuote);
+    },
+  });
+
   return {
     quote: quoteQuery.data ?? null,
     loading: quoteQuery.isLoading,
@@ -171,11 +194,18 @@ export function useQuote(id: string | undefined) {
     approve: (data?: ApproveQuoteDto) => approveMutation.mutateAsync(data),
     reject: (data: RejectQuoteDto) => rejectMutation.mutateAsync(data),
     clone: () => cloneMutation.mutateAsync(),
+    markAccepted: () => markAcceptedMutation.mutateAsync(),
+    cancel: (reason?: string) => cancelMutation.mutateAsync(reason),
+    recalculate: () => recalculateMutation.mutateAsync(),
 
     // Loading states
     isSending: sendMutation.isPending,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
+    isCloning: cloneMutation.isPending,
+    isAccepting: markAcceptedMutation.isPending,
+    isCancelling: cancelMutation.isPending,
+    isRecalculating: recalculateMutation.isPending,
   };
 }
 

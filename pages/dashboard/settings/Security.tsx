@@ -19,6 +19,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useTwoFactorStatus, useTwoFactorSetup, useTrustedDevices, useBackupCodes } from '../../../src/hooks/useTwoFactor';
 
 interface SetupModalProps {
@@ -213,6 +214,8 @@ interface BackupCodesModalProps {
 const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, codes, onRegenerate }) => {
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [pendingPassword, setPendingPassword] = useState<string | null>(null);
 
   const availableCodes = codes.filter(c => !c.usedAt);
   const usedCodes = codes.filter(c => c.usedAt);
@@ -223,15 +226,22 @@ const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, co
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRegenerate = async () => {
+  const handleRegenerate = () => {
     const password = prompt('Enter your password to regenerate backup codes:');
     if (!password) return;
-    if (!confirm('This will invalidate all existing backup codes. Continue?')) return;
+    setPendingPassword(password);
+    setShowRegenerateConfirm(true);
+  };
+
+  const confirmRegenerate = async () => {
+    if (!pendingPassword) return;
+    setShowRegenerateConfirm(false);
     setRegenerating(true);
     try {
-      await onRegenerate(password);
+      await onRegenerate(pendingPassword);
     } finally {
       setRegenerating(false);
+      setPendingPassword(null);
     }
   };
 
@@ -295,6 +305,20 @@ const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, co
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showRegenerateConfirm}
+        onClose={() => {
+          setShowRegenerateConfirm(false);
+          setPendingPassword(null);
+        }}
+        onConfirm={confirmRegenerate}
+        title="Regenerate Backup Codes"
+        message="This will invalidate all existing backup codes. Make sure to save the new codes in a secure location."
+        confirmLabel="Regenerate"
+        variant="warning"
+        loading={regenerating}
+      />
     </div>
   );
 };
@@ -309,6 +333,15 @@ export default function SecurityPage() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [disabling, setDisabling] = useState(false);
+
+  // Confirmation modal states
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'disable2fa' | 'removeDevice' | null;
+    deviceId?: string;
+    password?: string;
+  }>({ isOpen: false, type: null });
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const handleSetup = async () => {
     try {
@@ -325,26 +358,31 @@ export default function SecurityPage() {
     setSetupData(null);
   };
 
-  const handleDisable = async () => {
+  const handleDisable = () => {
     const password = prompt('Enter your password to disable 2FA:');
     if (!password) return;
-    if (!confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')) return;
-    setDisabling(true);
-    try {
-      await disable({ password });
-    } catch (err) {
-      console.error('Failed to disable 2FA:', err);
-    } finally {
-      setDisabling(false);
-    }
+    setConfirmModal({ isOpen: true, type: 'disable2fa', password });
   };
 
-  const handleRemoveDevice = async (deviceId: string) => {
-    if (!confirm('Remove this device from trusted devices?')) return;
+  const handleRemoveDevice = (deviceId: string) => {
+    setConfirmModal({ isOpen: true, type: 'removeDevice', deviceId });
+  };
+
+  const handleConfirmAction = async () => {
+    setConfirmLoading(true);
     try {
-      await removeDevice(deviceId);
+      if (confirmModal.type === 'disable2fa' && confirmModal.password) {
+        setDisabling(true);
+        await disable({ password: confirmModal.password });
+        setDisabling(false);
+      } else if (confirmModal.type === 'removeDevice' && confirmModal.deviceId) {
+        await removeDevice(confirmModal.deviceId);
+      }
     } catch (err) {
-      console.error('Failed to remove device:', err);
+      console.error('Failed to complete action:', err);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmModal({ isOpen: false, type: null });
     }
   };
 
@@ -542,6 +580,19 @@ export default function SecurityPage() {
           onRegenerate={regenerate}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: null })}
+        onConfirm={handleConfirmAction}
+        title={confirmModal.type === 'disable2fa' ? 'Disable Two-Factor Authentication' : 'Remove Trusted Device'}
+        message={confirmModal.type === 'disable2fa'
+          ? 'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
+          : 'Are you sure you want to remove this device from trusted devices?'}
+        confirmLabel={confirmModal.type === 'disable2fa' ? 'Disable' : 'Remove'}
+        variant="warning"
+        loading={confirmLoading}
+      />
     </div>
   );
 }

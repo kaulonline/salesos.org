@@ -11,15 +11,22 @@ import {
   ArrowRight,
   Loader2,
   Command,
+  Package,
+  Megaphone,
+  CheckSquare,
 } from 'lucide-react';
 import { leadsApi, Lead } from '../../api/leads';
 import { contactsApi, Contact } from '../../api/contacts';
 import { accountsApi, Account } from '../../api/accounts';
 import { opportunitiesApi, Opportunity } from '../../api/opportunities';
+import { productsApi, Product } from '../../api/products';
+import { campaignsApi } from '../../api/campaigns';
+import { tasksApi } from '../../api/tasks';
+import type { Campaign, Task } from '../../types';
 
 interface SearchResult {
   id: string;
-  type: 'lead' | 'contact' | 'account' | 'opportunity';
+  type: 'lead' | 'contact' | 'account' | 'opportunity' | 'product' | 'campaign' | 'task';
   title: string;
   subtitle: string;
   meta?: string;
@@ -36,6 +43,9 @@ const RESULT_ICONS = {
   contact: Users,
   account: Building2,
   opportunity: DollarSign,
+  product: Package,
+  campaign: Megaphone,
+  task: CheckSquare,
 };
 
 const RESULT_COLORS = {
@@ -43,6 +53,9 @@ const RESULT_COLORS = {
   contact: 'text-purple-600 bg-purple-50',
   account: 'text-green-600 bg-green-50',
   opportunity: 'text-amber-600 bg-amber-50',
+  product: 'text-indigo-600 bg-indigo-50',
+  campaign: 'text-pink-600 bg-pink-50',
+  task: 'text-teal-600 bg-teal-50',
 };
 
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
@@ -102,23 +115,31 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
     try {
       // Fetch data from all entities in parallel
-      const [leadsData, contactsData, accountsData, oppsData] = await Promise.all([
+      const [leadsData, contactsData, accountsData, oppsData, productsData, campaignsData, tasksData] = await Promise.all([
         leadsApi.getAll().catch(() => []),
         contactsApi.getAll().catch(() => []),
         accountsApi.getAll().catch(() => []),
         opportunitiesApi.getAll().catch(() => []),
+        productsApi.getAll().catch(() => []),
+        campaignsApi.getAll().catch(() => []),
+        tasksApi.getAll().catch(() => []),
       ]);
 
       const allResults: SearchResult[] = [];
 
-      // Search leads
+      // Search leads - expanded fields
       const leads = (leadsData || []) as Lead[];
       leads
         .filter(lead =>
           lead.firstName?.toLowerCase().includes(q) ||
           lead.lastName?.toLowerCase().includes(q) ||
           lead.email?.toLowerCase().includes(q) ||
-          lead.company?.toLowerCase().includes(q)
+          lead.company?.toLowerCase().includes(q) ||
+          lead.phone?.toLowerCase().includes(q) ||
+          lead.title?.toLowerCase().includes(q) ||
+          lead.description?.toLowerCase().includes(q) ||
+          lead.status?.toLowerCase().includes(q) ||
+          lead.rating?.toLowerCase().includes(q)
         )
         .slice(0, 5)
         .forEach(lead => {
@@ -126,20 +147,24 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
             id: lead.id,
             type: 'lead',
             title: `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || lead.email,
-            subtitle: lead.company || 'No company',
+            subtitle: lead.company || lead.title || 'No company',
             meta: lead.status,
             url: `/dashboard/leads/${lead.id}`,
           });
         });
 
-      // Search contacts
+      // Search contacts - expanded fields
       const contacts = (contactsData || []) as Contact[];
       contacts
         .filter(contact =>
           contact.firstName?.toLowerCase().includes(q) ||
           contact.lastName?.toLowerCase().includes(q) ||
           contact.email?.toLowerCase().includes(q) ||
-          contact.title?.toLowerCase().includes(q)
+          contact.title?.toLowerCase().includes(q) ||
+          contact.phone?.toLowerCase().includes(q) ||
+          contact.mobilePhone?.toLowerCase().includes(q) ||
+          contact.department?.toLowerCase().includes(q) ||
+          (contact.account?.name)?.toLowerCase().includes(q)
         )
         .slice(0, 5)
         .forEach(contact => {
@@ -147,19 +172,22 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
             id: contact.id,
             type: 'contact',
             title: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
-            subtitle: contact.title || 'No title',
-            meta: contact.accountId ? 'Has Account' : undefined,
+            subtitle: contact.title || contact.account?.name || 'No title',
+            meta: contact.account?.name ? 'Has Account' : undefined,
             url: `/dashboard/contacts/${contact.id}`,
           });
         });
 
-      // Search accounts
+      // Search accounts - expanded fields
       const accounts = (accountsData || []) as Account[];
       accounts
         .filter(account =>
           account.name?.toLowerCase().includes(q) ||
           account.industry?.toLowerCase().includes(q) ||
-          account.website?.toLowerCase().includes(q)
+          account.website?.toLowerCase().includes(q) ||
+          account.phone?.toLowerCase().includes(q) ||
+          account.description?.toLowerCase().includes(q) ||
+          account.type?.toLowerCase().includes(q)
         )
         .slice(0, 5)
         .forEach(account => {
@@ -173,12 +201,15 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           });
         });
 
-      // Search opportunities
+      // Search opportunities - expanded fields
       const opportunities = (oppsData || []) as Opportunity[];
       opportunities
         .filter(opp =>
           opp.name?.toLowerCase().includes(q) ||
-          opp.stage?.toLowerCase().includes(q)
+          opp.stage?.toLowerCase().includes(q) ||
+          opp.description?.toLowerCase().includes(q) ||
+          opp.type?.toLowerCase().includes(q) ||
+          (opp.account?.name)?.toLowerCase().includes(q)
         )
         .slice(0, 5)
         .forEach(opp => {
@@ -186,13 +217,77 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
             id: opp.id,
             type: 'opportunity',
             title: opp.name,
-            subtitle: `$${(opp.amount || 0).toLocaleString()}`,
+            subtitle: opp.account?.name || `$${(opp.amount || 0).toLocaleString()}`,
             meta: opp.stage,
             url: `/dashboard/deals/${opp.id}`,
           });
         });
 
-      setResults(allResults.slice(0, 10));
+      // Search products
+      const products = (productsData || []) as Product[];
+      products
+        .filter(product =>
+          product.name?.toLowerCase().includes(q) ||
+          product.sku?.toLowerCase().includes(q) ||
+          product.description?.toLowerCase().includes(q) ||
+          product.type?.toLowerCase().includes(q) ||
+          product.category?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(product => {
+          allResults.push({
+            id: product.id,
+            type: 'product',
+            title: product.name,
+            subtitle: `$${(product.listPrice || 0).toLocaleString()} • ${product.sku}`,
+            meta: product.type,
+            url: `/dashboard/products/${product.id}`,
+          });
+        });
+
+      // Search campaigns
+      const campaigns = (campaignsData || []) as Campaign[];
+      campaigns
+        .filter(campaign =>
+          campaign.name?.toLowerCase().includes(q) ||
+          campaign.description?.toLowerCase().includes(q) ||
+          campaign.type?.toLowerCase().includes(q) ||
+          campaign.status?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(campaign => {
+          allResults.push({
+            id: campaign.id,
+            type: 'campaign',
+            title: campaign.name,
+            subtitle: campaign.type || 'Campaign',
+            meta: campaign.status,
+            url: `/dashboard/campaigns/${campaign.id}`,
+          });
+        });
+
+      // Search tasks
+      const tasks = (tasksData || []) as Task[];
+      tasks
+        .filter(task =>
+          task.subject?.toLowerCase().includes(q) ||
+          task.description?.toLowerCase().includes(q) ||
+          task.status?.toLowerCase().includes(q) ||
+          task.priority?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(task => {
+          allResults.push({
+            id: task.id,
+            type: 'task',
+            title: task.subject,
+            subtitle: task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString()}` : 'No due date',
+            meta: task.status,
+            url: `/dashboard/tasks?taskId=${task.id}`,
+          });
+        });
+
+      setResults(allResults.slice(0, 15));
       setSelectedIndex(0);
     } catch (error) {
       console.error('Search failed:', error);
@@ -300,7 +395,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
             {results.length > 0 && (
               <div className="p-2">
-                {['lead', 'contact', 'account', 'opportunity'].map(type => {
+                {['lead', 'contact', 'account', 'opportunity', 'product', 'campaign', 'task'].map(type => {
                   const typeResults = results.filter(r => r.type === type);
                   if (typeResults.length === 0) return null;
 
@@ -314,6 +409,9 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
                         {type === 'contact' && 'Contacts'}
                         {type === 'account' && 'Companies'}
                         {type === 'opportunity' && 'Deals'}
+                        {type === 'product' && 'Products'}
+                        {type === 'campaign' && 'Campaigns'}
+                        {type === 'task' && 'Tasks'}
                       </div>
                       {typeResults.map((result, idx) => {
                         const globalIdx = results.indexOf(result);

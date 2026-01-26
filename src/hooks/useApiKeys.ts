@@ -13,8 +13,14 @@ export function useApiKeys(filters?: ApiKeyFilters) {
 
   const usageQuery = useQuery({
     queryKey: queryKeys.apiKeys.usage(),
-    queryFn: () => apiKeysApi.getUsage(),
+    queryFn: () => apiKeysApi.getUsage().catch(() => ({
+      requestsToday: 0,
+      totalRequests: 0,
+      avgResponseTime: 0,
+      requestsByKey: [],
+    })),
     staleTime: 60 * 1000,
+    retry: false,
   });
 
   const createMutation = useMutation({
@@ -98,9 +104,15 @@ export function useApiKey(id: string | undefined) {
 
   const usageQuery = useQuery({
     queryKey: queryKeys.apiKeys.keyUsage(id!),
-    queryFn: () => apiKeysApi.getKeyUsage(id!),
+    queryFn: () => apiKeysApi.getKeyUsage(id!).catch(() => ({
+      requestsToday: 0,
+      totalRequests: 0,
+      avgResponseTime: 0,
+      requestsByKey: [],
+    })),
     enabled: !!id,
     staleTime: 60 * 1000,
+    retry: false,
   });
 
   const testMutation = useMutation({

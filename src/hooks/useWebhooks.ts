@@ -13,8 +13,14 @@ export function useWebhooks(filters?: WebhookFilters) {
 
   const statsQuery = useQuery({
     queryKey: queryKeys.webhooks.stats(),
-    queryFn: () => webhooksApi.getStats(),
+    queryFn: () => webhooksApi.getStats().catch(() => ({
+      total: 0,
+      active: 0,
+      totalDeliveries: 0,
+      deliveryRate: 0,
+    })),
     staleTime: 60 * 1000,
+    retry: false,
   });
 
   const createMutation = useMutation({

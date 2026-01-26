@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -44,6 +44,8 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Messages', href: '/dashboard/messages' },
     { label: 'Products', href: '/dashboard/products', icon: Package },
     { label: 'Quotes', href: '/dashboard/quotes', icon: FileText },
+    { label: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
+    { label: 'CPQ Analytics', href: '/dashboard/cpq-analytics', icon: TrendingUp },
     { label: 'Email Templates', href: '/dashboard/email-templates', icon: Mail },
   ];
 
@@ -55,6 +57,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
     { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
+    { label: 'Approval Workflows', href: '/dashboard/settings/approval-workflows', icon: CheckSquare },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
     { label: 'Custom Fields', href: '/dashboard/settings/custom-fields', icon: Columns },

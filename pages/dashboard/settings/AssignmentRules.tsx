@@ -23,6 +23,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useAssignmentRules } from '../../../src/hooks/useAssignmentRules';
 import type { AssignmentRule, CreateAssignmentRuleDto, RuleCondition } from '../../../src/types';
 import type { AssignmentRuleEntity, AssignmentMethod, ConditionOperator } from '../../../src/types/assignmentRule';
@@ -357,6 +358,13 @@ export default function AssignmentRulesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; ruleId: string | null }>({
+    isOpen: false,
+    ruleId: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Handle AI-generated assignment rules
   const handleAIRuleApply = async (config: Record<string, any>) => {
     try {
@@ -457,12 +465,20 @@ export default function AssignmentRulesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this rule?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteModal({ isOpen: true, ruleId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.ruleId) return;
+    setDeleteLoading(true);
     try {
-      await remove(id);
+      await remove(deleteModal.ruleId);
     } catch (err) {
       console.error('Failed to delete rule:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, ruleId: null });
     }
   };
 
@@ -656,6 +672,17 @@ export default function AssignmentRulesPage() {
         entityType={AIBuilderEntityType.ASSIGNMENT_RULE}
         entityLabel="Assignment Rule"
         onApply={handleAIRuleApply}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, ruleId: null })}
+        onConfirm={confirmDelete}
+        title="Delete Rule"
+        message="Are you sure you want to delete this assignment rule? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

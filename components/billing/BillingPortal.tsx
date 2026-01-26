@@ -18,6 +18,7 @@ import {
   useInvoices,
   usePaymentMethods,
 } from '../../src/hooks';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 
 export const BillingPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment-methods'>('overview');
@@ -33,6 +34,10 @@ export const BillingPortal: React.FC = () => {
     billingName: customer?.billingName || '',
     billingEmail: customer?.billingEmail || '',
     billingPhone: customer?.billingPhone || '',
+  });
+  const [cancelModal, setCancelModal] = useState<{ isOpen: boolean; subscriptionId: string | null }>({
+    isOpen: false,
+    subscriptionId: null,
   });
 
   const activeSubscription = subscriptions.find(s => s.status === 'ACTIVE' || s.status === 'TRIALING');
@@ -75,13 +80,16 @@ export const BillingPortal: React.FC = () => {
     );
   };
 
-  const handleCancelSubscription = async (id: string) => {
-    if (!window.confirm('Are you sure you want to cancel? You will retain access until the end of your billing period.')) {
-      return;
-    }
-    setCancellingId(id);
+  const handleCancelSubscription = (id: string) => {
+    setCancelModal({ isOpen: true, subscriptionId: id });
+  };
+
+  const confirmCancelSubscription = async () => {
+    if (!cancelModal.subscriptionId) return;
+    setCancellingId(cancelModal.subscriptionId);
+    setCancelModal({ isOpen: false, subscriptionId: null });
     try {
-      await cancelSubscription(id, false);
+      await cancelSubscription(cancelModal.subscriptionId, false);
     } finally {
       setCancellingId(null);
     }
@@ -404,6 +412,17 @@ export const BillingPortal: React.FC = () => {
           </button>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={cancelModal.isOpen}
+        onClose={() => setCancelModal({ isOpen: false, subscriptionId: null })}
+        onConfirm={confirmCancelSubscription}
+        title="Cancel Subscription"
+        message="Are you sure you want to cancel? You will retain access until the end of your billing period."
+        confirmLabel="Cancel Subscription"
+        variant="warning"
+        loading={!!cancellingId}
+      />
     </div>
   );
 };

@@ -18,6 +18,7 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useEmailTemplates, useMergeFields } from '../../src/hooks/useEmailTemplates';
 import type { EmailTemplate, CreateEmailTemplateDto, TemplateCategory } from '../../src/types';
 import { TEMPLATE_CATEGORY_LABELS } from '../../src/types/emailTemplate';
@@ -226,6 +227,13 @@ export default function EmailTemplatesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; template: EmailTemplate | null }>({
+    isOpen: false,
+    template: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Handle AI-generated template
   const handleAITemplateApply = async (config: Record<string, any>) => {
     try {
@@ -274,12 +282,20 @@ export default function EmailTemplatesPage() {
     }
   };
 
-  const handleDelete = async (template: EmailTemplate) => {
-    if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
+  const handleDelete = (template: EmailTemplate) => {
+    setDeleteModal({ isOpen: true, template });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.template) return;
+    setDeleteLoading(true);
     try {
-      await remove(template.id);
+      await remove(deleteModal.template.id);
     } catch (err) {
       console.error('Failed to delete template:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, template: null });
     }
   };
 
@@ -461,6 +477,17 @@ export default function EmailTemplatesPage() {
         entityType={AIBuilderEntityType.EMAIL_TEMPLATE}
         entityLabel="Email Template"
         onApply={handleAITemplateApply}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, template: null })}
+        onConfirm={confirmDelete}
+        title="Delete Template"
+        message={`Are you sure you want to delete "${deleteModal.template?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

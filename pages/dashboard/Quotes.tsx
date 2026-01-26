@@ -23,6 +23,7 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useQuotes, useCreateQuoteFromOpportunity } from '../../src/hooks/useQuotes';
 import type { Quote, QuoteStatus, CreateQuoteDto } from '../../src/types';
 
@@ -168,6 +169,13 @@ export default function QuotesPage() {
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; quoteId: string | null }>({
+    isOpen: false,
+    quoteId: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const filteredQuotes = useMemo(() => {
     return quotes.filter(quote => {
       const matchesSearch =
@@ -186,12 +194,20 @@ export default function QuotesPage() {
     }).format(amount);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this quote?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteModal({ isOpen: true, quoteId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.quoteId) return;
+    setDeleteLoading(true);
     try {
-      await remove(id);
+      await remove(deleteModal.quoteId);
     } catch (err) {
       console.error('Failed to delete quote:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, quoteId: null });
     }
   };
 
@@ -369,6 +385,17 @@ export default function QuotesPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={create}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, quoteId: null })}
+        onConfirm={confirmDelete}
+        title="Delete Quote"
+        message="Are you sure you want to delete this quote? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

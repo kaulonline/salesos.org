@@ -13,6 +13,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import {
   useAdminDashboard,
   useAdminUsers,
@@ -176,6 +177,15 @@ export const Admin: React.FC = () => {
     durationDays: 365,
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
+
+  // Confirmation modal states
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'deletePlan' | 'deleteCoupon' | 'refundPayment' | null;
+    itemId: string | null;
+    itemName: string;
+  }>({ isOpen: false, type: null, itemId: null, itemName: '' });
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   // Check if user is admin (handle case sensitivity)
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
@@ -1049,11 +1059,12 @@ export const Admin: React.FC = () => {
                             <Edit size={12} />
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to delete "${plan.name}"? This cannot be undone.`)) {
-                                deleteType(plan.id);
-                              }
-                            }}
+                            onClick={() => setConfirmModal({
+                              isOpen: true,
+                              type: 'deletePlan',
+                              itemId: plan.id,
+                              itemName: plan.name,
+                            })}
                             className={`p-1.5 rounded-lg transition-colors ${
                             plan.tier === 'ENTERPRISE'
                               ? 'hover:bg-white/10 text-white/60'
@@ -1482,11 +1493,12 @@ export const Admin: React.FC = () => {
                                   <Edit size={14} />
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Are you sure you want to delete coupon "${coupon.code}"?`)) {
-                                      deleteCoupon(coupon.id);
-                                    }
-                                  }}
+                                  onClick={() => setConfirmModal({
+                                    isOpen: true,
+                                    type: 'deleteCoupon',
+                                    itemId: coupon.id,
+                                    itemName: coupon.code,
+                                  })}
                                   className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
                                   title="Delete"
                                 >
@@ -1632,11 +1644,12 @@ export const Admin: React.FC = () => {
                               <div className="flex items-center gap-1">
                                 {transaction.status === 'SUCCEEDED' && (
                                   <button
-                                    onClick={() => {
-                                      if (confirm('Are you sure you want to refund this payment?')) {
-                                        refundPayment(transaction.id);
-                                      }
-                                    }}
+                                    onClick={() => setConfirmModal({
+                                      isOpen: true,
+                                      type: 'refundPayment',
+                                      itemId: transaction.id,
+                                      itemName: `${formatCurrency(transaction.amount)} payment`,
+                                    })}
                                     className="p-2 rounded-lg hover:bg-yellow-50 text-[#666] hover:text-yellow-600 transition-colors"
                                     title="Refund"
                                   >
@@ -2993,6 +3006,44 @@ export const Admin: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, itemId: null, itemName: '' })}
+        onConfirm={async () => {
+          if (!confirmModal.itemId) return;
+          setConfirmLoading(true);
+          try {
+            if (confirmModal.type === 'deletePlan') {
+              await deleteType(confirmModal.itemId);
+            } else if (confirmModal.type === 'deleteCoupon') {
+              await deleteCoupon(confirmModal.itemId);
+            } else if (confirmModal.type === 'refundPayment') {
+              await refundPayment(confirmModal.itemId);
+            }
+          } catch (err) {
+            console.error('Failed to complete action:', err);
+          } finally {
+            setConfirmLoading(false);
+            setConfirmModal({ isOpen: false, type: null, itemId: null, itemName: '' });
+          }
+        }}
+        title={
+          confirmModal.type === 'deletePlan' ? 'Delete Plan' :
+          confirmModal.type === 'deleteCoupon' ? 'Delete Coupon' :
+          'Refund Payment'
+        }
+        message={
+          confirmModal.type === 'deletePlan' ? `Are you sure you want to delete "${confirmModal.itemName}"? This cannot be undone.` :
+          confirmModal.type === 'deleteCoupon' ? `Are you sure you want to delete coupon "${confirmModal.itemName}"?` :
+          `Are you sure you want to refund this ${confirmModal.itemName}?`
+        }
+        confirmLabel={
+          confirmModal.type === 'refundPayment' ? 'Refund' : 'Delete'
+        }
+        variant={confirmModal.type === 'refundPayment' ? 'warning' : 'danger'}
+        loading={confirmLoading}
+      />
     </div>
   );
 };

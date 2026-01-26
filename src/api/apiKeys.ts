@@ -25,8 +25,41 @@ export const apiKeysApi = {
         }
       });
     }
-    const response = await client.get<ApiKey[]>(`/api-keys?${params.toString()}`);
-    return response.data;
+    // Backend returns different field names, transform to frontend format
+    const response = await client.get<Array<{
+      id: string;
+      name: string;
+      description?: string;
+      keyPrefix: string;
+      scopes: string[];
+      rateLimit: number;
+      rateLimitWindow: number;
+      ipWhitelist?: string[];
+      status: string;
+      expiresAt?: string | null;
+      lastUsedAt?: string | null;
+      usageCount: number;
+      createdAt: string;
+      updatedAt: string;
+    }>>(`/api-keys?${params.toString()}`);
+
+    return response.data.map(key => ({
+      id: key.id,
+      name: key.name,
+      description: key.description,
+      keyPrefix: key.keyPrefix,
+      scopes: key.scopes as ApiKey['scopes'],
+      status: key.status as ApiKey['status'],
+      rateLimitPerMinute: key.rateLimit,
+      rateLimitPerDay: key.rateLimit * 60 * 24,
+      allowedIps: key.ipWhitelist,
+      expiresAt: key.expiresAt || undefined,
+      lastUsedAt: key.lastUsedAt || undefined,
+      usageCount: key.usageCount,
+      usageCountToday: 0,
+      createdAt: key.createdAt,
+      updatedAt: key.updatedAt,
+    }));
   },
 
   /**
@@ -41,8 +74,34 @@ export const apiKeysApi = {
    * Create a new API key
    */
   create: async (data: CreateApiKeyDto): Promise<ApiKeyCreateResponse> => {
-    const response = await client.post<ApiKeyCreateResponse>('/api-keys', data);
-    return response.data;
+    // Backend returns flat object with 'key' field, transform to expected format
+    const response = await client.post<{
+      id: string;
+      name: string;
+      key: string;
+      keyPrefix: string;
+      scopes: string[];
+      rateLimit: number;
+      rateLimitWindow: number;
+      expiresAt: string | null;
+      createdAt: string;
+      message: string;
+    }>('/api-keys', data);
+
+    const { key, ...apiKeyData } = response.data;
+    return {
+      apiKey: {
+        ...apiKeyData,
+        description: '',
+        status: 'ACTIVE' as const,
+        rateLimitPerMinute: apiKeyData.rateLimit,
+        rateLimitPerDay: apiKeyData.rateLimit * 60 * 24,
+        usageCount: 0,
+        usageCountToday: 0,
+        updatedAt: apiKeyData.createdAt,
+      },
+      secretKey: key,
+    };
   },
 
   /**
@@ -72,8 +131,30 @@ export const apiKeysApi = {
    * Regenerate an API key (creates new secret)
    */
   regenerate: async (id: string): Promise<ApiKeyCreateResponse> => {
-    const response = await client.post<ApiKeyCreateResponse>(`/api-keys/${id}/regenerate`);
-    return response.data;
+    // Backend returns { id, key, keyPrefix, message }
+    const response = await client.post<{
+      id: string;
+      key: string;
+      keyPrefix: string;
+      message: string;
+    }>(`/api-keys/${id}/regenerate`);
+
+    return {
+      apiKey: {
+        id: response.data.id,
+        name: '',
+        keyPrefix: response.data.keyPrefix,
+        scopes: [],
+        status: 'ACTIVE' as const,
+        rateLimitPerMinute: 60,
+        rateLimitPerDay: 10000,
+        usageCount: 0,
+        usageCountToday: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      secretKey: response.data.key,
+    };
   },
 
   /**

@@ -22,6 +22,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useApiKeys } from '../../../src/hooks/useApiKeys';
 import { useWebhooks } from '../../../src/hooks/useWebhooks';
 import type { ApiKey, Webhook as WebhookType, CreateApiKeyDto, CreateWebhookDto, ApiKeyScope, WebhookEvent } from '../../../src/types';
@@ -241,35 +242,83 @@ export default function ApiSettingsPage() {
   const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState<string | null>(null);
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: 'danger' | 'warning';
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: 'Confirm',
+    variant: 'danger',
+    onConfirm: async () => {},
+  });
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
   const filteredKeys = useMemo(() => {
     return keys.filter(key =>
-      key.name.toLowerCase().includes(searchQuery.toLowerCase())
+      key?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [keys, searchQuery]);
 
   const filteredWebhooks = useMemo(() => {
     return webhooks.filter(wh =>
-      wh.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wh.url.toLowerCase().includes(searchQuery.toLowerCase())
+      wh?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      wh?.url?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [webhooks, searchQuery]);
 
-  const handleDeleteKey = async (key: ApiKey) => {
-    if (!confirm(`Are you sure you want to delete "${key.name}"?`)) return;
+  const closeConfirmModal = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    setConfirmLoading(false);
+  };
+
+  const handleConfirm = async () => {
+    setConfirmLoading(true);
     try {
-      await remove(key.id);
-    } catch (err) {
-      console.error('Failed to delete key:', err);
+      await confirmModal.onConfirm();
+    } finally {
+      closeConfirmModal();
     }
   };
 
-  const handleRevokeKey = async (key: ApiKey) => {
-    if (!confirm(`Are you sure you want to revoke "${key.name}"? This cannot be undone.`)) return;
-    try {
-      await revoke(key.id);
-    } catch (err) {
-      console.error('Failed to revoke key:', err);
-    }
+  const handleDeleteKey = (key: ApiKey) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete API Key',
+      message: `Are you sure you want to delete "${key.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await remove(key.id);
+        } catch (err) {
+          console.error('Failed to delete key:', err);
+        }
+      },
+    });
+  };
+
+  const handleRevokeKey = (key: ApiKey) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Revoke API Key',
+      message: `Are you sure you want to revoke "${key.name}"? This cannot be undone and the key will stop working immediately.`,
+      confirmLabel: 'Revoke',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await revoke(key.id);
+        } catch (err) {
+          console.error('Failed to revoke key:', err);
+        }
+      },
+    });
   };
 
   const handleToggleWebhook = async (webhook: WebhookType) => {
@@ -284,13 +333,21 @@ export default function ApiSettingsPage() {
     }
   };
 
-  const handleDeleteWebhook = async (webhook: WebhookType) => {
-    if (!confirm(`Are you sure you want to delete "${webhook.name}"?`)) return;
-    try {
-      await removeWebhook(webhook.id);
-    } catch (err) {
-      console.error('Failed to delete webhook:', err);
-    }
+  const handleDeleteWebhook = (webhook: WebhookType) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Webhook',
+      message: `Are you sure you want to delete "${webhook.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await removeWebhook(webhook.id);
+        } catch (err) {
+          console.error('Failed to delete webhook:', err);
+        }
+      },
+    });
   };
 
   return (
@@ -530,6 +587,17 @@ export default function ApiSettingsPage() {
         isOpen={showCreateKeyModal}
         onClose={() => setShowCreateKeyModal(false)}
         onCreate={create}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={handleConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmLabel={confirmModal.confirmLabel}
+        variant={confirmModal.variant}
+        loading={confirmLoading}
       />
     </div>
   );

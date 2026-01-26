@@ -36,6 +36,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useFeatureFlags } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import {
@@ -196,6 +197,13 @@ export const Automations: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'templates'>('templates');
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; workflowId: string | null }>({
+    isOpen: false,
+    workflowId: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Fetch workflows and stats in parallel but independently
   const fetchWorkflows = useCallback(async () => {
     try {
@@ -290,13 +298,21 @@ export const Automations: React.FC = () => {
     }
   };
 
-  const handleDeleteWorkflow = async (workflowId: string) => {
-    if (!confirm('Are you sure you want to delete this workflow?')) return;
+  const handleDeleteWorkflow = (workflowId: string) => {
+    setDeleteModal({ isOpen: true, workflowId });
+  };
+
+  const confirmDeleteWorkflow = async () => {
+    if (!deleteModal.workflowId) return;
+    setDeleteLoading(true);
     try {
-      await workflowsApi.delete(workflowId);
+      await workflowsApi.delete(deleteModal.workflowId);
       await fetchWorkflows();
     } catch (error) {
       console.error('Failed to delete workflow:', error);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, workflowId: null });
     }
   };
 
@@ -721,6 +737,17 @@ export const Automations: React.FC = () => {
         entityType={AIBuilderEntityType.WORKFLOW}
         entityLabel="Workflow"
         onApply={handleAIWorkflowApply}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, workflowId: null })}
+        onConfirm={confirmDeleteWorkflow}
+        title="Delete Workflow"
+        message="Are you sure you want to delete this workflow? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

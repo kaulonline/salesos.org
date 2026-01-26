@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GripVertical, Trash2, ChevronDown, Trophy, XCircle } from 'lucide-react';
 import type { PipelineStage, UpdatePipelineStageDto } from '../../src/types';
 import { STAGE_COLOR_PRESETS } from '../../src/types/pipeline';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 
 interface StageEditorProps {
   stage: PipelineStage;
@@ -26,6 +27,7 @@ export const StageEditor: React.FC<StageEditorProps> = ({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [localName, setLocalName] = useState(stage.displayName);
   const [localProbability, setLocalProbability] = useState(stage.probability);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleNameBlur = async () => {
     if (localName !== stage.displayName && localName.trim()) {
@@ -61,10 +63,13 @@ export const StageEditor: React.FC<StageEditorProps> = ({
     });
   };
 
-  const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete the "${stage.displayName}" stage? Deals in this stage will need to be reassigned.`)) {
-      await onDelete(stage.id);
-    }
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    await onDelete(stage.id);
+    setShowDeleteModal(false);
   };
 
   return (
@@ -223,6 +228,17 @@ export const StageEditor: React.FC<StageEditorProps> = ({
           onClick={() => setShowColorPicker(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Delete Stage"
+        message={`Are you sure you want to delete the "${stage.displayName}" stage? Deals in this stage will need to be reassigned.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={isDeleting}
+      />
     </div>
   );
 };

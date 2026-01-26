@@ -70,6 +70,7 @@ const PipelineSettings = lazy(() => import('./pages/dashboard/PipelineSettings')
 
 // Phase 1 Feature Pages
 const Quotes = lazy(() => import('./pages/dashboard/Quotes'));
+const QuoteDetail = lazy(() => import('./pages/dashboard/QuoteDetail'));
 const EmailTemplates = lazy(() => import('./pages/dashboard/EmailTemplates'));
 const CustomFields = lazy(() => import('./pages/dashboard/settings/CustomFields'));
 const Profiles = lazy(() => import('./pages/dashboard/settings/Profiles'));
@@ -77,6 +78,19 @@ const Security = lazy(() => import('./pages/dashboard/settings/Security'));
 const AssignmentRules = lazy(() => import('./pages/dashboard/settings/AssignmentRules'));
 const WebForms = lazy(() => import('./pages/dashboard/settings/WebForms'));
 const ApiSettings = lazy(() => import('./pages/dashboard/settings/ApiSettings'));
+
+// Phase 2 CPQ Feature Pages
+const PriceBooks = lazy(() => import('./pages/dashboard/PriceBooks'));
+const DiscountRules = lazy(() => import('./pages/dashboard/DiscountRules'));
+const TaxRates = lazy(() => import('./pages/dashboard/TaxRates'));
+
+// Phase 3 Workflow & Automation
+const ApprovalWorkflows = lazy(() => import('./pages/dashboard/ApprovalWorkflows'));
+
+// Phase 4 Integrations & Advanced
+const Orders = lazy(() => import('./pages/dashboard/Orders'));
+const OrderDetail = lazy(() => import('./pages/dashboard/OrderDetail'));
+const CPQAnalytics = lazy(() => import('./pages/dashboard/CPQAnalytics'));
 
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
@@ -434,7 +448,7 @@ function AppContent() {
             <Route path="quotes/:id" element={
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
-                  <Quotes />
+                  <QuoteDetail />
                 </Suspense>
               </PageErrorBoundary>
             } />
@@ -442,6 +456,55 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <EmailTemplates />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="price-books" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PriceBooks />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="discount-rules" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <DiscountRules />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="tax-rates" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <TaxRates />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="approval-workflows" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <ApprovalWorkflows />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="orders" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Orders />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="orders/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <OrderDetail />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="cpq-analytics" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <CPQAnalytics />
                 </Suspense>
               </PageErrorBoundary>
             } />

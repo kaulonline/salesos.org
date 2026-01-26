@@ -24,6 +24,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useWebForms, useWebFormSubmissions } from '../../../src/hooks/useWebForms';
 import type { WebForm, CreateWebFormDto, UpdateWebFormDto } from '../../../src/types';
 import { AIBuilderModal, AIBuilderTrigger } from '../../../src/components/AIBuilder';
@@ -848,6 +849,13 @@ export default function WebFormsPage() {
   const [editForm, setEditForm] = useState<WebForm | null>(null);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; form: WebForm | null }>({
+    isOpen: false,
+    form: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Handle AI-generated form
   const handleAIFormApply = async (config: Record<string, any>) => {
     try {
@@ -919,12 +927,20 @@ export default function WebFormsPage() {
     }
   };
 
-  const handleDelete = async (form: WebForm) => {
-    if (!confirm(`Are you sure you want to delete "${form.name}"?`)) return;
+  const handleDelete = (form: WebForm) => {
+    setDeleteModal({ isOpen: true, form });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.form) return;
+    setDeleteLoading(true);
     try {
-      await remove(form.id);
+      await remove(deleteModal.form.id);
     } catch (err) {
       console.error('Failed to delete form:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, form: null });
     }
   };
 
@@ -1120,6 +1136,17 @@ export default function WebFormsPage() {
         onClose={() => setEditForm(null)}
         form={editForm}
         onSave={update}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, form: null })}
+        onConfirm={confirmDelete}
+        title="Delete Form"
+        message={`Are you sure you want to delete "${deleteModal.form?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

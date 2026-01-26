@@ -18,6 +18,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useProfiles } from '../../../src/hooks/useProfiles';
 import type { Profile, CreateProfileDto, Permission, DataAccessLevel } from '../../../src/types';
 import { PERMISSION_MODULES } from '../../../src/types/profile';
@@ -303,6 +304,13 @@ export default function ProfilesPage() {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [showAIBuilder, setShowAIBuilder] = useState(false);
 
+  // Confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; profileId: string | null }>({
+    isOpen: false,
+    profileId: null,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const filteredProfiles = useMemo(() => {
     return profiles.filter(profile =>
       profile.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -310,17 +318,25 @@ export default function ProfilesPage() {
     );
   }, [profiles, searchQuery]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     const profile = profiles.find(p => p.id === id);
     if (profile?.isSystem) {
       alert('System profiles cannot be deleted');
       return;
     }
-    if (!confirm('Are you sure you want to delete this profile?')) return;
+    setDeleteModal({ isOpen: true, profileId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.profileId) return;
+    setDeleteLoading(true);
     try {
-      await remove(id);
+      await remove(deleteModal.profileId);
     } catch (err) {
       console.error('Failed to delete profile:', err);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteModal({ isOpen: false, profileId: null });
     }
   };
 
@@ -546,6 +562,17 @@ export default function ProfilesPage() {
         entityType={AIBuilderEntityType.PROFILE}
         entityLabel="Profile"
         onApply={handleAIProfileApply}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, profileId: null })}
+        onConfirm={confirmDelete}
+        title="Delete Profile"
+        message="Are you sure you want to delete this profile? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleteLoading}
       />
     </div>
   );

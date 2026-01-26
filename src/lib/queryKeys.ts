@@ -267,6 +267,99 @@ export const queryKeys = {
     events: () => [...queryKeys.webhooks.all, 'events'] as const,
     stats: () => [...queryKeys.webhooks.all, 'stats'] as const,
   },
+
+  // Discount Rules
+  discountRules: {
+    all: ['discountRules'] as const,
+    lists: () => [...queryKeys.discountRules.all, 'list'] as const,
+    list: (filters?: { type?: string; isActive?: boolean }) => [...queryKeys.discountRules.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.discountRules.all, 'detail', id] as const,
+    applicable: (quoteId: string) => [...queryKeys.discountRules.all, 'applicable', quoteId] as const,
+    stats: () => [...queryKeys.discountRules.all, 'stats'] as const,
+  },
+
+  // Tax Rates
+  taxRates: {
+    all: ['taxRates'] as const,
+    lists: () => [...queryKeys.taxRates.all, 'list'] as const,
+    list: (filters?: { country?: string; taxType?: string; isActive?: boolean }) => [...queryKeys.taxRates.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.taxRates.all, 'detail', id] as const,
+    byCountry: (country: string) => [...queryKeys.taxRates.all, 'country', country] as const,
+    default: (country: string, region?: string) => [...queryKeys.taxRates.all, 'default', country, region] as const,
+    stats: () => [...queryKeys.taxRates.all, 'stats'] as const,
+  },
+
+  // Approval Workflows
+  approvalWorkflows: {
+    all: ['approvalWorkflows'] as const,
+    lists: () => [...queryKeys.approvalWorkflows.all, 'list'] as const,
+    list: (filters?: { entity?: string; isActive?: boolean }) => [...queryKeys.approvalWorkflows.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.approvalWorkflows.all, 'detail', id] as const,
+    byEntity: (entity: string) => [...queryKeys.approvalWorkflows.all, 'entity', entity] as const,
+    check: (entityType: string, entityId: string) => [...queryKeys.approvalWorkflows.all, 'check', entityType, entityId] as const,
+    stats: () => [...queryKeys.approvalWorkflows.all, 'stats'] as const,
+  },
+
+  // Approval Requests
+  approvalRequests: {
+    all: ['approvalRequests'] as const,
+    lists: () => [...queryKeys.approvalRequests.all, 'list'] as const,
+    list: (filters?: { entityType?: string; status?: string }) => [...queryKeys.approvalRequests.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.approvalRequests.all, 'detail', id] as const,
+    pending: () => [...queryKeys.approvalRequests.all, 'pending'] as const,
+    forEntity: (entityType: string, entityId: string) => [...queryKeys.approvalRequests.all, 'entity', entityType, entityId] as const,
+    history: (entityType: string, entityId: string) => [...queryKeys.approvalRequests.all, 'history', entityType, entityId] as const,
+  },
+
+  // Quote Versions
+  quoteVersions: {
+    all: ['quoteVersions'] as const,
+    list: (quoteId: string, filters?: { createdById?: string }) => [...queryKeys.quoteVersions.all, quoteId, 'list', filters] as const,
+    detail: (quoteId: string, versionId: string) => [...queryKeys.quoteVersions.all, quoteId, 'detail', versionId] as const,
+    latest: (quoteId: string) => [...queryKeys.quoteVersions.all, quoteId, 'latest'] as const,
+    count: (quoteId: string) => [...queryKeys.quoteVersions.all, quoteId, 'count'] as const,
+    changesSince: (quoteId: string, versionId: string) => [...queryKeys.quoteVersions.all, quoteId, 'changesSince', versionId] as const,
+    stats: () => [...queryKeys.quoteVersions.all, 'stats'] as const,
+  },
+
+  // E-Signature (Phase 4)
+  esignature: {
+    all: ['esignature'] as const,
+    lists: () => [...queryKeys.esignature.all, 'list'] as const,
+    list: (filters?: { status?: string; provider?: string; quoteId?: string }) => [...queryKeys.esignature.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.esignature.all, 'detail', id] as const,
+    byQuote: (quoteId: string) => [...queryKeys.esignature.all, 'quote', quoteId] as const,
+    stats: () => [...queryKeys.esignature.all, 'stats'] as const,
+    providers: () => [...queryKeys.esignature.all, 'providers'] as const,
+    signingUrl: (requestId: string, signerId: string) => [...queryKeys.esignature.all, 'signingUrl', requestId, signerId] as const,
+  },
+
+  // Orders (Phase 4)
+  orders: {
+    all: ['orders'] as const,
+    lists: () => [...queryKeys.orders.all, 'list'] as const,
+    list: (filters?: { status?: string; accountId?: string }) => [...queryKeys.orders.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.orders.all, 'detail', id] as const,
+    byAccount: (accountId: string) => [...queryKeys.orders.all, 'account', accountId] as const,
+    byQuote: (quoteId: string) => [...queryKeys.orders.all, 'quote', quoteId] as const,
+    timeline: (id: string) => [...queryKeys.orders.detail(id), 'timeline'] as const,
+    stats: () => [...queryKeys.orders.all, 'stats'] as const,
+  },
+
+  // CPQ Analytics (Phase 4)
+  cpqAnalytics: {
+    all: ['cpqAnalytics'] as const,
+    dashboard: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'dashboard', filters] as const,
+    trends: (filters?: { startDate?: string; endDate?: string; groupBy?: string }) => [...queryKeys.cpqAnalytics.all, 'trends', filters] as const,
+    quotePipeline: () => [...queryKeys.cpqAnalytics.all, 'quotePipeline'] as const,
+    topProducts: (limit?: number, sortBy?: string) => [...queryKeys.cpqAnalytics.all, 'topProducts', limit, sortBy] as const,
+    topAccounts: (limit?: number) => [...queryKeys.cpqAnalytics.all, 'topAccounts', limit] as const,
+    salesRepPerformance: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'salesRepPerformance', filters] as const,
+    forecast: (periods?: number) => [...queryKeys.cpqAnalytics.all, 'forecast', periods] as const,
+    snapshots: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'snapshots', filters] as const,
+    conversionFunnel: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'conversionFunnel', filters] as const,
+    winLoss: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'winLoss', filters] as const,
+  },
 } as const;
 
 // Type helper for query key arrays

@@ -26,6 +26,13 @@ export * from './assignmentRule';
 export * from './webForm';
 export * from './apiKey';
 export * from './aiBuilder';
+export * from './discountRule';
+export * from './taxRate';
+export * from './approvalWorkflow';
+export * from './quoteVersion';
+export * from './esignature';
+export * from './order';
+export * from './cpqAnalytics';
 
 // Re-export specific types needed for dashboard
 export type { PipelineStats, SalesForecast } from './opportunity';

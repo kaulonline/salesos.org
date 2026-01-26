@@ -27,6 +27,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import {
   emailIntegrationsApi,
   calendarIntegrationsApi,
@@ -122,6 +123,12 @@ export const IntegrationsPage: React.FC = () => {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Confirmation modal state
+  const [disconnectModal, setDisconnectModal] = useState<{
+    isOpen: boolean;
+    integration: Integration | null;
+  }>({ isOpen: false, integration: null });
 
   // Handle OAuth redirect result
   useEffect(() => {
@@ -319,14 +326,18 @@ export const IntegrationsPage: React.FC = () => {
     }
   };
 
-  const handleDisconnect = async (integration: Integration) => {
+  const handleDisconnect = (integration: Integration) => {
     if (!integration.connectionId) return;
+    setDisconnectModal({ isOpen: true, integration });
+  };
 
-    if (!window.confirm(`Are you sure you want to disconnect ${integration.name}?`)) {
-      return;
-    }
+  const confirmDisconnect = async () => {
+    const integration = disconnectModal.integration;
+    if (!integration?.connectionId) return;
 
     setDisconnecting(integration.id);
+    setDisconnectModal({ isOpen: false, integration: null });
+
     try {
       if (integration.category === 'email') {
         await emailIntegrationsApi.deleteConnection(integration.connectionId);
@@ -658,6 +669,16 @@ export const IntegrationsPage: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      <ConfirmationModal
+        isOpen={disconnectModal.isOpen}
+        onClose={() => setDisconnectModal({ isOpen: false, integration: null })}
+        onConfirm={confirmDisconnect}
+        title="Disconnect Integration"
+        message={`Are you sure you want to disconnect ${disconnectModal.integration?.name}? You can reconnect it later.`}
+        confirmLabel="Disconnect"
+        variant="warning"
+      />
     </div>
   );
 };

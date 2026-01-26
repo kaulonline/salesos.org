@@ -8,6 +8,7 @@ import { SearchInput } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { PipelineSelector } from '../../components/pipeline';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useDeals } from '../../src/hooks/useDeals';
 import { useCompanies } from '../../src/hooks/useCompanies';
 import { usePipelines } from '../../src/hooks/usePipelines';
@@ -339,6 +340,10 @@ export const Deals: React.FC = () => {
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const [closeLostReason, setCloseLostReason] = useState('');
   const [showCloseLostModal, setShowCloseLostModal] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; dealId: string | null }>({
+    isOpen: false,
+    dealId: null,
+  });
 
   // Get selected pipeline from URL params or default
   const selectedPipelineId = searchParams.get('pipeline');
@@ -436,15 +441,20 @@ export const Deals: React.FC = () => {
     }
   };
 
-  const handleDelete = async (dealId: string) => {
-    if (window.confirm('Are you sure you want to delete this deal? This action cannot be undone.')) {
-      try {
-        await remove(dealId);
-        await fetchPipelineStats();
-        setActionMenuOpen(null);
-      } catch (err) {
-        console.error('Failed to delete deal:', err);
-      }
+  const handleDelete = (dealId: string) => {
+    setDeleteModal({ isOpen: true, dealId });
+    setActionMenuOpen(null);
+  };
+
+  const confirmDeleteDeal = async () => {
+    if (!deleteModal.dealId) return;
+    try {
+      await remove(deleteModal.dealId);
+      await fetchPipelineStats();
+    } catch (err) {
+      console.error('Failed to delete deal:', err);
+    } finally {
+      setDeleteModal({ isOpen: false, dealId: null });
     }
   };
 
@@ -838,6 +848,17 @@ export const Deals: React.FC = () => {
       {actionMenuOpen && (
         <div className="fixed inset-0 z-20" onClick={() => setActionMenuOpen(null)} />
       )}
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, dealId: null })}
+        onConfirm={confirmDeleteDeal}
+        title="Delete Deal"
+        message="Are you sure you want to delete this deal? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={isDeleting}
+      />
     </div>
     </FeatureGate>
   );
