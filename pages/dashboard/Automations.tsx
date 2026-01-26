@@ -51,6 +51,9 @@ import {
   type WorkflowAction,
   type WorkflowCondition,
 } from '../../src/api/workflows';
+import { AIBuilderTrigger } from '../../src/components/AIBuilder/AIBuilderTrigger';
+import { AIBuilderModal } from '../../src/components/AIBuilder/AIBuilderModal';
+import { AIBuilderEntityType, WorkflowConfig } from '../../src/types/aiBuilder';
 
 interface AutomationTemplate {
   id: string;
@@ -191,6 +194,7 @@ export const Automations: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<AutomationTemplate | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'templates'>('templates');
+  const [showAIBuilder, setShowAIBuilder] = useState(false);
 
   // Fetch workflows and stats in parallel but independently
   const fetchWorkflows = useCallback(async () => {
@@ -296,6 +300,66 @@ export const Automations: React.FC = () => {
     }
   };
 
+  const handleAIWorkflowApply = async (config: Record<string, any>) => {
+    try {
+      const workflowConfig = config as WorkflowConfig;
+
+      // Map trigger type
+      const triggerTypeMap: Record<string, WorkflowTriggerType> = {
+        RECORD_CREATED: WorkflowTriggerType.RECORD_CREATED,
+        RECORD_UPDATED: WorkflowTriggerType.RECORD_UPDATED,
+        STAGE_CHANGED: WorkflowTriggerType.STAGE_CHANGED,
+        FIELD_CHANGED: WorkflowTriggerType.FIELD_CHANGED,
+        DATE_REACHED: WorkflowTriggerType.TIME_BASED,
+        MANUAL: WorkflowTriggerType.MANUAL,
+      };
+
+      // Map entity type
+      const entityTypeMap: Record<string, WorkflowEntityType> = {
+        LEAD: WorkflowEntityType.LEAD,
+        CONTACT: WorkflowEntityType.CONTACT,
+        ACCOUNT: WorkflowEntityType.ACCOUNT,
+        OPPORTUNITY: WorkflowEntityType.OPPORTUNITY,
+        TASK: WorkflowEntityType.TASK,
+      };
+
+      // Map action types
+      const actionTypeMap: Record<string, WorkflowActionType> = {
+        SEND_EMAIL: WorkflowActionType.SEND_EMAIL,
+        CREATE_TASK: WorkflowActionType.CREATE_TASK,
+        UPDATE_FIELD: WorkflowActionType.UPDATE_FIELD,
+        NOTIFY_USER: WorkflowActionType.SEND_NOTIFICATION,
+        ASSIGN_TO: WorkflowActionType.ASSIGN_OWNER,
+        ADD_TAG: WorkflowActionType.ADD_TAG,
+        WEBHOOK: WorkflowActionType.WEBHOOK_CALL,
+      };
+
+      const workflowData: CreateWorkflowRequest = {
+        name: workflowConfig.name,
+        description: workflowConfig.description,
+        triggerType: triggerTypeMap[workflowConfig.trigger.type] || WorkflowTriggerType.RECORD_CREATED,
+        triggerEntity: entityTypeMap[workflowConfig.trigger.entity] || WorkflowEntityType.LEAD,
+        conditions: workflowConfig.conditions?.map((cond, idx) => ({
+          field: cond.field,
+          operator: cond.operator as ConditionOperator,
+          value: cond.value,
+          order: idx,
+        })),
+        actions: workflowConfig.actions.map((action) => ({
+          type: actionTypeMap[action.type] || WorkflowActionType.SEND_NOTIFICATION,
+          config: action.config,
+        })),
+      };
+
+      await workflowsApi.create(workflowData);
+      await fetchWorkflows();
+      setActiveTab('active');
+      setShowAIBuilder(false);
+    } catch (error) {
+      console.error('Failed to create workflow from AI:', error);
+    }
+  };
+
   // Only show full-page loading if we're on the active tab and workflows are loading
   // Templates tab can render immediately since templates are static
   const showFullPageLoading = activeTab === 'active' && workflowsLoading && workflows.length === 0;
@@ -335,13 +399,20 @@ export const Automations: React.FC = () => {
           </div>
           <p className="text-[#666]">Build workflows that work while you sleep</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
-        >
-          <Plus size={18} />
-          New Automation
-        </button>
+        <div className="flex items-center gap-3">
+          <AIBuilderTrigger
+            onClick={() => setShowAIBuilder(true)}
+            label="Create with AI"
+            variant="secondary"
+          />
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
+          >
+            <Plus size={18} />
+            New Automation
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -642,6 +713,15 @@ export const Automations: React.FC = () => {
           )}
         </Card>
       )}
+
+      {/* AI Builder Modal */}
+      <AIBuilderModal
+        isOpen={showAIBuilder}
+        onClose={() => setShowAIBuilder(false)}
+        entityType={AIBuilderEntityType.WORKFLOW}
+        entityLabel="Workflow"
+        onApply={handleAIWorkflowApply}
+      />
     </div>
   );
 };

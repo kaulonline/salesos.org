@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -42,6 +42,9 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Revenue', href: '/dashboard/revenue' },
     { label: 'Calendar', href: '/dashboard/calendar' },
     { label: 'Messages', href: '/dashboard/messages' },
+    { label: 'Products', href: '/dashboard/products', icon: Package },
+    { label: 'Quotes', href: '/dashboard/quotes', icon: FileText },
+    { label: 'Email Templates', href: '/dashboard/email-templates', icon: Mail },
   ];
 
   // Check if user is admin (handle potential case differences)
@@ -54,6 +57,12 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
     { label: 'Team', href: '/dashboard/team', icon: Users },
+    { label: 'Custom Fields', href: '/dashboard/settings/custom-fields', icon: Columns },
+    { label: 'Assignment Rules', href: '/dashboard/settings/assignment-rules', icon: GitBranch },
+    { label: 'Web Forms', href: '/dashboard/settings/web-forms', icon: Globe },
+    { label: 'Profiles', href: '/dashboard/settings/profiles', icon: Shield },
+    { label: 'Security', href: '/dashboard/settings/security', icon: Lock },
+    { label: 'API & Webhooks', href: '/dashboard/settings/api', icon: Key },
     // Admin-only items
     ...(isAdmin ? [
       { label: 'Admin Console', href: '/dashboard/admin', icon: Shield },

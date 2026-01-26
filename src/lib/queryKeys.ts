@@ -154,6 +154,119 @@ export const queryKeys = {
     systemConfig: () => [...queryKeys.admin.all, 'systemConfig'] as const,
     featureFlags: () => [...queryKeys.admin.all, 'featureFlags'] as const,
   },
+
+  // Custom Fields
+  customFields: {
+    all: ['customFields'] as const,
+    lists: () => [...queryKeys.customFields.all, 'list'] as const,
+    list: (filters?: { entity?: string }) => [...queryKeys.customFields.lists(), filters] as const,
+    byEntity: (entity: string) => [...queryKeys.customFields.all, 'entity', entity] as const,
+    detail: (id: string) => [...queryKeys.customFields.all, 'detail', id] as const,
+    stats: () => [...queryKeys.customFields.all, 'stats'] as const,
+  },
+
+  // Profiles & Permissions
+  profiles: {
+    all: ['profiles'] as const,
+    lists: () => [...queryKeys.profiles.all, 'list'] as const,
+    list: (filters?: { isSystem?: boolean }) => [...queryKeys.profiles.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.profiles.all, 'detail', id] as const,
+    users: (profileId: string) => [...queryKeys.profiles.detail(profileId), 'users'] as const,
+    modules: () => [...queryKeys.profiles.all, 'modules'] as const,
+    stats: () => [...queryKeys.profiles.all, 'stats'] as const,
+  },
+
+  // Two-Factor Authentication
+  twoFactor: {
+    all: ['twoFactor'] as const,
+    status: () => [...queryKeys.twoFactor.all, 'status'] as const,
+    backupCodes: () => [...queryKeys.twoFactor.all, 'backupCodes'] as const,
+    trustedDevices: () => [...queryKeys.twoFactor.all, 'trustedDevices'] as const,
+    enforcementSettings: () => [...queryKeys.twoFactor.all, 'enforcement'] as const,
+  },
+
+  // Price Books
+  priceBooks: {
+    all: ['priceBooks'] as const,
+    lists: () => [...queryKeys.priceBooks.all, 'list'] as const,
+    list: (filters?: { isActive?: boolean; currency?: string }) => [...queryKeys.priceBooks.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.priceBooks.all, 'detail', id] as const,
+    entries: (priceBookId: string) => [...queryKeys.priceBooks.detail(priceBookId), 'entries'] as const,
+    standard: () => [...queryKeys.priceBooks.all, 'standard'] as const,
+    stats: () => [...queryKeys.priceBooks.all, 'stats'] as const,
+  },
+
+  // Quotes
+  quotes: {
+    all: ['quotes'] as const,
+    lists: () => [...queryKeys.quotes.all, 'list'] as const,
+    list: (filters?: { status?: string; opportunityId?: string }) => [...queryKeys.quotes.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.quotes.all, 'detail', id] as const,
+    byOpportunity: (opportunityId: string) => [...queryKeys.quotes.all, 'opportunity', opportunityId] as const,
+    stats: () => [...queryKeys.quotes.all, 'stats'] as const,
+  },
+
+  // Email Templates
+  emailTemplates: {
+    all: ['emailTemplates'] as const,
+    lists: () => [...queryKeys.emailTemplates.all, 'list'] as const,
+    list: (filters?: { category?: string; isActive?: boolean }) => [...queryKeys.emailTemplates.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.emailTemplates.all, 'detail', id] as const,
+    mergeFields: () => [...queryKeys.emailTemplates.all, 'mergeFields'] as const,
+    stats: () => [...queryKeys.emailTemplates.all, 'stats'] as const,
+  },
+
+  // Email Tracking
+  emailTracking: {
+    all: ['emailTracking'] as const,
+    lists: () => [...queryKeys.emailTracking.all, 'list'] as const,
+    list: (filters?: { status?: string }) => [...queryKeys.emailTracking.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.emailTracking.all, 'detail', id] as const,
+    byEntity: (entityType: string, entityId: string) => [...queryKeys.emailTracking.all, 'entity', entityType, entityId] as const,
+    stats: () => [...queryKeys.emailTracking.all, 'stats'] as const,
+  },
+
+  // Assignment Rules
+  assignmentRules: {
+    all: ['assignmentRules'] as const,
+    lists: () => [...queryKeys.assignmentRules.all, 'list'] as const,
+    list: (filters?: { entity?: string; isActive?: boolean }) => [...queryKeys.assignmentRules.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.assignmentRules.all, 'detail', id] as const,
+    fields: (entity: string) => [...queryKeys.assignmentRules.all, 'fields', entity] as const,
+    stats: () => [...queryKeys.assignmentRules.all, 'stats'] as const,
+  },
+
+  // Web Forms
+  webForms: {
+    all: ['webForms'] as const,
+    lists: () => [...queryKeys.webForms.all, 'list'] as const,
+    list: (filters?: { isActive?: boolean }) => [...queryKeys.webForms.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.webForms.all, 'detail', id] as const,
+    submissions: (formId: string) => [...queryKeys.webForms.detail(formId), 'submissions'] as const,
+    embedCode: (formId: string) => [...queryKeys.webForms.detail(formId), 'embedCode'] as const,
+    stats: () => [...queryKeys.webForms.all, 'stats'] as const,
+  },
+
+  // API Keys
+  apiKeys: {
+    all: ['apiKeys'] as const,
+    lists: () => [...queryKeys.apiKeys.all, 'list'] as const,
+    list: (filters?: { status?: string }) => [...queryKeys.apiKeys.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.apiKeys.all, 'detail', id] as const,
+    usage: () => [...queryKeys.apiKeys.all, 'usage'] as const,
+    keyUsage: (keyId: string) => [...queryKeys.apiKeys.detail(keyId), 'usage'] as const,
+  },
+
+  // Webhooks
+  webhooks: {
+    all: ['webhooks'] as const,
+    lists: () => [...queryKeys.webhooks.all, 'list'] as const,
+    list: (filters?: { status?: string }) => [...queryKeys.webhooks.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.webhooks.all, 'detail', id] as const,
+    logs: (webhookId: string) => [...queryKeys.webhooks.detail(webhookId), 'logs'] as const,
+    events: () => [...queryKeys.webhooks.all, 'events'] as const,
+    stats: () => [...queryKeys.webhooks.all, 'stats'] as const,
+  },
 } as const;
 
 // Type helper for query key arrays

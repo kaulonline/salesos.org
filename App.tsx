@@ -34,6 +34,7 @@ const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Pri
 const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
 const PricingLanding = lazy(() => import('./components/Pricing').then(m => ({ default: m.Pricing })));
 const DynamicPricingPage = lazy(() => import('./pages/Pricing').then(m => ({ default: m.PricingPage })));
+const PublicForm = lazy(() => import('./pages/PublicForm'));
 
 // Lazy-loaded Dashboard Pages (code splitting for performance)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
@@ -66,6 +67,16 @@ const Tasks = lazy(() => import('./pages/dashboard/Tasks').then(m => ({ default:
 const Campaigns = lazy(() => import('./pages/dashboard/Campaigns').then(m => ({ default: m.Campaigns })));
 const Subscription = lazy(() => import('./pages/dashboard/Subscription').then(m => ({ default: m.Subscription })));
 const PipelineSettings = lazy(() => import('./pages/dashboard/PipelineSettings').then(m => ({ default: m.PipelineSettings })));
+
+// Phase 1 Feature Pages
+const Quotes = lazy(() => import('./pages/dashboard/Quotes'));
+const EmailTemplates = lazy(() => import('./pages/dashboard/EmailTemplates'));
+const CustomFields = lazy(() => import('./pages/dashboard/settings/CustomFields'));
+const Profiles = lazy(() => import('./pages/dashboard/settings/Profiles'));
+const Security = lazy(() => import('./pages/dashboard/settings/Security'));
+const AssignmentRules = lazy(() => import('./pages/dashboard/settings/AssignmentRules'));
+const WebForms = lazy(() => import('./pages/dashboard/settings/WebForms'));
+const ApiSettings = lazy(() => import('./pages/dashboard/settings/ApiSettings'));
 
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
@@ -106,6 +117,7 @@ function AppContent() {
   const isDashboard = pathname.startsWith('/dashboard');
   const isAdmin = pathname.startsWith('/admin');
   const isBilling = pathname.startsWith('/billing');
+  const isPublicForm = pathname.startsWith('/forms/');
 
   // Scroll to top on route change
   React.useEffect(() => {
@@ -116,7 +128,7 @@ function AppContent() {
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
       {/* Global subtle noise overlay for premium feel */}
       <NoiseOverlay opacity={0.02} blend="soft-light" />
-      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && <Navbar />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && !isPublicForm && <Navbar />}
       <main>
         <Routes>
           {/* Public Routes */}
@@ -175,6 +187,13 @@ function AppContent() {
           <Route path="/terms" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <Terms />
+            </Suspense>
+          } />
+
+          {/* Public Web Forms */}
+          <Route path="/forms/:slug" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PublicForm />
             </Suspense>
           } />
 
@@ -405,6 +424,69 @@ function AppContent() {
                 </Suspense>
               </PageErrorBoundary>
             } />
+            <Route path="quotes" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Quotes />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="quotes/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Quotes />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="email-templates" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <EmailTemplates />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/custom-fields" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <CustomFields />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/profiles" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Profiles />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/security" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Security />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/assignment-rules" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <AssignmentRules />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/web-forms" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <WebForms />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/api" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <ApiSettings />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
           </Route>
 
           {/* Admin Routes - Protected with AdminLayout */}
@@ -477,7 +559,7 @@ function AppContent() {
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && <Footer />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && !isPublicForm && <Footer />}
     </div>
   );
 }

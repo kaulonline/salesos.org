@@ -20,6 +20,18 @@ export { default as teamMessagesApi } from './teamMessages';
 export { default as licensingApi } from './licensing';
 export { default as paymentsApi, adminPaymentsApi } from './payments';
 
+// Phase 1 feature APIs
+export { default as customFieldsApi } from './customFields';
+export { default as profilesApi } from './profiles';
+export { default as twoFactorApi } from './twoFactor';
+export { default as priceBooksApi } from './priceBooks';
+export { default as quotesApi } from './quotes';
+export { default as emailTemplatesApi, emailTrackingApi } from './emailTemplates';
+export { default as assignmentRulesApi } from './assignmentRules';
+export { default as webFormsApi, publicWebFormsApi } from './webForms';
+export { default as apiKeysApi } from './apiKeys';
+export { default as webhooksApi } from './webhooks';
+
 // Re-export filter types
 export type { LeadFilters } from './leads';
 export type { OpportunityFilters } from './opportunities';
@@ -102,3 +114,14 @@ export type {
   CouponValidation,
   PaymentsDashboard,
 } from './payments';
+
+// Re-export Phase 1 feature filter types
+export type { CustomFieldFilters } from './customFields';
+export type { ProfileFilters } from './profiles';
+export type { PriceBookFilters, PriceBookEntryFilters } from './priceBooks';
+export type { QuoteFilters } from './quotes';
+export type { EmailTemplateFilters, EmailTrackingFilters } from './emailTemplates';
+export type { AssignmentRuleFilters } from './assignmentRules';
+export type { WebFormFilters, WebFormSubmissionFilters } from './webForms';
+export type { ApiKeyFilters } from './apiKeys';
+export type { WebhookFilters, WebhookLogFilters } from './webhooks';

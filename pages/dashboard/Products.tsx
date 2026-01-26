@@ -5,6 +5,9 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { useProducts } from '../../src/hooks/useProducts';
 import type { Product, CreateProductDto, ProductType, ProductCategory, BillingFrequency } from '../../src/api/products';
+import { AIBuilderTrigger } from '../../src/components/AIBuilder/AIBuilderTrigger';
+import { AIBuilderModal } from '../../src/components/AIBuilder/AIBuilderModal';
+import { AIBuilderEntityType, ProductConfig } from '../../src/types/aiBuilder';
 
 const TYPE_COLORS: Record<ProductType, string> = {
   PRODUCT: 'bg-[#EAD07D]',
@@ -53,6 +56,7 @@ export const Products: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showAIBuilder, setShowAIBuilder] = useState(false);
 
   const {
     products,
@@ -95,6 +99,48 @@ export const Products: React.FC = () => {
       setDeleteConfirm(null);
     } catch (error) {
       console.error('Failed to delete product:', error);
+    }
+  };
+
+  const handleAIProductApply = async (config: Record<string, any>) => {
+    try {
+      const productConfig = config as ProductConfig;
+
+      // Map product type
+      const typeMap: Record<string, ProductType> = {
+        PRODUCT: 'PRODUCT',
+        SERVICE: 'SERVICE',
+        SUBSCRIPTION: 'SUBSCRIPTION',
+        LICENSE: 'LICENSE',
+        BUNDLE: 'BUNDLE',
+        ADD_ON: 'PRODUCT', // Map ADD_ON to PRODUCT as fallback
+      };
+
+      // Map billing frequency
+      const billingMap: Record<string, BillingFrequency> = {
+        ONE_TIME: 'ONE_TIME',
+        MONTHLY: 'MONTHLY',
+        QUARTERLY: 'QUARTERLY',
+        SEMI_ANNUAL: 'QUARTERLY', // Map to closest
+        ANNUAL: 'ANNUAL',
+      };
+
+      const productData: CreateProductDto = {
+        name: productConfig.name,
+        sku: productConfig.sku,
+        description: productConfig.description,
+        type: typeMap[productConfig.type] || 'PRODUCT',
+        category: 'OTHER', // Default category
+        listPrice: productConfig.unitPrice,
+        billingFrequency: billingMap[productConfig.billingFrequency || 'ONE_TIME'] || 'ONE_TIME',
+        isActive: productConfig.isActive ?? true,
+        features: productConfig.features,
+      };
+
+      await create(productData);
+      setShowAIBuilder(false);
+    } catch (error) {
+      console.error('Failed to create product from AI:', error);
     }
   };
 
@@ -145,6 +191,11 @@ export const Products: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <AIBuilderTrigger
+            onClick={() => setShowAIBuilder(true)}
+            label="Create with AI"
+            variant="secondary"
+          />
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all"
@@ -344,6 +395,15 @@ export const Products: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* AI Builder Modal */}
+      <AIBuilderModal
+        isOpen={showAIBuilder}
+        onClose={() => setShowAIBuilder(false)}
+        entityType={AIBuilderEntityType.PRODUCT}
+        entityLabel="Product"
+        onApply={handleAIProductApply}
+      />
     </div>
   );
 };

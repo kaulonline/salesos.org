@@ -15,6 +15,18 @@ export * from './campaign';
 export * from './conversation';
 export * from './meeting';
 
+// Phase 1 feature types
+export * from './customField';
+export * from './profile';
+export * from './twoFactor';
+export * from './priceBook';
+export * from './quote';
+export * from './emailTemplate';
+export * from './assignmentRule';
+export * from './webForm';
+export * from './apiKey';
+export * from './aiBuilder';
+
 // Re-export specific types needed for dashboard
 export type { PipelineStats, SalesForecast } from './opportunity';
 export type { LeadStats } from './lead';
