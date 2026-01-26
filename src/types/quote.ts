@@ -23,15 +23,19 @@ export interface Address {
 export interface QuoteLineItem {
   id: string;
   quoteId: string;
-  productId: string;
+  productId?: string;
+  productName?: string;
+  productCode?: string;
   description?: string;
   quantity: number;
   unitPrice: number;
+  listPrice?: number;
   discount?: number;
   discountPercent?: number;
   tax?: number;
   taxPercent?: number;
-  total: number;
+  totalPrice: number; // Backend field: (quantity * unitPrice) - discount
+  total?: number; // Alias for backwards compatibility
   sortOrder: number;
   product?: {
     id: string;
@@ -50,24 +54,33 @@ export interface Quote {
   name: string;
   status: QuoteStatus;
   expirationDate?: string;
+  validUntil?: string; // Backend field name
   subtotal: number;
   discount?: number;
   discountPercent?: number;
   tax?: number;
   taxPercent?: number;
   shippingCost?: number;
-  total: number;
+  shippingHandling?: number; // Backend field name
+  total?: number; // Alias for backwards compatibility
+  totalPrice?: number; // Backend field name
   currency: string;
   terms?: string;
+  paymentTerms?: string; // Backend field name
   notes?: string;
+  description?: string; // Backend field name
   billingAddress?: Address;
   shippingAddress?: Address;
-  isSynced: boolean;
+  isSynced?: boolean;
   sentAt?: string;
+  sentDate?: string; // Backend field name
   viewedAt?: string;
   acceptedAt?: string;
+  acceptedDate?: string; // Backend field name
   rejectedAt?: string;
+  rejectedDate?: string; // Backend field name
   rejectionReason?: string;
+  rejectedReason?: string; // Backend field name
   lineItems: QuoteLineItem[];
   opportunity?: {
     id: string;
@@ -84,7 +97,13 @@ export interface Quote {
     lastName: string;
     email?: string;
   };
-  createdBy: string;
+  owner?: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  createdBy?: string;
+  ownerId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -133,9 +152,11 @@ export interface CreateQuoteLineItemDto {
 }
 
 export interface UpdateQuoteLineItemDto {
+  productName?: string;
   description?: string;
   quantity?: number;
   unitPrice?: number;
+  listPrice?: number;
   discount?: number;
   discountPercent?: number;
   taxPercent?: number;

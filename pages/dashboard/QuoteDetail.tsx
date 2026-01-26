@@ -89,9 +89,9 @@ const EditQuoteModal: React.FC<EditQuoteModalProps> = ({ isOpen, quote, onClose,
         expirationDate: formData.expirationDate || undefined,
         paymentTerms: formData.paymentTerms || undefined,
         notes: formData.notes || undefined,
-        discount: formData.discount || undefined,
-        tax: formData.tax || undefined,
-        shippingHandling: formData.shippingHandling || undefined,
+        discount: formData.discount ?? undefined, // Allow 0 as valid value
+        tax: formData.tax ?? undefined, // Allow 0 as valid value
+        shippingHandling: formData.shippingHandling ?? undefined, // Allow 0 as valid value
       });
       onClose();
     } catch (err) {
@@ -595,7 +595,7 @@ export function QuoteDetail() {
                   <span className="text-[10px] font-bold text-[#1A1A1A]/60 uppercase tracking-wider">Total</span>
                 </div>
                 <div className="text-xl font-semibold text-[#1A1A1A]">
-                  {formatCurrency(quote.total, quote.currency)}
+                  {formatCurrency(quote.total ?? quote.totalPrice, quote.currency)}
                 </div>
               </div>
 

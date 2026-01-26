@@ -73,6 +73,7 @@ export function QuoteLineItemsTable({
 
     try {
       const updateData: UpdateQuoteLineItemDto = {};
+      const currentItem = lineItems.find(item => item.id === editState.lineItemId);
 
       if (editState.field === 'productName') {
         updateData.productName = editState.value;
@@ -80,12 +81,14 @@ export function QuoteLineItemsTable({
         updateData.description = editState.value;
       } else if (editState.field === 'discount') {
         const numValue = parseFloat(editState.value) || 0;
-        if (editState.discountType === 'percent') {
-          updateData.discountPercent = numValue;
-          updateData.discount = 0; // Clear fixed discount
+        if (editState.discountType === 'percent' && currentItem) {
+          // Calculate fixed discount from percentage
+          // Discount is applied to (unitPrice * quantity)
+          const lineSubtotal = currentItem.unitPrice * currentItem.quantity;
+          const fixedDiscount = (lineSubtotal * numValue) / 100;
+          updateData.discount = Math.round(fixedDiscount * 100) / 100; // Round to 2 decimal places
         } else {
           updateData.discount = numValue;
-          updateData.discountPercent = 0; // Clear percent discount
         }
       } else {
         const numValue = parseFloat(editState.value) || 0;
@@ -116,15 +119,32 @@ export function QuoteLineItemsTable({
   };
 
   const handleStartDiscountEdit = (item: QuoteLineItem) => {
-    // Determine current discount type and value
-    if (item.discountPercent && item.discountPercent > 0) {
-      handleStartEdit(item.id, 'discount', item.discountPercent, 'percent');
-    } else if (item.discount && item.discount > 0) {
-      handleStartEdit(item.id, 'discount', item.discount, 'fixed');
+    // Calculate percentage from fixed discount for display
+    if (item.discount && item.discount > 0) {
+      const lineSubtotal = item.unitPrice * item.quantity;
+      const percentValue = lineSubtotal > 0 ? ((item.discount / lineSubtotal) * 100) : 0;
+      // Show as percentage if it's a round number, otherwise show as fixed
+      if (Math.abs(percentValue - Math.round(percentValue)) < 0.01) {
+        handleStartEdit(item.id, 'discount', Math.round(percentValue), 'percent');
+      } else {
+        handleStartEdit(item.id, 'discount', item.discount, 'fixed');
+      }
     } else {
       // Default to percent for new discounts
       handleStartEdit(item.id, 'discount', 0, 'percent');
     }
+  };
+
+  // Calculate discount percentage for display
+  const getDiscountDisplay = (item: QuoteLineItem): string => {
+    if (!item.discount || item.discount <= 0) return '—';
+    const lineSubtotal = item.unitPrice * item.quantity;
+    const percentValue = lineSubtotal > 0 ? ((item.discount / lineSubtotal) * 100) : 0;
+    // Show as percentage if it's a round number
+    if (Math.abs(percentValue - Math.round(percentValue)) < 0.01 && percentValue > 0) {
+      return `-${Math.round(percentValue)}%`;
+    }
+    return `-${formatCurrency(item.discount, currency)}`;
   };
 
   if (lineItems.length === 0) {
@@ -433,16 +453,12 @@ export function QuoteLineItemsTable({
                     disabled={readOnly}
                     className={cn(
                       'text-sm',
-                      item.discount || item.discountPercent ? 'text-[#93C01F] font-medium' : 'text-[#CCC]',
+                      item.discount && item.discount > 0 ? 'text-[#93C01F] font-medium' : 'text-[#CCC]',
                       !readOnly && 'hover:text-[#EAD07D] cursor-pointer'
                     )}
                     title={readOnly ? undefined : 'Click to edit discount'}
                   >
-                    {item.discountPercent && item.discountPercent > 0
-                      ? `-${item.discountPercent}%`
-                      : item.discount && item.discount > 0
-                      ? `-${formatCurrency(item.discount, currency)}`
-                      : '—'}
+                    {getDiscountDisplay(item)}
                   </button>
                 )}
               </div>
@@ -450,7 +466,7 @@ export function QuoteLineItemsTable({
               {/* Total */}
               <div className="col-span-2 flex items-center justify-end gap-2">
                 <span className="text-sm font-semibold text-[#1A1A1A]">
-                  {formatCurrency(item.total, currency)}
+                  {formatCurrency(item.totalPrice ?? item.total ?? 0, currency)}
                 </span>
 
                 {/* Actions */}

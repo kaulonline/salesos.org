@@ -21,7 +21,9 @@ export function QuoteSummary({ quote, compact = false }: QuoteSummaryProps) {
   const lineItemsCount = quote.lineItems?.length || 0;
   const hasDiscount = (quote.discount && quote.discount > 0) || (quote.discountPercent && quote.discountPercent > 0);
   const hasTax = (quote.tax && quote.tax > 0) || (quote.taxPercent && quote.taxPercent > 0);
-  const hasShipping = quote.shippingCost && quote.shippingCost > 0;
+  const shipping = quote.shippingCost ?? quote.shippingHandling ?? 0;
+  const hasShipping = shipping > 0;
+  const total = quote.total ?? quote.totalPrice ?? 0;
 
   if (compact) {
     return (
@@ -29,7 +31,7 @@ export function QuoteSummary({ quote, compact = false }: QuoteSummaryProps) {
         <div className="flex justify-between items-center">
           <span className="text-sm text-[#666]">Total</span>
           <span className="text-lg font-semibold text-[#1A1A1A]">
-            {formatCurrency(quote.total, quote.currency)}
+            {formatCurrency(total, quote.currency)}
           </span>
         </div>
       </div>
@@ -94,7 +96,7 @@ export function QuoteSummary({ quote, compact = false }: QuoteSummaryProps) {
               Shipping
             </span>
             <span className="text-sm font-medium text-[#1A1A1A]">
-              {formatCurrency(quote.shippingCost, quote.currency)}
+              {formatCurrency(shipping, quote.currency)}
             </span>
           </div>
         )}
@@ -106,7 +108,7 @@ export function QuoteSummary({ quote, compact = false }: QuoteSummaryProps) {
         <div className="flex justify-between items-center pt-1">
           <span className="text-base font-semibold text-[#1A1A1A]">Total</span>
           <span className="text-xl font-bold text-[#1A1A1A]">
-            {formatCurrency(quote.total, quote.currency)}
+            {formatCurrency(total, quote.currency)}
           </span>
         </div>
 

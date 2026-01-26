@@ -117,12 +117,12 @@ export const quotesApi = {
    * Update a line item
    */
   updateLineItem: async (
-    quoteId: string,
+    _quoteId: string, // Not used in URL but kept for API consistency
     lineItemId: string,
     data: UpdateQuoteLineItemDto
   ): Promise<QuoteLineItem> => {
     const response = await client.patch<QuoteLineItem>(
-      `/quotes/${quoteId}/line-items/${lineItemId}`,
+      `/quotes/line-items/${lineItemId}`,
       data
     );
     return response.data;
@@ -131,8 +131,8 @@ export const quotesApi = {
   /**
    * Delete a line item
    */
-  deleteLineItem: async (quoteId: string, lineItemId: string): Promise<void> => {
-    await client.delete(`/quotes/${quoteId}/line-items/${lineItemId}`);
+  deleteLineItem: async (_quoteId: string, lineItemId: string): Promise<void> => {
+    await client.delete(`/quotes/line-items/${lineItemId}`);
   },
 
   /**
