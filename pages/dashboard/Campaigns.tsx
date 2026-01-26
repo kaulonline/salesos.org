@@ -164,22 +164,23 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen, onClo
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[2rem] p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200 shadow-2xl">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-[2rem] w-full max-w-lg animate-in fade-in zoom-in duration-200 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-[#1A1A1A]">New Campaign</h2>
           <button onClick={onClose} className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:text-[#1A1A1A] hover:bg-[#F2F1EA] transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle size={16} />
-            {error}
-          </div>
-        )}
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-[#666] mb-1 block">Campaign Name *</label>
             <input
@@ -290,7 +291,8 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({ isOpen, onClo
               Create Campaign
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

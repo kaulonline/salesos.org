@@ -181,14 +181,15 @@ export function BulkActionsBar({
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setShowDeleteConfirm(false)}
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Delete {selectedCount} {entityName}{selectedCount !== 1 ? 's' : ''}?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              This action cannot be undone. All selected records will be permanently deleted.
-            </p>
-            <div className="flex justify-end gap-3">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete {selectedCount} {entityName}{selectedCount !== 1 ? 's' : ''}?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                This action cannot be undone. All selected records will be permanently deleted.
+              </p>
+              <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-900"
@@ -207,6 +208,7 @@ export function BulkActionsBar({
                 )}
                 Delete
               </button>
+              </div>
             </div>
           </div>
         </>
@@ -219,11 +221,13 @@ export function BulkActionsBar({
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setShowAssignModal(false)}
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Assign {selectedCount} {entityName}{selectedCount !== 1 ? 's' : ''} to
-            </h3>
-            <div className="max-h-64 overflow-y-auto space-y-1">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 pb-4 shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Assign {selectedCount} {entityName}{selectedCount !== 1 ? 's' : ''} to
+              </h3>
+            </div>
+            <div className="px-6 overflow-y-auto flex-1 space-y-1">
               {users.map((user) => (
                 <button
                   key={user.id}
@@ -238,7 +242,7 @@ export function BulkActionsBar({
                 </button>
               ))}
             </div>
-            <div className="mt-4 flex justify-end">
+            <div className="p-6 pt-4 flex justify-end shrink-0">
               <button
                 onClick={() => setShowAssignModal(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-900"

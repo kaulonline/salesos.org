@@ -101,11 +101,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto animate-in zoom-in-95 fade-in duration-200"
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-black/5 flex items-start justify-between gap-4">
+          <div className="px-6 py-5 border-b border-black/5 flex items-start justify-between gap-4 shrink-0">
             <div className="flex items-start gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                 task.status === 'COMPLETED'
@@ -145,7 +145,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="px-6 py-5 space-y-5">
+          <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
             {/* Description */}
             {task.description && (
               <div>
@@ -224,7 +224,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-black/5 flex items-center gap-3">
+          <div className="px-6 py-4 border-t border-black/5 flex items-center gap-3 shrink-0">
             {task.status !== 'COMPLETED' && onMarkComplete && (
               <button
                 onClick={() => {

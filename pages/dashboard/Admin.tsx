@@ -30,7 +30,8 @@ import {
 } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import type { LicenseStatus, LicenseTier, PreGeneratedKeyStatus } from '../../src/api/licensing';
-import type { Coupon, Payment, DiscountType, CouponDuration, PaymentStatus, GatewayConfig, PaymentGateway } from '../../src/api/payments';
+import type { Coupon, Payment, DiscountType, CouponDuration, PaymentStatus, GatewayConfig, PaymentGateway, StripeSyncResult } from '../../src/api/payments';
+import paymentsApi from '../../src/api/payments';
 
 type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit';
 type BillingSubTab = 'overview' | 'plans' | 'licenses' | 'keys' | 'coupons' | 'transactions';
@@ -256,6 +257,30 @@ export const Admin: React.FC = () => {
     testMode: true,
     isActive: false,
   });
+
+  // Stripe sync state
+  const [syncingStripe, setSyncingStripe] = useState(false);
+  const [syncResult, setSyncResult] = useState<StripeSyncResult | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const handleStripeSync = async () => {
+    setSyncingStripe(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const result = await paymentsApi.syncStripeData();
+      setSyncResult(result);
+      // Refetch data after sync
+      if (result.subscriptionsCreated > 0 || result.invoicesCreated > 0) {
+        // Refresh transactions and dashboard data
+        window.location.reload();
+      }
+    } catch (error: any) {
+      setSyncError(error.response?.data?.message || error.message || 'Sync failed');
+    } finally {
+      setSyncingStripe(false);
+    }
+  };
 
   // Coupon form state
   const [showCreateCouponModal, setShowCreateCouponModal] = useState(false);
@@ -1996,6 +2021,106 @@ export const Admin: React.FC = () => {
             )}
           </Card>
 
+          {/* Data Sync Card */}
+          <Card className="p-6">
+            <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+              <RefreshCw size={18} className="text-[#EAD07D]" />
+              Data Sync
+            </h3>
+            <p className="text-sm text-[#666] mb-6">
+              Sync subscription and invoice data from Stripe to resolve any discrepancies.
+            </p>
+
+            <div className="border border-[#F2F1EA] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#635BFF] flex items-center justify-center p-2">
+                    <svg viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M59.64 12.776c0-4.12-1.996-7.372-5.816-7.372-3.836 0-6.156 3.252-6.156 7.34 0 4.844 2.74 7.292 6.672 7.292 1.916 0 3.364-.436 4.46-1.048v-3.22c-1.096.548-2.356.888-3.956.888-1.568 0-2.96-.548-3.14-2.452h7.912c0-.208.024-1.044.024-1.428zm-8-1.54c0-1.82 1.112-2.58 2.128-2.58.984 0 2.032.76 2.032 2.58h-4.16zM41.32 5.404c-1.584 0-2.604.744-3.172 1.26l-.212-.996h-3.54v19.06l4.024-.856.008-4.628c.584.424 1.444 1.024 2.868 1.024 2.9 0 5.54-2.332 5.54-7.468-.016-4.696-2.692-7.396-5.516-7.396zm-.972 11.372c-.956 0-1.52-.34-1.912-.76l-.016-6.004c.424-.468.996-.792 1.928-.792 1.476 0 2.496 1.656 2.496 3.772 0 2.164-1.004 3.784-2.496 3.784zM28.144 4.24l4.04-.868V0l-4.04.856v3.384zM28.144 5.66h4.04v14.048h-4.04V5.66zM23.78 6.9l-.252-1.24h-3.48v14.048h4.024V10.06c.952-1.24 2.56-1.012 3.064-.836V5.66c-.52-.192-2.42-.548-3.356 1.24zM15.884 1.74l-3.928.836-.016 12.864c0 2.376 1.784 4.128 4.16 4.128 1.316 0 2.28-.244 2.812-.532v-3.268c-.516.208-3.06.948-3.06-1.428V8.932h3.06V5.66h-3.06l.032-3.92zM4.04 10.284c0-.632.52-.872 1.38-.872 1.236 0 2.796.372 4.032 1.04V6.596c-1.348-.54-2.68-.752-4.032-.752C2.168 5.844 0 7.532 0 10.476c0 4.56 6.276 3.832 6.276 5.8 0 .748-.652 1.004-1.564 1.004-1.356 0-3.088-.556-4.46-1.308v3.912c1.52.656 3.06.936 4.46.936 3.324 0 5.608-1.64 5.608-4.632-.016-4.924-6.32-4.052-6.32-5.904h.04z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">Sync from Stripe</h4>
+                    <p className="text-xs text-[#666]">Import subscriptions, customers & invoices</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleStripeSync}
+                  disabled={syncingStripe}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#635BFF] hover:bg-[#5147e6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {syncingStripe ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={16} />
+                      Sync Now
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Sync Results */}
+              {syncResult && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle size={18} className="text-green-600" />
+                    <span className="font-medium text-green-800">Sync Completed</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-green-600 font-medium">{syncResult.subscriptionsProcessed}</p>
+                      <p className="text-green-700 text-xs">Subscriptions Processed</p>
+                    </div>
+                    <div>
+                      <p className="text-green-600 font-medium">{syncResult.subscriptionsCreated}</p>
+                      <p className="text-green-700 text-xs">Subscriptions Created</p>
+                    </div>
+                    <div>
+                      <p className="text-green-600 font-medium">{syncResult.invoicesProcessed}</p>
+                      <p className="text-green-700 text-xs">Invoices Processed</p>
+                    </div>
+                    <div>
+                      <p className="text-green-600 font-medium">{syncResult.invoicesCreated}</p>
+                      <p className="text-green-700 text-xs">Invoices Created</p>
+                    </div>
+                  </div>
+                  {syncResult.errors.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <p className="text-amber-700 text-xs font-medium mb-1">Warnings ({syncResult.errors.length}):</p>
+                      <ul className="text-xs text-amber-600 space-y-1">
+                        {syncResult.errors.slice(0, 3).map((err, i) => (
+                          <li key={i} className="truncate">{err}</li>
+                        ))}
+                        {syncResult.errors.length > 3 && (
+                          <li className="text-amber-500">...and {syncResult.errors.length - 3} more</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sync Error */}
+              {syncError && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <XCircle size={18} className="text-red-600" />
+                    <span className="font-medium text-red-800">Sync Failed</span>
+                  </div>
+                  <p className="text-sm text-red-600 mt-2">{syncError}</p>
+                </div>
+              )}
+
+              <p className="text-xs text-[#999] mt-4">
+                Use this if subscriptions or invoices are missing from the dashboard. This will fetch all data from Stripe and update local records.
+              </p>
+            </div>
+          </Card>
+
           {/* Gateway Configuration Modal */}
           {editingGateway && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -2229,8 +2354,8 @@ export const Admin: React.FC = () => {
       {showCreatePlanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowCreatePlanModal(false); setEditingPlan(null); }} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-0 shrink-0">
               <h3 className="text-lg font-bold text-[#1A1A1A]">
                 {editingPlan ? 'Edit Plan' : 'Create New Plan'}
               </h3>
@@ -2239,7 +2364,7 @@ export const Admin: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Name & Slug */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -2668,8 +2793,8 @@ export const Admin: React.FC = () => {
       {showCreateCouponModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateCouponModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-[#F2F1EA] shrink-0">
               <h3 className="text-lg font-bold text-[#1A1A1A]">
                 {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
               </h3>
@@ -2678,6 +2803,7 @@ export const Admin: React.FC = () => {
               </button>
             </div>
 
+            <div className="p-6 overflow-y-auto flex-1">
             <div className="space-y-4">
               {/* Code */}
               <div>
@@ -2816,8 +2942,9 @@ export const Admin: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA] shrink-0">
               <button
                 onClick={() => setShowCreateCouponModal(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"

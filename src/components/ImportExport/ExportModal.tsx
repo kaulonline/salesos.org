@@ -147,9 +147,9 @@ export function ExportModal({
         aria-modal="true"
         aria-labelledby="export-modal-title"
       >
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
             <div>
               <h2 id="export-modal-title" className="text-lg font-semibold text-gray-900">
                 Export {entityLabels[entityType]}
@@ -170,7 +170,7 @@ export function ExportModal({
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto flex-1">
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -292,7 +292,7 @@ export function ExportModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
             <button
               onClick={handleClose}
               className="px-4 py-2 text-gray-600 hover:text-gray-900"

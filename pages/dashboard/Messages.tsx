@@ -41,13 +41,15 @@ const CreateChannelModal: React.FC<{
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-          <X size={20} />
-        </button>
-        <h2 className="text-xl font-semibold mb-4">Create Channel</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
+          <h2 className="text-xl font-semibold">Create Channel</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="px-6 overflow-y-auto flex-1 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Channel Name</label>
               <input
@@ -93,7 +95,7 @@ const CreateChannelModal: React.FC<{
               </div>
             </div>
           </div>
-          <div className="mt-6 flex gap-3">
+          <div className="p-6 pt-4 flex gap-3 shrink-0">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors">
               Cancel
             </button>
@@ -131,23 +133,27 @@ const UserSearchModal: React.FC<{
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-          <X size={20} />
-        </button>
-        <h2 className="text-xl font-semibold mb-4">New Message</h2>
-        <div className="relative mb-4">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EAD07D] focus:border-transparent"
-            autoFocus
-          />
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
+          <h2 className="text-xl font-semibold">New Message</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
         </div>
-        <div className="max-h-64 overflow-y-auto">
+        <div className="px-6 pb-4 shrink-0">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EAD07D] focus:border-transparent"
+              autoFocus
+            />
+          </div>
+        </div>
+        <div className="px-6 pb-6 overflow-y-auto flex-1">
           {searching ? (
             <div className="py-8 text-center text-gray-500">Searching...</div>
           ) : results.length === 0 ? (

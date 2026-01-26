@@ -1131,8 +1131,8 @@ export const DealDetail: React.FC = () => {
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-0 shrink-0">
               <h3 className="text-lg font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <Pencil size={18} className="text-[#EAD07D]" />
                 Edit Opportunity
@@ -1145,7 +1145,7 @@ export const DealDetail: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Name */}
               <div>
                 <label className="block text-xs font-medium text-[#888] mb-1.5">Opportunity Name</label>
@@ -1250,7 +1250,7 @@ export const DealDetail: React.FC = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 mt-6 pt-4 border-t border-[#F2F1EA]">
+            <div className="flex gap-3 p-6 pt-4 border-t border-[#F2F1EA] shrink-0">
               <button
                 onClick={() => setShowEditModal(false)}
                 className="flex-1 px-4 py-2.5 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors rounded-xl hover:bg-[#F8F8F6]"
@@ -1274,8 +1274,9 @@ export const DealDetail: React.FC = () => {
       {showCloseWonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCloseWonModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
               <Check size={24} className="text-emerald-600" />
             </div>
             <h3 className="text-lg font-semibold text-[#1A1A1A] text-center mb-2">Mark as Won</h3>
@@ -1297,6 +1298,7 @@ export const DealDetail: React.FC = () => {
                 {stageUpdating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Confirm
               </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1306,8 +1308,9 @@ export const DealDetail: React.FC = () => {
       {showCloseLostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCloseLostModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
               <X size={24} className="text-red-500" />
             </div>
             <h3 className="text-lg font-semibold text-[#1A1A1A] text-center mb-2">Mark as Lost</h3>
@@ -1339,6 +1342,7 @@ export const DealDetail: React.FC = () => {
                 {stageUpdating ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
                 Confirm
               </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1348,15 +1352,16 @@ export const DealDetail: React.FC = () => {
       {showAddContactModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddContactModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="flex items-center gap-3 mb-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center gap-3 p-6 pb-0 shrink-0">
               <div className="w-10 h-10 rounded-full bg-[#F2F1EA] flex items-center justify-center">
                 <UserPlus size={18} className="text-[#666]" />
               </div>
               <h3 className="text-lg font-semibold text-[#1A1A1A]">Add to Committee</h3>
             </div>
 
-            {contactsLoading ? (
+            <div className="p-6 overflow-y-auto flex-1">
+              {contactsLoading ? (
               <div className="py-8 flex justify-center">
                 <Loader2 size={24} className="animate-spin text-[#999]" />
               </div>
@@ -1430,7 +1435,8 @@ export const DealDetail: React.FC = () => {
                   </button>
                 </div>
               </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}

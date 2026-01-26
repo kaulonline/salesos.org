@@ -424,22 +424,23 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-[#1A1A1A]">New Pipeline</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle size={16} />
-            {error}
-          </div>
-        )}
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-[#666] mb-1 block">Pipeline Name *</label>
             <input
@@ -484,7 +485,8 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = ({
               )}
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -506,24 +508,23 @@ const DeletePipelineModal: React.FC<DeletePipelineModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-red-600">Delete Pipeline</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
         </div>
 
-        <div className="mb-6">
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
           <p className="text-[#666] mb-4">
             Are you sure you want to delete <strong className="text-[#1A1A1A]">{pipeline.name}</strong>?
           </p>
-          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700">
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-6">
             <strong>Warning:</strong> This action cannot be undone. All deals in this pipeline will need to be reassigned to another pipeline.
           </div>
-        </div>
 
-        <div className="flex gap-3">
+          <div className="flex gap-3">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
@@ -547,6 +548,7 @@ const DeletePipelineModal: React.FC<DeletePipelineModalProps> = ({
               </>
             )}
           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -573,19 +575,19 @@ const DuplicatePipelineModal: React.FC<DuplicatePipelineModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-[#1A1A1A]">Duplicate Pipeline</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
         </div>
 
-        <div className="mb-6">
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
           <p className="text-[#666] mb-4">
             Create a copy of <strong className="text-[#1A1A1A]">{pipeline.name}</strong> with all its stages.
           </p>
-          <div>
+          <div className="mb-6">
             <label className="text-xs font-medium text-[#666] mb-1 block">New Pipeline Name</label>
             <input
               type="text"
@@ -595,9 +597,8 @@ const DuplicatePipelineModal: React.FC<DuplicatePipelineModalProps> = ({
               autoFocus
             />
           </div>
-        </div>
 
-        <div className="flex gap-3">
+          <div className="flex gap-3">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
@@ -621,6 +622,7 @@ const DuplicatePipelineModal: React.FC<DuplicatePipelineModalProps> = ({
               </>
             )}
           </button>
+          </div>
         </div>
       </div>
     </div>

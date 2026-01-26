@@ -478,8 +478,8 @@ export const Calendar: React.FC = () => {
       {/* New Event Modal */}
       {showNewEventModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
               <h2 className="text-xl font-medium text-[#1A1A1A]">New Event</h2>
               <button
                 onClick={() => setShowNewEventModal(false)}
@@ -488,7 +488,7 @@ export const Calendar: React.FC = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-sm font-medium text-[#666] mb-1">Event Title *</label>
                 <input

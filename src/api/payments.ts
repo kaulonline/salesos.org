@@ -9,6 +9,21 @@ export type PaymentStatus = 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 
 export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
 export type CouponDuration = 'ONCE' | 'REPEATING' | 'FOREVER';
 
+// Stripe Sync Result Type
+export interface StripeSyncResult {
+  customersProcessed: number;
+  customersCreated: number;
+  customersUpdated: number;
+  subscriptionsProcessed: number;
+  subscriptionsCreated: number;
+  subscriptionsUpdated: number;
+  invoicesProcessed: number;
+  invoicesCreated: number;
+  paymentsProcessed: number;
+  paymentsCreated: number;
+  errors: string[];
+}
+
 export interface BillingAddress {
   line1?: string;
   line2?: string;
@@ -224,6 +239,45 @@ export interface CouponValidation {
   discountAmount?: number;
 }
 
+export interface UpgradePreview {
+  currentPlan: {
+    id?: string;
+    name?: string;
+    price: number;
+    billingCycle: 'monthly' | 'yearly';
+  };
+  newPlan: {
+    id: string;
+    name: string;
+    price: number;
+    billingCycle: 'monthly' | 'yearly';
+  };
+  proration: {
+    unusedCredit: number;
+    newPlanCharge: number;
+    netAmount: number;
+    remainingDays: number;
+    lines: Array<{
+      description: string;
+      amount: number;
+      quantity: number;
+    }>;
+  };
+  isUpgrade: boolean;
+  message: string;
+}
+
+export interface ExistingSubscriptionError {
+  message: string;
+  code: 'EXISTING_SUBSCRIPTION';
+  subscriptionId: string;
+  currentPlan: {
+    id: string;
+    name: string;
+    tier: string;
+  };
+}
+
 export interface PaymentsDashboard {
   totalRevenue: number;
   mrr: number;
@@ -310,8 +364,36 @@ export const paymentsApi = {
   changeSubscriptionPlan: async (id: string, data: {
     newLicenseTypeId: string;
     billingCycle?: 'monthly' | 'yearly';
-  }): Promise<Subscription> => {
-    const response = await client.post<Subscription>(`/payments/subscriptions/${id}/change-plan`, data);
+  }): Promise<Subscription & {
+    invoice?: {
+      id: string;
+      invoiceNumber: string;
+      amountDue: number;
+      amountPaid: number;
+      status: InvoiceStatus;
+      hostedInvoiceUrl?: string;
+      pdfUrl?: string;
+    };
+  }> => {
+    const response = await client.post<Subscription & {
+      invoice?: {
+        id: string;
+        invoiceNumber: string;
+        amountDue: number;
+        amountPaid: number;
+        status: InvoiceStatus;
+        hostedInvoiceUrl?: string;
+        pdfUrl?: string;
+      };
+    }>(`/payments/subscriptions/${id}/change-plan`, data);
+    return response.data;
+  },
+
+  previewSubscriptionChange: async (id: string, params: {
+    newLicenseTypeId: string;
+    billingCycle?: 'monthly' | 'yearly';
+  }): Promise<UpgradePreview> => {
+    const response = await client.get<UpgradePreview>(`/payments/subscriptions/${id}/upgrade-preview`, { params });
     return response.data;
   },
 
@@ -483,6 +565,12 @@ export const adminPaymentsApi = {
 
   testGatewayConnection: async (provider: PaymentGateway): Promise<{ success: boolean; message: string }> => {
     const response = await client.post<{ success: boolean; message: string }>(`/admin/payments/gateways/${provider}/test`);
+    return response.data;
+  },
+
+  // Stripe Sync
+  syncStripeData: async (): Promise<StripeSyncResult> => {
+    const response = await client.post<StripeSyncResult>('/admin/payments/sync/stripe');
     return response.data;
   },
 };

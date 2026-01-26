@@ -103,9 +103,17 @@ export const PricingPage: React.FC = () => {
       if (session.url) {
         window.location.href = session.url;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
-      setCouponError('Failed to start checkout. Please try again.');
+
+      // Handle existing subscription error - redirect to subscription page with upgrade params
+      const errorData = error?.response?.data;
+      if (errorData?.code === 'EXISTING_SUBSCRIPTION') {
+        navigate(`/dashboard/subscription?upgrade=true&targetPlan=${licenseType.id}&billingCycle=${billingCycle === 'annual' ? 'yearly' : 'monthly'}`);
+        return;
+      }
+
+      setCouponError(errorData?.message || 'Failed to start checkout. Please try again.');
       setSelectedPlan(null);
     }
   };
@@ -281,8 +289,6 @@ export const PricingPage: React.FC = () => {
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               Processing...
             </>
-          ) : plan.tier === 'ENTERPRISE' ? (
-            'Contact Sales'
           ) : (
             'Start Free Trial'
           )}

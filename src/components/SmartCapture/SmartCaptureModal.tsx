@@ -121,9 +121,9 @@ export function SmartCaptureModal({ isOpen, onClose }: SmartCaptureModalProps) {
         aria-describedby="smart-capture-description"
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg z-50"
       >
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A]">
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center" aria-hidden="true">
                 <Sparkles className="w-4 h-4 text-[#EAD07D]" />
@@ -144,7 +144,7 @@ export function SmartCaptureModal({ isOpen, onClose }: SmartCaptureModalProps) {
           </div>
 
           {/* Content */}
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto flex-1">
             {!capturedData ? (
               <>
                 {/* Mode Tabs */}

@@ -102,17 +102,17 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
     try {
       // Fetch data from all entities in parallel
-      const [leadsRes, contactsRes, accountsRes, oppsRes] = await Promise.all([
-        leadsApi.getAll().catch(() => ({ leads: [] })),
-        contactsApi.getAll().catch(() => ({ contacts: [] })),
-        accountsApi.getAll().catch(() => ({ accounts: [] })),
-        opportunitiesApi.getAll().catch(() => ({ opportunities: [] })),
+      const [leadsData, contactsData, accountsData, oppsData] = await Promise.all([
+        leadsApi.getAll().catch(() => []),
+        contactsApi.getAll().catch(() => []),
+        accountsApi.getAll().catch(() => []),
+        opportunitiesApi.getAll().catch(() => []),
       ]);
 
       const allResults: SearchResult[] = [];
 
       // Search leads
-      const leads = (leadsRes.leads || []) as Lead[];
+      const leads = (leadsData || []) as Lead[];
       leads
         .filter(lead =>
           lead.firstName?.toLowerCase().includes(q) ||
@@ -133,7 +133,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
         });
 
       // Search contacts
-      const contacts = (contactsRes.contacts || []) as Contact[];
+      const contacts = (contactsData || []) as Contact[];
       contacts
         .filter(contact =>
           contact.firstName?.toLowerCase().includes(q) ||
@@ -154,7 +154,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
         });
 
       // Search accounts
-      const accounts = (accountsRes.accounts || []) as Account[];
+      const accounts = (accountsData || []) as Account[];
       accounts
         .filter(account =>
           account.name?.toLowerCase().includes(q) ||
@@ -174,7 +174,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
         });
 
       // Search opportunities
-      const opportunities = (oppsRes.opportunities || []) as Opportunity[];
+      const opportunities = (oppsData || []) as Opportunity[];
       opportunities
         .filter(opp =>
           opp.name?.toLowerCase().includes(q) ||

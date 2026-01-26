@@ -199,22 +199,23 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-[#1A1A1A]">New Opportunity</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle size={16} />
-            {error}
-          </div>
-        )}
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-[#666] mb-1 block">Opportunity Name *</label>
             <input
@@ -310,7 +311,8 @@ const CreateDealModal: React.FC<CreateDealModalProps> = ({ isOpen, onClose, onCr
               {loading ? 'Creating...' : 'Create Opportunity'}
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -795,36 +797,38 @@ export const Deals: React.FC = () => {
       {/* Close Lost Modal */}
       {showCloseLostModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-8 pb-0 shrink-0">
               <h2 className="text-2xl font-medium text-[#1A1A1A]">Mark Opportunity as Lost</h2>
               <button onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }} className="text-[#666] hover:text-[#1A1A1A]">
                 <X size={24} />
               </button>
             </div>
-            <div className="mb-6">
-              <label className="text-xs font-medium text-[#666] mb-1 block">Reason for Loss *</label>
-              <textarea
-                value={closeLostReason}
-                onChange={(e) => setCloseLostReason(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none min-h-[100px]"
-                placeholder="e.g., Lost to competitor, budget constraints, timing..."
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleCloseLost(showCloseLostModal)}
-                disabled={!closeLostReason.trim()}
-                className="flex-1 px-4 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Mark as Lost
-              </button>
+            <div className="p-8 pt-6 overflow-y-auto flex-1">
+              <div className="mb-6">
+                <label className="text-xs font-medium text-[#666] mb-1 block">Reason for Loss *</label>
+                <textarea
+                  value={closeLostReason}
+                  onChange={(e) => setCloseLostReason(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none min-h-[100px]"
+                  placeholder="e.g., Lost to competitor, budget constraints, timing..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowCloseLostModal(null); setCloseLostReason(''); }}
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-[#666] font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleCloseLost(showCloseLostModal)}
+                  disabled={!closeLostReason.trim()}
+                  className="flex-1 px-4 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Mark as Lost
+                </button>
+              </div>
             </div>
           </div>
         </div>

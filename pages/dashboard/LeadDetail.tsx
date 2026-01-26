@@ -762,8 +762,8 @@ export const LeadDetail: React.FC = () => {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
               <h2 className="text-xl font-medium text-[#1A1A1A]">Edit Lead</h2>
               <button
                 onClick={() => setShowEditModal(false)}
@@ -772,7 +772,7 @@ export const LeadDetail: React.FC = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#666] mb-1">First Name</label>
@@ -872,7 +872,7 @@ export const LeadDetail: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-100 shrink-0">
               <button
                 onClick={() => setShowEditModal(false)}
                 className="px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
@@ -895,8 +895,8 @@ export const LeadDetail: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="p-6">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                 <Trash2 size={24} className="text-red-600" />
               </div>
@@ -927,8 +927,8 @@ export const LeadDetail: React.FC = () => {
       {/* Convert Modal */}
       {showConvertModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
               <h2 className="text-xl font-medium text-[#1A1A1A]">Convert Lead</h2>
               <button
                 onClick={() => setShowConvertModal(false)}
@@ -937,7 +937,7 @@ export const LeadDetail: React.FC = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               <p className="text-[#666] mb-6">
                 Convert <strong>{fullName}</strong> into CRM records. Select what to create:
               </p>
@@ -980,7 +980,7 @@ export const LeadDetail: React.FC = () => {
                 </label>
               </div>
             </div>
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-100 shrink-0">
               <button
                 onClick={() => setShowConvertModal(false)}
                 className="px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"

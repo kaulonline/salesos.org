@@ -78,22 +78,23 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-lg animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-8 pb-0 shrink-0">
           <h2 className="text-2xl font-medium text-[#1A1A1A]">New Lead</h2>
           <button onClick={onClose} className="text-[#666] hover:text-[#1A1A1A]">
             <X size={24} />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle size={16} />
-            {error}
-          </div>
-        )}
+        <div className="p-8 pt-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-[#666] mb-1 block">First Name *</label>
@@ -189,7 +190,8 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onCr
               {loading ? 'Creating...' : 'Create Lead'}
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
