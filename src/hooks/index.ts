@@ -80,6 +80,21 @@ export {
 export { useCommandCenter } from './useCommandCenter';
 export { useAIInsights, useDealInsights, useLeadInsights } from './useAIInsights';
 export { useSmartCapture } from './useSmartCapture';
+export { useAgentAlerts, useAgentQueue, useAgentTrigger, agentAlertKeys } from './useAgentAlerts';
+
+// Knowledge Base / PageIndex hooks
+export {
+  usePageIndexHealth,
+  usePageIndexDocuments,
+  usePageIndexDocument,
+  usePageIndexStatus,
+  useUploadDocument,
+  useDeleteDocument,
+  useSearchDocument,
+  useSearchMutation,
+  useSearchAllMutation,
+  pageIndexKeys,
+} from './usePageIndex';
 export {
   useMeetingBriefing,
   useMeetingAnalysis,

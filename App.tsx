@@ -95,6 +95,15 @@ const Orders = lazy(() => import('./pages/dashboard/Orders'));
 const OrderDetail = lazy(() => import('./pages/dashboard/OrderDetail'));
 const CPQAnalytics = lazy(() => import('./pages/dashboard/CPQAnalytics'));
 
+// Phase 5 Advanced CRM Features
+const Alerts = lazy(() => import('./pages/dashboard/Alerts').then(m => ({ default: m.Alerts })));
+const Forecast = lazy(() => import('./pages/dashboard/Forecast').then(m => ({ default: m.Forecast })));
+const AccountHealth = lazy(() => import('./pages/dashboard/AccountHealth').then(m => ({ default: m.AccountHealth })));
+const Territories = lazy(() => import('./pages/dashboard/Territories').then(m => ({ default: m.Territories })));
+const WinLoss = lazy(() => import('./pages/dashboard/WinLoss').then(m => ({ default: m.WinLoss })));
+const Playbooks = lazy(() => import('./pages/dashboard/Playbooks').then(m => ({ default: m.Playbooks })));
+const ConversationIntelligence = lazy(() => import('./pages/dashboard/ConversationIntelligence').then(m => ({ default: m.ConversationIntelligence })));
+
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
 const CheckoutCancel = lazy(() => import('./pages/billing/Cancel').then(m => ({ default: m.CheckoutCancel })));
@@ -511,6 +520,55 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <CPQAnalytics />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="alerts" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Alerts />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="forecast" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Forecast />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="account-health" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <AccountHealth />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="territories" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Territories />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="win-loss" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <WinLoss />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="playbooks" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Playbooks />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="conversations" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <ConversationIntelligence />
                 </Suspense>
               </PageErrorBoundary>
             } />

@@ -7,6 +7,7 @@ import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/Gl
 import { useAuth } from '../src/context/AuthContext';
 import { FloatingChat } from '../components/FloatingChat';
 import { NotificationDropdown } from '../src/components/NotificationDropdown';
+import { AlertsDropdown } from '../src/components/AlertsDropdown';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -216,6 +217,7 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
           
+          <AlertsDropdown />
           <NotificationDropdown />
 
           {/* User Menu */}
