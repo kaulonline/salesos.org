@@ -59,7 +59,7 @@ export const authApi = {
   /**
    * Reset password with token
    */
-  resetPassword: async (data: { token: string; password: string }): Promise<void> => {
+  resetPassword: async (data: { token: string; newPassword: string }): Promise<void> => {
     await client.post('/auth/reset-password', data);
   },
 

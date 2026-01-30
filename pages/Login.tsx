@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Command, Eye, EyeOff, X, Apple, AlertCircle } from 'lucide-react';
+import { Command, Eye, EyeOff, X, Apple, AlertCircle, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../src/context/AuthContext';
+import { authApi } from '../src/api/auth';
 
 // Custom Google Icon component since Lucide doesn't have the colored G
 const GoogleIcon = () => (
@@ -14,6 +15,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// OAuth status interface
+interface OAuthStatus {
+  google: { enabled: boolean; configured: boolean };
+  apple: { enabled: boolean; configured: boolean };
+}
+
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +31,17 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
 
+  // OAuth status state
+  const [oauthStatus, setOauthStatus] = useState<OAuthStatus | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(true);
+
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -31,6 +49,24 @@ export const Login: React.FC = () => {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+
+  // Fetch OAuth status on mount
+  useEffect(() => {
+    const fetchOAuthStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/oauth-status`);
+        if (response.ok) {
+          const data = await response.json();
+          setOauthStatus(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch OAuth status:', err);
+      } finally {
+        setOauthLoading(false);
+      }
+    };
+    fetchOAuthStatus();
+  }, []);
 
   // Clear errors when inputs change
   useEffect(() => {
@@ -58,6 +94,55 @@ export const Login: React.FC = () => {
     } catch {
       // Error is handled by AuthContext
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+
+    if (!forgotEmail.trim()) {
+      setForgotError('Email is required');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      await authApi.forgotPassword(forgotEmail.trim());
+      setForgotSuccess(true);
+    } catch (err: any) {
+      setForgotError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleOAuthLogin = (provider: 'google' | 'apple') => {
+    // Check if provider is enabled
+    const providerStatus = oauthStatus?.[provider];
+    if (!providerStatus?.enabled) {
+      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      if (!providerStatus?.configured) {
+        alert(`${providerName} login is being configured. Please use email login for now.`);
+      } else {
+        alert(`${providerName} login is currently disabled. Please use email login.`);
+      }
+      return;
+    }
+
+    // OAuth endpoints - redirect to the OAuth provider
+    const oauthUrls: Record<string, string> = {
+      google: `${import.meta.env.VITE_API_URL || ''}/api/auth/google`,
+      apple: `${import.meta.env.VITE_API_URL || ''}/api/auth/apple`,
+    };
+
+    window.location.href = oauthUrls[provider];
+  };
+
+  const closeForgotPassword = () => {
+    setShowForgotPassword(false);
+    setForgotEmail('');
+    setForgotSuccess(false);
+    setForgotError('');
   };
 
   const displayError = localError || error;
@@ -150,26 +235,45 @@ export const Login: React.FC = () => {
             </Button>
           </form>
 
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <button
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
-              disabled={isLoading}
-            >
-              <Apple size={18} /> Apple
-            </button>
-            <button
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
-              disabled={isLoading}
-            >
-              <GoogleIcon /> Google
-            </button>
-          </div>
+          {/* OAuth Buttons - Only show if at least one provider is configured */}
+          {!oauthLoading && (oauthStatus?.google.configured || oauthStatus?.apple.configured) && (
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              {oauthStatus?.apple.configured && (
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('apple')}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50 ${!oauthStatus.apple.enabled ? 'opacity-60' : ''}`}
+                  disabled={isLoading}
+                  title={!oauthStatus.apple.enabled ? 'Apple login is currently disabled' : 'Sign in with Apple'}
+                >
+                  <Apple size={18} /> Apple
+                </button>
+              )}
+              {oauthStatus?.google.configured && (
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50 ${!oauthStatus.google.enabled ? 'opacity-60' : ''}`}
+                  disabled={isLoading}
+                  title={!oauthStatus.google.enabled ? 'Google login is currently disabled' : 'Sign in with Google'}
+                >
+                  <GoogleIcon /> Google
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-between items-center mt-12 text-sm">
             <div className="text-[#666]">
               Don't have an account? <Link to="/signup" className="text-[#1A1A1A] underline font-medium hover:text-[#EAD07D] transition-colors">Sign up</Link>
             </div>
-            <Link to="/terms" className="text-[#666] underline hover:text-[#1A1A1A] transition-colors">Forgot Password?</Link>
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-[#666] underline hover:text-[#1A1A1A] transition-colors"
+            >
+              Forgot Password?
+            </button>
           </div>
         </div>
       </div>
@@ -237,6 +341,97 @@ export const Login: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-8 pb-0">
+              <h2 className="text-2xl font-medium text-[#1A1A1A]">Reset Password</h2>
+              <button
+                onClick={closeForgotPassword}
+                className="text-[#666] hover:text-[#1A1A1A] transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-8 pt-6">
+              {forgotSuccess ? (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 rounded-full bg-[#93C01F]/20 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={32} className="text-[#93C01F]" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">Check your email</h3>
+                  <p className="text-[#666] text-sm mb-6">
+                    We've sent password reset instructions to <strong>{forgotEmail}</strong>
+                  </p>
+                  <button
+                    onClick={closeForgotPassword}
+                    className="px-6 py-3 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium"
+                  >
+                    Back to Login
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword}>
+                  <p className="text-[#666] text-sm mb-6">
+                    Enter your email address and we'll send you instructions to reset your password.
+                  </p>
+
+                  {forgotError && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
+                      <AlertCircle size={20} />
+                      <span className="text-sm">{forgotError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5 mb-6">
+                    <label className="text-xs font-medium text-[#666] ml-1">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#999]" size={18} />
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="w-full pl-12 pr-6 py-4 rounded-full bg-[#F8F8F6] border-transparent focus:bg-white focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium"
+                        disabled={forgotLoading}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={closeForgotPassword}
+                      className="flex-1 py-3.5 rounded-full border border-black/10 text-[#666] hover:bg-[#F8F8F6] transition-colors font-medium"
+                      disabled={forgotLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3.5 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 size={18} className="animate-spin" />
+                          Sending...
+                        </span>
+                      ) : (
+                        'Send Reset Link'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

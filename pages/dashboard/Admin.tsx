@@ -273,6 +273,39 @@ export const Admin: React.FC = () => {
   const [syncResult, setSyncResult] = useState<StripeSyncResult | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  // OAuth Settings state
+  interface OAuthConfig {
+    googleEnabled: boolean;
+    googleClientId: string;
+    googleClientSecret: string;
+    appleEnabled: boolean;
+    appleClientId: string;
+    appleTeamId: string;
+    appleKeyId: string;
+    applePrivateKey: string;
+  }
+  const [oauthConfig, setOauthConfig] = useState<OAuthConfig>({
+    googleEnabled: false,
+    googleClientId: '',
+    googleClientSecret: '',
+    appleEnabled: false,
+    appleClientId: '',
+    appleTeamId: '',
+    appleKeyId: '',
+    applePrivateKey: '',
+  });
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthSaving, setOauthSaving] = useState(false);
+  const [showOAuthModal, setShowOAuthModal] = useState<'google' | 'apple' | null>(null);
+  const [oauthFormData, setOauthFormData] = useState({
+    enabled: false,
+    clientId: '',
+    clientSecret: '',
+    teamId: '',
+    keyId: '',
+    privateKey: '',
+  });
+
   const handleStripeSync = async () => {
     setSyncingStripe(true);
     setSyncResult(null);
@@ -290,6 +323,100 @@ export const Admin: React.FC = () => {
     } finally {
       setSyncingStripe(false);
     }
+  };
+
+  // Fetch OAuth config on Settings tab
+  const fetchOAuthConfig = async () => {
+    setOauthLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/config?category=oauth`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const configMap: Record<string, string> = {};
+        data.forEach((c: { key: string; value: string }) => {
+          configMap[c.key] = c.value;
+        });
+        setOauthConfig({
+          googleEnabled: configMap['oauth_google_enabled'] === 'true',
+          googleClientId: configMap['oauth_google_client_id'] || '',
+          googleClientSecret: configMap['oauth_google_client_secret'] || '',
+          appleEnabled: configMap['oauth_apple_enabled'] === 'true',
+          appleClientId: configMap['oauth_apple_client_id'] || '',
+          appleTeamId: configMap['oauth_apple_team_id'] || '',
+          appleKeyId: configMap['oauth_apple_key_id'] || '',
+          applePrivateKey: configMap['oauth_apple_private_key'] || '',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch OAuth config:', err);
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
+  // Save OAuth config
+  const saveOAuthConfig = async (provider: 'google' | 'apple') => {
+    setOauthSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const configs = provider === 'google'
+        ? [
+            { key: 'oauth_google_enabled', value: String(oauthFormData.enabled) },
+            { key: 'oauth_google_client_id', value: oauthFormData.clientId },
+            { key: 'oauth_google_client_secret', value: oauthFormData.clientSecret },
+          ]
+        : [
+            { key: 'oauth_apple_enabled', value: String(oauthFormData.enabled) },
+            { key: 'oauth_apple_client_id', value: oauthFormData.clientId },
+            { key: 'oauth_apple_team_id', value: oauthFormData.teamId },
+            { key: 'oauth_apple_key_id', value: oauthFormData.keyId },
+            { key: 'oauth_apple_private_key', value: oauthFormData.privateKey },
+          ];
+
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/config/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ configs }),
+      });
+
+      // Refresh config
+      await fetchOAuthConfig();
+      setShowOAuthModal(null);
+    } catch (err) {
+      console.error('Failed to save OAuth config:', err);
+    } finally {
+      setOauthSaving(false);
+    }
+  };
+
+  // Open OAuth modal with existing config
+  const openOAuthModal = (provider: 'google' | 'apple') => {
+    if (provider === 'google') {
+      setOauthFormData({
+        enabled: oauthConfig.googleEnabled,
+        clientId: oauthConfig.googleClientId,
+        clientSecret: oauthConfig.googleClientSecret,
+        teamId: '',
+        keyId: '',
+        privateKey: '',
+      });
+    } else {
+      setOauthFormData({
+        enabled: oauthConfig.appleEnabled,
+        clientId: oauthConfig.appleClientId,
+        clientSecret: '',
+        teamId: oauthConfig.appleTeamId,
+        keyId: oauthConfig.appleKeyId,
+        privateKey: oauthConfig.applePrivateKey,
+      });
+    }
+    setShowOAuthModal(provider);
   };
 
   // Coupon form state
@@ -314,6 +441,13 @@ export const Admin: React.FC = () => {
       refetchUsers({ search: searchQuery, role: selectedRole, status: selectedStatus });
     }
   }, [searchQuery, selectedRole, selectedStatus]);
+
+  // Fetch OAuth config when Settings tab is active
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      fetchOAuthConfig();
+    }
+  }, [activeTab]);
 
   // Calculate revenue from license types
   const calculatedRevenue = useMemo(() => {
@@ -2034,6 +2168,101 @@ export const Admin: React.FC = () => {
             )}
           </Card>
 
+          {/* OAuth / Social Login Settings */}
+          <Card className="p-6">
+            <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
+              <Key size={18} className="text-[#EAD07D]" />
+              Social Login (OAuth)
+            </h3>
+            <p className="text-sm text-[#666] mb-6">
+              Configure Google and Apple Sign-In for your users. Credentials are stored securely in the database.
+            </p>
+
+            {oauthLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Skeleton className="h-32 rounded-xl" />
+                <Skeleton className="h-32 rounded-xl" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Google OAuth */}
+                <div className="border border-[#F2F1EA] rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between p-4 bg-[#F8F8F6]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#E5E5E5]">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M23.52 12.29C23.52 11.43 23.44 10.64 23.3 9.87H12V14.51H18.46C18.18 15.99 17.34 17.25 16.08 18.1V21.09H19.95C22.21 19 23.52 15.92 23.52 12.29Z" fill="#4285F4"/>
+                          <path d="M12 24C15.24 24 17.96 22.92 19.95 21.09L16.08 18.1C15 18.82 13.62 19.25 12 19.25C8.87 19.25 6.22 17.14 5.27 14.29H1.27V17.38C3.25 21.32 7.31 24 12 24Z" fill="#34A853"/>
+                          <path d="M5.27 14.29C5.03 13.57 4.9 12.8 4.9 12C4.9 11.2 5.03 10.43 5.27 9.71V6.62H1.27C0.46 8.23 0 10.06 0 12C0 13.94 0.46 15.77 1.27 17.38L5.27 14.29Z" fill="#FBBC05"/>
+                          <path d="M12 4.75C13.76 4.75 15.34 5.36 16.58 6.55L20.03 3.1C17.96 1.16 15.24 0 12 0C7.31 0 3.25 2.68 1.27 6.62L5.27 9.71C6.22 6.86 8.87 4.75 12 4.75Z" fill="#EA4335"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-[#1A1A1A]">Google Sign-In</h4>
+                        <p className="text-xs text-[#666]">OAuth 2.0 authentication</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {oauthConfig.googleClientId && oauthConfig.googleClientSecret ? (
+                        oauthConfig.googleEnabled ? (
+                          <Badge variant="green" size="sm">Enabled</Badge>
+                        ) : (
+                          <Badge variant="yellow" size="sm">Configured</Badge>
+                        )
+                      ) : (
+                        <Badge variant="outline" size="sm">Not Configured</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <button
+                      onClick={() => openOAuthModal('google')}
+                      className="w-full px-4 py-2 text-sm font-medium text-[#1A1A1A] bg-[#F8F8F6] hover:bg-[#F2F1EA] rounded-lg transition-colors"
+                    >
+                      Configure Google
+                    </button>
+                  </div>
+                </div>
+
+                {/* Apple OAuth */}
+                <div className="border border-[#F2F1EA] rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between p-4 bg-[#F8F8F6]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[#000] flex items-center justify-center">
+                        <svg width="18" height="22" viewBox="0 0 18 22" fill="white">
+                          <path d="M17.0703 7.29C16.9203 7.39 14.5203 8.7 14.5203 11.71C14.5203 15.23 17.6203 16.43 17.7003 16.46C17.6903 16.53 17.2203 18.23 16.0603 19.98C15.0403 21.51 13.9803 23.03 12.3603 23.03C10.7403 23.03 10.2603 22.07 8.39025 22.07C6.56025 22.07 5.84025 23.06 4.35025 23.06C2.86025 23.06 1.83025 21.63 0.650254 19.91C-0.719746 17.88 -0.749746 15.56 0.550254 14.31C1.46025 13.44 2.69025 12.96 3.87025 12.96C5.40025 12.96 6.21025 13.95 7.82025 13.95C9.39025 13.95 9.99025 12.96 11.7303 12.96C12.7703 12.96 13.8803 13.33 14.7603 14.08C12.4903 15.41 12.8603 18.67 15.3303 19.53C14.6103 20.9 13.6603 22.21 12.3603 22.21C11.0803 22.21 10.5403 21.42 8.89025 21.42C7.20025 21.42 6.40025 22.24 5.25025 22.24C3.97025 22.24 2.95025 20.99 2.04025 19.49C0.850254 17.54 0.710254 15.3 1.61025 14.14C2.23025 13.32 3.19025 12.85 4.20025 12.85C5.58025 12.85 6.39025 13.67 7.82025 13.67C9.29025 13.67 9.92025 12.85 11.5703 12.85C12.5803 12.85 13.5703 13.2 14.3803 13.82C15.6303 12.31 16.3503 10.48 16.3803 8.59C14.2803 7.85 17.0703 7.29 17.0703 7.29ZM12.5103 4.62C13.2303 3.72 13.7503 2.48 13.5903 1.22C12.4803 1.28 11.1703 1.97 10.3603 2.89C9.63025 3.71 9.05025 4.96 9.24025 6.17C10.4503 6.21 11.7503 5.54 12.5103 4.62Z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-[#1A1A1A]">Apple Sign-In</h4>
+                        <p className="text-xs text-[#666]">Sign in with Apple</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {oauthConfig.appleClientId && oauthConfig.appleTeamId && oauthConfig.appleKeyId && oauthConfig.applePrivateKey ? (
+                        oauthConfig.appleEnabled ? (
+                          <Badge variant="green" size="sm">Enabled</Badge>
+                        ) : (
+                          <Badge variant="yellow" size="sm">Configured</Badge>
+                        )
+                      ) : (
+                        <Badge variant="outline" size="sm">Not Configured</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <button
+                      onClick={() => openOAuthModal('apple')}
+                      className="w-full px-4 py-2 text-sm font-medium text-[#1A1A1A] bg-[#F8F8F6] hover:bg-[#F2F1EA] rounded-lg transition-colors"
+                    >
+                      Configure Apple
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
           {/* Data Sync Card */}
           <Card className="p-6">
             <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
@@ -2287,6 +2516,166 @@ export const Admin: React.FC = () => {
                       Save Configuration
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OAuth Configuration Modal */}
+          {showOAuthModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-[#F2F1EA]">
+                  <h3 className="font-bold text-[#1A1A1A] flex items-center gap-3">
+                    {showOAuthModal === 'google' ? (
+                      <div className="w-8 h-8 rounded-lg bg-white border border-[#E5E5E5] flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M23.52 12.29C23.52 11.43 23.44 10.64 23.3 9.87H12V14.51H18.46C18.18 15.99 17.34 17.25 16.08 18.1V21.09H19.95C22.21 19 23.52 15.92 23.52 12.29Z" fill="#4285F4"/>
+                          <path d="M12 24C15.24 24 17.96 22.92 19.95 21.09L16.08 18.1C15 18.82 13.62 19.25 12 19.25C8.87 19.25 6.22 17.14 5.27 14.29H1.27V17.38C3.25 21.32 7.31 24 12 24Z" fill="#34A853"/>
+                          <path d="M5.27 14.29C5.03 13.57 4.9 12.8 4.9 12C4.9 11.2 5.03 10.43 5.27 9.71V6.62H1.27C0.46 8.23 0 10.06 0 12C0 13.94 0.46 15.77 1.27 17.38L5.27 14.29Z" fill="#FBBC05"/>
+                          <path d="M12 4.75C13.76 4.75 15.34 5.36 16.58 6.55L20.03 3.1C17.96 1.16 15.24 0 12 0C7.31 0 3.25 2.68 1.27 6.62L5.27 9.71C6.22 6.86 8.87 4.75 12 4.75Z" fill="#EA4335"/>
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-[#000] flex items-center justify-center">
+                        <svg width="16" height="20" viewBox="0 0 18 22" fill="white">
+                          <path d="M17.0703 7.29C16.9203 7.39 14.5203 8.7 14.5203 11.71C14.5203 15.23 17.6203 16.43 17.7003 16.46C17.6903 16.53 17.2203 18.23 16.0603 19.98C15.0403 21.51 13.9803 23.03 12.3603 23.03C10.7403 23.03 10.2603 22.07 8.39025 22.07C6.56025 22.07 5.84025 23.06 4.35025 23.06C2.86025 23.06 1.83025 21.63 0.650254 19.91C-0.719746 17.88 -0.749746 15.56 0.550254 14.31C1.46025 13.44 2.69025 12.96 3.87025 12.96C5.40025 12.96 6.21025 13.95 7.82025 13.95C9.39025 13.95 9.99025 12.96 11.7303 12.96C12.7703 12.96 13.8803 13.33 14.7603 14.08C12.4903 15.41 12.8603 18.67 15.3303 19.53C14.6103 20.9 13.6603 22.21 12.3603 22.21C11.0803 22.21 10.5403 21.42 8.89025 21.42C7.20025 21.42 6.40025 22.24 5.25025 22.24C3.97025 22.24 2.95025 20.99 2.04025 19.49C0.850254 17.54 0.710254 15.3 1.61025 14.14C2.23025 13.32 3.19025 12.85 4.20025 12.85C5.58025 12.85 6.39025 13.67 7.82025 13.67C9.29025 13.67 9.92025 12.85 11.5703 12.85C12.5803 12.85 13.5703 13.2 14.3803 13.82C15.6303 12.31 16.3503 10.48 16.3803 8.59C14.2803 7.85 17.0703 7.29 17.0703 7.29ZM12.5103 4.62C13.2303 3.72 13.7503 2.48 13.5903 1.22C12.4803 1.28 11.1703 1.97 10.3603 2.89C9.63025 3.71 9.05025 4.96 9.24025 6.17C10.4503 6.21 11.7503 5.54 12.5103 4.62Z"/>
+                        </svg>
+                      </div>
+                    )}
+                    Configure {showOAuthModal === 'google' ? 'Google' : 'Apple'} Sign-In
+                  </h3>
+                  <button
+                    onClick={() => setShowOAuthModal(null)}
+                    className="p-2 hover:bg-[#F8F8F6] rounded-lg transition-colors"
+                  >
+                    <X size={18} className="text-[#666]" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-4">
+                  {showOAuthModal === 'google' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Client ID
+                        </label>
+                        <input
+                          type="text"
+                          value={oauthFormData.clientId}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, clientId: e.target.value }))}
+                          placeholder="xxxxx.apps.googleusercontent.com"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                        <p className="mt-1 text-xs text-[#999]">From Google Cloud Console → Credentials</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Client Secret
+                          {oauthConfig.googleClientSecret && (
+                            <span className="text-[#666] font-normal ml-1">(already set)</span>
+                          )}
+                        </label>
+                        <input
+                          type="password"
+                          value={oauthFormData.clientSecret}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, clientSecret: e.target.value }))}
+                          placeholder={oauthConfig.googleClientSecret ? '••••••••' : 'GOCSPX-...'}
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Services ID (Client ID)
+                        </label>
+                        <input
+                          type="text"
+                          value={oauthFormData.clientId}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, clientId: e.target.value }))}
+                          placeholder="com.example.signin"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                        <p className="mt-1 text-xs text-[#999]">From Apple Developer → Identifiers → Services IDs</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Team ID
+                        </label>
+                        <input
+                          type="text"
+                          value={oauthFormData.teamId}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, teamId: e.target.value }))}
+                          placeholder="XXXXXXXXXX"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                        <p className="mt-1 text-xs text-[#999]">From Apple Developer → Membership</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Key ID
+                        </label>
+                        <input
+                          type="text"
+                          value={oauthFormData.keyId}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, keyId: e.target.value }))}
+                          placeholder="XXXXXXXXXX"
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                        <p className="mt-1 text-xs text-[#999]">From Apple Developer → Keys</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                          Private Key (.p8)
+                          {oauthConfig.applePrivateKey && (
+                            <span className="text-[#666] font-normal ml-1">(already set)</span>
+                          )}
+                        </label>
+                        <textarea
+                          value={oauthFormData.privateKey}
+                          onChange={(e) => setOauthFormData(f => ({ ...f, privateKey: e.target.value }))}
+                          placeholder={oauthConfig.applePrivateKey ? '••••••••' : '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----'}
+                          rows={4}
+                          className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm font-mono"
+                        />
+                        <p className="mt-1 text-xs text-[#999]">Paste the entire contents of your .p8 file</p>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex items-center gap-2 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={oauthFormData.enabled}
+                        onChange={(e) => setOauthFormData(f => ({ ...f, enabled: e.target.checked }))}
+                        className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                      />
+                      <span className="text-sm text-[#666]">Enable {showOAuthModal === 'google' ? 'Google' : 'Apple'} Sign-In</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 p-6 border-t border-[#F2F1EA] bg-[#FAFAF8]">
+                  <button
+                    onClick={() => setShowOAuthModal(null)}
+                    className="px-4 py-2 text-[#666] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => saveOAuthConfig(showOAuthModal)}
+                    disabled={oauthSaving}
+                    className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {oauthSaving ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Configuration'
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

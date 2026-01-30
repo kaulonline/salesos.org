@@ -959,12 +959,22 @@ export const DealDetail: React.FC = () => {
               </div>
 
               {/* Activity Timeline */}
-              <div className="bg-white rounded-2xl border border-[#F2F1EA] p-5">
-                <h3 className="text-sm font-semibold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                  <Clock size={16} className="text-[#888]" />
-                  Activity Timeline
-                </h3>
-                <ContactTimeline opportunityId={deal.id} limit={4} />
+              <div className="bg-white rounded-2xl border border-[#F2F1EA] overflow-hidden">
+                <button
+                  onClick={() => toggleSection('timeline')}
+                  className="w-full flex justify-between items-center px-5 py-4 text-[#1A1A1A] font-semibold text-sm hover:bg-[#FAFAFA] transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Clock size={16} className="text-[#888]" />
+                    Activity Timeline
+                  </span>
+                  {openSection === 'timeline' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                {openSection === 'timeline' && (
+                  <div className="px-5 pb-5 animate-in slide-in-from-top-2 duration-200">
+                    <ContactTimeline opportunityId={deal.id} limit={4} />
+                  </div>
+                )}
               </div>
             </div>
 

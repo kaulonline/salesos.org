@@ -623,9 +623,19 @@ export const LeadDetail: React.FC = () => {
               </Card>
 
               {/* Timeline Section */}
-              <Card padding="md" className="border border-black/5">
-                <h3 className="text-sm font-bold text-[#1A1A1A] mb-4">Activity Timeline</h3>
-                <ContactTimeline leadId={lead.id} limit={5} />
+              <Card padding="sm" className="px-6 py-4 border border-black/5">
+                <button
+                  onClick={() => toggleSection('timeline')}
+                  className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
+                >
+                  Activity Timeline
+                  {openSection === 'timeline' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+                {openSection === 'timeline' && (
+                  <div className="mt-4 animate-in slide-in-from-top-2">
+                    <ContactTimeline leadId={lead.id} limit={5} />
+                  </div>
+                )}
               </Card>
             </div>
 

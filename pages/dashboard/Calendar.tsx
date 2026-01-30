@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle, X, RefreshCw, Link } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { SearchInput } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useCalendarMeetings, useMeetings } from '../../src/hooks';
+import { calendarIntegrationsApi, type CalendarConnection } from '../../src/api/integrations';
 import type { Meeting, MeetingType, CreateMeetingDto } from '../../src/types';
 
 const formatTime = (dateString: string) => {
@@ -52,8 +53,59 @@ export const Calendar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewEventModal, setShowNewEventModal] = useState(false);
 
+  // Calendar sync state
+  const [calendarConnections, setCalendarConnections] = useState<CalendarConnection[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
   const { meetingsByDate, stats, loading, error, refetch } = useCalendarMeetings(currentYear, currentMonth);
   const { create, isCreating } = useMeetings();
+
+  // Fetch calendar connections on mount
+  useEffect(() => {
+    const fetchConnections = async () => {
+      try {
+        const response = await calendarIntegrationsApi.getConnections();
+        if (response.success) {
+          setCalendarConnections(response.connections.filter(c => c.status === 'ACTIVE'));
+        }
+      } catch (err) {
+        console.error('Failed to fetch calendar connections:', err);
+      }
+    };
+    fetchConnections();
+  }, []);
+
+  // Handle calendar sync
+  const handleCalendarSync = async () => {
+    if (calendarConnections.length === 0) {
+      setSyncMessage({ type: 'info', text: 'No calendars connected. Go to Integrations to connect your calendar.' });
+      setTimeout(() => setSyncMessage(null), 5000);
+      return;
+    }
+
+    setIsSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      // Sync all active connections
+      const syncPromises = calendarConnections.map(conn =>
+        calendarIntegrationsApi.triggerSync(conn.id)
+      );
+      await Promise.all(syncPromises);
+
+      // Refresh calendar data
+      await refetch();
+
+      setSyncMessage({ type: 'success', text: `Synced ${calendarConnections.length} calendar${calendarConnections.length > 1 ? 's' : ''} successfully!` });
+    } catch (err: any) {
+      console.error('Calendar sync failed:', err);
+      setSyncMessage({ type: 'error', text: err.response?.data?.message || 'Failed to sync calendar. Please try again.' });
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMessage(null), 5000);
+    }
+  };
 
   // New event form state
   const getDefaultStartTime = () => {
@@ -466,9 +518,42 @@ export const Calendar: React.FC = () => {
             </div>
 
             {/* Bottom Action */}
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <button className="w-full py-3 bg-[#1A1A1A] text-white rounded-xl font-bold text-sm hover:bg-black transition-colors shadow-lg">
-                Sync Calendar
+            <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+              {/* Sync Message */}
+              {syncMessage && (
+                <div className={`p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${
+                  syncMessage.type === 'success' ? 'bg-[#93C01F]/20 text-[#93C01F]' :
+                  syncMessage.type === 'error' ? 'bg-red-100 text-red-600' :
+                  'bg-[#EAD07D]/20 text-[#1A1A1A]'
+                }`}>
+                  {syncMessage.type === 'info' && <Link size={16} />}
+                  {syncMessage.type === 'success' && <CalendarIcon size={16} />}
+                  {syncMessage.type === 'error' && <AlertCircle size={16} />}
+                  {syncMessage.text}
+                </div>
+              )}
+
+              <button
+                onClick={handleCalendarSync}
+                disabled={isSyncing}
+                className="w-full py-3 bg-[#1A1A1A] text-white rounded-xl font-bold text-sm hover:bg-black transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSyncing ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={16} />
+                    Sync Calendar
+                    {calendarConnections.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-[10px]">
+                        {calendarConnections.length}
+                      </span>
+                    )}
+                  </>
+                )}
               </button>
             </div>
           </Card>

@@ -1,21 +1,63 @@
 import React, { useState } from 'react';
 import { Card } from '../ui/Card';
 import { Avatar } from '../ui/Avatar';
-import { Mail, Phone, Calendar, FileText, CheckCircle2, MessageSquare, Users, TrendingUp, Activity } from 'lucide-react';
+import { Mail, Phone, Calendar, FileText, CheckCircle2, MessageSquare, Users, TrendingUp, Activity, Send, Eye, MousePointer, AlertTriangle, XCircle } from 'lucide-react';
 import { useActivities } from '../../src/hooks';
 import { Skeleton } from '../ui/Skeleton';
 
+// Email tracking status configuration - using SalesOS brand colors
+const EMAIL_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
+  SENT: { label: 'Sent', icon: Send, className: 'bg-[#F0EBD8] text-[#666]' },
+  DELIVERED: { label: 'Delivered', icon: CheckCircle2, className: 'bg-[#93C01F]/20 text-[#93C01F]' },
+  OPENED: { label: 'Opened', icon: Eye, className: 'bg-[#EAD07D]/20 text-[#1A1A1A]' },
+  CLICKED: { label: 'Clicked', icon: MousePointer, className: 'bg-[#1A1A1A] text-white' },
+  BOUNCED: { label: 'Bounced', icon: AlertTriangle, className: 'bg-[#EAD07D]/30 text-[#1A1A1A]' },
+  FAILED: { label: 'Failed', icon: XCircle, className: 'bg-red-100 text-red-600' },
+};
+
+// Extract email status from activity metadata or subject
+const getEmailTrackingStatus = (activity: { type: string; subject?: string; metadata?: Record<string, unknown> }): string | null => {
+  if (activity.type !== 'EMAIL') return null;
+
+  // Check metadata first (from email tracking updates)
+  const metadata = activity.metadata as Record<string, any> | undefined;
+  if (metadata?.emailStatus) {
+    return metadata.emailStatus;
+  }
+
+  // Check if subject contains status indicator (from webhook-created activities)
+  const subject = activity.subject?.toLowerCase() || '';
+  if (subject.includes('clicked')) return 'CLICKED';
+  if (subject.includes('opened')) return 'OPENED';
+  if (subject.includes('delivered')) return 'DELIVERED';
+  if (subject.includes('bounced')) return 'BOUNCED';
+  if (subject.includes('failed')) return 'FAILED';
+
+  // Check trackingEvents in metadata for the latest status
+  if (metadata?.trackingEvents && Array.isArray(metadata.trackingEvents)) {
+    const events = metadata.trackingEvents as { type: string }[];
+    // Get the highest priority status (clicked > opened > delivered)
+    if (events.some(e => e.type === 'CLICKED')) return 'CLICKED';
+    if (events.some(e => e.type === 'OPENED')) return 'OPENED';
+    if (events.some(e => e.type === 'DELIVERED')) return 'DELIVERED';
+    if (events.some(e => e.type === 'BOUNCED')) return 'BOUNCED';
+    if (events.some(e => e.type === 'FAILED')) return 'FAILED';
+  }
+
+  return 'SENT'; // Default for email activities
+};
+
 const getActivityIcon = (type: string) => {
   switch (type) {
-    case 'EMAIL': return { icon: Mail, color: 'bg-blue-100 text-blue-600' };
-    case 'CALL': return { icon: Phone, color: 'bg-orange-100 text-orange-600' };
-    case 'MEETING': return { icon: Calendar, color: 'bg-[#EAD07D]/20 text-[#1A1A1A]' };
-    case 'TASK': return { icon: CheckCircle2, color: 'bg-green-100 text-green-600' };
-    case 'NOTE': return { icon: FileText, color: 'bg-purple-100 text-purple-600' };
-    case 'CHAT': return { icon: MessageSquare, color: 'bg-indigo-100 text-indigo-600' };
-    case 'DEAL_UPDATE': return { icon: TrendingUp, color: 'bg-emerald-100 text-emerald-600' };
-    case 'CONTACT': return { icon: Users, color: 'bg-pink-100 text-pink-600' };
-    default: return { icon: Activity, color: 'bg-gray-100 text-gray-600' };
+    case 'EMAIL': return { icon: Mail, color: 'bg-[#F0EBD8] text-[#1A1A1A]' };
+    case 'CALL': return { icon: Phone, color: 'bg-[#1A1A1A] text-[#EAD07D]' };
+    case 'MEETING': return { icon: Calendar, color: 'bg-[#EAD07D] text-[#1A1A1A]' };
+    case 'TASK': return { icon: CheckCircle2, color: 'bg-[#93C01F]/20 text-[#93C01F]' };
+    case 'NOTE': return { icon: FileText, color: 'bg-[#F8F8F6] text-[#666]' };
+    case 'CHAT': return { icon: MessageSquare, color: 'bg-[#EAD07D]/30 text-[#1A1A1A]' };
+    case 'DEAL_UPDATE': return { icon: TrendingUp, color: 'bg-[#93C01F]/30 text-[#93C01F]' };
+    case 'CONTACT': return { icon: Users, color: 'bg-[#EAD07D]/20 text-[#1A1A1A]' };
+    default: return { icon: Activity, color: 'bg-[#F2F1EA] text-[#666]' };
   }
 };
 
@@ -34,9 +76,19 @@ const formatTimeAgo = (date: string) => {
   return activityDate.toLocaleDateString();
 };
 
-const getActionText = (activity: { type: string; subject?: string; description?: string }) => {
+const getActionText = (activity: { type: string; subject?: string; description?: string; metadata?: Record<string, unknown> }) => {
+  if (activity.type === 'EMAIL') {
+    const status = getEmailTrackingStatus(activity);
+    // For status update activities (from webhook), show specific action
+    if (activity.subject?.toLowerCase().includes('email delivered')) return 'email was delivered';
+    if (activity.subject?.toLowerCase().includes('email opened')) return 'email was opened';
+    if (activity.subject?.toLowerCase().includes('email clicked')) return 'email link was clicked';
+    if (activity.subject?.toLowerCase().includes('email bounced')) return 'email bounced';
+    if (activity.subject?.toLowerCase().includes('email failed')) return 'email failed to deliver';
+    return 'sent an email';
+  }
+
   switch (activity.type) {
-    case 'EMAIL': return 'sent an email';
     case 'CALL': return 'logged a call';
     case 'MEETING': return 'scheduled a meeting';
     case 'TASK': return 'completed a task';
@@ -46,6 +98,20 @@ const getActionText = (activity: { type: string; subject?: string; description?:
     case 'CONTACT': return 'added a contact';
     default: return 'performed an action';
   }
+};
+
+// Email status badge component
+const EmailStatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const config = EMAIL_STATUS_CONFIG[status];
+  if (!config) return null;
+
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+      <Icon size={10} />
+      {config.label}
+    </span>
+  );
 };
 
 export const ActivityFeed: React.FC = () => {
@@ -90,7 +156,7 @@ export const ActivityFeed: React.FC = () => {
           <button
             onClick={() => setFilter('all')}
             className={`text-xs font-bold px-2 py-1 rounded transition-colors ${
-              filter === 'all' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-gray-100'
+              filter === 'all' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-[#F8F8F6]'
             }`}
           >
             All
@@ -98,7 +164,7 @@ export const ActivityFeed: React.FC = () => {
           <button
             onClick={() => setFilter('email')}
             className={`text-xs font-bold px-2 py-1 rounded transition-colors ${
-              filter === 'email' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-gray-100'
+              filter === 'email' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-[#F8F8F6]'
             }`}
           >
             Emails
@@ -106,7 +172,7 @@ export const ActivityFeed: React.FC = () => {
           <button
             onClick={() => setFilter('call')}
             className={`text-xs font-bold px-2 py-1 rounded transition-colors ${
-              filter === 'call' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-gray-100'
+              filter === 'call' ? 'bg-[#1A1A1A] text-white' : 'text-[#999] hover:bg-[#F8F8F6]'
             }`}
           >
             Calls
@@ -122,6 +188,10 @@ export const ActivityFeed: React.FC = () => {
         ) : (
           filtered.map((activity, i) => {
             const { icon: Icon, color } = getActivityIcon(activity.type);
+            const emailStatus = getEmailTrackingStatus(activity);
+            // Clean up subject for display (remove status prefix if present)
+            const displaySubject = activity.subject?.replace(/^Email (delivered|opened|clicked|bounced|failed):\s*/i, '') || activity.subject;
+
             return (
               <div key={activity.id} className="flex gap-4 group">
                 <div className="relative">
@@ -134,7 +204,7 @@ export const ActivityFeed: React.FC = () => {
                     <Icon size={10} strokeWidth={3} />
                   </div>
                   {i !== filtered.length - 1 && (
-                    <div className="absolute top-10 left-1/2 -translate-x-1/2 w-0.5 h-full bg-gray-100 -z-10"></div>
+                    <div className="absolute top-10 left-1/2 -translate-x-1/2 w-0.5 h-full bg-[#F0EBD8] -z-10"></div>
                   )}
                 </div>
                 <div className="flex-1 pb-4 border-b border-gray-50 group-last:border-0 group-last:pb-0">
@@ -143,13 +213,19 @@ export const ActivityFeed: React.FC = () => {
                       {activity.user?.name || activity.user?.email || 'Someone'}
                     </span>{' '}
                     <span className="text-[#666]">{getActionText(activity)}</span>
-                    {activity.subject && (
+                    {displaySubject && (
                       <>
                         {' '}
-                        <span className="font-bold text-[#1A1A1A]">{activity.subject}</span>
+                        <span className="font-bold text-[#1A1A1A]">{displaySubject}</span>
                       </>
                     )}
                   </div>
+                  {/* Email tracking status badge */}
+                  {activity.type === 'EMAIL' && emailStatus && (
+                    <div className="mt-1.5">
+                      <EmailStatusBadge status={emailStatus} />
+                    </div>
+                  )}
                   {activity.description && (
                     <p className="text-xs text-[#666] mt-1 line-clamp-2">{activity.description}</p>
                   )}

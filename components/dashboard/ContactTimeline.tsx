@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, Calendar, FileText, ArrowRight, Activity, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
+import { Mail, Phone, Calendar, FileText, ArrowRight, Activity, CheckCircle2, RefreshCw, Loader2, Send, Eye, MousePointer, AlertTriangle, XCircle } from 'lucide-react';
 import { useActivities } from '../../src/hooks';
 import { Skeleton } from '../ui/Skeleton';
 
@@ -10,6 +10,56 @@ interface ContactTimelineProps {
   leadId?: string;
   limit?: number;
 }
+
+// Email tracking status configuration - using SalesOS brand colors
+const EMAIL_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
+  SENT: { label: 'Sent', icon: Send, className: 'bg-[#F0EBD8] text-[#666]' },
+  DELIVERED: { label: 'Delivered', icon: CheckCircle2, className: 'bg-[#93C01F]/20 text-[#93C01F]' },
+  OPENED: { label: 'Opened', icon: Eye, className: 'bg-[#EAD07D]/20 text-[#1A1A1A]' },
+  CLICKED: { label: 'Clicked', icon: MousePointer, className: 'bg-[#1A1A1A] text-white' },
+  BOUNCED: { label: 'Bounced', icon: AlertTriangle, className: 'bg-[#EAD07D]/30 text-[#1A1A1A]' },
+  FAILED: { label: 'Failed', icon: XCircle, className: 'bg-red-100 text-red-600' },
+};
+
+// Extract email status from activity
+const getEmailTrackingStatus = (activity: { type: string; subject?: string; metadata?: Record<string, unknown> }): string | null => {
+  if (activity.type !== 'EMAIL') return null;
+
+  const metadata = activity.metadata as Record<string, any> | undefined;
+  if (metadata?.emailStatus) return metadata.emailStatus;
+
+  const subject = activity.subject?.toLowerCase() || '';
+  if (subject.includes('clicked')) return 'CLICKED';
+  if (subject.includes('opened')) return 'OPENED';
+  if (subject.includes('delivered')) return 'DELIVERED';
+  if (subject.includes('bounced')) return 'BOUNCED';
+  if (subject.includes('failed')) return 'FAILED';
+
+  if (metadata?.trackingEvents && Array.isArray(metadata.trackingEvents)) {
+    const events = metadata.trackingEvents as { type: string }[];
+    if (events.some(e => e.type === 'CLICKED')) return 'CLICKED';
+    if (events.some(e => e.type === 'OPENED')) return 'OPENED';
+    if (events.some(e => e.type === 'DELIVERED')) return 'DELIVERED';
+    if (events.some(e => e.type === 'BOUNCED')) return 'BOUNCED';
+    if (events.some(e => e.type === 'FAILED')) return 'FAILED';
+  }
+
+  return 'SENT';
+};
+
+// Email status badge component
+const EmailStatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const config = EMAIL_STATUS_CONFIG[status];
+  if (!config) return null;
+
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${config.className}`}>
+      <Icon size={10} />
+      {config.label}
+    </span>
+  );
+};
 
 const formatTimeAgo = (date: string) => {
   const now = new Date();
@@ -61,13 +111,13 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
 
   const getColor = (type: string) => {
     switch (type) {
-      case 'EMAIL': return 'bg-blue-100 text-blue-600';
-      case 'CALL': return 'bg-orange-100 text-orange-600';
+      case 'EMAIL': return 'bg-[#F0EBD8] text-[#1A1A1A]';
+      case 'CALL': return 'bg-[#1A1A1A] text-[#EAD07D]';
       case 'MEETING': return 'bg-[#EAD07D] text-[#1A1A1A]';
-      case 'TASK': return 'bg-green-100 text-green-600';
-      case 'NOTE': return 'bg-purple-100 text-purple-600';
-      case 'STAGE_CHANGE': return 'bg-indigo-100 text-indigo-600';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'TASK': return 'bg-[#93C01F]/20 text-[#93C01F]';
+      case 'NOTE': return 'bg-[#F8F8F6] text-[#666]';
+      case 'STAGE_CHANGE': return 'bg-[#EAD07D]/30 text-[#1A1A1A]';
+      default: return 'bg-[#F2F1EA] text-[#666]';
     }
   };
 
@@ -78,7 +128,7 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
   if (loading) {
     return (
       <div className="relative pl-2 space-y-4">
-        <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-gray-100"></div>
+        <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-[#F0EBD8] z-0"></div>
         {[1, 2, 3].map((i) => (
           <div key={i} className="relative flex gap-3">
             <Skeleton className="w-7 h-7 rounded-full shrink-0" />
@@ -119,36 +169,46 @@ export const ContactTimeline: React.FC<ContactTimelineProps> = ({
   return (
     <div className="relative pl-2 space-y-4">
       {/* Continuous Line */}
-      <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-gray-100"></div>
+      <div className="absolute top-2 bottom-0 left-[13px] w-0.5 bg-[#F0EBD8] z-0"></div>
 
-      {displayActivities.map((activity) => (
-        <div key={activity.id} className="relative flex gap-3 group">
-          <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm ${getColor(activity.type)}`}>
-            {getIcon(activity.type)}
-          </div>
-          <div className="flex-1 min-w-0 bg-white p-3 rounded-xl border border-black/5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col gap-1 mb-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-[#1A1A1A] text-sm truncate">{activity.subject}</span>
-                <span className="text-[10px] text-[#999] font-medium whitespace-nowrap shrink-0">
-                  {formatTimeAgo(activity.createdAt)}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#999]">
-                {getTypeLabel(activity.type)}
-              </span>
+      {displayActivities.map((activity) => {
+        const emailStatus = getEmailTrackingStatus(activity);
+        const displaySubject = activity.subject?.replace(/^Email (delivered|opened|clicked|bounced|failed):\s*/i, '') || activity.subject;
+
+        return (
+          <div key={activity.id} className="relative flex gap-3 group">
+            <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm ${getColor(activity.type)}`}>
+              {getIcon(activity.type)}
             </div>
-            {activity.description && (
-              <p className="text-xs text-[#666] leading-relaxed line-clamp-2">{activity.description}</p>
-            )}
-            {activity.user && (
-              <p className="text-[10px] text-[#999] mt-1.5">
-                by {activity.user.name || activity.user.email}
-              </p>
-            )}
+            <div className="flex-1 min-w-0 bg-white p-3 rounded-xl border border-black/5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col gap-1 mb-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-[#1A1A1A] text-sm truncate">{displaySubject}</span>
+                  <span className="text-[10px] text-[#999] font-medium whitespace-nowrap shrink-0">
+                    {formatTimeAgo(activity.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#999]">
+                    {getTypeLabel(activity.type)}
+                  </span>
+                  {activity.type === 'EMAIL' && emailStatus && (
+                    <EmailStatusBadge status={emailStatus} />
+                  )}
+                </div>
+              </div>
+              {activity.description && (
+                <p className="text-xs text-[#666] leading-relaxed line-clamp-2">{activity.description}</p>
+              )}
+              {activity.user && (
+                <p className="text-[10px] text-[#999] mt-1.5">
+                  by {activity.user.name || activity.user.email}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {activities.length > limit && (
         <button className="relative z-10 flex items-center gap-2 ml-1 text-xs font-bold text-[#999] hover:text-[#1A1A1A] bg-[#F2F1EA] px-3 py-1.5 rounded-full w-fit transition-colors">

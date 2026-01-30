@@ -19,6 +19,9 @@ initErrorTracking();
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
+import { ResetPassword } from './pages/ResetPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { AcceptInvite } from './pages/AcceptInvite';
 
 // Lazy-loaded public pages
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -127,7 +130,7 @@ const PricingPageWrapper = () => (
 
 function AppContent() {
   const { pathname } = useLocation();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/verify-email' || pathname === '/invite';
   const isDashboard = pathname.startsWith('/dashboard');
   const isAdmin = pathname.startsWith('/admin');
   const isBilling = pathname.startsWith('/billing');
@@ -233,6 +236,9 @@ function AppContent() {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/invite" element={<AcceptInvite />} />
 
           {/* Dashboard Routes - Protected and Lazy Loaded */}
           <Route path="/dashboard" element={
