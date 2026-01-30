@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import client from './client';
 
 // Types for PageIndex service
 export interface PageIndexDocument {
@@ -52,25 +52,25 @@ export interface DocumentTree {
 export const pageIndexApi = {
   // Health check
   getHealth: async (): Promise<PageIndexHealth> => {
-    const response = await apiClient.get<PageIndexHealth>('/pageindex/health');
+    const response = await client.get<PageIndexHealth>('/pageindex/health');
     return response.data;
   },
 
   // List all documents
   listDocuments: async (): Promise<PageIndexDocument[]> => {
-    const response = await apiClient.get<PageIndexDocument[]>('/pageindex/documents');
+    const response = await client.get<PageIndexDocument[]>('/pageindex/documents');
     return response.data;
   },
 
   // Get document by ID
   getDocument: async (documentId: string): Promise<DocumentTree> => {
-    const response = await apiClient.get<DocumentTree>(`/pageindex/document/${documentId}`);
+    const response = await client.get<DocumentTree>(`/pageindex/document/${documentId}`);
     return response.data;
   },
 
   // Get indexing status
   getStatus: async (documentId: string): Promise<IndexingStatus> => {
-    const response = await apiClient.get<IndexingStatus>(`/pageindex/status/${documentId}`);
+    const response = await client.get<IndexingStatus>(`/pageindex/status/${documentId}`);
     return response.data;
   },
 
@@ -87,7 +87,7 @@ export const pageIndexApi = {
     if (options?.addSummary !== undefined) params.append('addSummary', String(options.addSummary));
     if (options?.addDescription !== undefined) params.append('addDescription', String(options.addDescription));
 
-    const response = await apiClient.post(
+    const response = await client.post(
       `${endpoint}?${params.toString()}`,
       formData,
       {
@@ -101,7 +101,7 @@ export const pageIndexApi = {
 
   // Delete a document
   deleteDocument: async (documentId: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.delete(`/pageindex/document/${documentId}`);
+    const response = await client.delete(`/pageindex/document/${documentId}`);
     return response.data;
   },
 
@@ -111,7 +111,7 @@ export const pageIndexApi = {
     query: string,
     maxResults = 5
   ): Promise<SearchResult[]> => {
-    const response = await apiClient.post<SearchResult[]>(
+    const response = await client.post<SearchResult[]>(
       `/pageindex/search/${documentId}`,
       { query, maxResults }
     );

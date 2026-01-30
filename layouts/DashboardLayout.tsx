@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -16,6 +16,7 @@ export const DashboardLayout: React.FC = () => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showAIMenu, setShowAIMenu] = useState(false);
   const { user, logout } = useAuth();
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
@@ -41,6 +42,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Analytics', href: '/dashboard/analytics' },
     { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone },
     { label: 'Revenue', href: '/dashboard/revenue' },
+    { label: 'Forecast', href: '/dashboard/forecast', icon: Target },
     { label: 'Calendar', href: '/dashboard/calendar' },
     { label: 'Messages', href: '/dashboard/messages' },
     { label: 'Products', href: '/dashboard/products', icon: Package },
@@ -48,6 +50,17 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
     { label: 'CPQ Analytics', href: '/dashboard/cpq-analytics', icon: TrendingUp },
     { label: 'Email Templates', href: '/dashboard/email-templates', icon: Mail },
+    { label: 'Account Health', href: '/dashboard/account-health', icon: Heart },
+    { label: 'Territories', href: '/dashboard/territories', icon: Map },
+    { label: 'Win/Loss', href: '/dashboard/win-loss', icon: PieChart },
+    { label: 'Playbooks', href: '/dashboard/playbooks', icon: BookOpen },
+  ];
+
+  const aiNavItems = [
+    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Brain },
+    { label: 'AI Alerts', href: '/dashboard/alerts', icon: AlertCircle },
+    { label: 'Conversations', href: '/dashboard/conversations', icon: Mic },
+    { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
   ];
 
   // Check if user is admin (handle potential case differences)
@@ -173,6 +186,50 @@ export const DashboardLayout: React.FC = () => {
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
+          {/* AI Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAIMenu(!showAIMenu)}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${
+                aiNavItems.some(item => path.startsWith(item.href))
+                  ? 'bg-gradient-to-r from-[#EAD07D] to-[#D4B85C] text-[#1A1A1A] border-[#EAD07D]'
+                  : showAIMenu
+                  ? 'bg-white text-[#1A1A1A] border-gray-200'
+                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
+              }`}
+            >
+              <Brain size={16} />
+              <span className="hidden sm:inline">AI</span>
+              <ChevronDown size={14} className={`transition-transform duration-200 ${showAIMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showAIMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAIMenu(false)} />
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {aiNavItems.map((item) => {
+                    const isActive = path.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setShowAIMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-[#EAD07D]/20 text-[#1A1A1A]'
+                            : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
+                        }`}
+                      >
+                        {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Settings Dropdown */}
           <div className="relative">
             <button
