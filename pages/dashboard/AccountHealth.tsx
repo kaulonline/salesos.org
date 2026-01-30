@@ -54,40 +54,56 @@ export const AccountHealth: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<HealthStatus | 'ALL'>('ALL');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
-  // Calculate health scores for accounts
+  // Calculate health scores for accounts based on real data
   const accountHealthData = useMemo(() => {
     return companies.map(company => {
-      // Simulate health score calculation based on available data
-      const hasRecentActivity = company.lastActivityDate &&
-        new Date(company.lastActivityDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      // Calculate health score based on available data
+      const lastActivityDate = company.lastActivityDate ? new Date(company.lastActivityDate) : null;
+      const daysSinceActivity = lastActivityDate
+        ? Math.floor((Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      const hasRecentActivity = daysSinceActivity < 30;
+      const hasModerateActivity = daysSinceActivity < 60;
       const hasOpenDeals = (company.opportunityCount || 0) > 0;
       const hasContacts = (company.contactCount || 0) > 0;
+      const hasRevenue = (company.annualRevenue || 0) > 0;
 
-      let healthScore = 50; // Base score
-      if (hasRecentActivity) healthScore += 20;
-      if (hasOpenDeals) healthScore += 15;
+      // Calculate health score based on multiple factors
+      let healthScore = 30; // Base score
+      if (hasRecentActivity) healthScore += 25;
+      else if (hasModerateActivity) healthScore += 10;
+      if (hasOpenDeals) healthScore += 20;
       if (hasContacts) healthScore += 15;
+      if (hasRevenue) healthScore += 10;
 
-      // Add some randomness for demo purposes
-      healthScore = Math.min(100, Math.max(0, healthScore + Math.floor(Math.random() * 20) - 10));
+      // Cap at 100
+      healthScore = Math.min(100, healthScore);
 
       let status: HealthStatus = 'UNKNOWN';
       if (healthScore >= 70) status = 'HEALTHY';
-      else if (healthScore >= 40) status = 'AT_RISK';
+      else if (healthScore >= 45) status = 'AT_RISK';
       else if (healthScore > 0) status = 'CRITICAL';
 
-      const trends: HealthTrend[] = ['IMPROVING', 'STABLE', 'DECLINING'];
-      const trend = trends[Math.floor(Math.random() * 3)];
+      // Determine trend based on activity recency
+      let trend: HealthTrend = 'STABLE';
+      if (daysSinceActivity < 14 && hasOpenDeals) {
+        trend = 'IMPROVING';
+      } else if (daysSinceActivity > 45 || (!hasOpenDeals && !hasContacts)) {
+        trend = 'DECLINING';
+      }
 
       const riskFactors: string[] = [];
       const opportunities: string[] = [];
 
-      if (!hasRecentActivity) riskFactors.push('No activity in 30+ days');
+      if (daysSinceActivity > 60) riskFactors.push('No activity in 60+ days');
+      else if (daysSinceActivity > 30) riskFactors.push('No activity in 30+ days');
       if (!hasOpenDeals) riskFactors.push('No active opportunities');
       if (!hasContacts) riskFactors.push('No contacts on file');
 
-      if (hasRecentActivity) opportunities.push('Recent engagement - good time for upsell');
-      if (hasOpenDeals) opportunities.push('Active deals in pipeline');
+      if (hasRecentActivity && hasOpenDeals) opportunities.push('Active engagement with open deals');
+      else if (hasRecentActivity) opportunities.push('Recent engagement - good time for outreach');
+      if (hasRevenue && !hasOpenDeals) opportunities.push('Existing customer - potential upsell');
 
       return {
         id: company.id,

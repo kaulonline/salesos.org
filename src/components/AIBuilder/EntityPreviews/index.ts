@@ -6,3 +6,4 @@ export { WorkflowPreview } from './WorkflowPreview';
 export { ProductPreview } from './ProductPreview';
 export { ProfilePreview } from './ProfilePreview';
 export { ReportPreview } from './ReportPreview';
+export { TerritoryPreview } from './TerritoryPreview';

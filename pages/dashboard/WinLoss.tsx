@@ -11,34 +11,30 @@ import {
   ChevronRight,
   BarChart3,
   PieChart,
+  FileQuestion,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useDeals } from '../../src/hooks';
+import { useDeals, useWinRateReport } from '../../src/hooks';
 import { Skeleton } from '../../components/ui/Skeleton';
 
-type WinLossReason = {
-  reason: string;
-  count: number;
-  percentage: number;
-};
-
-type CompetitorData = {
-  name: string;
-  wins: number;
-  losses: number;
-  winRate: number;
-  deals: number;
-};
 
 export const WinLoss: React.FC = () => {
   const { deals, loading } = useDeals();
-  const [dateRange, setDateRange] = useState<'30' | '90' | '365'>('90');
+  const [dateRange, setDateRange] = useState<'month' | 'quarter' | 'year'>('quarter');
   const [viewMode, setViewMode] = useState<'overview' | 'reasons' | 'competitors'>('overview');
+
+  // Use the reporting API for win/loss data
+  const { data: winRateReport, isLoading: reportLoading } = useWinRateReport({
+    dateRange: dateRange,
+    groupBy: 'stage',
+  });
 
   // Filter deals by date range and closed status
   const filteredDeals = useMemo(() => {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - parseInt(dateRange));
+    if (dateRange === 'month') cutoff.setDate(cutoff.getDate() - 30);
+    else if (dateRange === 'quarter') cutoff.setDate(cutoff.getDate() - 90);
+    else cutoff.setDate(cutoff.getDate() - 365);
 
     return deals.filter(d => {
       if (!d.isClosed || !d.closedDate) return false;
@@ -49,7 +45,7 @@ export const WinLoss: React.FC = () => {
   const wonDeals = filteredDeals.filter(d => d.isWon);
   const lostDeals = filteredDeals.filter(d => !d.isWon);
 
-  // Calculate metrics
+  // Calculate metrics - always use deal data for consistency
   const metrics = useMemo(() => {
     const totalClosed = filteredDeals.length;
     const winCount = wonDeals.length;
@@ -60,7 +56,6 @@ export const WinLoss: React.FC = () => {
     const totalLostValue = lostDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
     const avgDealSize = winCount > 0 ? totalWonValue / winCount : 0;
 
-    // Calculate average sales cycle
     const salesCycles = wonDeals
       .filter(d => d.createdAt && d.closedDate)
       .map(d => {
@@ -84,35 +79,24 @@ export const WinLoss: React.FC = () => {
     };
   }, [filteredDeals, wonDeals, lostDeals]);
 
-  // Sample win/loss reasons (in real app, these would come from deal close reasons)
-  const winReasons: WinLossReason[] = [
-    { reason: 'Product fit', count: 28, percentage: 35 },
-    { reason: 'Competitive pricing', count: 22, percentage: 27 },
-    { reason: 'Strong relationships', count: 15, percentage: 19 },
-    { reason: 'Implementation support', count: 10, percentage: 12 },
-    { reason: 'Brand reputation', count: 6, percentage: 7 },
-  ];
+  // Get stage-by-stage win rates from API
+  const stageWinRates = useMemo(() => {
+    if (winRateReport?.byStage) {
+      return winRateReport.byStage.map(s => ({
+        stage: s.stage,
+        rate: s.winRate,
+        won: s.won,
+        lost: s.lost,
+      }));
+    }
+    return [];
+  }, [winRateReport]);
 
-  const lossReasons: WinLossReason[] = [
-    { reason: 'Price too high', count: 18, percentage: 32 },
-    { reason: 'Lost to competitor', count: 15, percentage: 27 },
-    { reason: 'No decision / Stalled', count: 12, percentage: 21 },
-    { reason: 'Missing features', count: 8, percentage: 14 },
-    { reason: 'Timing not right', count: 3, percentage: 6 },
-  ];
-
-  // Sample competitor data
-  const competitors: CompetitorData[] = [
-    { name: 'Competitor A', wins: 12, losses: 8, winRate: 60, deals: 20 },
-    { name: 'Competitor B', wins: 8, losses: 12, winRate: 40, deals: 20 },
-    { name: 'Competitor C', wins: 15, losses: 5, winRate: 75, deals: 20 },
-    { name: 'No Competitor', wins: 25, losses: 10, winRate: 71, deals: 35 },
-  ];
-
-  const formatCurrency = (value: number) => {
-    if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
-    if (value >= 1e3) return `$${(value / 1e3).toFixed(0)}K`;
-    return `$${value.toFixed(0)}`;
+  const formatCurrency = (value: number | undefined | null) => {
+    const num = value ?? 0;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
+    if (num >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
+    return `$${num.toFixed(0)}`;
   };
 
   if (loading) {
@@ -146,12 +130,12 @@ export const WinLoss: React.FC = () => {
           <div className="flex items-center gap-3">
             <select
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as '30' | '90' | '365')}
+              onChange={(e) => setDateRange(e.target.value as 'month' | 'quarter' | 'year')}
               className="px-4 py-2.5 rounded-full bg-white border border-black/10 text-sm font-medium text-[#1A1A1A] focus:border-[#EAD07D] outline-none"
             >
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="365">Last 12 months</option>
+              <option value="month">Last 30 days</option>
+              <option value="quarter">Last 90 days</option>
+              <option value="year">Last 12 months</option>
             </select>
           </div>
         </div>
@@ -219,30 +203,36 @@ export const WinLoss: React.FC = () => {
 
         {viewMode === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Win Rate Trend */}
+            {/* Win Rate by Stage */}
             <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
               <h2 className="text-lg font-semibold text-[#1A1A1A] mb-6">Win Rate by Stage</h2>
-              <div className="space-y-4">
-                {[
-                  { stage: 'Qualification → Needs Analysis', rate: 85 },
-                  { stage: 'Needs Analysis → Proposal', rate: 65 },
-                  { stage: 'Proposal → Negotiation', rate: 55 },
-                  { stage: 'Negotiation → Closed', rate: 75 },
-                ].map((item, idx) => (
-                  <div key={idx}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-[#666]">{item.stage}</span>
-                      <span className="text-sm font-semibold text-[#1A1A1A]">{item.rate}%</span>
+              {stageWinRates.length > 0 ? (
+                <div className="space-y-4">
+                  {stageWinRates.map((item, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-[#666]">{item.stage}</span>
+                        <span className="text-sm font-semibold text-[#1A1A1A]">{Math.round(item.rate)}%</span>
+                      </div>
+                      <div className="h-3 bg-[#F0EBD8] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#EAD07D] rounded-full transition-all duration-500"
+                          style={{ width: `${item.rate}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-[#999] mt-1">{item.won}W / {item.lost}L</p>
                     </div>
-                    <div className="h-3 bg-[#F0EBD8] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#EAD07D] rounded-full transition-all duration-500"
-                        style={{ width: `${item.rate}%` }}
-                      />
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-center">
+                  <div>
+                    <BarChart3 size={40} className="text-[#999] mx-auto mb-3 opacity-40" />
+                    <p className="text-[#666]">No stage data available</p>
+                    <p className="text-sm text-[#999]">Close more deals to see stage-by-stage win rates</p>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Recent Closed Deals */}
@@ -293,22 +283,12 @@ export const WinLoss: React.FC = () => {
                 </div>
                 <h2 className="text-lg font-semibold text-[#1A1A1A]">Why We Win</h2>
               </div>
-              <div className="space-y-4">
-                {winReasons.map((item, idx) => (
-                  <div key={idx}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-[#1A1A1A]">{item.reason}</span>
-                      <span className="text-sm font-semibold text-[#93C01F]">{item.percentage}%</span>
-                    </div>
-                    <div className="h-3 bg-[#F0EBD8] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#93C01F] rounded-full transition-all duration-500"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-[#999] mt-1">{item.count} deals</p>
-                  </div>
-                ))}
+              <div className="h-48 flex items-center justify-center text-center">
+                <div>
+                  <FileQuestion size={40} className="text-[#999] mx-auto mb-3 opacity-40" />
+                  <p className="text-[#666]">Win reason tracking not configured</p>
+                  <p className="text-sm text-[#999]">Record close reasons when marking deals as won</p>
+                </div>
               </div>
             </div>
 
@@ -320,22 +300,12 @@ export const WinLoss: React.FC = () => {
                 </div>
                 <h2 className="text-lg font-semibold text-[#1A1A1A]">Why We Lose</h2>
               </div>
-              <div className="space-y-4">
-                {lossReasons.map((item, idx) => (
-                  <div key={idx}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-[#1A1A1A]">{item.reason}</span>
-                      <span className="text-sm font-semibold text-[#666]">{item.percentage}%</span>
-                    </div>
-                    <div className="h-3 bg-[#F0EBD8] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#1A1A1A] rounded-full transition-all duration-500"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-[#999] mt-1">{item.count} deals</p>
-                  </div>
-                ))}
+              <div className="h-48 flex items-center justify-center text-center">
+                <div>
+                  <FileQuestion size={40} className="text-[#999] mx-auto mb-3 opacity-40" />
+                  <p className="text-[#666]">Loss reason tracking not configured</p>
+                  <p className="text-sm text-[#999]">Record close reasons when marking deals as lost</p>
+                </div>
               </div>
             </div>
           </div>
@@ -344,52 +314,15 @@ export const WinLoss: React.FC = () => {
         {viewMode === 'competitors' && (
           <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
             <h2 className="text-lg font-semibold text-[#1A1A1A] mb-6">Competitive Win Rate</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-black/5">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-[#666]">Competitor</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-[#666]">Deals</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-[#666]">Wins</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-[#666]">Losses</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-[#666]">Win Rate</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-[#666]">Performance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competitors.map((comp, idx) => (
-                    <tr key={idx} className="border-b border-black/5 hover:bg-[#F8F8F6]">
-                      <td className="px-4 py-4">
-                        <span className="font-medium text-[#1A1A1A]">{comp.name}</span>
-                      </td>
-                      <td className="px-4 py-4 text-center text-[#666]">{comp.deals}</td>
-                      <td className="px-4 py-4 text-center text-[#93C01F] font-medium">{comp.wins}</td>
-                      <td className="px-4 py-4 text-center text-[#666]">{comp.losses}</td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          comp.winRate >= 60 ? 'bg-[#93C01F]/20 text-[#93C01F]' :
-                          comp.winRate >= 40 ? 'bg-[#EAD07D]/20 text-[#1A1A1A]' :
-                          'bg-[#F0EBD8] text-[#666]'
-                        }`}>
-                          {comp.winRate}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="w-32 h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              comp.winRate >= 60 ? 'bg-[#93C01F]' :
-                              comp.winRate >= 40 ? 'bg-[#EAD07D]' :
-                              'bg-[#999]'
-                            }`}
-                            style={{ width: `${comp.winRate}%` }}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="h-64 flex items-center justify-center text-center">
+              <div>
+                <Users size={48} className="text-[#999] mx-auto mb-4 opacity-40" />
+                <p className="text-lg text-[#666]">Competitor tracking not configured</p>
+                <p className="text-sm text-[#999] mt-2 max-w-md mx-auto">
+                  Track competitors on individual deals to see competitive win rate analysis.
+                  Add competitors from the deal detail page.
+                </p>
+              </div>
             </div>
           </div>
         )}

@@ -103,3 +103,22 @@ export {
 
 // Offline support hooks
 export { useOfflineSync, useOfflineStatus, useStorageStats } from './useOfflineSync';
+
+// Reporting & Analytics hooks
+export {
+  useWinRateReport,
+  usePipelineReport,
+  useForecastData,
+  useCpqDashboard,
+} from './useReporting';
+
+// Territory Management hooks
+export { useTerritories, useTerritory } from './useTerritories';
+
+// Playbook Management hooks
+export {
+  usePlaybooks,
+  usePlaybook,
+  usePlaybookExecutions,
+  usePlaybookExecution,
+} from './usePlaybooks';

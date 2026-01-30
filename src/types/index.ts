@@ -33,6 +33,8 @@ export * from './quoteVersion';
 export * from './esignature';
 export * from './order';
 export * from './cpqAnalytics';
+export * from './territory';
+export * from './playbook';
 
 // Re-export specific types needed for dashboard
 export type { PipelineStats, SalesForecast } from './opportunity';

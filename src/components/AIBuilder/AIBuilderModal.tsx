@@ -19,6 +19,7 @@ import {
   isProductConfig,
   isProfileConfig,
   isReportConfig,
+  isTerritoryConfig,
 } from '../../types/aiBuilder';
 import {
   WebFormPreview,
@@ -29,6 +30,7 @@ import {
   ProductPreview,
   ProfilePreview,
   ReportPreview,
+  TerritoryPreview,
 } from './EntityPreviews';
 
 interface AIBuilderModalProps {
@@ -93,6 +95,11 @@ const entityExamples: Record<AIBuilderEntityType, string[]> = {
     'Set up our complete lead qualification workflow',
     'Create our SDR team setup with roles and templates',
     'Configure customer onboarding automation',
+  ],
+  [AIBuilderEntityType.TERRITORY]: [
+    'Create a West Coast territory for CA, OR, WA states',
+    'Set up an Enterprise territory for companies with 500+ employees',
+    'Create a Healthcare industry territory',
   ],
 };
 
@@ -227,6 +234,9 @@ export function AIBuilderModal({
     }
     if (isReportConfig(config)) {
       return <ReportPreview config={config} />;
+    }
+    if (isTerritoryConfig(config)) {
+      return <TerritoryPreview config={config} />;
     }
     // Fallback: JSON preview
     return (

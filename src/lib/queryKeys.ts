@@ -360,6 +360,29 @@ export const queryKeys = {
     conversionFunnel: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'conversionFunnel', filters] as const,
     winLoss: (filters?: { startDate?: string; endDate?: string }) => [...queryKeys.cpqAnalytics.all, 'winLoss', filters] as const,
   },
+  // Territories
+  territories: {
+    all: ['territories'] as const,
+    lists: () => [...queryKeys.territories.all, 'list'] as const,
+    list: () => [...queryKeys.territories.lists()] as const,
+    details: () => [...queryKeys.territories.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.territories.details(), id] as const,
+    accounts: (id: string) => [...queryKeys.territories.detail(id), 'accounts'] as const,
+    stats: () => [...queryKeys.territories.all, 'stats'] as const,
+  },
+
+  // Playbooks
+  playbooks: {
+    all: ['playbooks'] as const,
+    lists: () => [...queryKeys.playbooks.all, 'list'] as const,
+    list: (filters?: { isActive?: boolean; trigger?: string }) => [...queryKeys.playbooks.lists(), filters] as const,
+    details: () => [...queryKeys.playbooks.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.playbooks.details(), id] as const,
+    stats: () => [...queryKeys.playbooks.all, 'stats'] as const,
+    executions: () => [...queryKeys.playbooks.all, 'executions'] as const,
+    executionsList: (filters?: { playbookId?: string; dealId?: string; status?: string }) => [...queryKeys.playbooks.executions(), 'list', filters] as const,
+    execution: (id: string) => [...queryKeys.playbooks.executions(), 'detail', id] as const,
+  },
 } as const;
 
 // Type helper for query key arrays

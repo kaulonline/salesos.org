@@ -13,6 +13,7 @@ export enum AIBuilderEntityType {
   PROFILE = 'profile',
   REPORT = 'report',
   SMART_BUILDER = 'smart-builder',
+  TERRITORY = 'territory',
 }
 
 export interface GenerationContext {
@@ -320,4 +321,43 @@ export interface SmartBuilderConfig {
 
 export function isSmartBuilderConfig(config: Record<string, any>): config is SmartBuilderConfig {
   return 'summary' in config && 'entities' in config && Array.isArray(config.entities);
+}
+
+// Territory Config
+export interface TerritoryConfig {
+  name: string;
+  description?: string;
+  type: 'GEOGRAPHIC' | 'NAMED_ACCOUNTS' | 'INDUSTRY' | 'ACCOUNT_SIZE' | 'CUSTOM';
+  color?: string;
+  criteria?: {
+    geographic?: {
+      countries?: string[];
+      states?: string[];
+      regions?: string[];
+      cities?: string[];
+      postalCodes?: string[];
+    };
+    industry?: {
+      industries?: string[];
+      subIndustries?: string[];
+    };
+    segment?: {
+      companySize?: 'ENTERPRISE' | 'MID_MARKET' | 'SMB' | 'STARTUP';
+      minEmployees?: number;
+      maxEmployees?: number;
+      minRevenue?: number;
+      maxRevenue?: number;
+    };
+    namedAccounts?: string[];
+    customRules?: Array<{
+      field: string;
+      operator: string;
+      value: string;
+    }>;
+  };
+}
+
+export function isTerritoryConfig(config: Record<string, any>): config is TerritoryConfig {
+  return 'name' in config && 'type' in config &&
+    ['GEOGRAPHIC', 'NAMED_ACCOUNTS', 'INDUSTRY', 'ACCOUNT_SIZE', 'CUSTOM'].includes(config.type);
 }

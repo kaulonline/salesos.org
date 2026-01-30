@@ -125,3 +125,7 @@ export type { AssignmentRuleFilters } from './assignmentRules';
 export type { WebFormFilters, WebFormSubmissionFilters } from './webForms';
 export type { ApiKeyFilters } from './apiKeys';
 export type { WebhookFilters, WebhookLogFilters } from './webhooks';
+
+// Territory and Playbook APIs
+export { default as territoriesApi } from './territories';
+export { default as playbooksApi } from './playbooks';

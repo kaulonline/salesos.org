@@ -66,104 +66,8 @@ interface Conversation {
   coachingInsights?: string[];
 }
 
-// Sample conversations
-const sampleConversations: Conversation[] = [
-  {
-    id: '1',
-    type: 'CALL',
-    title: 'Discovery Call - TechCorp Inc',
-    date: '2026-01-30T10:00:00Z',
-    duration: 32,
-    participants: [
-      { id: '1', name: 'Sarah Johnson', role: 'Account Executive' },
-      { id: '2', name: 'Mike Chen', role: 'VP of Sales at TechCorp' },
-    ],
-    deal: { id: 'd1', name: 'TechCorp Enterprise Deal' },
-    sentiment: 'POSITIVE',
-    talkRatio: { rep: 35, customer: 65 },
-    topics: ['Pricing', 'Implementation', 'Integration', 'Timeline'],
-    keyMoments: [
-      { timestamp: 245, type: 'OBJECTION', text: 'The implementation timeline seems too long for our needs' },
-      { timestamp: 580, type: 'COMMITMENT', text: 'We can definitely move forward with a pilot program' },
-      { timestamp: 890, type: 'NEXT_STEP', text: 'Let\'s schedule a technical demo for next week' },
-      { timestamp: 1200, type: 'COMPETITOR', text: 'We\'re also evaluating Salesforce for this' },
-    ],
-    summary: 'Positive discovery call with strong buying signals. Customer showed interest in pilot program. Main concern is implementation timeline. Follow-up technical demo scheduled.',
-    actionItems: [
-      'Schedule technical demo for next week',
-      'Send implementation timeline proposal',
-      'Prepare competitive comparison vs Salesforce',
-    ],
-    coachingInsights: [
-      'Great talk ratio - customer spoke 65% of the time',
-      'Handled pricing objection effectively',
-      'Could have probed deeper on competitor evaluation criteria',
-    ],
-  },
-  {
-    id: '2',
-    type: 'VIDEO_MEETING',
-    title: 'Demo - GlobalTech Solutions',
-    date: '2026-01-29T14:30:00Z',
-    duration: 45,
-    participants: [
-      { id: '1', name: 'David Kim', role: 'Solution Engineer' },
-      { id: '3', name: 'Emily Watson', role: 'CTO at GlobalTech' },
-      { id: '4', name: 'James Miller', role: 'IT Director at GlobalTech' },
-    ],
-    deal: { id: 'd2', name: 'GlobalTech Platform Migration' },
-    sentiment: 'NEUTRAL',
-    talkRatio: { rep: 55, customer: 45 },
-    topics: ['Features', 'Security', 'API', 'Support'],
-    keyMoments: [
-      { timestamp: 300, type: 'QUESTION', text: 'How does your API handle rate limiting?' },
-      { timestamp: 720, type: 'OBJECTION', text: 'The security certifications need to be SOC 2 Type II' },
-      { timestamp: 1500, type: 'COMMITMENT', text: 'The team is impressed with the dashboard' },
-    ],
-    summary: 'Technical demo went well. Team was impressed with features but raised security certification concerns. Need to provide SOC 2 documentation.',
-    actionItems: [
-      'Send SOC 2 Type II certification',
-      'Provide API documentation',
-      'Schedule follow-up with security team',
-    ],
-    coachingInsights: [
-      'Consider letting the customer drive the demo more',
-      'Strong technical knowledge demonstrated',
-      'Security concerns should have been addressed earlier',
-    ],
-  },
-  {
-    id: '3',
-    type: 'CALL',
-    title: 'Negotiation - StartupXYZ',
-    date: '2026-01-28T11:00:00Z',
-    duration: 28,
-    participants: [
-      { id: '1', name: 'Sarah Johnson', role: 'Account Executive' },
-      { id: '5', name: 'Alex Turner', role: 'CEO at StartupXYZ' },
-    ],
-    deal: { id: 'd3', name: 'StartupXYZ Annual Contract' },
-    sentiment: 'NEGATIVE',
-    talkRatio: { rep: 45, customer: 55 },
-    topics: ['Pricing', 'Contract Terms', 'Budget'],
-    keyMoments: [
-      { timestamp: 180, type: 'OBJECTION', text: 'The pricing is 40% higher than our budget' },
-      { timestamp: 420, type: 'QUESTION', text: 'Are there any startup discounts available?' },
-      { timestamp: 900, type: 'OBJECTION', text: 'Our board won\'t approve this expense right now' },
-    ],
-    summary: 'Challenging negotiation call. Customer facing budget constraints and board approval issues. May need to revisit in Q2 or offer alternative pricing structure.',
-    actionItems: [
-      'Prepare startup discount proposal',
-      'Create ROI analysis for board presentation',
-      'Schedule follow-up for Q2',
-    ],
-    coachingInsights: [
-      'Budget constraints identified late - consider earlier discovery',
-      'Good handling of pricing objection',
-      'Could have explored multi-year discount option',
-    ],
-  },
-];
+// No conversation recording API available - feature not yet implemented
+const conversations: Conversation[] = [];
 
 const sentimentConfig = {
   POSITIVE: { label: 'Positive', color: 'text-[#93C01F]', bg: 'bg-[#93C01F]/20', icon: ThumbsUp },
@@ -185,12 +89,14 @@ export const ConversationIntelligence: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [filterSentiment, setFilterSentiment] = useState<string>('all');
-  const [showTranscript, setShowTranscript] = useState(false);
 
   const loading = dealsLoading || contactsLoading;
 
+  // Conversation recording not yet implemented
+  const hasNoConversations = conversations.length === 0;
+
   const filteredConversations = useMemo(() => {
-    return sampleConversations.filter(conv => {
+    return conversations.filter(conv => {
       const matchesSearch = conv.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.topics.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -200,16 +106,17 @@ export const ConversationIntelligence: React.FC = () => {
   }, [searchTerm, filterSentiment]);
 
   const selectedConv = selectedConversation
-    ? sampleConversations.find(c => c.id === selectedConversation)
+    ? conversations.find(c => c.id === selectedConversation)
     : null;
 
   // Aggregate stats
   const stats = useMemo(() => {
-    const total = sampleConversations.length;
-    const positive = sampleConversations.filter(c => c.sentiment === 'POSITIVE').length;
-    const avgDuration = Math.round(sampleConversations.reduce((sum, c) => sum + c.duration, 0) / total);
+    const total = conversations.length;
+    if (total === 0) return { total: 0, positive: 0, avgDuration: 0, avgTalkRatio: 0 };
+    const positive = conversations.filter(c => c.sentiment === 'POSITIVE').length;
+    const avgDuration = Math.round(conversations.reduce((sum, c) => sum + c.duration, 0) / total);
     const avgTalkRatio = Math.round(
-      sampleConversations.reduce((sum, c) => sum + c.talkRatio.rep, 0) / total
+      conversations.reduce((sum, c) => sum + c.talkRatio.rep, 0) / total
     );
 
     return { total, positive, avgDuration, avgTalkRatio };
@@ -262,49 +169,99 @@ export const ConversationIntelligence: React.FC = () => {
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
-                <Mic size={18} className="text-[#1A1A1A]" />
+        {/* Empty State */}
+        {hasNoConversations ? (
+          <div className="bg-white rounded-[32px] p-12 shadow-sm border border-black/5">
+            <div className="max-w-lg mx-auto text-center">
+              <div className="w-20 h-20 rounded-2xl bg-[#F0EBD8] flex items-center justify-center mx-auto mb-6">
+                <Mic size={40} className="text-[#999]" />
               </div>
-              <span className="text-sm text-[#666]">Total Calls</span>
-            </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{stats.total}</p>
-          </div>
-          <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
-                <ThumbsUp size={18} className="text-[#93C01F]" />
+              <h2 className="text-2xl font-light text-[#1A1A1A] mb-3">Conversation Intelligence</h2>
+              <p className="text-[#666] mb-8">
+                Record and analyze your sales calls with AI-powered insights.
+                Get automatic transcriptions, sentiment analysis, and coaching recommendations.
+                This feature is coming soon.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-left">
+                <div className="bg-[#F8F8F6] rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare size={16} className="text-[#EAD07D]" />
+                    <h3 className="font-medium text-[#1A1A1A]">Transcription</h3>
+                  </div>
+                  <p className="text-sm text-[#666]">Automatic call transcription with speaker identification</p>
+                </div>
+                <div className="bg-[#F8F8F6] rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain size={16} className="text-purple-600" />
+                    <h3 className="font-medium text-[#1A1A1A]">AI Analysis</h3>
+                  </div>
+                  <p className="text-sm text-[#666]">Key moments, objections, and commitments detected</p>
+                </div>
+                <div className="bg-[#F8F8F6] rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ThumbsUp size={16} className="text-[#93C01F]" />
+                    <h3 className="font-medium text-[#1A1A1A]">Sentiment</h3>
+                  </div>
+                  <p className="text-sm text-[#666]">Track conversation sentiment and customer engagement</p>
+                </div>
+                <div className="bg-[#F8F8F6] rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb size={16} className="text-blue-600" />
+                    <h3 className="font-medium text-[#1A1A1A]">Coaching</h3>
+                  </div>
+                  <p className="text-sm text-[#666]">AI-powered coaching suggestions for improvement</p>
+                </div>
               </div>
-              <span className="text-sm text-[#666]">Positive Sentiment</span>
+              <p className="text-sm text-[#999]">
+                Connect your phone system or use our dialer to start recording conversations.
+              </p>
             </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{Math.round((stats.positive / stats.total) * 100)}%</p>
           </div>
-          <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Clock size={18} className="text-blue-600" />
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                    <Mic size={18} className="text-[#1A1A1A]" />
+                  </div>
+                  <span className="text-sm text-[#666]">Total Calls</span>
+                </div>
+                <p className="text-3xl font-light text-[#1A1A1A]">{stats.total}</p>
               </div>
-              <span className="text-sm text-[#666]">Avg Duration</span>
-            </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{stats.avgDuration}m</p>
-          </div>
-          <div className="bg-[#1A1A1A] rounded-[24px] p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
-                <BarChart3 size={18} className="text-[#EAD07D]" />
+              <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#93C01F]/20 flex items-center justify-center">
+                    <ThumbsUp size={18} className="text-[#93C01F]" />
+                  </div>
+                  <span className="text-sm text-[#666]">Positive Sentiment</span>
+                </div>
+                <p className="text-3xl font-light text-[#1A1A1A]">{stats.total > 0 ? Math.round((stats.positive / stats.total) * 100) : 0}%</p>
               </div>
-              <span className="text-sm text-white/60">Avg Talk Ratio</span>
+              <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <Clock size={18} className="text-blue-600" />
+                  </div>
+                  <span className="text-sm text-[#666]">Avg Duration</span>
+                </div>
+                <p className="text-3xl font-light text-[#1A1A1A]">{stats.avgDuration}m</p>
+              </div>
+              <div className="bg-[#1A1A1A] rounded-[24px] p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                    <BarChart3 size={18} className="text-[#EAD07D]" />
+                  </div>
+                  <span className="text-sm text-white/60">Avg Talk Ratio</span>
+                </div>
+                <p className="text-3xl font-light text-white">{stats.avgTalkRatio}%</p>
+                <p className="text-xs text-white/40">Rep speaking time</p>
+              </div>
             </div>
-            <p className="text-3xl font-light text-white">{stats.avgTalkRatio}%</p>
-            <p className="text-xs text-white/40">Rep speaking time</p>
-          </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Conversations List */}
           <div className="lg:col-span-5">
             <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
@@ -528,6 +485,8 @@ export const ConversationIntelligence: React.FC = () => {
             )}
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
