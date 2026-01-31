@@ -26,10 +26,13 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Card } from '../../components/ui/Card';
+import { CountUp } from '../../components/ui/CountUp';
 import { TaskDetailModal } from '../../components/TaskDetailModal';
 import { useDashboard, useDeals, useMeetings, useActivities, useTasks } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import type { Task } from '../../src/types/task';
+import { BarChart } from '../../src/components/charts';
 
 // Accordion Item Component
 const AccordionItem: React.FC<{
@@ -270,24 +273,24 @@ export const DashboardHome: React.FC = () => {
 
           {/* Large Stats - Right Side */}
           <div className="flex items-center gap-8 lg:gap-12">
-            <div className="text-center">
+            <div className="text-center min-w-[80px]">
               <div className="flex items-center gap-2 justify-center">
                 <Users size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A]">{leadStats?.total || 0}</span>
+                <CountUp end={leadStats?.total || 0} className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
               </div>
               <p className="text-xs font-medium text-[#999]">Leads</p>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-[100px]">
               <div className="flex items-center gap-2 justify-center">
                 <Target size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A]">{totalDeals}</span>
+                <CountUp end={totalDeals} className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
               </div>
               <p className="text-xs font-medium text-[#999]">Open Deals</p>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-[160px]">
               <div className="flex items-center gap-2 justify-center">
                 <DollarSign size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A]">{formatCurrency(totalPipeline)}</span>
+                <CountUp end={totalPipeline} prefix="$" className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
               </div>
               <p className="text-xs font-medium text-[#999]">Pipeline</p>
             </div>
@@ -461,7 +464,7 @@ export const DashboardHome: React.FC = () => {
             {/* Activity & Deal Velocity Row */}
             <div className="grid grid-cols-2 gap-6">
               {/* Sales Activity Card */}
-              <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+              <Card className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-[#1A1A1A]">Sales Activity</h3>
                   <Link to="/dashboard/analytics" className="text-[#999] hover:text-[#1A1A1A]">
@@ -470,38 +473,30 @@ export const DashboardHome: React.FC = () => {
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-4xl font-light text-[#1A1A1A]">{totalMonthlyActivities}</span>
+                  <CountUp end={totalMonthlyActivities} className="text-4xl font-light text-[#1A1A1A] tabular-nums min-w-[60px]" />
                   <span className="text-sm text-[#999]">touchpoints</span>
                 </div>
                 <p className="text-xs text-[#999] mb-6">last 30 days</p>
 
                 {/* Weekly Activity Bar Chart */}
                 {totalMonthlyActivities > 0 ? (
-                  <div className="flex items-end justify-between h-32 gap-2">
-                    {dailyActivities.map((day, i) => {
-                      const height = maxDailyActivity > 0 ? (day.total / maxDailyActivity) * 100 : 0;
-                      const isHighest = day.total === maxDailyActivity && maxDailyActivity > 0 && day.total > 0;
-
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                          {isHighest && (
-                            <div className="text-xs font-medium text-[#1A1A1A] bg-[#EAD07D] px-2 py-0.5 rounded-full whitespace-nowrap">
-                              {day.total}
-                            </div>
-                          )}
-                          <div
-                            className={`w-full rounded-xl transition-all ${
-                              isHighest ? 'bg-[#EAD07D]' : day.isToday ? 'bg-[#1A1A1A]' : 'bg-[#F0EBD8]'
-                            }`}
-                            style={{ height: `${Math.max(height, 8)}%` }}
-                          />
-                          <span className={`text-xs font-medium ${day.isToday ? 'text-[#1A1A1A]' : 'text-[#999]'}`}>
-                            {day.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <BarChart
+                    data={dailyActivities.map((day, i) => ({
+                      name: day.label,
+                      value: day.total,
+                      isToday: day.isToday,
+                    }))}
+                    dataKey="value"
+                    xAxisKey="name"
+                    height={140}
+                    color="#F0EBD8"
+                    activeColor="#1A1A1A"
+                    activeIndex={dailyActivities.findIndex(d => d.isToday)}
+                    showGrid={false}
+                    showYAxis={false}
+                    barRadius={8}
+                    tooltipFormatter={(value) => `${value} activities`}
+                  />
                 ) : (
                   <div className="flex items-center justify-center h-32 text-center">
                     <div>
@@ -511,10 +506,10 @@ export const DashboardHome: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
 
               {/* Deal Velocity Card */}
-              <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+              <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-[#1A1A1A]">Deal Velocity</h3>
                   <Link to="/dashboard/analytics" className="text-[#999] hover:text-[#1A1A1A]">
@@ -559,22 +554,22 @@ export const DashboardHome: React.FC = () => {
 
                   {/* Quick Stats */}
                   <div className="flex items-center gap-4 text-center">
-                    <div>
-                      <p className="text-lg font-semibold text-[#1A1A1A]">{Math.round(winRate)}%</p>
+                    <div className="min-w-[50px]">
+                      <CountUp end={Math.round(winRate)} suffix="%" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
                       <p className="text-xs text-[#999]">Win Rate</p>
                     </div>
                     <div className="w-px h-8 bg-black/10"></div>
-                    <div>
-                      <p className="text-lg font-semibold text-[#1A1A1A]">{conversionRate}%</p>
+                    <div className="min-w-[50px]">
+                      <CountUp end={conversionRate} suffix="%" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
                       <p className="text-xs text-[#999]">Conversion</p>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
 
             {/* Calendar Section - Sales Meetings */}
-            <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+            <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-[#1A1A1A]">Upcoming Meetings</h3>
                 <Link to="/dashboard/calendar" className="text-[#999] hover:text-[#1A1A1A]">
@@ -666,13 +661,13 @@ export const DashboardHome: React.FC = () => {
               >
                 View Full Calendar →
               </Link>
-            </div>
+            </Card>
           </div>
 
           {/* Right Column */}
           <div className="lg:col-span-3 space-y-6">
             {/* Pipeline Summary Card */}
-            <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+            <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-[#1A1A1A]">Pipeline Summary</h3>
                 <Link to="/dashboard/deals" className="text-[#999] hover:text-[#1A1A1A]">
@@ -689,7 +684,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Open Deals</span>
                   </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A]">{totalDeals}</span>
+                  <CountUp end={totalDeals} className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -699,7 +694,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Closed Won</span>
                   </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A]">{closedWonThisMonth}</span>
+                  <CountUp end={closedWonThisMonth} className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -709,9 +704,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Avg Deal Size</span>
                   </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A]">
-                    {formatCurrency(totalPipeline / (pipelineStats?.totalOpportunities || 1))}
-                  </span>
+                  <CountUp end={totalPipeline / (pipelineStats?.totalOpportunities || 1)} prefix="$" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -726,10 +719,10 @@ export const DashboardHome: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Sales Tasks Card - Dark Theme */}
-            <div className="bg-[#1A1A1A] rounded-[32px] p-6 shadow-lg">
+            <Card variant="dark" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-semibold text-white">Action Items</h3>
                 <div className="flex items-center gap-2">
@@ -807,12 +800,12 @@ export const DashboardHome: React.FC = () => {
                 View All Tasks
                 <ChevronRight size={16} />
               </Link>
-            </div>
+            </Card>
           </div>
         </div>
 
         {/* AI Forecast Section */}
-        <div className="mt-6 bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+        <Card className="mt-6 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-semibold text-[#1A1A1A]">Revenue Forecast</h3>
@@ -831,9 +824,7 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           <div className="flex items-baseline gap-4 mb-8">
-            <span className="text-5xl font-light text-[#1A1A1A]">
-              {formatCurrency(forecast?.quarterBestCase || totalPipeline)}
-            </span>
+            <CountUp end={forecast?.quarterBestCase || totalPipeline} prefix="$" className="text-5xl font-light text-[#1A1A1A] tabular-nums min-w-[200px]" />
             <span className="text-sm text-[#666]">projected revenue</span>
             {(forecast?.quarterCommit ?? 0) > 0 && (
               <span className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#1A1A1A]">
@@ -887,7 +878,7 @@ export const DashboardHome: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Task Detail Modal */}

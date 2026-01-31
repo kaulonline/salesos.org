@@ -63,47 +63,77 @@ export const AccountHealth: React.FC = () => {
         ? Math.floor((Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
 
-      const hasRecentActivity = daysSinceActivity < 30;
-      const hasModerateActivity = daysSinceActivity < 60;
-      const hasOpenDeals = (company.opportunityCount || 0) > 0;
-      const hasContacts = (company.contactCount || 0) > 0;
-      const hasRevenue = (company.annualRevenue || 0) > 0;
+      // Get counts from different possible sources
+      const contactCount = company.contactCount ?? company._count?.contacts ?? 0;
+      const opportunityCount = company.opportunityCount ?? company._count?.opportunities ?? 0;
 
-      // Calculate health score based on multiple factors
-      let healthScore = 30; // Base score
-      if (hasRecentActivity) healthScore += 25;
-      else if (hasModerateActivity) healthScore += 10;
-      if (hasOpenDeals) healthScore += 20;
-      if (hasContacts) healthScore += 15;
-      if (hasRevenue) healthScore += 10;
+      const hasRecentActivity = daysSinceActivity < 30;
+      const hasModerateActivity = daysSinceActivity < 90;
+      const hasAnyActivity = daysSinceActivity < 180;
+      const hasOpenDeals = opportunityCount > 0;
+      const hasContacts = contactCount > 0;
+      const hasRevenue = (company.annualRevenue || 0) > 0;
+      const hasWebsite = !!company.website;
+      const hasPhone = !!company.phone;
+      const isCustomer = company.type === 'CUSTOMER';
+      const isActiveStatus = company.accountStatus === 'ACTIVE';
+
+      // Use stored healthScore if available, otherwise calculate
+      let healthScore = company.healthScore ?? 0;
+
+      if (!company.healthScore) {
+        // Calculate health score based on multiple factors
+        healthScore = 20; // Base score
+
+        // Activity scoring (up to 30 points)
+        if (hasRecentActivity) healthScore += 30;
+        else if (hasModerateActivity) healthScore += 20;
+        else if (hasAnyActivity) healthScore += 10;
+
+        // Relationship scoring (up to 25 points)
+        if (hasOpenDeals) healthScore += 15;
+        if (hasContacts) healthScore += 10;
+
+        // Profile completeness (up to 15 points)
+        if (hasRevenue) healthScore += 5;
+        if (hasWebsite) healthScore += 5;
+        if (hasPhone) healthScore += 5;
+
+        // Account status (up to 10 points)
+        if (isCustomer) healthScore += 5;
+        if (isActiveStatus) healthScore += 5;
+      }
 
       // Cap at 100
       healthScore = Math.min(100, healthScore);
 
       let status: HealthStatus = 'UNKNOWN';
-      if (healthScore >= 70) status = 'HEALTHY';
-      else if (healthScore >= 45) status = 'AT_RISK';
+      if (healthScore >= 65) status = 'HEALTHY';
+      else if (healthScore >= 40) status = 'AT_RISK';
       else if (healthScore > 0) status = 'CRITICAL';
 
       // Determine trend based on activity recency
       let trend: HealthTrend = 'STABLE';
       if (daysSinceActivity < 14 && hasOpenDeals) {
         trend = 'IMPROVING';
-      } else if (daysSinceActivity > 45 || (!hasOpenDeals && !hasContacts)) {
+      } else if (daysSinceActivity > 90 || (!hasOpenDeals && !hasContacts)) {
         trend = 'DECLINING';
       }
 
       const riskFactors: string[] = [];
       const opportunities: string[] = [];
 
-      if (daysSinceActivity > 60) riskFactors.push('No activity in 60+ days');
+      if (daysSinceActivity > 180) riskFactors.push('No activity in 6+ months');
+      else if (daysSinceActivity > 90) riskFactors.push('No activity in 90+ days');
       else if (daysSinceActivity > 30) riskFactors.push('No activity in 30+ days');
       if (!hasOpenDeals) riskFactors.push('No active opportunities');
       if (!hasContacts) riskFactors.push('No contacts on file');
+      if (!hasWebsite && !hasPhone) riskFactors.push('Missing contact information');
 
       if (hasRecentActivity && hasOpenDeals) opportunities.push('Active engagement with open deals');
       else if (hasRecentActivity) opportunities.push('Recent engagement - good time for outreach');
-      if (hasRevenue && !hasOpenDeals) opportunities.push('Existing customer - potential upsell');
+      if (isCustomer && !hasOpenDeals) opportunities.push('Existing customer - potential upsell');
+      if (hasWebsite && !hasContacts) opportunities.push('Research company website for contacts');
 
       return {
         id: company.id,
@@ -113,7 +143,7 @@ export const AccountHealth: React.FC = () => {
         status,
         trend,
         lastActivity: company.lastActivityDate || '',
-        openDeals: company.opportunityCount || 0,
+        openDeals: opportunityCount,
         totalRevenue: company.annualRevenue || 0,
         riskFactors,
         opportunities,

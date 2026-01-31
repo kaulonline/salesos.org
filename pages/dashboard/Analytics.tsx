@@ -4,9 +4,11 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { CountUp } from '../../components/ui/CountUp';
 import { reportsApi, type RevenueReport, type ForecastReport, DateRange } from '../../src/api/reports';
 import { useDashboard } from '../../src/hooks';
 import { FeatureGate, Features, useCanAccess } from '../../src/components/FeatureGate';
+import { AreaChart } from '../../src/components/charts';
 
 export const Analytics: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -171,9 +173,7 @@ export const Analytics: React.FC = () => {
             </Badge>
           </div>
           <div>
-            <div className="text-5xl font-light text-[#1A1A1A] mb-2">
-              {formatCurrency(revenueReport?.closedWon || 0)}
-            </div>
+            <CountUp end={revenueReport?.closedWon || 0} prefix="$" className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums" />
             <div className="text-sm text-[#666]">Total Revenue (YTD)</div>
           </div>
           <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -192,9 +192,7 @@ export const Analytics: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="text-5xl font-light text-[#1A1A1A] mb-2">
-              {totalLeads.toLocaleString()}
-            </div>
+            <CountUp end={totalLeads} className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums" />
             <div className="text-sm text-[#666]">Total Leads</div>
           </div>
           <div className="flex gap-1 items-end h-8">
@@ -224,9 +222,7 @@ export const Analytics: React.FC = () => {
             )}
           </div>
           <div className="relative z-10">
-            <div className="text-5xl font-light text-white mb-2">
-              {quotaAttainment.toFixed(0)}%
-            </div>
+            <CountUp end={quotaAttainment} suffix="%" className="text-5xl font-light text-white mb-2 block tabular-nums" />
             <div className="text-sm text-white/60">Quota Attainment</div>
           </div>
         </Card>
@@ -259,75 +255,15 @@ export const Analytics: React.FC = () => {
             </div>
           </div>
 
-          {chartData.length > 0 ? (
-            <>
-              <div className="h-64 w-full relative group">
-                <svg
-                  className="w-full h-full overflow-visible"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  onMouseLeave={() => setHoveredIndex(null)}
-                >
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-
-                  <path d={areaPath} fill="url(#chartGradient)" />
-                  <path
-                    d={linePath}
-                    fill="none"
-                    stroke="#EAD07D"
-                    strokeWidth="3"
-                    vectorEffect="non-scaling-stroke"
-                    strokeLinecap="round"
-                  />
-
-                  {chartData.map((val, i) => {
-                    const x = (i / Math.max(chartData.length - 1, 1)) * 100;
-                    const y = 100 - val;
-                    const isHovered = hoveredIndex === i;
-
-                    return (
-                      <g key={i} onMouseEnter={() => setHoveredIndex(i)}>
-                        <circle cx={x} cy={y} r="5" fill="transparent" cursor="pointer" />
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={isHovered ? 6 : 0}
-                          fill="#1A1A1A"
-                          stroke="#fff"
-                          strokeWidth="2"
-                          className="transition-all duration-200"
-                          vectorEffect="non-scaling-stroke"
-                        />
-                      </g>
-                    );
-                  })}
-                </svg>
-
-                {hoveredIndex !== null && rawData && rawData[hoveredIndex] !== undefined && (
-                  <div
-                    className="absolute bg-[#1A1A1A] text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full mb-3 transition-all pointer-events-none z-10 whitespace-nowrap"
-                    style={{
-                      left: `${(hoveredIndex / Math.max(chartData.length - 1, 1)) * 100}%`,
-                      top: `${100 - chartData[hoveredIndex]}%`
-                    }}
-                  >
-                    {formatCurrency(rawData[hoveredIndex])}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1A1A1A]" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between text-xs text-[#999] mt-6 pt-4 border-t border-gray-100">
-                {chartLabels.map((label, i) => (
-                  <span key={i} className="truncate">{label}</span>
-                ))}
-              </div>
-            </>
+          {revenueReport?.byMonth && revenueReport.byMonth.length > 0 ? (
+            <AreaChart
+              data={revenueReport.byMonth.map(m => ({ name: m.month, value: m.actual }))}
+              dataKey="value"
+              xAxisKey="name"
+              height={280}
+              color="#EAD07D"
+              tooltipFormatter={(value) => formatCurrency(value)}
+            />
           ) : (
             <div className="h-64 flex items-center justify-center text-[#666]">
               <div className="text-center">

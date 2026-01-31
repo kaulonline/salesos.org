@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, ArrowUpRight, CheckCircle2, Clock, FileCheck, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { CountUp } from '../../components/ui/CountUp';
 import { useDeals } from '../../src/hooks';
 import type { Opportunity } from '../../src/types';
+import { AreaChart } from '../../src/components/charts';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -220,7 +222,7 @@ export const Revenue: React.FC = () => {
               )}
             </div>
             <div>
-              <div className="text-3xl font-medium text-[#1A1A1A]">{formatCurrency(metrics.totalCollected)}</div>
+              <CountUp end={metrics.totalCollected} prefix="$" className="text-3xl font-medium text-[#1A1A1A] block tabular-nums" />
               <div className="text-sm text-[#666] mt-1">Closed Won Revenue</div>
             </div>
           </Card>
@@ -232,7 +234,7 @@ export const Revenue: React.FC = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-medium text-[#1A1A1A]">{formatCurrency(metrics.outstandingAmount)}</div>
+              <CountUp end={metrics.outstandingAmount} prefix="$" className="text-3xl font-medium text-[#1A1A1A] block tabular-nums" />
               <div className="text-sm text-[#666] mt-1">Open Pipeline</div>
             </div>
           </Card>
@@ -245,7 +247,7 @@ export const Revenue: React.FC = () => {
               </div>
             </div>
             <div className="relative z-10">
-              <div className="text-3xl font-medium text-white">{formatShortCurrency(metrics.projectedMRR)}</div>
+              <CountUp end={metrics.projectedMRR} prefix="$" className="text-3xl font-medium text-white block tabular-nums" />
               <div className="text-sm text-white/60 mt-1">Weighted Pipeline</div>
             </div>
           </Card>
@@ -337,74 +339,23 @@ export const Revenue: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 w-full relative group">
-              <svg
-                className="w-full h-full overflow-visible"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                onMouseLeave={() => setHoveredIndex(null)}
-              >
-                <defs>
-                  <linearGradient id="forecastGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EAD07D" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#EAD07D" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
-                <path d={areaPath} fill="url(#forecastGradient)" />
-                <path
-                  d={linePath}
-                  fill="none"
-                  stroke="#EAD07D"
-                  strokeWidth="2.5"
-                  vectorEffect="non-scaling-stroke"
-                  strokeLinecap="round"
-                />
-
-                {normalizedData.map((d, i) => {
-                  const x = i * (100 / (normalizedData.length - 1));
-                  const y = 100 - d;
-                  const isHovered = hoveredIndex === i;
-
-                  return (
-                    <g key={i} onMouseEnter={() => setHoveredIndex(i)} className="cursor-pointer">
-                      <rect x={x - 5} y="0" width="10" height="100" fill="transparent" />
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={isHovered ? 5 : 3}
-                        fill={isHovered ? "#EAD07D" : "#1A1A1A"}
-                        stroke="#EAD07D"
-                        strokeWidth={isHovered ? 0 : 2}
-                        className="transition-all duration-200"
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {hoveredIndex !== null && (
-                <div
-                  className="absolute bg-white/90 backdrop-blur-sm border border-white/20 text-[#1A1A1A] px-2 py-1 rounded text-xs font-bold shadow-lg transform -translate-x-1/2 -translate-y-full pointer-events-none mb-3"
-                  style={{
-                    left: `${hoveredIndex * (100 / (normalizedData.length - 1))}%`,
-                    top: `${100 - normalizedData[hoveredIndex]}%`
-                  }}
-                >
-                  {formatShortCurrency(forecastData[hoveredIndex]?.value || 0)}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90"></div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-between text-xs text-white/40 border-t border-white/10 pt-4 mt-2">
-              {forecastData.map((d, i) => <span key={i}>{d.month}</span>)}
+            <div className="flex-1 w-full">
+              <AreaChart
+                data={forecastData}
+                dataKey="value"
+                xAxisKey="month"
+                height={180}
+                color="#EAD07D"
+                gradientId="revenueForecastGradient"
+                showGrid={false}
+                tooltipFormatter={(value) => formatShortCurrency(value)}
+              />
             </div>
           </Card>
 
           <Card variant="yellow" padding="lg" className="relative overflow-hidden">
             <h3 className="font-bold text-lg mb-2 text-[#1A1A1A]">Expected Close</h3>
-            <div className="text-4xl font-medium mb-8 text-[#1A1A1A]">{formatCurrency(totalUpcoming)}</div>
+            <CountUp end={totalUpcoming} prefix="$" className="text-4xl font-medium mb-8 text-[#1A1A1A] block tabular-nums" />
 
             <div className="space-y-3 relative z-10">
               {upcomingPayouts.length > 0 ? (

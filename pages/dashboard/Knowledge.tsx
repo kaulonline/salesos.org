@@ -133,10 +133,15 @@ export const Knowledge: React.FC = () => {
 
   const isLoading = healthLoading || documentsLoading;
 
+  // Ensure documents is always an array (backend might return { documents: [...] })
+  const documentsList = Array.isArray(documents)
+    ? documents
+    : (documents as any)?.documents ?? [];
+
   // Calculate storage stats
-  const totalSize = documents?.reduce((sum, doc) => sum + (doc.file_size || 0), 0) || 0;
-  const totalVectors = documents?.reduce((sum, doc) => sum + (doc.vector_count || 0), 0) || 0;
-  const completedDocs = documents?.filter(d => d.status === 'completed').length || 0;
+  const totalSize = documentsList.reduce((sum, doc) => sum + (doc.file_size || 0), 0);
+  const totalVectors = documentsList.reduce((sum, doc) => sum + (doc.vector_count || 0), 0);
+  const completedDocs = documentsList.filter(d => d.status === 'completed').length;
 
   if (isLoading) {
     return (
@@ -263,14 +268,14 @@ export const Knowledge: React.FC = () => {
             </div>
 
             <div className="p-2">
-              {!documents || documents.length === 0 ? (
+              {documentsList.length === 0 ? (
                 <div className="py-16 text-center">
                   <Database size={48} className="mx-auto text-[#999] opacity-40 mb-4" />
                   <p className="text-[#666] mb-2">No documents indexed yet</p>
                   <p className="text-sm text-[#999]">Upload PDFs to train your AI agents</p>
                 </div>
               ) : (
-                documents.map((doc) => {
+                documentsList.map((doc) => {
                   const status = statusConfig[doc.status] || statusConfig.pending;
                   const isDeleting = deleteMutation.isPending && deleteConfirm === doc.document_id;
 

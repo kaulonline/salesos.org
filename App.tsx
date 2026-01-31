@@ -11,6 +11,7 @@ import { FeatureProvider } from './src/components/FeatureGate';
 import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
 import { NoiseOverlay } from './components/ui/NoiseOverlay';
+import DesignSystem from './src/pages/DesignSystem';
 
 // Initialize error tracking
 initErrorTracking();
@@ -158,6 +159,11 @@ function AppContent() {
       <main>
         <Routes>
           {/* Public Routes */}
+          <Route path="/design-system" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <DesignSystem />
+            </Suspense>
+          } />
           <Route path="/" element={<Home />} />
           <Route path="/product" element={
             <Suspense fallback={<PageLoadingFallback />}>
@@ -690,6 +696,7 @@ function AppContent() {
     </div>
   );
 }
+
 
 function App() {
   return (

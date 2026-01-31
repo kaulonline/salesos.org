@@ -1,42 +1,45 @@
+import { motion, HTMLMotionProps } from "framer-motion";
 import React from 'react';
+import { cn } from "../../src/lib/utils";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'dark' | 'yellow' | 'outline' | 'ghost';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  className?: string;
-  children: React.ReactNode;
+export interface CardProps extends HTMLMotionProps<"div"> {
+  variant?: "default" | "small" | "dark" | "flat" | "yellow";
+  padding?: "none" | "sm" | "md" | "lg";
 }
 
-export const Card: React.FC<CardProps> = ({ 
-  variant = 'default', 
-  padding = 'md', 
-  className = '', 
-  children, 
-  ...props 
-}) => {
-  const baseStyles = "relative overflow-hidden transition-all duration-300";
-  
-  const variants = {
-    default: "bg-white rounded-[2rem] shadow-sm border border-black/5 hover:shadow-card",
-    dark: "bg-[#1A1A1A] text-white rounded-[2rem] shadow-lg shadow-black/10",
-    yellow: "bg-[#EAD07D] text-[#1A1A1A] rounded-[2rem] shadow-sm",
-    outline: "bg-transparent border border-black/10 rounded-[2rem]",
-    ghost: "bg-[#F8F8F6] rounded-[2rem] border border-transparent",
-  };
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = "default", padding, ...props }, ref) => {
+    const isInteractive = variant === "default" || variant === "small" || variant === "dark" || variant === "yellow";
 
-  const paddings = {
-    none: "",
-    sm: "p-4",
-    md: "p-6",
-    lg: "p-8",
-  };
+    const paddingClasses = {
+      none: "p-0",
+      sm: "p-4",
+      md: "p-5",
+      lg: "p-8",
+    };
 
-  return (
-    <div 
-      className={`${baseStyles} ${variants[variant]} ${paddings[padding]} ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-};
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        whileHover={isInteractive ? { y: -4, transition: { duration: 0.2 } } : undefined}
+        className={cn(
+          "transition-shadow duration-200 relative overflow-hidden",
+          {
+            "bg-white rounded-[32px] p-6 shadow-sm hover:shadow-md border border-black/5": variant === "default",
+            "bg-white rounded-[24px] p-5 shadow-sm hover:shadow-md border border-black/5": variant === "small",
+            "bg-[#1A1A1A] text-white rounded-[32px] p-6 shadow-lg hover:shadow-xl": variant === "dark",
+            "bg-transparent border-none shadow-none p-0": variant === "flat",
+            "bg-[#EAD07D] rounded-[24px] p-5 shadow-sm hover:shadow-md": variant === "yellow",
+          },
+          padding && paddingClasses[padding],
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+Card.displayName = "Card";
+
+export { Card };

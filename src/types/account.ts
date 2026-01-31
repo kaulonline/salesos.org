@@ -49,6 +49,13 @@ export interface Account {
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  // Relationship counts (may be included from backend)
+  contactCount?: number;
+  opportunityCount?: number;
+  _count?: {
+    contacts?: number;
+    opportunities?: number;
+  };
 }
 
 export interface CreateAccountDto {

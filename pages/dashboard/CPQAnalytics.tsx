@@ -22,6 +22,8 @@ import { format, subDays, startOfMonth } from 'date-fns';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { CountUp } from '../../components/ui/CountUp';
+import { BarChart } from '../../src/components/charts';
 import {
   useCPQDashboard,
   useCPQTrends,
@@ -220,7 +222,7 @@ export default function CPQAnalytics() {
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Revenue Trend */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-[#999]" />
@@ -237,27 +239,22 @@ export default function CPQAnalytics() {
                 </div>
               </div>
             ) : (
-              <div className="h-48">
-                <div className="flex items-end justify-between h-full gap-1">
-                  {trends.slice(-14).map((item, index) => {
-                    const maxRevenue = Math.max(...trends.map((t) => t.revenue || 0), 1);
-                    const height = maxRevenue > 0 ? ((item.revenue || 0) / maxRevenue) * 100 : 0;
-                    return (
-                      <div
-                        key={index}
-                        className="flex-1 bg-[#EAD07D] rounded-xl hover:bg-[#D4BC5E] transition-colors cursor-pointer"
-                        style={{ height: `${Math.max(height, 4)}%` }}
-                        title={`${item.period}: ${formatCurrency(item.revenue || 0)}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
+              <BarChart
+                data={trends.slice(-14).map((item) => ({ name: item.period, value: item.revenue || 0 }))}
+                dataKey="value"
+                xAxisKey="name"
+                height={200}
+                color="#EAD07D"
+                showGrid={false}
+                showXAxis={false}
+                barRadius={8}
+                tooltipFormatter={(value) => formatCurrency(value)}
+              />
             )}
-          </div>
+          </Card>
 
           {/* Quote Pipeline */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-[#999]" />
@@ -292,13 +289,13 @@ export default function CPQAnalytics() {
                 })}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* Charts Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Top Products */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <Package className="w-5 h-5 text-[#999]" />
@@ -329,10 +326,10 @@ export default function CPQAnalytics() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Top Accounts */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <Users className="w-5 h-5 text-[#999]" />
@@ -363,10 +360,10 @@ export default function CPQAnalytics() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Conversion Funnel */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <Activity className="w-5 h-5 text-[#999]" />
@@ -400,11 +397,11 @@ export default function CPQAnalytics() {
                 })}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* Sales Rep Performance */}
-        <div className="bg-[#1A1A1A] rounded-[32px] p-6 mb-6">
+        <Card variant="dark" className="p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-white flex items-center gap-2">
               <Award className="w-5 h-5 text-[#EAD07D]" />
@@ -459,11 +456,11 @@ export default function CPQAnalytics() {
               </table>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Forecast */}
         {!forecastLoading && forecast.length > 0 && (
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+          <Card className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-[#1A1A1A] flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-[#999]" />
@@ -474,9 +471,7 @@ export default function CPQAnalytics() {
               {forecast.map((period) => (
                 <div key={period.period} className="bg-[#F8F6EF] rounded-2xl p-5">
                   <p className="text-sm text-[#666] mb-1">{period.period}</p>
-                  <p className="text-2xl font-light text-[#1A1A1A] mb-3">
-                    {formatCurrency(period.projectedRevenue || 0)}
-                  </p>
+                  <CountUp end={period.projectedRevenue || 0} prefix="$" className="text-2xl font-light text-[#1A1A1A] mb-3 block tabular-nums" />
                   <div className="flex items-center gap-2 mb-2">
                     <span className="px-3 py-1 bg-[#EAD07D]/30 rounded-full text-xs font-semibold text-[#1A1A1A]">
                       {period.confidence || 0}% confidence
@@ -488,7 +483,7 @@ export default function CPQAnalytics() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </div>
@@ -507,7 +502,7 @@ function MetricCard({ title, value, change, icon, accentColor }: MetricCardProps
   const isPositive = change >= 0;
 
   return (
-    <div className="bg-white rounded-[24px] p-5 shadow-sm border border-black/5">
+    <Card variant="small" className="p-5">
       <div className="flex items-start justify-between mb-4">
         <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
           accentColor === 'gold'
@@ -525,6 +520,6 @@ function MetricCard({ title, value, change, icon, accentColor }: MetricCardProps
       </div>
       <p className="text-2xl font-light text-[#1A1A1A] mb-1">{value}</p>
       <p className="text-sm text-[#666]">{title}</p>
-    </div>
+    </Card>
   );
 }

@@ -15,6 +15,8 @@ import {
 import { Link } from 'react-router-dom';
 import { useDeals } from '../../src/hooks';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Card } from '../../components/ui/Card';
+import { CountUp } from '../../components/ui/CountUp';
 
 type ForecastCategory = 'COMMIT' | 'BEST_CASE' | 'PIPELINE' | 'OMITTED';
 
@@ -162,45 +164,45 @@ export const Forecast: React.FC = () => {
 
         {/* Forecast Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-[#1A1A1A] rounded-[24px] p-6">
+          <Card variant="dark" className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <Target size={20} className="text-[#EAD07D]" />
               <span className="text-sm text-white/60">Weighted Forecast</span>
             </div>
-            <p className="text-3xl font-light text-white">{formatCurrency(totalForecast)}</p>
+            <CountUp end={totalForecast} prefix="$" className="text-3xl font-light text-white block tabular-nums" />
             <p className="text-xs text-white/40 mt-1">Probability-weighted total</p>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-black/5">
+          <Card variant="small" className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <CheckCircle size={20} className="text-[#93C01F]" />
               <span className="text-sm text-[#666]">Commit</span>
             </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{formatCurrency(commitTotal)}</p>
+            <CountUp end={commitTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
             <p className="text-xs text-[#999] mt-1">{totals.COMMIT.count} deals • 90%+ probability</p>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-black/5">
+          <Card variant="small" className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={20} className="text-[#EAD07D]" />
               <span className="text-sm text-[#666]">Best Case</span>
             </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{formatCurrency(bestCaseTotal)}</p>
+            <CountUp end={bestCaseTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
             <p className="text-xs text-[#999] mt-1">{totals.COMMIT.count + totals.BEST_CASE.count} deals total</p>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-black/5">
+          <Card variant="small" className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <DollarSign size={20} className="text-blue-600" />
               <span className="text-sm text-[#666]">Total Pipeline</span>
             </div>
-            <p className="text-3xl font-light text-[#1A1A1A]">{formatCurrency(pipelineTotal)}</p>
+            <CountUp end={pipelineTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
             <p className="text-xs text-[#999] mt-1">{categorizedDeals.length} open deals</p>
-          </div>
+          </Card>
         </div>
 
         {/* Forecast Funnel Visualization */}
-        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5 mb-8">
+        <Card className="p-6 mb-8">
           <h2 className="text-lg font-semibold text-[#1A1A1A] mb-6">Forecast Breakdown</h2>
           <div className="space-y-4">
             {(['COMMIT', 'BEST_CASE', 'PIPELINE', 'OMITTED'] as ForecastCategory[]).map((category) => {
@@ -271,10 +273,10 @@ export const Forecast: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Monthly Breakdown */}
-        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-black/5">
+        <Card className="p-6">
           <h2 className="text-lg font-semibold text-[#1A1A1A] mb-6">Monthly Close Timeline</h2>
           <div className="grid grid-cols-3 gap-6">
             {['Jan', 'Feb', 'Mar'].map((month, idx) => {
@@ -305,7 +307,7 @@ export const Forecast: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

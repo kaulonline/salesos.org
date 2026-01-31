@@ -25,11 +25,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#F2F1EA]/80 backdrop-blur-xl py-4 shadow-sm'
-          : 'bg-transparent border-b border-transparent py-6'
-      }`}
+      className="fixed w-full z-50 transition-all duration-300 border-b border-black/5 bg-white/80 backdrop-blur-md"
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
@@ -94,7 +90,7 @@ export const Navbar: React.FC = () => {
       {/* Mobile Menu - Frosted Glass Overlay */}
       {mobileMenuOpen && (
         <div className="absolute top-0 left-0 right-0 h-screen bg-[#F2F1EA]/95 backdrop-blur-xl z-[-1] pt-32 px-6 md:hidden flex flex-col gap-6 animate-in slide-in-from-top-5">
-           {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <Link
               key={item.label}
               to={item.href}

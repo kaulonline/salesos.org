@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  X,
   CheckCircle2,
   Clock,
   Calendar,
@@ -16,6 +15,7 @@ import {
   FileText,
   ExternalLink
 } from 'lucide-react';
+import { Modal } from '../src/components/ui/Modal';
 import type { Task } from '../src/types/task';
 
 interface TaskDetailModalProps {
@@ -31,7 +31,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onClose,
   onMarkComplete
 }) => {
-  if (!isOpen || !task) return null;
+  if (!task) return null;
 
   const getTaskIcon = () => {
     const subject = task.subject.toLowerCase();
@@ -71,7 +71,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
 
-  // Determine related entity link
   const getRelatedEntityLink = () => {
     if (task.lead) {
       return { href: `/dashboard/leads/${task.leadId}`, label: `${task.lead.firstName} ${task.lead.lastName}`, type: 'Lead', icon: User };
@@ -91,174 +90,155 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const relatedEntity = getRelatedEntityLink();
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-in fade-in duration-200"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] overflow-hidden flex flex-col"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-black/5 flex items-start justify-between gap-4 shrink-0">
-            <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                task.status === 'COMPLETED'
-                  ? 'bg-green-100 text-green-600'
-                  : task.priority === 'HIGH'
-                    ? 'bg-[#EAD07D]/20 text-[#1A1A1A]'
-                    : 'bg-[#F8F8F6] text-[#666]'
-              }`}>
-                {task.status === 'COMPLETED' ? <CheckCircle2 size={24} /> : getTaskIcon()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className={`text-lg font-semibold text-[#1A1A1A] ${task.status === 'COMPLETED' ? 'line-through opacity-60' : ''}`}>
-                  {task.subject}
-                </h2>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor()}`}>
-                    {task.status.replace('_', ' ')}
-                  </span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor()}`}>
-                    {task.priority}
-                  </span>
-                  {isOverdue && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1">
-                      <AlertCircle size={12} />
-                      Overdue
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl text-[#999] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] transition-colors"
-            >
-              <X size={20} />
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      showCloseButton={false}
+      contentClassName="p-0 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-black/5 flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+            task.status === 'COMPLETED'
+              ? 'bg-green-100 text-green-600'
+              : task.priority === 'HIGH'
+                ? 'bg-[#EAD07D]/20 text-[#1A1A1A]'
+                : 'bg-[#F8F8F6] text-[#666]'
+          }`}>
+            {task.status === 'COMPLETED' ? <CheckCircle2 size={24} /> : getTaskIcon()}
           </div>
-
-          {/* Content */}
-          <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
-            {/* Description */}
-            {task.description && (
-              <div>
-                <h4 className="text-xs font-medium text-[#999] uppercase tracking-wide mb-2">Description</h4>
-                <p className="text-sm text-[#1A1A1A] leading-relaxed">{task.description}</p>
-              </div>
-            )}
-
-            {/* Due Date */}
-            {task.dueDate && (
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOverdue ? 'bg-red-100' : 'bg-[#F8F8F6]'}`}>
-                  <Calendar size={18} className={isOverdue ? 'text-red-600' : 'text-[#666]'} />
-                </div>
-                <div>
-                  <p className="text-xs text-[#999]">Due Date</p>
-                  <p className={`text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-[#1A1A1A]'}`}>
-                    {new Date(task.dueDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Related Entity */}
-            {relatedEntity && (
-              <Link
-                to={relatedEntity.href}
-                onClick={onClose}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F8F6] hover:bg-[#EAD07D]/20 transition-colors group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                  <relatedEntity.icon size={18} className="text-[#666]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-[#999]">Related {relatedEntity.type}</p>
-                  <p className="text-sm font-medium text-[#1A1A1A] truncate">{relatedEntity.label}</p>
-                </div>
-                <ExternalLink size={16} className="text-[#999] group-hover:text-[#1A1A1A] transition-colors" />
-              </Link>
-            )}
-
-            {/* Assigned To */}
-            {task.assignedTo && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
-                  <User size={18} className="text-[#666]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#999]">Assigned To</p>
-                  <p className="text-sm font-medium text-[#1A1A1A]">{task.assignedTo.name}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Created At */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
-                <Clock size={18} className="text-[#666]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#999]">Created</p>
-                <p className="text-sm font-medium text-[#1A1A1A]">
-                  {new Date(task.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
+          <div className="flex-1 min-w-0">
+            <h2 className={`text-lg font-semibold text-[#1A1A1A] ${task.status === 'COMPLETED' ? 'line-through opacity-60' : ''}`}>
+              {task.subject}
+            </h2>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor()}`}>
+                {task.status.replace('_', ' ')}
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor()}`}>
+                {task.priority}
+              </span>
+              {isOverdue && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1">
+                  <AlertCircle size={12} />
+                  Overdue
+                </span>
+              )}
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-black/5 flex items-center gap-3 shrink-0">
-            {task.status !== 'COMPLETED' && onMarkComplete && (
-              <button
-                onClick={() => {
-                  onMarkComplete(task.id);
-                  onClose();
-                }}
-                className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-2xl font-medium text-sm hover:bg-black transition-colors flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 size={18} />
-                Mark Complete
-              </button>
-            )}
-            {relatedEntity && (
-              <Link
-                to={relatedEntity.href}
-                onClick={onClose}
-                className={`${task.status !== 'COMPLETED' && onMarkComplete ? 'flex-1' : 'w-full'} py-3 bg-[#F8F8F6] text-[#1A1A1A] rounded-2xl font-medium text-sm hover:bg-[#EAD07D]/20 transition-colors flex items-center justify-center gap-2`}
-              >
-                View {relatedEntity.type}
-                <ExternalLink size={16} />
-              </Link>
-            )}
-            {!relatedEntity && task.status === 'COMPLETED' && (
-              <button
-                onClick={onClose}
-                className="w-full py-3 bg-[#F8F8F6] text-[#1A1A1A] rounded-2xl font-medium text-sm hover:bg-[#EAD07D]/20 transition-colors"
-              >
-                Close
-              </button>
-            )}
           </div>
         </div>
       </div>
-    </>
+
+      {/* Content */}
+      <div className="px-6 py-5 space-y-5 overflow-y-auto max-h-[50vh]">
+        {task.description && (
+          <div>
+            <h4 className="text-xs font-medium text-[#999] uppercase tracking-wide mb-2">Description</h4>
+            <p className="text-sm text-[#1A1A1A] leading-relaxed">{task.description}</p>
+          </div>
+        )}
+
+        {task.dueDate && (
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOverdue ? 'bg-red-100' : 'bg-[#F8F8F6]'}`}>
+              <Calendar size={18} className={isOverdue ? 'text-red-600' : 'text-[#666]'} />
+            </div>
+            <div>
+              <p className="text-xs text-[#999]">Due Date</p>
+              <p className={`text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-[#1A1A1A]'}`}>
+                {new Date(task.dueDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {relatedEntity && (
+          <Link
+            to={relatedEntity.href}
+            onClick={onClose}
+            className="flex items-center gap-3 p-3 rounded-2xl bg-[#F8F8F6] hover:bg-[#EAD07D]/20 transition-colors group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+              <relatedEntity.icon size={18} className="text-[#666]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-[#999]">Related {relatedEntity.type}</p>
+              <p className="text-sm font-medium text-[#1A1A1A] truncate">{relatedEntity.label}</p>
+            </div>
+            <ExternalLink size={16} className="text-[#999] group-hover:text-[#1A1A1A] transition-colors" />
+          </Link>
+        )}
+
+        {task.assignedTo && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
+              <User size={18} className="text-[#666]" />
+            </div>
+            <div>
+              <p className="text-xs text-[#999]">Assigned To</p>
+              <p className="text-sm font-medium text-[#1A1A1A]">{task.assignedTo.name}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
+            <Clock size={18} className="text-[#666]" />
+          </div>
+          <div>
+            <p className="text-xs text-[#999]">Created</p>
+            <p className="text-sm font-medium text-[#1A1A1A]">
+              {new Date(task.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-black/5 flex items-center gap-3">
+        {task.status !== 'COMPLETED' && onMarkComplete && (
+          <button
+            onClick={() => {
+              onMarkComplete(task.id);
+              onClose();
+            }}
+            className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-2xl font-medium text-sm hover:bg-black transition-colors flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 size={18} />
+            Mark Complete
+          </button>
+        )}
+        {relatedEntity && (
+          <Link
+            to={relatedEntity.href}
+            onClick={onClose}
+            className={`${task.status !== 'COMPLETED' && onMarkComplete ? 'flex-1' : 'w-full'} py-3 bg-[#F8F8F6] text-[#1A1A1A] rounded-2xl font-medium text-sm hover:bg-[#EAD07D]/20 transition-colors flex items-center justify-center gap-2`}
+          >
+            View {relatedEntity.type}
+            <ExternalLink size={16} />
+          </Link>
+        )}
+        {!relatedEntity && task.status === 'COMPLETED' && (
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-[#F8F8F6] text-[#1A1A1A] rounded-2xl font-medium text-sm hover:bg-[#EAD07D]/20 transition-colors"
+          >
+            Close
+          </button>
+        )}
+      </div>
+    </Modal>
   );
 };
 

@@ -91,10 +91,10 @@ export const DashboardLayout: React.FC = () => {
     <div className="min-h-screen bg-[#F2F1EA] text-[#1A1A1A] font-sans selection:bg-[#EAD07D] selection:text-[#1A1A1A]">
       <CommandPalette />
       <GlobalSearch isOpen={searchOpen} onClose={closeSearch} />
-      
+
       {/* Fixed Frosted Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
-        
+
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group cursor-pointer mr-4 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-white shadow-lg shadow-[#1A1A1A]/20 transition-transform group-hover:scale-105">
@@ -114,13 +114,12 @@ export const DashboardLayout: React.FC = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${
-                    isActive
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${isActive
                       ? 'bg-[#1A1A1A] text-white shadow-md'
                       : item.highlight
-                      ? 'text-[#1A1A1A] hover:bg-[#EAD07D]/20'
-                      : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/50'
-                  }`}
+                        ? 'text-[#1A1A1A] hover:bg-[#EAD07D]/20'
+                        : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/50'
+                    }`}
                 >
                   {item.icon && <item.icon size={14} className={isActive ? 'text-[#EAD07D]' : item.highlight ? 'text-[#EAD07D]' : ''} />}
                   {item.label}
@@ -133,13 +132,12 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${
-                secondaryNavItems.some(item => path.startsWith(item.href))
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white shadow-md border-[#1A1A1A]'
                   : showMoreMenu
-                  ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
-                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
-              }`}
+                    ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
+                    : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white/80'
+                }`}
             >
               More
               <ChevronDown size={14} className={`transition-transform duration-200 ${showMoreMenu ? 'rotate-180' : ''}`} />
@@ -148,7 +146,7 @@ export const DashboardLayout: React.FC = () => {
             {showMoreMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   {secondaryNavItems.map((item) => {
                     const isActive = path.startsWith(item.href);
                     return (
@@ -156,11 +154,10 @@ export const DashboardLayout: React.FC = () => {
                         key={item.href}
                         to={item.href}
                         onClick={() => setShowMoreMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
-                          isActive
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${isActive
                             ? 'bg-[#F8F8F6] text-[#1A1A1A]'
                             : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
-                        }`}
+                          }`}
                       >
                         {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
                         {item.label}
@@ -190,13 +187,12 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowAIMenu(!showAIMenu)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${
-                aiNavItems.some(item => path.startsWith(item.href))
+              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${aiNavItems.some(item => path.startsWith(item.href))
                   ? 'bg-gradient-to-r from-[#EAD07D] to-[#D4B85C] text-[#1A1A1A] border-[#EAD07D]'
                   : showAIMenu
-                  ? 'bg-white text-[#1A1A1A] border-gray-200'
-                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
-              }`}
+                    ? 'bg-white text-[#1A1A1A] border-gray-200'
+                    : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
+                }`}
             >
               <Brain size={16} />
               <span className="hidden sm:inline">AI</span>
@@ -214,11 +210,10 @@ export const DashboardLayout: React.FC = () => {
                         key={item.href}
                         to={item.href}
                         onClick={() => setShowAIMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
-                          isActive
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${isActive
                             ? 'bg-[#EAD07D]/20 text-[#1A1A1A]'
                             : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
-                        }`}
+                          }`}
                       >
                         {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
                         {item.label}
@@ -234,13 +229,12 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${
-                settingsNavItems.some(item => path.startsWith(item.href))
+              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
                   : showSettingsMenu
-                  ? 'bg-white text-[#1A1A1A] border-gray-200'
-                  : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
-              }`}
+                    ? 'bg-white text-[#1A1A1A] border-gray-200'
+                    : 'bg-white/60 border-white/50 text-[#666] hover:text-[#1A1A1A] hover:bg-white'
+                }`}
             >
               <Settings size={16} />
               <span className="hidden sm:inline">Settings</span>
@@ -258,11 +252,10 @@ export const DashboardLayout: React.FC = () => {
                         key={item.href}
                         to={item.href}
                         onClick={() => setShowSettingsMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
-                          isActive
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${isActive
                             ? 'bg-[#F8F8F6] text-[#1A1A1A]'
                             : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
-                        }`}
+                          }`}
                       >
                         {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
                         {item.label}
@@ -273,7 +266,7 @@ export const DashboardLayout: React.FC = () => {
               </>
             )}
           </div>
-          
+
           <AlertsDropdown />
           <NotificationDropdown />
 
@@ -289,7 +282,7 @@ export const DashboardLayout: React.FC = () => {
             {showUserMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="font-bold text-[#1A1A1A]">

@@ -1,23 +1,18 @@
 import React from 'react';
+import { cn } from "../../src/lib/utils";
 
-interface SkeletonProps {
-  className?: string;
-  variant?: 'default' | 'circle' | 'rect';
-}
-
-export const Skeleton: React.FC<SkeletonProps> = ({ 
-  className = '', 
-  variant = 'default' 
-}) => {
-  const baseStyles = "animate-pulse bg-gray-200/80"; // Slightly transparent for better blending
-  
-  const variants = {
-    default: "rounded-2xl",
-    circle: "rounded-full",
-    rect: "rounded-md",
-  };
-
+export const Skeleton = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => {
   return (
-    <div className={`${baseStyles} ${variants[variant]} ${className}`} />
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-md bg-[#F0EBD8]",
+        "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent",
+        className
+      )}
+      {...props}
+    />
   );
 };
