@@ -9,6 +9,40 @@ import { tokenManager } from '../lib/tokenManager';
 import { logger } from '../lib/logger';
 import { getCsrfToken, setCsrfToken } from '../lib/security';
 
+// Organization context management for multi-tenant requests
+let currentOrganizationId: string | null = null;
+
+/**
+ * Set the current organization context for API requests
+ * This will be included as X-Organization-ID header
+ */
+export function setOrganizationContext(organizationId: string | null): void {
+  currentOrganizationId = organizationId;
+  if (organizationId) {
+    sessionStorage.setItem('organizationId', organizationId);
+  } else {
+    sessionStorage.removeItem('organizationId');
+  }
+}
+
+/**
+ * Get the current organization context
+ */
+export function getOrganizationContext(): string | null {
+  if (!currentOrganizationId) {
+    currentOrganizationId = sessionStorage.getItem('organizationId');
+  }
+  return currentOrganizationId;
+}
+
+/**
+ * Clear organization context (e.g., on logout)
+ */
+export function clearOrganizationContext(): void {
+  currentOrganizationId = null;
+  sessionStorage.removeItem('organizationId');
+}
+
 // Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const DEFAULT_TIMEOUT = 30000;
@@ -69,6 +103,12 @@ client.interceptors.request.use(
       if (csrfToken && config.headers) {
         config.headers['X-CSRF-Token'] = csrfToken;
       }
+    }
+
+    // Add Organization ID header for multi-tenant isolation
+    const organizationId = getOrganizationContext();
+    if (organizationId && config.headers) {
+      config.headers['X-Organization-ID'] = organizationId;
     }
 
     // Add breadcrumb for debugging

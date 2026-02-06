@@ -3,6 +3,7 @@ import type { User, LoginCredentials, RegisterData, AuthState } from '../types/a
 import authApi from '../api/auth';
 import { tokenManager } from '../lib/tokenManager';
 import { clearCsrfToken, generateCsrfToken, setCsrfToken } from '../lib/security';
+import { setOrganizationContext, clearOrganizationContext } from '../api/client';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
 
           // Verify token is still valid by fetching profile
-          const user = await authApi.getProfile();
+          const user = await authApi.getProfile() as User & { organizationId?: string };
           setState({
             user,
             token: tokenManager.getToken(),
@@ -69,6 +70,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           });
           // Update stored user with fresh data
           localStorage.setItem('user', JSON.stringify(user));
+
+          // Restore organization context for multi-tenant API requests
+          if (user.organizationId) {
+            setOrganizationContext(user.organizationId);
+          }
 
           // Schedule automatic refresh
           scheduleTokenRefresh();
@@ -104,11 +110,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const response = await authApi.login(credentials);
-      const { access_token, user, expires_in } = response as { access_token: string; user: User; expires_in?: number };
+      const { access_token, user, expires_in } = response as { access_token: string; user: User & { organizationId?: string }; expires_in?: number };
 
       // Use token manager to store token with expiry
       tokenManager.setToken(access_token, expires_in);
       localStorage.setItem('user', JSON.stringify(user));
+
+      // Set organization context for multi-tenant API requests
+      if (user.organizationId) {
+        setOrganizationContext(user.organizationId);
+      }
 
       setState({
         user,
@@ -137,11 +148,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const response = await authApi.register(data);
-      const { access_token, user, expires_in } = response as { access_token: string; user: User; expires_in?: number };
+      const { access_token, user, expires_in } = response as { access_token: string; user: User & { organizationId?: string }; expires_in?: number };
 
       // Use token manager to store token with expiry
       tokenManager.setToken(access_token, expires_in);
       localStorage.setItem('user', JSON.stringify(user));
+
+      // Set organization context for multi-tenant API requests
+      if (user.organizationId) {
+        setOrganizationContext(user.organizationId);
+      }
 
       setState({
         user,
@@ -175,6 +191,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear tokens and user data
     tokenManager.clearToken();
     clearCsrfToken();
+    clearOrganizationContext(); // Clear organization context for multi-tenant
     localStorage.removeItem('user');
 
     // Notify backend (fire and forget)
