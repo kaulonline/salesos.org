@@ -24,6 +24,7 @@ import type { EmailTemplate, CreateEmailTemplateDto, TemplateCategory } from '..
 import { TEMPLATE_CATEGORY_LABELS } from '../../src/types/emailTemplate';
 import { AIBuilderModal, AIBuilderTrigger } from '../../src/components/AIBuilder';
 import { AIBuilderEntityType, EmailTemplateConfig } from '../../src/types/aiBuilder';
+import { sanitizeHtml } from '../../src/lib/security';
 
 const CATEGORY_COLORS: Record<TemplateCategory, string> = {
   SALES: 'blue',
@@ -80,7 +81,7 @@ const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template,
   };
 
   // Replace merge fields with sample data for preview
-  const getPreviewContent = (content: string) => {
+  const getPreviewContent = (content: string, shouldSanitize = false) => {
     let preview = content;
     Object.entries(sampleData).forEach(([field, value]) => {
       preview = preview.replace(new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
@@ -90,7 +91,8 @@ const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template,
       const noSpaceField = field.replace(/\s/g, '');
       preview = preview.replace(new RegExp(noSpaceField.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
     });
-    return preview;
+    // Sanitize HTML to prevent XSS attacks
+    return shouldSanitize ? sanitizeHtml(preview) : preview;
   };
 
   // Update form when template changes
@@ -320,7 +322,7 @@ const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template,
                 {formData.body ? (
                   <div
                     className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: getPreviewContent(formData.body) }}
+                    dangerouslySetInnerHTML={{ __html: getPreviewContent(formData.body, true) }}
                   />
                 ) : (
                   <p className="text-[#888] text-center py-12">No content to preview</p>

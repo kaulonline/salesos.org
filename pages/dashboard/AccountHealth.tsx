@@ -439,7 +439,7 @@ export const AccountHealth: React.FC = () => {
                 )}
 
                 <Link
-                  to={`/dashboard/companies`}
+                  to={`/dashboard/companies/${selectedAccountData.id}`}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium text-sm hover:bg-[#333] transition-colors"
                 >
                   View Account

@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { EmailTemplateConfig } from '../../../types/aiBuilder';
 import { cn } from '../../../lib/utils';
 import { Mail, Tag, Eye, Code, Variable } from 'lucide-react';
+import { sanitizeHtml, escapeHtml } from '../../../lib/security';
 
 interface EmailTemplatePreviewProps {
   config: EmailTemplateConfig;
@@ -45,8 +46,9 @@ export function EmailTemplatePreview({ config, className }: EmailTemplatePreview
   const [viewMode, setViewMode] = useState<'preview' | 'html'>('preview');
   const { name, subject, bodyHtml, bodyText, preheader, category, variables, ctaText } = config;
 
-  const previewSubject = replaceMergeFields(subject || '');
-  const previewBody = replaceMergeFields(bodyHtml || '');
+  const previewSubject = escapeHtml(replaceMergeFields(subject || ''));
+  // Sanitize HTML content to prevent XSS attacks
+  const previewBody = sanitizeHtml(replaceMergeFields(bodyHtml || ''));
 
   return (
     <div className={cn('space-y-4', className)}>

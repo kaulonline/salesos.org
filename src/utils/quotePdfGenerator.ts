@@ -1,4 +1,11 @@
 import type { Quote } from '../types';
+import { escapeHtml } from '../lib/security';
+
+// Helper to safely escape HTML and handle null/undefined values
+const safeEscape = (value: string | undefined | null, fallback = ''): string => {
+  if (value === null || value === undefined) return fallback;
+  return escapeHtml(String(value));
+};
 
 const formatCurrency = (amount?: number, currency: string = 'USD') => {
   if (amount === undefined || amount === null) return '-';
@@ -25,8 +32,8 @@ export function generateQuotePrintHtml(quote: Quote): string {
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${index + 1}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee;">
-          <div style="font-weight: 500;">${item.productName || 'Unnamed Product'}</div>
-          ${item.description ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${item.description}</div>` : ''}
+          <div style="font-weight: 500;">${safeEscape(item.productName, 'Unnamed Product')}</div>
+          ${item.description ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${safeEscape(item.description)}</div>` : ''}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.unitPrice, quote.currency)}</td>
@@ -218,39 +225,39 @@ export function generateQuotePrintHtml(quote: Quote): string {
         <div class="header">
           <div class="logo">Sales<span>OS</span></div>
           <div class="quote-info">
-            <div class="quote-number">${quote.quoteNumber}</div>
+            <div class="quote-number">${safeEscape(quote.quoteNumber)}</div>
             <div class="quote-date">Created: ${formatDate(quote.createdAt)}</div>
             ${quote.expirationDate ? `<div class="quote-date">Valid Until: ${formatDate(quote.expirationDate)}</div>` : ''}
-            <span class="status-badge status-${quote.status?.toLowerCase()}">${quote.status}</span>
+            <span class="status-badge status-${safeEscape(quote.status?.toLowerCase())}">${safeEscape(quote.status)}</span>
           </div>
         </div>
 
         <div class="addresses">
           <div class="address-block">
             <div class="address-label">Bill To</div>
-            <div class="address-name">${quote.account?.name || 'N/A'}</div>
+            <div class="address-name">${safeEscape(quote.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${quote.billingStreet ? `${quote.billingStreet}<br>` : ''}
-              ${quote.billingCity ? `${quote.billingCity}, ` : ''}${quote.billingState || ''} ${quote.billingPostalCode || ''}
-              ${quote.billingCountry ? `<br>${quote.billingCountry}` : ''}
+              ${quote.billingStreet ? `${safeEscape(quote.billingStreet)}<br>` : ''}
+              ${quote.billingCity ? `${safeEscape(quote.billingCity)}, ` : ''}${safeEscape(quote.billingState)} ${safeEscape(quote.billingPostalCode)}
+              ${quote.billingCountry ? `<br>${safeEscape(quote.billingCountry)}` : ''}
             </div>
           </div>
           <div class="address-block">
             <div class="address-label">Ship To</div>
-            <div class="address-name">${quote.account?.name || 'N/A'}</div>
+            <div class="address-name">${safeEscape(quote.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${quote.shippingStreet ? `${quote.shippingStreet}<br>` : ''}
-              ${quote.shippingCity ? `${quote.shippingCity}, ` : ''}${quote.shippingState || ''} ${quote.shippingPostalCode || ''}
-              ${quote.shippingCountry ? `<br>${quote.shippingCountry}` : ''}
+              ${quote.shippingStreet ? `${safeEscape(quote.shippingStreet)}<br>` : ''}
+              ${quote.shippingCity ? `${safeEscape(quote.shippingCity)}, ` : ''}${safeEscape(quote.shippingState)} ${safeEscape(quote.shippingPostalCode)}
+              ${quote.shippingCountry ? `<br>${safeEscape(quote.shippingCountry)}` : ''}
             </div>
           </div>
           <div class="address-block">
             <div class="address-label">Quote Details</div>
             <div class="address-details">
-              <strong>Quote Name:</strong> ${quote.name}<br>
-              ${quote.opportunity ? `<strong>Opportunity:</strong> ${quote.opportunity.name}<br>` : ''}
-              ${quote.owner ? `<strong>Sales Rep:</strong> ${quote.owner.name}<br>` : ''}
-              ${quote.paymentTerms ? `<strong>Payment Terms:</strong> ${quote.paymentTerms}` : ''}
+              <strong>Quote Name:</strong> ${safeEscape(quote.name)}<br>
+              ${quote.opportunity ? `<strong>Opportunity:</strong> ${safeEscape(quote.opportunity.name)}<br>` : ''}
+              ${quote.owner ? `<strong>Sales Rep:</strong> ${safeEscape(quote.owner.name)}<br>` : ''}
+              ${quote.paymentTerms ? `<strong>Payment Terms:</strong> ${safeEscape(quote.paymentTerms)}` : ''}
             </div>
           </div>
         </div>
@@ -305,19 +312,19 @@ export function generateQuotePrintHtml(quote: Quote): string {
         ${quote.terms ? `
           <div class="terms">
             <div class="terms-title">Terms & Conditions</div>
-            <div class="terms-content">${quote.terms}</div>
+            <div class="terms-content">${safeEscape(quote.terms)}</div>
           </div>
         ` : ''}
 
         ${quote.notes ? `
           <div class="terms">
             <div class="terms-title">Notes</div>
-            <div class="terms-content">${quote.notes}</div>
+            <div class="terms-content">${safeEscape(quote.notes)}</div>
           </div>
         ` : ''}
 
         <div class="footer">
-          Generated on ${new Date().toLocaleString()} | Quote ${quote.quoteNumber}
+          Generated on ${new Date().toLocaleString()} | Quote ${safeEscape(quote.quoteNumber)}
         </div>
 
         <button class="print-button no-print" onclick="window.print()">Print / Save as PDF</button>

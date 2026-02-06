@@ -5,12 +5,19 @@ import axios, {
   AxiosResponse,
 } from 'axios';
 import { captureError, addBreadcrumb } from '../lib/errorTracking';
+import { tokenManager } from '../lib/tokenManager';
+import { logger } from '../lib/logger';
+import { getCsrfToken, setCsrfToken } from '../lib/security';
 
 // Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const DEFAULT_TIMEOUT = 30000;
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
+
+// Flag to prevent infinite refresh loops
+let isRefreshing = false;
+let refreshSubscribers: ((token: string | null) => void)[] = [];
 
 // Request deduplication: Track in-flight requests
 const pendingRequests = new Map<string, Promise<AxiosResponse>>();
@@ -47,12 +54,21 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor: Add JWT token and tracking
+// Request interceptor: Add JWT token, CSRF token, and tracking
 client.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add CSRF token for state-changing requests (POST, PUT, PATCH, DELETE)
+    const method = config.method?.toUpperCase();
+    if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken && config.headers) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
     }
 
     // Add breadcrumb for debugging
@@ -66,23 +82,101 @@ client.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
+// Helper to notify subscribers when token is refreshed
+function onTokenRefreshed(token: string | null) {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+}
+
+// Helper to add subscriber for token refresh
+function addRefreshSubscriber(callback: (token: string | null) => void) {
+  refreshSubscribers.push(callback);
+}
+
 // Response interceptor: Handle errors and retries
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Extract CSRF token from response headers if provided by server
+    const csrfToken = response.headers['x-csrf-token'];
+    if (csrfToken) {
+      setCsrfToken(csrfToken);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const config = error.config as InternalAxiosRequestConfig & {
       _retryCount?: number;
       _skipDedup?: boolean;
+      _isRetryAfterRefresh?: boolean;
     };
 
-    // Handle 401 - redirect to login
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+    // Handle 401 - attempt token refresh first
+    if (error.response?.status === 401 && !config._isRetryAfterRefresh) {
+      // Don't try to refresh if we're on auth endpoints
+      const isAuthEndpoint = config.url?.includes('/auth/');
+      if (isAuthEndpoint) {
+        tokenManager.clearToken();
+        localStorage.removeItem('user');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
       }
-      return Promise.reject(error);
+
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          addRefreshSubscriber((newToken) => {
+            if (newToken) {
+              config.headers.Authorization = `Bearer ${newToken}`;
+              config._isRetryAfterRefresh = true;
+              resolve(client(config));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
+
+      // Start refresh
+      isRefreshing = true;
+
+      try {
+        // Attempt to refresh the token
+        const response = await axios.post<{ access_token: string; expires_in?: number }>(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${tokenManager.getToken()}`,
+            },
+          }
+        );
+
+        const { access_token, expires_in } = response.data;
+        tokenManager.setToken(access_token, expires_in);
+        localStorage.setItem('token', access_token);
+
+        // Notify all queued requests
+        onTokenRefreshed(access_token);
+        isRefreshing = false;
+
+        // Retry the original request with new token
+        config.headers.Authorization = `Bearer ${access_token}`;
+        config._isRetryAfterRefresh = true;
+        return client(config);
+      } catch (refreshError) {
+        // Refresh failed - clear tokens and redirect to login
+        onTokenRefreshed(null);
+        isRefreshing = false;
+        tokenManager.clearToken();
+        localStorage.removeItem('user');
+
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
     }
 
     // Handle retries for retryable errors
@@ -94,7 +188,7 @@ client.interceptors.response.use(
         config._skipDedup = true; // Skip dedup on retry
 
         const delay = calculateRetryDelay(config._retryCount);
-        console.log(`[API] Retrying request (attempt ${config._retryCount}/${MAX_RETRIES}) after ${Math.round(delay)}ms`);
+        logger.api(`Retrying request (attempt ${config._retryCount}/${MAX_RETRIES}) after ${Math.round(delay)}ms`);
 
         await new Promise((resolve) => setTimeout(resolve, delay));
         return client(config);

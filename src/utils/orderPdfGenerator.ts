@@ -1,4 +1,11 @@
 import type { Order } from '../types/order';
+import { escapeHtml } from '../lib/security';
+
+// Helper to safely escape HTML and handle null/undefined values
+const safeEscape = (value: string | undefined | null, fallback = ''): string => {
+  if (value === null || value === undefined) return fallback;
+  return escapeHtml(String(value));
+};
 
 const formatCurrency = (amount?: number, currency: string = 'USD') => {
   if (amount === undefined || amount === null) return '-';
@@ -25,8 +32,8 @@ export function generateOrderPrintHtml(order: Order): string {
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${index + 1}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee;">
-          <div style="font-weight: 500;">${item.productName || 'Unnamed Product'}</div>
-          ${item.description ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${item.description}</div>` : ''}
+          <div style="font-weight: 500;">${safeEscape(item.productName, 'Unnamed Product')}</div>
+          ${item.description ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${safeEscape(item.description)}</div>` : ''}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.unitPrice)}</td>
@@ -56,7 +63,7 @@ export function generateOrderPrintHtml(order: Order): string {
     <html>
       <head>
         <meta charset="utf-8">
-        <title>Order ${order.orderNumber}</title>
+        <title>Order ${safeEscape(order.orderNumber)}</title>
         <style>
           * {
             margin: 0;
@@ -227,39 +234,39 @@ export function generateOrderPrintHtml(order: Order): string {
         <div class="header">
           <div class="logo">Sales<span>OS</span></div>
           <div class="order-info">
-            <div class="order-number">${order.orderNumber}</div>
+            <div class="order-number">${safeEscape(order.orderNumber)}</div>
             <div class="order-date">Order Date: ${formatDate(order.orderDate)}</div>
             ${order.expectedDeliveryDate ? `<div class="order-date">Expected Delivery: ${formatDate(order.expectedDeliveryDate)}</div>` : ''}
-            <span class="status-badge" style="${getStatusColor(order.status)}">${order.status}</span>
+            <span class="status-badge" style="${getStatusColor(order.status)}">${safeEscape(order.status)}</span>
           </div>
         </div>
 
         <div class="addresses">
           <div class="address-block">
             <div class="address-label">Bill To</div>
-            <div class="address-name">${order.account?.name || 'N/A'}</div>
+            <div class="address-name">${safeEscape(order.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${order.billingStreet ? `${order.billingStreet}<br>` : ''}
-              ${order.billingCity ? `${order.billingCity}, ` : ''}${order.billingState || ''} ${order.billingPostalCode || ''}
-              ${order.billingCountry ? `<br>${order.billingCountry}` : ''}
+              ${order.billingStreet ? `${safeEscape(order.billingStreet)}<br>` : ''}
+              ${order.billingCity ? `${safeEscape(order.billingCity)}, ` : ''}${safeEscape(order.billingState)} ${safeEscape(order.billingPostalCode)}
+              ${order.billingCountry ? `<br>${safeEscape(order.billingCountry)}` : ''}
             </div>
           </div>
           <div class="address-block">
             <div class="address-label">Ship To</div>
-            <div class="address-name">${order.account?.name || 'N/A'}</div>
+            <div class="address-name">${safeEscape(order.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${order.shippingStreet ? `${order.shippingStreet}<br>` : ''}
-              ${order.shippingCity ? `${order.shippingCity}, ` : ''}${order.shippingState || ''} ${order.shippingPostalCode || ''}
-              ${order.shippingCountry ? `<br>${order.shippingCountry}` : ''}
+              ${order.shippingStreet ? `${safeEscape(order.shippingStreet)}<br>` : ''}
+              ${order.shippingCity ? `${safeEscape(order.shippingCity)}, ` : ''}${safeEscape(order.shippingState)} ${safeEscape(order.shippingPostalCode)}
+              ${order.shippingCountry ? `<br>${safeEscape(order.shippingCountry)}` : ''}
             </div>
           </div>
           <div class="address-block">
             <div class="address-label">Order Details</div>
             <div class="address-details">
-              <strong>Order Name:</strong> ${order.name}<br>
-              ${order.paymentTerms ? `<strong>Payment Terms:</strong> ${order.paymentTerms}<br>` : ''}
-              ${order.shippingMethod ? `<strong>Shipping Method:</strong> ${order.shippingMethod}<br>` : ''}
-              ${order.trackingNumber ? `<strong>Tracking #:</strong> ${order.trackingNumber}` : ''}
+              <strong>Order Name:</strong> ${safeEscape(order.name)}<br>
+              ${order.paymentTerms ? `<strong>Payment Terms:</strong> ${safeEscape(order.paymentTerms)}<br>` : ''}
+              ${order.shippingMethod ? `<strong>Shipping Method:</strong> ${safeEscape(order.shippingMethod)}<br>` : ''}
+              ${order.trackingNumber ? `<strong>Tracking #:</strong> ${safeEscape(order.trackingNumber)}` : ''}
             </div>
           </div>
         </div>
@@ -315,8 +322,8 @@ export function generateOrderPrintHtml(order: Order): string {
           <div class="payment-info">
             <div class="payment-title">Payment Information</div>
             <div class="payment-content">
-              <strong>Status:</strong> ${order.paymentStatus}<br>
-              ${order.paymentMethod ? `<strong>Method:</strong> ${order.paymentMethod}<br>` : ''}
+              <strong>Status:</strong> ${safeEscape(order.paymentStatus)}<br>
+              ${order.paymentMethod ? `<strong>Method:</strong> ${safeEscape(order.paymentMethod)}<br>` : ''}
               ${order.paidAmount ? `<strong>Amount Paid:</strong> ${formatCurrency(order.paidAmount)}` : ''}
             </div>
           </div>
@@ -325,12 +332,12 @@ export function generateOrderPrintHtml(order: Order): string {
         ${order.notes ? `
           <div class="payment-info">
             <div class="payment-title">Notes</div>
-            <div class="payment-content">${order.notes}</div>
+            <div class="payment-content">${safeEscape(order.notes)}</div>
           </div>
         ` : ''}
 
         <div class="footer">
-          Generated on ${new Date().toLocaleString()} | Order ${order.orderNumber}
+          Generated on ${new Date().toLocaleString()} | Order ${safeEscape(order.orderNumber)}
         </div>
 
         <button class="print-button no-print" onclick="window.print()">Print / Save as PDF</button>

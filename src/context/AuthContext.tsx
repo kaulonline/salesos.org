@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import type { User, LoginCredentials, RegisterData, AuthState } from '../types/auth';
 import authApi from '../api/auth';
+import { tokenManager } from '../lib/tokenManager';
+import { clearCsrfToken, generateCsrfToken, setCsrfToken } from '../lib/security';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -25,28 +27,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: null,
   });
 
+  // Ref to store cleanup function for token refresh scheduling
+  const refreshCleanupRef = useRef<(() => void) | null>(null);
+
+  // Schedule automatic token refresh
+  const scheduleTokenRefresh = useCallback(() => {
+    // Clear any existing scheduled refresh
+    if (refreshCleanupRef.current) {
+      refreshCleanupRef.current();
+    }
+
+    // Schedule new refresh
+    refreshCleanupRef.current = tokenManager.scheduleRefresh(async () => {
+      const response = await authApi.refreshToken();
+      return response;
+    });
+  }, []);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = tokenManager.getToken();
       const storedUser = localStorage.getItem('user');
 
       if (token && storedUser) {
         try {
+          // Check if token needs refresh
+          if (tokenManager.shouldRefresh()) {
+            const refreshResponse = await authApi.refreshToken();
+            tokenManager.setToken(refreshResponse.access_token, refreshResponse.expires_in);
+          }
+
           // Verify token is still valid by fetching profile
           const user = await authApi.getProfile();
           setState({
             user,
-            token,
+            token: tokenManager.getToken(),
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
           // Update stored user with fresh data
           localStorage.setItem('user', JSON.stringify(user));
+
+          // Schedule automatic refresh
+          scheduleTokenRefresh();
         } catch {
           // Token is invalid, clear storage
-          localStorage.removeItem('token');
+          tokenManager.clearToken();
           localStorage.removeItem('user');
           setState({
             user: null,
@@ -62,16 +90,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshCleanupRef.current) {
+        refreshCleanupRef.current();
+      }
+    };
+  }, [scheduleTokenRefresh]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const response = await authApi.login(credentials);
-      const { access_token, user } = response;
+      const { access_token, user, expires_in } = response as { access_token: string; user: User; expires_in?: number };
 
-      localStorage.setItem('token', access_token);
+      // Use token manager to store token with expiry
+      tokenManager.setToken(access_token, expires_in);
       localStorage.setItem('user', JSON.stringify(user));
 
       setState({
@@ -81,6 +117,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+
+      // Schedule automatic refresh
+      scheduleTokenRefresh();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
@@ -91,16 +130,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }));
       throw new Error(message);
     }
-  }, []);
+  }, [scheduleTokenRefresh]);
 
   const register = useCallback(async (data: RegisterData) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const response = await authApi.register(data);
-      const { access_token, user } = response;
+      const { access_token, user, expires_in } = response as { access_token: string; user: User; expires_in?: number };
 
-      localStorage.setItem('token', access_token);
+      // Use token manager to store token with expiry
+      tokenManager.setToken(access_token, expires_in);
       localStorage.setItem('user', JSON.stringify(user));
 
       setState({
@@ -110,6 +150,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+
+      // Schedule automatic refresh
+      scheduleTokenRefresh();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const message = error.response?.data?.message || 'Registration failed. Please try again.';
@@ -120,11 +163,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }));
       throw new Error(message);
     }
-  }, []);
+  }, [scheduleTokenRefresh]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
+    // Cancel any scheduled refresh
+    if (refreshCleanupRef.current) {
+      refreshCleanupRef.current();
+      refreshCleanupRef.current = null;
+    }
+
+    // Clear tokens and user data
+    tokenManager.clearToken();
+    clearCsrfToken();
     localStorage.removeItem('user');
+
+    // Notify backend (fire and forget)
+    authApi.logout().catch(() => {});
+
     setState({
       user: null,
       token: null,
