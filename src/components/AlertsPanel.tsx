@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { useAgentAlerts } from '../hooks/useAgentAlerts';
 import type { AgentAlert, AgentType, AlertPriority } from '../api/agentAlerts';
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from '../lib/logger';
 
 // Agent type icon mapping
 const agentIcons: Record<AgentType, React.ReactNode> = {
@@ -250,7 +251,7 @@ export const AlertsPanel: React.FC = () => {
     try {
       await acknowledge(id);
     } catch (error) {
-      console.error('Failed to acknowledge alert:', error);
+      logger.error('Failed to acknowledge alert:', error);
     }
   };
 
@@ -258,7 +259,7 @@ export const AlertsPanel: React.FC = () => {
     try {
       await dismiss(id, reason);
     } catch (error) {
-      console.error('Failed to dismiss alert:', error);
+      logger.error('Failed to dismiss alert:', error);
     }
   };
 
@@ -266,7 +267,7 @@ export const AlertsPanel: React.FC = () => {
     try {
       await markActioned(id, notes);
     } catch (error) {
-      console.error('Failed to mark alert as actioned:', error);
+      logger.error('Failed to mark alert as actioned:', error);
     }
   };
 

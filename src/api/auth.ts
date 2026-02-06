@@ -1,6 +1,12 @@
 import client from './client';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
 
+// Token refresh response type
+export interface RefreshResponse {
+  access_token: string;
+  expires_in?: number; // seconds until expiry
+}
+
 export const authApi = {
   /**
    * Login with email and password
@@ -76,6 +82,26 @@ export const authApi = {
   verifyMagicLink: async (token: string): Promise<AuthResponse> => {
     const response = await client.get<AuthResponse>(`/auth/magic-link?token=${token}`);
     return response.data;
+  },
+
+  /**
+   * Refresh access token
+   * Uses the current token to get a new one before expiry
+   */
+  refreshToken: async (): Promise<RefreshResponse> => {
+    const response = await client.post<RefreshResponse>('/auth/refresh');
+    return response.data;
+  },
+
+  /**
+   * Logout and invalidate tokens
+   */
+  logout: async (): Promise<void> => {
+    try {
+      await client.post('/auth/logout');
+    } catch {
+      // Ignore errors on logout - we'll clear local storage anyway
+    }
   },
 };
 

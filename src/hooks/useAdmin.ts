@@ -8,6 +8,7 @@ import type {
   AuditLog,
   Integration,
 } from '../api/admin';
+import { logger } from '../lib/logger';
 
 // Admin Dashboard Stats Hook
 export function useAdminDashboard() {
@@ -22,7 +23,7 @@ export function useAdminDashboard() {
       const data = await adminApi.getDashboardStats();
       setStats(data);
     } catch (err) {
-      console.error('Failed to fetch admin dashboard stats:', err);
+      logger.error('Failed to fetch admin dashboard stats:', err);
       setError('Failed to load dashboard statistics');
     } finally {
       setLoading(false);
@@ -65,7 +66,7 @@ export function useAdminUsers(initialParams?: {
       setUsers(response.items || response.data || []);
       setTotal(response.total || 0);
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      logger.error('Failed to fetch users:', err);
       setError('Failed to load users');
       setUsers([]);
     } finally {
@@ -83,7 +84,7 @@ export function useAdminUsers(initialParams?: {
       setUsers(prev => prev.map(u => u.id === id ? updated : u));
       return updated;
     } catch (err) {
-      console.error('Failed to update user:', err);
+      logger.error('Failed to update user:', err);
       throw err;
     }
   };
@@ -94,7 +95,7 @@ export function useAdminUsers(initialParams?: {
       setUsers(prev => prev.map(u => u.id === id ? updated : u));
       return updated;
     } catch (err) {
-      console.error('Failed to suspend user:', err);
+      logger.error('Failed to suspend user:', err);
       throw err;
     }
   };
@@ -105,7 +106,7 @@ export function useAdminUsers(initialParams?: {
       setUsers(prev => prev.map(u => u.id === id ? updated : u));
       return updated;
     } catch (err) {
-      console.error('Failed to activate user:', err);
+      logger.error('Failed to activate user:', err);
       throw err;
     }
   };
@@ -116,7 +117,7 @@ export function useAdminUsers(initialParams?: {
       setUsers(prev => prev.filter(u => u.id !== id));
       setTotal(prev => prev - 1);
     } catch (err) {
-      console.error('Failed to delete user:', err);
+      logger.error('Failed to delete user:', err);
       throw err;
     }
   };
@@ -125,7 +126,7 @@ export function useAdminUsers(initialParams?: {
     try {
       await adminApi.resetUserPassword(id);
     } catch (err) {
-      console.error('Failed to reset password:', err);
+      logger.error('Failed to reset password:', err);
       throw err;
     }
   };
@@ -159,7 +160,7 @@ export function useFeatureFlags(category?: string) {
       const data = await adminApi.getFeatureFlags(category);
       setFlags(data);
     } catch (err) {
-      console.error('Failed to fetch feature flags:', err);
+      logger.error('Failed to fetch feature flags:', err);
       setError('Failed to load feature flags');
     } finally {
       setLoading(false);
@@ -176,7 +177,7 @@ export function useFeatureFlags(category?: string) {
       setFlags(prev => prev.map(f => f.key === key ? updated : f));
       return updated;
     } catch (err) {
-      console.error('Failed to toggle feature flag:', err);
+      logger.error('Failed to toggle feature flag:', err);
       throw err;
     }
   };
@@ -197,7 +198,7 @@ export function useSystemConfig(category?: string) {
       const data = await adminApi.getConfigs(category);
       setConfigs(data);
     } catch (err) {
-      console.error('Failed to fetch system config:', err);
+      logger.error('Failed to fetch system config:', err);
       setError('Failed to load system configuration');
     } finally {
       setLoading(false);
@@ -214,7 +215,7 @@ export function useSystemConfig(category?: string) {
       setConfigs(prev => prev.map(c => c.key === key ? updated : c));
       return updated;
     } catch (err) {
-      console.error('Failed to update config:', err);
+      logger.error('Failed to update config:', err);
       throw err;
     }
   };
@@ -251,7 +252,7 @@ export function useAuditLogs(initialParams?: {
       setLogs(response.items || response.data || []);
       setTotal(response.total || 0);
     } catch (err) {
-      console.error('Failed to fetch audit logs:', err);
+      logger.error('Failed to fetch audit logs:', err);
       setError('Failed to load audit logs');
       setLogs([]);
     } finally {
@@ -279,7 +280,7 @@ export function useIntegrations() {
       const data = await adminApi.getIntegrations();
       setIntegrations(data);
     } catch (err) {
-      console.error('Failed to fetch integrations:', err);
+      logger.error('Failed to fetch integrations:', err);
       setError('Failed to load integrations');
     } finally {
       setLoading(false);
@@ -296,7 +297,7 @@ export function useIntegrations() {
       setIntegrations(prev => prev.map(i => i.provider === provider ? updated : i));
       return updated;
     } catch (err) {
-      console.error('Failed to update integration:', err);
+      logger.error('Failed to update integration:', err);
       throw err;
     }
   };

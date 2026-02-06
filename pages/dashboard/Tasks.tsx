@@ -17,6 +17,7 @@ import {
   ArrowUpRight,
   Loader2,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -70,6 +71,21 @@ export const Tasks: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'ALL'>('ALL');
   const [showFilters, setShowFilters] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newTask, setNewTask] = useState<{
+    subject: string;
+    description: string;
+    type: TaskType;
+    priority: TaskPriority;
+    dueDate: string;
+  }>({
+    subject: '',
+    description: '',
+    type: 'OTHER',
+    priority: 'NORMAL',
+    dueDate: '',
+  });
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -107,6 +123,39 @@ export const Tasks: React.FC = () => {
     }
   };
 
+  const handleCreateTask = async () => {
+    if (!newTask.subject.trim()) return;
+    setIsCreating(true);
+    try {
+      // Simulate API call - in production, this would call a create task API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowCreateModal(false);
+      setNewTask({
+        subject: '',
+        description: '',
+        type: 'OTHER',
+        priority: 'NORMAL',
+        dueDate: '',
+      });
+      refetch();
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setNewTask({
+      subject: '',
+      description: '',
+      type: 'OTHER',
+      priority: 'NORMAL',
+      dueDate: new Date().toISOString().split('T')[0],
+    });
+    setShowCreateModal(true);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -141,7 +190,10 @@ export const Tasks: React.FC = () => {
           >
             <RefreshCw size={18} className="text-[#666]" />
           </button>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg">
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
+          >
             <Plus size={18} />
             New Task
           </button>
@@ -304,11 +356,125 @@ export const Tasks: React.FC = () => {
               ? 'Try adjusting your filters'
               : 'Create your first task to get started'}
           </p>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors">
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors"
+          >
             <Plus size={18} />
             Create Task
           </button>
         </Card>
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 pb-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <Plus size={18} className="text-[#1A1A1A]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Create New Task</h2>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Subject *</label>
+                <input
+                  type="text"
+                  value={newTask.subject}
+                  onChange={(e) => setNewTask({ ...newTask, subject: e.target.value })}
+                  placeholder="Enter task subject..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Description</label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  placeholder="Add details about this task..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Type</label>
+                  <select
+                    value={newTask.type}
+                    onChange={(e) => setNewTask({ ...newTask, type: e.target.value as TaskType })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                  >
+                    <option value="CALL">Call</option>
+                    <option value="EMAIL">Email</option>
+                    <option value="MEETING">Meeting</option>
+                    <option value="FOLLOW_UP">Follow Up</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Priority</label>
+                  <select
+                    value={newTask.priority}
+                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as TaskPriority })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                  >
+                    <option value="HIGH">High</option>
+                    <option value="NORMAL">Normal</option>
+                    <option value="LOW">Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Due Date</label>
+                <input
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium hover:bg-[#F0EBD8] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateTask}
+                  disabled={!newTask.subject.trim() || isCreating}
+                  className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      Create Task
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

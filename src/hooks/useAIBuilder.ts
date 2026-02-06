@@ -12,6 +12,7 @@ import {
   RefineConfigRequest,
   GenerationContext,
 } from '../types/aiBuilder';
+import { logger } from '../lib/logger';
 
 export const aiBuilderKeys = {
   all: ['ai-builder'] as const,
@@ -36,7 +37,7 @@ export function useGenerateConfig() {
   return useMutation({
     mutationFn: (request: GenerateConfigRequest) => aiBuilderApi.generate(request),
     onError: (error: any) => {
-      console.error('Failed to generate configuration:', error.response?.data?.message || error.message);
+      logger.error('Failed to generate configuration:', error.response?.data?.message || error.message);
     },
   });
 }
@@ -48,7 +49,7 @@ export function useRefineConfig() {
   return useMutation({
     mutationFn: (request: RefineConfigRequest) => aiBuilderApi.refine(request),
     onError: (error: any) => {
-      console.error('Failed to refine configuration:', error.response?.data?.message || error.message);
+      logger.error('Failed to refine configuration:', error.response?.data?.message || error.message);
     },
   });
 }

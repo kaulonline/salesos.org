@@ -20,9 +20,15 @@ import {
   FileText,
   Pause,
   AlertCircle,
+  Sparkles,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { usePlaybooks, usePlaybook, usePlaybookExecutions } from '../../src/hooks';
+import { useAIBuilder } from '../../src/hooks/useAIBuilder';
+import { AIBuilderEntityType, isPlaybookConfig } from '../../src/types/aiBuilder';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { useToast } from '../../src/components/ui/Toast';
 import type {
   Playbook,
   PlaybookStep,
@@ -62,10 +68,17 @@ const triggerLabels: Record<PlaybookTrigger, string> = {
 export const Playbooks: React.FC = () => {
   const { playbooks, stats, loading, create, remove, duplicate, isCreating, isDeleting, isDuplicating } = usePlaybooks();
   const { executions } = usePlaybookExecutions();
+  const { showToast } = useToast();
   const [expandedPlaybook, setExpandedPlaybook] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  // AI Builder hook
+  const { generate, isGenerating } = useAIBuilder(AIBuilderEntityType.PLAYBOOK);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [showAiSection, setShowAiSection] = useState(true);
 
   // Form state
   const [formData, setFormData] = useState<CreatePlaybookDto>({
@@ -99,25 +112,70 @@ export const Playbooks: React.FC = () => {
       await create(formData);
       setShowCreateModal(false);
       setFormData({ name: '', description: '', trigger: 'MANUAL', isActive: true, steps: [] });
+      setAiPrompt('');
+      setAiError(null);
+      showToast({ type: 'success', title: 'Playbook Created', message: `"${formData.name}" has been created successfully` });
     } catch (error) {
-      console.error('Failed to create playbook:', error);
+      showToast({ type: 'error', title: 'Creation Failed', message: (error as Error).message || 'Could not create playbook' });
     }
   };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim() || isGenerating) return;
+    setAiError(null);
+
+    try {
+      const response = await generate(aiPrompt.trim());
+      if (response.success && response.rawConfig && isPlaybookConfig(response.rawConfig)) {
+        const config = response.rawConfig;
+        setFormData({
+          name: config.name || '',
+          description: config.description || '',
+          trigger: config.trigger || 'MANUAL',
+          targetStage: config.targetStage || undefined,
+          targetDealType: config.targetDealType || undefined,
+          isActive: config.isActive !== false,
+          steps: (config.steps || []).map((step: any) => ({
+            type: step.type || 'TASK',
+            title: step.title || '',
+            description: step.description || '',
+            daysOffset: step.daysOffset || 0,
+            isRequired: step.isRequired !== false,
+            config: step.config || undefined,
+          })),
+        });
+        setShowAiSection(false); // Collapse AI section after generation
+      } else {
+        setAiError(response.error || 'Failed to generate playbook. Please try rephrasing your request.');
+      }
+    } catch (err: any) {
+      setAiError(err.message || 'Something went wrong. Please try again.');
+    }
+  };
+
+  const aiExamples = [
+    'Enterprise discovery process using MEDDIC',
+    'Lead qualification playbook using BANT',
+    'Deal closing sequence for negotiation stage',
+    'Customer onboarding and handoff process',
+  ];
 
   const handleDelete = async (id: string) => {
     try {
       await remove(id);
       setShowDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Playbook Deleted', message: 'The playbook has been removed' });
     } catch (error) {
-      console.error('Failed to delete playbook:', error);
+      showToast({ type: 'error', title: 'Delete Failed', message: (error as Error).message || 'Could not delete playbook' });
     }
   };
 
   const handleDuplicate = async (id: string) => {
     try {
       await duplicate(id);
+      showToast({ type: 'success', title: 'Playbook Duplicated', message: 'A copy of the playbook has been created' });
     } catch (error) {
-      console.error('Failed to duplicate playbook:', error);
+      showToast({ type: 'error', title: 'Duplicate Failed', message: (error as Error).message || 'Could not duplicate playbook' });
     }
   };
 
@@ -456,13 +514,107 @@ export const Playbooks: React.FC = () => {
               <div className="flex justify-between items-center p-8 pb-0">
                 <h2 className="text-2xl font-medium text-[#1A1A1A]">Create Playbook</h2>
                 <button
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setAiPrompt('');
+                    setAiError(null);
+                    setShowAiSection(true);
+                    setFormData({ name: '', description: '', trigger: 'MANUAL', isActive: true, steps: [] });
+                  }}
                   className="text-[#666] hover:text-[#1A1A1A]"
                 >
                   <X size={24} />
                 </button>
               </div>
               <form onSubmit={handleCreate} className="p-8 pt-6 space-y-5">
+                {/* AI Generation Section */}
+                <div className={`border rounded-2xl overflow-hidden transition-all ${showAiSection ? 'border-[#EAD07D] bg-[#EAD07D]/5' : 'border-black/10 bg-[#F8F8F6]'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAiSection(!showAiSection)}
+                    className="w-full flex items-center justify-between p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${showAiSection ? 'bg-[#EAD07D]/20' : 'bg-white'}`}>
+                        <Sparkles size={18} className={showAiSection ? 'text-[#1A1A1A]' : 'text-[#999]'} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-[#1A1A1A] text-sm">AI Assistant</p>
+                        <p className="text-xs text-[#666]">Describe your playbook and AI will generate it</p>
+                      </div>
+                    </div>
+                    <ChevronDown size={18} className={`text-[#999] transition-transform ${showAiSection ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showAiSection && (
+                    <div className="px-4 pb-4 space-y-3">
+                      <div className="relative">
+                        <textarea
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="e.g., Create an enterprise discovery process using MEDDIC methodology with tasks, calls, and meetings..."
+                          className="w-full px-4 py-3 pr-24 rounded-xl bg-white border border-black/10 focus:border-[#EAD07D] focus:ring-1 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
+                          rows={2}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAiGenerate();
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAiGenerate}
+                          disabled={isGenerating || !aiPrompt.trim()}
+                          className="absolute right-2 bottom-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-[#333] transition-colors flex items-center gap-2"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={14} />
+                              Generate
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {aiError && (
+                        <div className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+                          <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                          {aiError}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-[#999]">Try:</span>
+                        {aiExamples.map((example, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setAiPrompt(example)}
+                            className="text-xs px-2.5 py-1 bg-white border border-black/10 rounded-full text-[#666] hover:border-[#EAD07D] hover:text-[#1A1A1A] transition-colors"
+                          >
+                            {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider when AI section is collapsed and form has content */}
+                {!showAiSection && formData.name && (
+                  <div className="flex items-center gap-3 text-xs text-[#999]">
+                    <div className="flex-1 h-px bg-black/10" />
+                    <span>Generated playbook - edit below</span>
+                    <div className="flex-1 h-px bg-black/10" />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Name</label>
@@ -518,20 +670,30 @@ export const Playbooks: React.FC = () => {
 
                   {/* Existing Steps */}
                   {(formData.steps || []).length > 0 && (
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
                       {formData.steps!.map((step, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stepColors[step.type]}`}>
+                        <div key={index} className="flex items-start gap-3 p-3 bg-[#F8F8F6] rounded-xl">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${stepColors[step.type]}`}>
                             {stepIcons[step.type]}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[#1A1A1A] text-sm truncate">{step.title}</p>
-                            <p className="text-xs text-[#999]">Day {step.daysOffset}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-[#1A1A1A] text-sm">{step.title}</p>
+                              {step.isRequired && (
+                                <span className="px-1.5 py-0.5 bg-[#EAD07D]/20 text-[#1A1A1A] text-[10px] font-semibold rounded">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            {step.description && (
+                              <p className="text-xs text-[#666] mt-0.5 line-clamp-2">{step.description}</p>
+                            )}
+                            <p className="text-xs text-[#999] mt-1">Day {step.daysOffset}</p>
                           </div>
                           <button
                             type="button"
                             onClick={() => removeStepFromForm(index)}
-                            className="p-1 text-[#999] hover:text-red-500"
+                            className="p-1 text-[#999] hover:text-red-500 flex-shrink-0"
                           >
                             <X size={16} />
                           </button>
@@ -587,7 +749,13 @@ export const Playbooks: React.FC = () => {
                 <div className="flex gap-3 pt-4 border-t border-black/5">
                   <button
                     type="button"
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setAiPrompt('');
+                      setAiError(null);
+                      setShowAiSection(true);
+                      setFormData({ name: '', description: '', trigger: 'MANUAL', isActive: true, steps: [] });
+                    }}
                     className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium text-sm hover:bg-[#F0EBD8] transition-colors"
                   >
                     Cancel

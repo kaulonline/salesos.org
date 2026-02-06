@@ -66,6 +66,9 @@ export { usePagination, useCursorPagination } from './usePagination';
 export { useDebounce, useDebouncedCallback, useThrottle } from './useDebounce';
 export { useServerSearch, useGlobalSearch, useSearchSuggestions } from './useServerSearch';
 
+// Form validation hooks
+export { useFormValidation } from './useFormValidation';
+
 // Real-time sync hooks
 export {
   useWebSocketConnection,

@@ -536,7 +536,13 @@ export const DealDetail: React.FC = () => {
                       </h1>
                       <div className="flex items-center gap-2 text-[#666]">
                         <Building2 size={14} />
-                        <span>{deal.account?.name || 'Unknown Company'}</span>
+                        {deal.accountId ? (
+                          <Link to={`/dashboard/companies/${deal.accountId}`} className="hover:text-[#EAD07D] transition-colors">
+                            {deal.account?.name || 'Unknown Company'}
+                          </Link>
+                        ) : (
+                          <span>{deal.account?.name || 'Unknown Company'}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -625,7 +631,13 @@ export const DealDetail: React.FC = () => {
                     <div>
                       <div className="text-[10px] font-bold text-[#999] uppercase tracking-wider mb-1">Account</div>
                       <div className="text-sm font-semibold text-[#1A1A1A]">
-                        {deal.account?.name || 'Not specified'}
+                        {deal.accountId ? (
+                          <Link to={`/dashboard/companies/${deal.accountId}`} className="hover:text-[#EAD07D] transition-colors">
+                            {deal.account?.name || 'Not specified'}
+                          </Link>
+                        ) : (
+                          deal.account?.name || 'Not specified'
+                        )}
                       </div>
                     </div>
                     <div>

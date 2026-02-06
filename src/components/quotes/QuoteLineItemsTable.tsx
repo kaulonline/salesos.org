@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trash2, GripVertical, Plus, Edit2, Check, X, Loader2, Package, Percent, DollarSign } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { QuoteLineItem, UpdateQuoteLineItemDto } from '../../types/quote';
+import { logger } from '../../lib/logger';
 
 interface QuoteLineItemsTableProps {
   lineItems: QuoteLineItem[];
@@ -98,7 +99,7 @@ export function QuoteLineItemsTable({
       await onUpdateLineItem(editState.lineItemId, updateData);
       setEditState(null);
     } catch (err) {
-      console.error('Failed to update line item:', err);
+      logger.error('Failed to update line item:', err);
     } finally {
       setSavingId(null);
     }
@@ -112,7 +113,7 @@ export function QuoteLineItemsTable({
       await onDeleteLineItem(lineItemId);
       setDeleteConfirm(null);
     } catch (err) {
-      console.error('Failed to delete line item:', err);
+      logger.error('Failed to delete line item:', err);
     } finally {
       setDeletingId(null);
     }

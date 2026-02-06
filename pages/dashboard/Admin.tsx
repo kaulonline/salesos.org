@@ -144,6 +144,9 @@ export const Admin: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [usersPage, setUsersPage] = useState(1);
+  const [showAuditFilterMenu, setShowAuditFilterMenu] = useState(false);
+  const [auditActionFilter, setAuditActionFilter] = useState<string>('all');
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
   const [showAssignLicenseModal, setShowAssignLicenseModal] = useState(false);
   const [showGenerateKeysModal, setShowGenerateKeysModal] = useState(false);
@@ -212,7 +215,7 @@ export const Admin: React.FC = () => {
     activateUser,
     resetPassword,
     refetch: refetchUsers,
-  } = useAdminUsers({ search: searchQuery, role: selectedRole, status: selectedStatus });
+  } = useAdminUsers({ search: searchQuery, role: selectedRole, status: selectedStatus, page: usersPage });
   const { flags, loading: flagsLoading, toggleFlag } = useFeatureFlags();
   const { configs, loading: configsLoading } = useSystemConfig();
   const { logs, loading: logsLoading } = useAuditLogs({ limit: 20 });
@@ -435,12 +438,73 @@ export const Admin: React.FC = () => {
     syncToStripe: true,
   });
 
-  // Refetch users when search/filters change
+  // Export transactions to CSV
+  const handleExportTransactions = () => {
+    if (!transactions || transactions.length === 0) return;
+    const headers = ['ID', 'Amount', 'Status', 'Gateway', 'Customer', 'Date'];
+    const rows = transactions.map(t => [
+      t.id,
+      formatCurrency(t.amount),
+      t.status,
+      t.gateway,
+      t.customerEmail || 'N/A',
+      formatDate(t.createdAt),
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  // Export audit logs to CSV
+  const handleExportAuditLogs = () => {
+    if (!logs || logs.length === 0) return;
+    const headers = ['Timestamp', 'User', 'Action', 'Resource', 'Details'];
+    const rows = logs.map(l => [
+      formatDate(l.createdAt),
+      l.user?.name || l.user?.email || 'System',
+      l.action,
+      l.resourceType,
+      l.details || '',
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  // Filtered audit logs
+  const filteredLogs = useMemo(() => {
+    if (!logs || auditActionFilter === 'all') return logs;
+    return logs.filter(l => l.action.toLowerCase().includes(auditActionFilter.toLowerCase()));
+  }, [logs, auditActionFilter]);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (usersPage > 1) {
+      setUsersPage(usersPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    const maxPages = Math.ceil(totalUsers / 20);
+    if (usersPage < maxPages) {
+      setUsersPage(usersPage + 1);
+    }
+  };
+
+  // Refetch users when search/filters/page change
   useEffect(() => {
     if (activeTab === 'users') {
-      refetchUsers({ search: searchQuery, role: selectedRole, status: selectedStatus });
+      refetchUsers({ search: searchQuery, role: selectedRole, status: selectedStatus, page: usersPage });
     }
-  }, [searchQuery, selectedRole, selectedStatus]);
+  }, [searchQuery, selectedRole, selectedStatus, usersPage]);
 
   // Fetch OAuth config when Settings tab is active
   useEffect(() => {
@@ -892,13 +956,21 @@ export const Admin: React.FC = () => {
             {totalUsers > 20 && (
               <div className="p-4 border-t border-[#F2F1EA] flex items-center justify-between">
                 <p className="text-sm text-[#666]">
-                  Showing {(users || []).length} of {totalUsers} users
+                  Page {usersPage} of {Math.ceil(totalUsers / 20)} • Showing {(users || []).length} of {totalUsers} users
                 </p>
                 <div className="flex gap-2">
-                  <button className="px-4 py-2 rounded-lg bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={usersPage === 1}
+                    className="px-4 py-2 rounded-lg bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Previous
                   </button>
-                  <button className="px-4 py-2 rounded-lg bg-[#1A1A1A] text-white text-sm font-medium hover:bg-[#333] transition-colors">
+                  <button
+                    onClick={handleNextPage}
+                    disabled={usersPage >= Math.ceil(totalUsers / 20)}
+                    className="px-4 py-2 rounded-lg bg-[#1A1A1A] text-white text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Next
                   </button>
                 </div>
@@ -1666,7 +1738,10 @@ export const Admin: React.FC = () => {
                     <RefreshCw size={14} />
                     Refresh
                   </button>
-                  <button className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium">
+                  <button
+                    onClick={handleExportTransactions}
+                    className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
                     <Download size={14} />
                     Export
                   </button>
@@ -2693,11 +2768,37 @@ export const Admin: React.FC = () => {
                 <p className="text-sm text-[#666]">Track all administrative actions</p>
               </div>
               <div className="flex gap-2">
-                <button className="px-4 py-2 rounded-xl bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors flex items-center gap-2">
-                  <Filter size={14} />
-                  Filter
-                </button>
-                <button className="px-4 py-2 rounded-xl bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAuditFilterMenu(!showAuditFilterMenu)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
+                      auditActionFilter !== 'all' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 'bg-[#F8F8F6] hover:bg-[#F2F1EA]'
+                    }`}
+                  >
+                    <Filter size={14} />
+                    Filter
+                  </button>
+                  {showAuditFilterMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAuditFilterMenu(false)} />
+                      <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        {['all', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'].map(action => (
+                          <button
+                            key={action}
+                            onClick={() => { setAuditActionFilter(action); setShowAuditFilterMenu(false); }}
+                            className={`w-full text-left px-3 py-2 text-sm ${auditActionFilter === action ? 'bg-[#EAD07D]/20 font-medium' : 'hover:bg-[#F8F8F6]'}`}
+                          >
+                            {action === 'all' ? 'All Actions' : action}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={handleExportAuditLogs}
+                  className="px-4 py-2 rounded-xl bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors flex items-center gap-2"
+                >
                   <Download size={14} />
                   Export
                 </button>
@@ -2710,7 +2811,7 @@ export const Admin: React.FC = () => {
                   <Skeleton key={i} className="h-16 rounded-xl" />
                 ))}
               </div>
-            ) : (logs || []).length === 0 ? (
+            ) : (filteredLogs || []).length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
                   <Clock size={24} className="text-[#999]" />
@@ -2719,7 +2820,7 @@ export const Admin: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {(logs || []).map((log) => (
+                {(filteredLogs || []).map((log) => (
                   <div
                     key={log.id}
                     className="flex items-start justify-between p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#F2F1EA] transition-colors"

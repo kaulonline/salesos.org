@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -40,6 +40,11 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   contentClassName,
 }) => {
+  const titleId = useId();
+  const subtitleId = useId();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<Element | null>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (closeOnEscape && e.key === 'Escape') {
@@ -51,12 +56,25 @@ export const Modal: React.FC<ModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      // Store the currently focused element
+      previousActiveElement.current = document.activeElement;
+
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+
+      // Focus the modal
+      setTimeout(() => {
+        modalRef.current?.focus();
+      }, 0);
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
+
+      // Restore focus to the previously focused element
+      if (previousActiveElement.current instanceof HTMLElement) {
+        previousActiveElement.current.focus();
+      }
     };
   }, [isOpen, handleKeyDown]);
 
@@ -81,12 +99,18 @@ export const Modal: React.FC<ModalProps> = ({
           onClick={handleOverlayClick}
         >
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={subtitle ? subtitleId : undefined}
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'bg-white/95 backdrop-blur-xl rounded-3xl w-full shadow-xl border border-white/50',
+              'bg-white/95 backdrop-blur-xl rounded-3xl w-full shadow-xl border border-white/50 outline-none',
               sizeClasses[size],
               contentClassName
             )}
@@ -95,19 +119,20 @@ export const Modal: React.FC<ModalProps> = ({
               <div className="flex justify-between items-start p-8 pb-0">
                 <div>
                   {title && (
-                    <h2 className="text-2xl font-medium text-[#1A1A1A]">{title}</h2>
+                    <h2 id={titleId} className="text-2xl font-medium text-[#1A1A1A]">{title}</h2>
                   )}
                   {subtitle && (
-                    <p className="text-[#666] mt-1">{subtitle}</p>
+                    <p id={subtitleId} className="text-[#666] mt-1">{subtitle}</p>
                   )}
                 </div>
                 {showCloseButton && (
                   <button
                     type="button"
                     onClick={onClose}
+                    aria-label="Close modal"
                     className="text-[#666] hover:text-[#1A1A1A] transition-colors p-1 -m-1"
                   >
-                    <X size={24} />
+                    <X size={24} aria-hidden="true" />
                   </button>
                 )}
               </div>

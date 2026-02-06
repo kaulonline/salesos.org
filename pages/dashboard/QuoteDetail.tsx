@@ -27,8 +27,11 @@ import {
   File,
   Table,
   Tag,
+  Phone,
 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { useToast } from '../../src/components/ui/Toast';
 import {
   QuoteStatusBadge,
   QuoteSummary,
@@ -38,6 +41,7 @@ import {
   ConvertToOrderModal,
 } from '../../src/components/quotes';
 import { useQuote, useQuoteDocuments } from '../../src/hooks/useQuotes';
+import { useActivities } from '../../src/hooks/useActivities';
 import { quotesApi, QuoteDocument } from '../../src/api/quotes';
 import { printQuote } from '../../src/utils/quotePdfGenerator';
 import type { CreateQuoteLineItemDto, UpdateQuoteLineItemDto, UpdateQuoteDto } from '../../src/types/quote';
@@ -294,6 +298,12 @@ export function QuoteDetail() {
     isReprocessing,
   } = useQuoteDocuments(id);
 
+  // Fetch activities related to this quote's opportunity or account
+  const { activities, loading: activitiesLoading } = useActivities(
+    quote?.opportunityId ? { opportunityId: quote.opportunityId } :
+    quote?.accountId ? { accountId: quote.accountId } : undefined
+  );
+
   const [activeTab, setActiveTab] = useState<TabType>('line-items');
   const [showAddLineItemModal, setShowAddLineItemModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -308,6 +318,8 @@ export function QuoteDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [deleteDocumentId, setDeleteDocumentId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   // Handlers
   const handleAddLineItem = async (data: CreateQuoteLineItemDto) => {
@@ -332,9 +344,10 @@ export function QuoteDetail() {
     setIsCloning(true);
     try {
       const clonedQuote = await clone();
+      showToast({ type: 'success', title: 'Quote Cloned', message: 'Successfully created a copy of the quote' });
       navigate(`/dashboard/quotes/${clonedQuote.id}`);
     } catch (err) {
-      console.error('Failed to clone quote:', err);
+      showToast({ type: 'error', title: 'Clone Failed', message: (err as Error).message || 'Could not clone quote' });
     } finally {
       setIsCloning(false);
       setShowActionsMenu(false);
@@ -347,8 +360,9 @@ export function QuoteDetail() {
     try {
       await quotesApi.markAccepted(quote.id);
       await refetch();
+      showToast({ type: 'success', title: 'Quote Accepted', message: 'The quote has been marked as accepted' });
     } catch (err) {
-      console.error('Failed to accept quote:', err);
+      showToast({ type: 'error', title: 'Accept Failed', message: (err as Error).message || 'Could not accept quote' });
     } finally {
       setIsAccepting(false);
     }
@@ -362,8 +376,9 @@ export function QuoteDetail() {
       await refetch();
       setShowRejectModal(false);
       setRejectReason('');
+      showToast({ type: 'success', title: 'Quote Rejected', message: 'The quote has been marked as rejected' });
     } catch (err) {
-      console.error('Failed to reject quote:', err);
+      showToast({ type: 'error', title: 'Reject Failed', message: (err as Error).message || 'Could not reject quote' });
     } finally {
       setIsRejecting(false);
     }
@@ -375,10 +390,23 @@ export function QuoteDetail() {
     try {
       // Open print-friendly view in a new window
       printQuote(quote);
+      showToast({ type: 'success', title: 'PDF Generated', message: 'The PDF is ready for download' });
     } catch (err) {
-      console.error('Failed to generate PDF:', err);
+      showToast({ type: 'error', title: 'PDF Generation Failed', message: (err as Error).message || 'Could not generate PDF' });
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!deleteDocumentId) return;
+    try {
+      await deleteDocument(deleteDocumentId);
+      showToast({ type: 'success', title: 'Document Deleted', message: 'The document has been removed' });
+    } catch (err) {
+      showToast({ type: 'error', title: 'Delete Failed', message: (err as Error).message || 'Could not delete document' });
+    } finally {
+      setDeleteDocumentId(null);
     }
   };
 
@@ -761,12 +789,82 @@ export function QuoteDetail() {
               )}
 
               {activeTab === 'activity' && (
-                <div className="py-8 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
-                    <Clock size={24} className="text-[#999]" />
-                  </div>
-                  <h4 className="text-base font-semibold text-[#1A1A1A] mb-2">Activity Timeline</h4>
-                  <p className="text-sm text-[#666]">Activity tracking coming soon</p>
+                <div className="space-y-4">
+                  {activitiesLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex gap-4 p-4 bg-[#F8F8F6] rounded-xl animate-pulse">
+                          <div className="w-10 h-10 rounded-full bg-[#E5E5E5]" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-[#E5E5E5] rounded w-1/3" />
+                            <div className="h-3 bg-[#E5E5E5] rounded w-2/3" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
+                        <Clock size={24} className="text-[#999]" />
+                      </div>
+                      <h4 className="text-base font-semibold text-[#1A1A1A] mb-2">No Activity Yet</h4>
+                      <p className="text-sm text-[#666]">Activities related to this quote will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {activities.slice(0, 20).map((activity) => {
+                        const getActivityIcon = () => {
+                          switch (activity.type) {
+                            case 'CALL': return <Phone size={16} className="text-[#93C01F]" />;
+                            case 'EMAIL': return <Send size={16} className="text-blue-500" />;
+                            case 'MEETING': return <Calendar size={16} className="text-purple-500" />;
+                            case 'NOTE': return <FileText size={16} className="text-[#EAD07D]" />;
+                            case 'STATUS_CHANGE': return <RefreshCw size={16} className="text-[#666]" />;
+                            case 'STAGE_CHANGE': return <ArrowLeft size={16} className="text-[#1A1A1A] rotate-180" />;
+                            default: return <Clock size={16} className="text-[#999]" />;
+                          }
+                        };
+
+                        const getActivityBg = () => {
+                          switch (activity.type) {
+                            case 'CALL': return 'bg-[#93C01F]/20';
+                            case 'EMAIL': return 'bg-blue-100';
+                            case 'MEETING': return 'bg-purple-100';
+                            case 'NOTE': return 'bg-[#EAD07D]/20';
+                            default: return 'bg-[#F8F8F6]';
+                          }
+                        };
+
+                        return (
+                          <div key={activity.id} className="flex gap-4 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#F0EBD8] transition-colors">
+                            <div className={`w-10 h-10 rounded-full ${getActivityBg()} flex items-center justify-center flex-shrink-0`}>
+                              {getActivityIcon()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-medium text-[#1A1A1A] text-sm">{activity.subject}</h4>
+                                <span className="text-xs text-[#999] whitespace-nowrap">
+                                  {new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                              {activity.description && (
+                                <p className="text-sm text-[#666] mt-1 line-clamp-2">{activity.description}</p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-xs text-[#999] capitalize">{activity.type.toLowerCase().replace('_', ' ')}</span>
+                                {activity.user && (
+                                  <span className="text-xs text-[#999]">by {activity.user.name}</span>
+                                )}
+                                {activity.duration && (
+                                  <span className="text-xs text-[#999]">{activity.duration} min</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -925,11 +1023,7 @@ export function QuoteDetail() {
                                 </button>
                               )}
                               <button
-                                onClick={() => {
-                                  if (confirm('Delete this document?')) {
-                                    deleteDocument(doc.id);
-                                  }
-                                }}
+                                onClick={() => setDeleteDocumentId(doc.id)}
                                 disabled={isDeleting}
                                 className="p-1.5 text-[#888] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete document"
@@ -1119,6 +1213,18 @@ export function QuoteDetail() {
         quote={quote}
         isOpen={showConvertToOrderModal}
         onClose={() => setShowConvertToOrderModal(false)}
+      />
+
+      {/* Delete Document Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!deleteDocumentId}
+        onClose={() => setDeleteDocumentId(null)}
+        onConfirm={handleDeleteDocument}
+        title="Delete Document"
+        message="Are you sure you want to delete this document? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        loading={isDeleting}
       />
     </div>
   );

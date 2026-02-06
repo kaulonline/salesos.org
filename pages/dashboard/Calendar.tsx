@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle, X, RefreshCw, Link } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Video, Clock, MapPin, MoreHorizontal, Calendar as CalendarIcon, Filter, Users, Phone, AlertCircle, X, RefreshCw, Link, CheckCircle2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
@@ -52,6 +52,8 @@ export const Calendar: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewEventModal, setShowNewEventModal] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<MeetingType | 'ALL'>('ALL');
 
   // Calendar sync state
   const [calendarConnections, setCalendarConnections] = useState<CalendarConnection[]>([]);
@@ -211,13 +213,23 @@ export const Calendar: React.FC = () => {
   }, [currentYear, currentMonth, meetingsByDate, today]);
 
   const selectedEvents = useMemo(() => {
-    const events = meetingsByDate[selectedDay] || [];
-    if (!searchQuery) return events;
-    return events.filter(e =>
-      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.location?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [meetingsByDate, selectedDay, searchQuery]);
+    let events = meetingsByDate[selectedDay] || [];
+
+    // Apply type filter
+    if (typeFilter !== 'ALL') {
+      events = events.filter(e => e.type === typeFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      events = events.filter(e =>
+        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.location?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return events;
+  }, [meetingsByDate, selectedDay, searchQuery, typeFilter]);
 
   const navigateMonth = (direction: number) => {
     const newDate = new Date(currentYear, currentMonth + direction);
@@ -302,9 +314,57 @@ export const Calendar: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#666] hover:text-[#1A1A1A] shadow-sm">
-            <Filter size={18} />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                typeFilter !== 'ALL' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 'bg-white text-[#666] hover:text-[#1A1A1A]'
+              }`}
+            >
+              <Filter size={18} />
+            </button>
+            {showFilterMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
+                <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-3 py-2 text-xs font-bold text-[#999] uppercase">Filter by Type</div>
+                  {(['ALL', 'VIDEO', 'CALL', 'IN_PERSON', 'WEBINAR'] as const).map((type) => {
+                    const labels: Record<string, string> = {
+                      ALL: 'All Types',
+                      VIDEO: 'Video Call',
+                      CALL: 'Phone Call',
+                      IN_PERSON: 'In Person',
+                      WEBINAR: 'Webinar',
+                    };
+                    const icons: Record<string, React.ElementType> = {
+                      ALL: CalendarIcon,
+                      VIDEO: Video,
+                      CALL: Phone,
+                      IN_PERSON: MapPin,
+                      WEBINAR: Users,
+                    };
+                    const Icon = icons[type];
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setTypeFilter(type);
+                          setShowFilterMenu(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                          typeFilter === type ? 'bg-[#EAD07D]/20 text-[#1A1A1A] font-medium' : 'text-[#666] hover:bg-[#F8F8F6]'
+                        }`}
+                      >
+                        <Icon size={14} />
+                        {labels[type]}
+                        {typeFilter === type && <CheckCircle2 size={14} className="ml-auto text-[#EAD07D]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={handleOpenNewEventModal}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all whitespace-nowrap"

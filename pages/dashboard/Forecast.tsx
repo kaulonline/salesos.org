@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { useDeals } from '../../src/hooks';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Card } from '../../components/ui/Card';
-import { CountUp } from '../../components/ui/CountUp';
+import { format, addMonths, startOfQuarter, getQuarter } from 'date-fns';
 
 type ForecastCategory = 'COMMIT' | 'BEST_CASE' | 'PIPELINE' | 'OMITTED';
 
@@ -39,14 +39,53 @@ const categoryConfig: Record<ForecastCategory, { label: string; color: string; b
   OMITTED: { label: 'Omitted', color: 'text-[#999]', bg: 'bg-[#F8F8F6]' },
 };
 
+// Helper to generate dynamic quarters
+const generateQuarters = () => {
+  const now = new Date();
+  const currentQuarter = getQuarter(now);
+  const currentYear = now.getFullYear();
+  const quarters: string[] = [];
+
+  // Show current quarter and next 3 quarters
+  for (let i = 0; i < 4; i++) {
+    const quarter = ((currentQuarter - 1 + i) % 4) + 1;
+    const year = currentYear + Math.floor((currentQuarter - 1 + i) / 4);
+    quarters.push(`Q${quarter} ${year}`);
+  }
+
+  return quarters;
+};
+
+// Helper to get months for selected quarter
+const getQuarterMonths = (quarterString: string) => {
+  const [q, yearStr] = quarterString.split(' ');
+  const quarterNum = parseInt(q.replace('Q', ''));
+  const year = parseInt(yearStr);
+  const startMonth = (quarterNum - 1) * 3;
+  const quarterStart = new Date(year, startMonth, 1);
+
+  return [0, 1, 2].map(offset => ({
+    name: format(addMonths(quarterStart, offset), 'MMM'),
+    fullName: format(addMonths(quarterStart, offset), 'MMM yyyy'),
+    date: addMonths(quarterStart, offset),
+  }));
+};
+
+// Get current quarter string
+const getCurrentQuarter = () => {
+  const now = new Date();
+  return `Q${getQuarter(now)} ${now.getFullYear()}`;
+};
+
 export const Forecast: React.FC = () => {
   const { deals, loading } = useDeals();
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('Q1 2026');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>(getCurrentQuarter());
   const [expandedCategory, setExpandedCategory] = useState<ForecastCategory | null>('COMMIT');
   const [viewMode, setViewMode] = useState<'summary' | 'detailed'>('summary');
 
-  // Get current quarter info
-  const quarters = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
+  // Get dynamic quarters based on current date
+  const quarters = useMemo(() => generateQuarters(), []);
+  const quarterMonths = useMemo(() => getQuarterMonths(selectedQuarter), [selectedQuarter]);
 
   // Categorize deals based on probability and stage
   const categorizedDeals = useMemo(() => {
@@ -122,6 +161,32 @@ export const Forecast: React.FC = () => {
     return labels[stage] || stage;
   };
 
+  const handleExport = () => {
+    const headers = ['Deal Name', 'Account', 'Owner', 'Amount', 'Probability', 'Category', 'Stage', 'Close Date'];
+    const rows = categorizedDeals.map(deal => [
+      deal.name,
+      deal.accountName,
+      deal.ownerName,
+      deal.amount.toString(),
+      `${deal.probability}%`,
+      categoryConfig[deal.category].label,
+      getStageLabel(deal.stage),
+      deal.closeDate || 'N/A',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `forecast_${selectedQuarter.replace(' ', '_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen p-6 lg:p-8">
@@ -155,7 +220,10 @@ export const Forecast: React.FC = () => {
                 <option key={q} value={q}>{q}</option>
               ))}
             </select>
-            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium text-sm">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium text-sm"
+            >
               <Download size={16} />
               Export
             </button>
@@ -169,7 +237,7 @@ export const Forecast: React.FC = () => {
               <Target size={20} className="text-[#EAD07D]" />
               <span className="text-sm text-white/60">Weighted Forecast</span>
             </div>
-            <CountUp end={totalForecast} prefix="$" className="text-3xl font-light text-white block tabular-nums" />
+            <span className="text-3xl font-light text-white block tabular-nums">{formatCurrency(totalForecast)}</span>
             <p className="text-xs text-white/40 mt-1">Probability-weighted total</p>
           </Card>
 
@@ -178,7 +246,7 @@ export const Forecast: React.FC = () => {
               <CheckCircle size={20} className="text-[#93C01F]" />
               <span className="text-sm text-[#666]">Commit</span>
             </div>
-            <CountUp end={commitTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
+            <span className="text-3xl font-light text-[#1A1A1A] block tabular-nums">{formatCurrency(commitTotal)}</span>
             <p className="text-xs text-[#999] mt-1">{totals.COMMIT.count} deals • 90%+ probability</p>
           </Card>
 
@@ -187,7 +255,7 @@ export const Forecast: React.FC = () => {
               <TrendingUp size={20} className="text-[#EAD07D]" />
               <span className="text-sm text-[#666]">Best Case</span>
             </div>
-            <CountUp end={bestCaseTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
+            <span className="text-3xl font-light text-[#1A1A1A] block tabular-nums">{formatCurrency(bestCaseTotal)}</span>
             <p className="text-xs text-[#999] mt-1">{totals.COMMIT.count + totals.BEST_CASE.count} deals total</p>
           </Card>
 
@@ -196,7 +264,7 @@ export const Forecast: React.FC = () => {
               <DollarSign size={20} className="text-blue-600" />
               <span className="text-sm text-[#666]">Total Pipeline</span>
             </div>
-            <CountUp end={pipelineTotal} prefix="$" className="text-3xl font-light text-[#1A1A1A] block tabular-nums" />
+            <span className="text-3xl font-light text-[#1A1A1A] block tabular-nums">{formatCurrency(pipelineTotal)}</span>
             <p className="text-xs text-[#999] mt-1">{categorizedDeals.length} open deals</p>
           </Card>
         </div>
@@ -279,16 +347,22 @@ export const Forecast: React.FC = () => {
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-[#1A1A1A] mb-6">Monthly Close Timeline</h2>
           <div className="grid grid-cols-3 gap-6">
-            {['Jan', 'Feb', 'Mar'].map((month, idx) => {
-              const monthDeals = categorizedDeals.slice(idx * 3, (idx + 1) * 3);
+            {quarterMonths.map((month, idx) => {
+              // Filter deals by close date in this month
+              const monthDeals = categorizedDeals.filter(deal => {
+                if (!deal.closeDate) return false;
+                const closeDate = new Date(deal.closeDate);
+                return closeDate.getMonth() === month.date.getMonth() &&
+                       closeDate.getFullYear() === month.date.getFullYear();
+              });
               const monthTotal = monthDeals.reduce((sum, d) => sum + d.amount, 0);
 
               return (
-                <div key={month} className="bg-[#F8F8F6] rounded-2xl p-5">
+                <div key={month.fullName} className="bg-[#F8F8F6] rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="text-[#999]" />
-                      <span className="text-sm font-medium text-[#1A1A1A]">{month} 2026</span>
+                      <span className="text-sm font-medium text-[#1A1A1A]">{month.fullName}</span>
                     </div>
                     <span className="text-lg font-semibold text-[#1A1A1A]">{formatCurrency(monthTotal)}</span>
                   </div>

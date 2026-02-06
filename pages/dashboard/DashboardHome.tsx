@@ -27,10 +27,10 @@ import {
 import { Link } from 'react-router-dom';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Card } from '../../components/ui/Card';
-import { CountUp } from '../../components/ui/CountUp';
 import { TaskDetailModal } from '../../components/TaskDetailModal';
 import { useDashboard, useDeals, useMeetings, useActivities, useTasks } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
+import { useToast } from '../../src/components/ui/Toast';
 import type { Task } from '../../src/types/task';
 import { BarChart } from '../../src/components/charts';
 
@@ -97,6 +97,7 @@ export const DashboardHome: React.FC = () => {
   const { meetings } = useMeetings({ limit: 20 });
   const { activities } = useActivities({ limit: 50 });
   const { tasks, complete: completeTask } = useTasks({ limit: 10 });
+  const { showToast } = useToast();
 
   // State for task detail modal
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -126,33 +127,30 @@ export const DashboardHome: React.FC = () => {
     return openDeals.sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 3);
   }, [deals]);
 
-  // This week's meetings for calendar - use consistent week calculation
-  const thisWeekMeetings = useMemo(() => {
-    const now = new Date();
-    // Start from Monday of current week
-    const startOfWeek = new Date(now);
-    const dayOfWeek = now.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Monday start
-    startOfWeek.setDate(now.getDate() + diff);
-    startOfWeek.setHours(0, 0, 0, 0);
+  // Calendar month state for navigation
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
 
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+  // Calculate displayed month based on offset
+  const displayedMonth = useMemo(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + calendarMonthOffset);
+    return date;
+  }, [calendarMonthOffset]);
 
-    return meetings.filter(m => {
-      const meetingDate = new Date(m.startTime);
-      return meetingDate >= startOfWeek && meetingDate <= endOfWeek;
-    });
-  }, [meetings]);
+  const currentMonthLabel = displayedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const prevMonthLabel = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() - 1).toLocaleDateString('en-US', { month: 'long' });
+  const nextMonthLabel = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1).toLocaleDateString('en-US', { month: 'long' });
 
-  // Get week dates - Monday to Saturday
+  // Get week dates based on displayed month - first week of the month
   const weekDates = useMemo(() => {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    const dayOfWeek = now.getDay();
+    // Get the first day of the displayed month
+    const firstOfMonth = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1);
+
+    // Find the Monday of the week containing the first of the month
+    const dayOfWeek = firstOfMonth.getDay();
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startOfWeek.setDate(now.getDate() + diff);
+    const startOfWeek = new Date(firstOfMonth);
+    startOfWeek.setDate(firstOfMonth.getDate() + diff);
     startOfWeek.setHours(0, 0, 0, 0);
 
     return Array.from({ length: 6 }, (_, i) => {
@@ -160,7 +158,21 @@ export const DashboardHome: React.FC = () => {
       date.setDate(startOfWeek.getDate() + i);
       return date;
     });
-  }, []);
+  }, [displayedMonth]);
+
+  // Filter meetings for the displayed week
+  const thisWeekMeetings = useMemo(() => {
+    if (weekDates.length === 0) return [];
+
+    const startOfWeek = weekDates[0];
+    const endOfWeek = new Date(weekDates[weekDates.length - 1]);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return meetings.filter(m => {
+      const meetingDate = new Date(m.startTime);
+      return meetingDate >= startOfWeek && meetingDate <= endOfWeek;
+    });
+  }, [meetings, weekDates]);
 
   // Daily activity breakdown - last 7 days
   const dailyActivities = useMemo(() => {
@@ -210,11 +222,6 @@ export const DashboardHome: React.FC = () => {
   const salesTasks = useMemo(() => {
     return tasks.slice(0, 5);
   }, [tasks]);
-
-  // Current month name
-  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const prevMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long' });
-  const nextMonth = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('en-US', { month: 'long' });
 
   // Deal velocity - average days to close
   const dealVelocity = useMemo(() => {
@@ -276,21 +283,21 @@ export const DashboardHome: React.FC = () => {
             <div className="text-center min-w-[80px]">
               <div className="flex items-center gap-2 justify-center">
                 <Users size={20} className="text-[#999]" />
-                <CountUp end={leadStats?.total || 0} className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
+                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{(leadStats?.total || 0).toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Leads</p>
             </div>
             <div className="text-center min-w-[100px]">
               <div className="flex items-center gap-2 justify-center">
                 <Target size={20} className="text-[#999]" />
-                <CountUp end={totalDeals} className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
+                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{totalDeals.toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Open Deals</p>
             </div>
             <div className="text-center min-w-[160px]">
               <div className="flex items-center gap-2 justify-center">
                 <DollarSign size={20} className="text-[#999]" />
-                <CountUp end={totalPipeline} prefix="$" className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums" />
+                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">${totalPipeline.toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Pipeline</p>
             </div>
@@ -473,7 +480,7 @@ export const DashboardHome: React.FC = () => {
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-1">
-                  <CountUp end={totalMonthlyActivities} className="text-4xl font-light text-[#1A1A1A] tabular-nums min-w-[60px]" />
+                  <span className="text-4xl font-light text-[#1A1A1A] tabular-nums min-w-[60px]">{totalMonthlyActivities.toLocaleString()}</span>
                   <span className="text-sm text-[#999]">touchpoints</span>
                 </div>
                 <p className="text-xs text-[#999] mb-6">last 30 days</p>
@@ -555,12 +562,12 @@ export const DashboardHome: React.FC = () => {
                   {/* Quick Stats */}
                   <div className="flex items-center gap-4 text-center">
                     <div className="min-w-[50px]">
-                      <CountUp end={Math.round(winRate)} suffix="%" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
+                      <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{Math.round(winRate)}%</span>
                       <p className="text-xs text-[#999]">Win Rate</p>
                     </div>
                     <div className="w-px h-8 bg-black/10"></div>
                     <div className="min-w-[50px]">
-                      <CountUp end={conversionRate} suffix="%" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
+                      <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{conversionRate}%</span>
                       <p className="text-xs text-[#999]">Conversion</p>
                     </div>
                   </div>
@@ -579,14 +586,27 @@ export const DashboardHome: React.FC = () => {
 
               {/* Month Navigation */}
               <div className="flex items-center gap-3 mb-6">
-                <button className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all">
-                  {prevMonth}
+                <button
+                  onClick={() => setCalendarMonthOffset(prev => prev - 1)}
+                  className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all"
+                >
+                  {prevMonthLabel}
                 </button>
-                <button className="px-4 py-2 bg-[#EAD07D] rounded-full text-sm font-semibold text-[#1A1A1A]">
-                  {currentMonth}
+                <button
+                  onClick={() => setCalendarMonthOffset(0)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                    calendarMonthOffset === 0
+                      ? 'bg-[#EAD07D] text-[#1A1A1A]'
+                      : 'bg-[#F0EBD8] text-[#666] hover:bg-[#EAD07D]'
+                  }`}
+                >
+                  {currentMonthLabel}
                 </button>
-                <button className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all">
-                  {nextMonth}
+                <button
+                  onClick={() => setCalendarMonthOffset(prev => prev + 1)}
+                  className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all"
+                >
+                  {nextMonthLabel}
                 </button>
               </div>
 
@@ -684,7 +704,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Open Deals</span>
                   </div>
-                  <CountUp end={totalDeals} className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
+                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{totalDeals.toLocaleString()}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -694,7 +714,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Closed Won</span>
                   </div>
-                  <CountUp end={closedWonThisMonth} className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
+                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{closedWonThisMonth.toLocaleString()}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -704,7 +724,7 @@ export const DashboardHome: React.FC = () => {
                     </div>
                     <span className="text-sm text-[#666]">Avg Deal Size</span>
                   </div>
-                  <CountUp end={totalPipeline / (pipelineStats?.totalOpportunities || 1)} prefix="$" className="text-lg font-semibold text-[#1A1A1A] tabular-nums" />
+                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">${Math.round(totalPipeline / (pipelineStats?.totalOpportunities || 1)).toLocaleString()}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
@@ -824,7 +844,7 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           <div className="flex items-baseline gap-4 mb-8">
-            <CountUp end={forecast?.quarterBestCase || totalPipeline} prefix="$" className="text-5xl font-light text-[#1A1A1A] tabular-nums min-w-[200px]" />
+            <span className="text-5xl font-light text-[#1A1A1A] tabular-nums min-w-[200px]">${(forecast?.quarterBestCase || totalPipeline).toLocaleString()}</span>
             <span className="text-sm text-[#666]">projected revenue</span>
             {(forecast?.quarterCommit ?? 0) > 0 && (
               <span className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#1A1A1A]">
@@ -888,7 +908,13 @@ export const DashboardHome: React.FC = () => {
         onClose={() => setSelectedTask(null)}
         onMarkComplete={async (taskId) => {
           if (completeTask) {
-            await completeTask(taskId);
+            try {
+              await completeTask(taskId);
+              showToast({ type: 'success', title: 'Task Completed', message: 'Great work!' });
+              setSelectedTask(null);
+            } catch (err) {
+              showToast({ type: 'error', title: 'Failed to Complete Task', message: (err as Error).message || 'Please try again' });
+            }
           }
         }}
       />

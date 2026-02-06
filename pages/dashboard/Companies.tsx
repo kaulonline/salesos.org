@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Building2,
   Search,
@@ -562,8 +563,8 @@ export const Companies: React.FC = () => {
           {filteredCompanies.map((company, index) => {
             const healthColors = getHealthColor(company.healthScore);
             return (
+              <Link key={company.id} to={`/dashboard/companies/${company.id}`} className="block">
               <Card
-                key={company.id}
                 className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -586,6 +587,7 @@ export const Companies: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         setEditingCompany(company);
                       }}
                       className="p-1.5 rounded-lg hover:bg-[#F8F8F6] text-[#666] hover:text-[#1A1A1A] transition-colors opacity-0 group-hover:opacity-100"
@@ -647,6 +649,7 @@ export const Companies: React.FC = () => {
                   </div>
                 </div>
               </Card>
+              </Link>
             );
           })}
         </div>
@@ -671,6 +674,7 @@ export const Companies: React.FC = () => {
             renderItem={(company) => {
               const healthColors = getHealthColor(company.healthScore);
               return (
+                <Link to={`/dashboard/companies/${company.id}`} className="block">
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors items-center">
                   <div className="col-span-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -698,6 +702,7 @@ export const Companies: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         setEditingCompany(company);
                       }}
                       className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -705,11 +710,10 @@ export const Companies: React.FC = () => {
                     >
                       <Edit2 size={16} className="text-[#666]" />
                     </button>
-                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      <ChevronRight size={16} className="text-[#666]" />
-                    </button>
+                    <ChevronRight size={16} className="text-[#666]" />
                   </div>
                 </div>
+                </Link>
               );
             }}
           />

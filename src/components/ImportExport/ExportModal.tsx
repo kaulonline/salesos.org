@@ -15,6 +15,7 @@ import {
   ExportFieldDefinition,
   ExportResult,
 } from '../../api/importExport';
+import { logger } from '../../lib/logger';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export function ExportModal({
       setAvailableFields(fieldDefs);
       setFields(fieldDefs.map((f) => f.name));
     } catch (err) {
-      console.error('Failed to load fields:', err);
+      logger.error('Failed to load fields:', err);
     }
   };
 
@@ -124,7 +125,7 @@ export function ExportModal({
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Download failed:', err);
+      logger.error('Download failed:', err);
     }
   };
 

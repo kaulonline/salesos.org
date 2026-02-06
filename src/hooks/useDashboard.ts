@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { dashboardApi, opportunitiesApi, leadsApi, activitiesApi, tasksApi, meetingsApi } from '../api';
 import type { PipelineStats, LeadStats, Activity, SalesForecast } from '../types';
+import { logger } from '../lib/logger';
 
 export interface DashboardData {
   pipelineStats: PipelineStats | null;
@@ -103,7 +104,7 @@ export function useDashboard() {
         quotaAttainment: Math.min(quotaAttainment, 100),
       });
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
+      logger.error('Failed to fetch dashboard data:', err);
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);

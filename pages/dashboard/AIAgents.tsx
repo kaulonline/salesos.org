@@ -101,6 +101,30 @@ export const AIAgents: React.FC = () => {
   const { user } = useAuth();
   const [selectedAgent, setSelectedAgent] = useState<AIAgentConfig | null>(null);
   const [filter, setFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configAgent, setConfigAgent] = useState<AIAgentConfig | null>(null);
+  const [agentStatuses, setAgentStatuses] = useState<Record<AgentType, 'enabled' | 'disabled'>>({
+    DEAL_HEALTH: 'enabled',
+    PIPELINE_ACCELERATION: 'enabled',
+    ACCOUNT_INTELLIGENCE: 'enabled',
+    OUTREACH_OPTIMIZATION: 'enabled',
+    COACHING: 'enabled',
+  });
+
+  const handleOpenConfig = (agent: AIAgentConfig, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setConfigAgent(agent);
+    setShowConfigModal(true);
+  };
+
+  const handleToggleAgent = (agentId: AgentType, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setAgentStatuses(prev => ({
+      ...prev,
+      [agentId]: prev[agentId] === 'enabled' ? 'disabled' : 'enabled',
+    }));
+  };
 
   // Get real agent data
   const { data: alerts = [], isLoading: alertsLoading } = useAgentAlerts({
@@ -187,12 +211,12 @@ export const AIAgents: React.FC = () => {
   const filteredAgents = useMemo(() => {
     return AI_AGENT_CONFIGS.filter(agent => {
       if (filter === 'all') return true;
-      return agent.status === filter;
+      return agentStatuses[agent.id] === filter;
     });
-  }, [filter]);
+  }, [filter, agentStatuses]);
 
   const loading = flagsLoading || alertsLoading;
-  const enabledCount = AI_AGENT_CONFIGS.filter(a => a.status === 'enabled').length;
+  const enabledCount = Object.values(agentStatuses).filter(s => s === 'enabled').length;
 
   if (loading) {
     return (
@@ -260,7 +284,10 @@ export const AIAgents: React.FC = () => {
                 <AlertCircle size={16} />
                 View All Alerts ({stats.pendingCount})
               </Link>
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-black transition-colors shadow-lg">
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-black transition-colors shadow-lg"
+              >
                 <Settings size={18} />
                 Agent Settings
               </button>
@@ -361,11 +388,11 @@ export const AIAgents: React.FC = () => {
                         <h3 className="font-bold text-[#1A1A1A]">{agent.name}</h3>
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={agent.status === 'enabled' ? 'green' : 'outline'}
+                            variant={agentStatuses[agent.id] === 'enabled' ? 'green' : 'outline'}
                             size="sm"
-                            dot={agent.status === 'enabled'}
+                            dot={agentStatuses[agent.id] === 'enabled'}
                           >
-                            {agent.status === 'enabled' ? 'Active' : 'Disabled'}
+                            {agentStatuses[agent.id] === 'enabled' ? 'Active' : 'Disabled'}
                           </Badge>
                           {alertCount > 0 && (
                             <span className="text-xs text-[#666]">{alertCount} alerts</span>
@@ -407,7 +434,10 @@ export const AIAgents: React.FC = () => {
 
                   {/* Action */}
                   <div className="flex items-center gap-2">
-                    <button className="flex-1 py-2.5 bg-[#F8F8F6] text-[#1A1A1A] rounded-xl text-sm font-medium hover:bg-[#EAD07D] transition-colors">
+                    <button
+                      onClick={(e) => handleOpenConfig(agent, e)}
+                      className="flex-1 py-2.5 bg-[#F8F8F6] text-[#1A1A1A] rounded-xl text-sm font-medium hover:bg-[#EAD07D] transition-colors"
+                    >
                       Configure
                     </button>
                     <Link
@@ -479,11 +509,17 @@ export const AIAgents: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <button className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors">
+                    <button
+                      onClick={() => handleOpenConfig(selectedAgent)}
+                      className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors"
+                    >
                       Configure
                     </button>
-                    <button className="px-4 py-3 bg-[#F8F8F6] text-[#666] rounded-xl hover:bg-[#F0EBD8] transition-colors">
-                      {selectedAgent.status === 'enabled' ? (
+                    <button
+                      onClick={() => handleToggleAgent(selectedAgent.id)}
+                      className="px-4 py-3 bg-[#F8F8F6] text-[#666] rounded-xl hover:bg-[#F0EBD8] transition-colors"
+                    >
+                      {agentStatuses[selectedAgent.id] === 'enabled' ? (
                         <Pause size={18} />
                       ) : (
                         <Play size={18} />
@@ -603,6 +639,169 @@ export const AIAgents: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {/* Agent Settings Modal */}
+        {showSettingsModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+              <div className="flex justify-between items-center p-6 pb-0">
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Agent Settings</h2>
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="p-2 text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-full transition-colors"
+                >
+                  <Plus size={20} className="rotate-45" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-[#666] mb-4">Manage your AI agent preferences and notification settings.</p>
+
+                <div className="space-y-3">
+                  {AI_AGENT_CONFIGS.map(agent => {
+                    const Icon = agent.icon;
+                    return (
+                      <div key={agent.id} className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: `${agent.color}20` }}
+                          >
+                            <Icon size={16} style={{ color: agent.color }} />
+                          </div>
+                          <span className="text-sm font-medium text-[#1A1A1A]">{agent.name}</span>
+                        </div>
+                        <button
+                          onClick={() => handleToggleAgent(agent.id)}
+                          className={`w-12 h-6 rounded-full transition-colors relative ${
+                            agentStatuses[agent.id] === 'enabled' ? 'bg-[#93C01F]' : 'bg-[#E0E0E0]'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-all ${
+                            agentStatuses[agent.id] === 'enabled' ? 'right-0.5' : 'left-0.5'
+                          }`} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <h4 className="text-sm font-semibold text-[#1A1A1A] mb-3">Notification Preferences</h4>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl cursor-pointer">
+                      <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#EAD07D]" />
+                      <span className="text-sm text-[#666]">Email notifications for urgent alerts</span>
+                    </label>
+                    <label className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl cursor-pointer">
+                      <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#EAD07D]" />
+                      <span className="text-sm text-[#666]">In-app notifications</span>
+                    </label>
+                    <label className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 accent-[#EAD07D]" />
+                      <span className="text-sm text-[#666]">Daily digest summary</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowSettingsModal(false)}
+                    className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium hover:bg-[#F0EBD8] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setShowSettingsModal(false)}
+                    className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors"
+                  >
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Agent Configuration Modal */}
+        {showConfigModal && configAgent && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+              <div className="flex justify-between items-center p-6 pb-0">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${configAgent.color}20` }}
+                  >
+                    <configAgent.icon size={18} style={{ color: configAgent.color }} />
+                  </div>
+                  <h2 className="text-xl font-semibold text-[#1A1A1A]">{configAgent.name}</h2>
+                </div>
+                <button
+                  onClick={() => setShowConfigModal(false)}
+                  className="p-2 text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-full transition-colors"
+                >
+                  <Plus size={20} className="rotate-45" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-[#666]">{configAgent.description}</p>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-[#1A1A1A]">Alert Sensitivity</h4>
+                  <div className="flex gap-2">
+                    {['Low', 'Medium', 'High'].map(level => (
+                      <button
+                        key={level}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                          level === 'Medium' ? 'bg-[#1A1A1A] text-white' : 'bg-[#F8F8F6] text-[#666] hover:bg-[#F0EBD8]'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-[#1A1A1A]">Capabilities</h4>
+                  <div className="space-y-2">
+                    {configAgent.capabilities.map((cap, i) => (
+                      <label key={i} className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl cursor-pointer">
+                        <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#EAD07D]" />
+                        <span className="text-sm text-[#666]">{cap}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-[#1A1A1A]">Alert Frequency</h4>
+                  <select className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm">
+                    <option>Real-time</option>
+                    <option>Hourly digest</option>
+                    <option>Daily digest</option>
+                    <option>Weekly summary</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowConfigModal(false)}
+                    className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium hover:bg-[#F0EBD8] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setShowConfigModal(false)}
+                    className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors"
+                  >
+                    Save Configuration
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </FeatureGate>
   );

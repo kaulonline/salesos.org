@@ -14,6 +14,7 @@ export enum AIBuilderEntityType {
   REPORT = 'report',
   SMART_BUILDER = 'smart-builder',
   TERRITORY = 'territory',
+  PLAYBOOK = 'playbook',
 }
 
 export interface GenerationContext {
@@ -360,4 +361,45 @@ export interface TerritoryConfig {
 export function isTerritoryConfig(config: Record<string, any>): config is TerritoryConfig {
   return 'name' in config && 'type' in config &&
     ['GEOGRAPHIC', 'NAMED_ACCOUNTS', 'INDUSTRY', 'ACCOUNT_SIZE', 'CUSTOM'].includes(config.type);
+}
+
+// Playbook Config
+export interface PlaybookStepConfig {
+  type: 'TASK' | 'EMAIL' | 'CALL' | 'MEETING' | 'WAIT';
+  title: string;
+  description?: string;
+  daysOffset: number;
+  isRequired: boolean;
+  config?: {
+    // TASK config
+    priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+    checklist?: string[];
+    // EMAIL config
+    templateSuggestion?: string;
+    keyPoints?: string[];
+    // CALL config
+    talkingPoints?: string[];
+    questions?: string[];
+    duration?: number;
+    // MEETING config
+    agenda?: string[];
+    prepRequired?: string;
+    attendees?: string;
+    // WAIT config
+    reason?: string;
+  };
+}
+
+export interface PlaybookConfig {
+  name: string;
+  description?: string;
+  trigger: 'MANUAL' | 'DEAL_CREATED' | 'DEAL_STAGE_CHANGE' | 'LEAD_QUALIFIED' | 'ACCOUNT_CREATED';
+  targetStage?: string;
+  targetDealType?: string;
+  isActive: boolean;
+  steps: PlaybookStepConfig[];
+}
+
+export function isPlaybookConfig(config: Record<string, any>): config is PlaybookConfig {
+  return 'name' in config && 'trigger' in config && 'steps' in config && Array.isArray(config.steps);
 }

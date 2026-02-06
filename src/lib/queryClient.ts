@@ -1,12 +1,13 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { logger } from './logger';
 
 // Error handler for queries and mutations
 function handleError(error: unknown, context?: string) {
   const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
   const message = err.response?.data?.message || err.message || 'An unexpected error occurred';
 
-  // Log error for debugging (will be replaced with Sentry in production)
-  console.error(`[${context || 'Query'}] Error:`, message, error);
+  // Log error for debugging
+  logger.error(`[${context || 'Query'}] Error:`, message, error);
 
   // Don't show toast for 401 errors - handled by axios interceptor
   if (err.response?.status === 401) {

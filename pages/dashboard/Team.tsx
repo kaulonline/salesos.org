@@ -19,6 +19,9 @@ import {
   Ban,
   CheckCircle,
   Key,
+  Download,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -54,6 +57,9 @@ export const Team: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'USER', message: '' });
+  const [isInviting, setIsInviting] = useState(false);
 
   const {
     users,
@@ -103,6 +109,47 @@ export const Team: React.FC = () => {
     }
   };
 
+  const handleInvite = async () => {
+    if (!inviteForm.email) return;
+    setIsInviting(true);
+    try {
+      // Simulate API call - in production, this would call an invite API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowInviteModal(false);
+      setInviteForm({ email: '', role: 'USER', message: '' });
+      refetch();
+    } catch (err) {
+      console.error('Invite failed:', err);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleExportTeam = () => {
+    const headers = ['Name', 'Email', 'Role', 'Status', 'Leads', 'Opportunities', 'Last Login'];
+    const rows = users.map(user => [
+      user.name || 'N/A',
+      user.email,
+      user.role,
+      user.status,
+      (user.stats?.leadsCount || 0).toString(),
+      (user.stats?.opportunitiesCount || 0).toString(),
+      user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `team_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -132,13 +179,23 @@ export const Team: React.FC = () => {
           <p className="text-[#666]">Manage your sales team and track performance</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={handleExportTeam}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-[#1A1A1A] rounded-xl font-medium hover:bg-gray-50 transition-colors"
+          >
+            <Download size={16} />
+            Export
+          </button>
           {isAdmin && (
             <>
               <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-[#1A1A1A] rounded-xl font-medium hover:bg-gray-50 transition-colors">
                 <Settings size={16} />
                 Roles & Permissions
               </button>
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg">
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors shadow-lg"
+              >
                 <UserPlus size={18} />
                 Invite Member
               </button>
@@ -446,6 +503,91 @@ export const Team: React.FC = () => {
             </button>
           </div>
         </Card>
+      )}
+
+      {/* Invite Member Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 pb-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <UserPlus size={18} className="text-[#1A1A1A]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Invite Team Member</h2>
+              </div>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  placeholder="colleague@company.com"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Role</label>
+                <select
+                  value={inviteForm.role}
+                  onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="USER">User</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="VIEWER">Viewer</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Personal Message (Optional)</label>
+                <textarea
+                  value={inviteForm.message}
+                  onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
+                  placeholder="Add a personal message to the invitation..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium hover:bg-[#F0EBD8] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleInvite}
+                  disabled={!inviteForm.email || isInviting}
+                  className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isInviting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail size={16} />
+                      Send Invite
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

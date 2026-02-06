@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight, AlertCircle, File, FilePlus2 } from 'lucide-react';
+import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight, AlertCircle, File, FilePlus2, X, Upload, Loader2 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useDeals } from '../../src/hooks';
 import { FeatureGate, Features } from '../../src/components/FeatureGate';
@@ -60,10 +60,32 @@ export const Documents: React.FC = () => {
   const { deals, pipelineStats, loading, error, fetchPipelineStats } = useDeals();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
+  const [showNewDocModal, setShowNewDocModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newDoc, setNewDoc] = useState({
+    name: '',
+    type: 'Proposal' as 'Proposal' | 'Quote' | 'Contract',
+    client: '',
+  });
 
   React.useEffect(() => {
     fetchPipelineStats();
   }, [fetchPipelineStats]);
+
+  const handleCreateDocument = async () => {
+    if (!newDoc.name.trim()) return;
+    setIsCreating(true);
+    try {
+      // Simulate API call - in production this would create a document
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowNewDocModal(false);
+      setNewDoc({ name: '', type: 'Proposal', client: '' });
+    } catch (err) {
+      console.error('Failed to create document:', err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // Transform deals into document-like items
   const documents = useMemo(() => {
@@ -243,7 +265,10 @@ export const Documents: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-[#EAD07D] text-[#1A1A1A] rounded-full text-sm font-bold shadow-md hover:bg-[#e5c973] transition-all">
+            <button
+              onClick={() => setShowNewDocModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#EAD07D] text-[#1A1A1A] rounded-full text-sm font-bold shadow-md hover:bg-[#e5c973] transition-all"
+            >
               <Plus size={16} /> New Doc
             </button>
           </div>
@@ -303,6 +328,96 @@ export const Documents: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* New Document Modal */}
+      {showNewDocModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 pb-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <FilePlus2 size={18} className="text-[#1A1A1A]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">New Document</h2>
+              </div>
+              <button
+                onClick={() => setShowNewDocModal(false)}
+                className="p-2 text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Document Name *</label>
+                <input
+                  type="text"
+                  value={newDoc.name}
+                  onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
+                  placeholder="Enter document name..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Document Type</label>
+                <select
+                  value={newDoc.type}
+                  onChange={(e) => setNewDoc({ ...newDoc, type: e.target.value as 'Proposal' | 'Quote' | 'Contract' })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="Proposal">Proposal</option>
+                  <option value="Quote">Quote</option>
+                  <option value="Contract">Contract</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Client / Company</label>
+                <input
+                  type="text"
+                  value={newDoc.client}
+                  onChange={(e) => setNewDoc({ ...newDoc, client: e.target.value })}
+                  placeholder="Enter client name..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                />
+              </div>
+
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-[#EAD07D] transition-colors cursor-pointer">
+                <Upload size={24} className="mx-auto text-[#999] mb-2" />
+                <p className="text-sm text-[#666]">Click to upload or drag and drop</p>
+                <p className="text-xs text-[#999] mt-1">PDF, DOCX, or image files</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowNewDocModal(false)}
+                  className="flex-1 py-3 bg-[#F8F8F6] text-[#666] rounded-xl font-medium hover:bg-[#F0EBD8] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateDocument}
+                  disabled={!newDoc.name.trim() || isCreating}
+                  className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      Create Document
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </FeatureGate>
   );

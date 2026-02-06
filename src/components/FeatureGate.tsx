@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Crown, Zap, AlertTriangle } from 'lucide-react';
 import { licensingApi } from '../api/licensing';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../lib/logger';
 
 // Feature keys - must match backend LicenseFeature.featureKey
 export const Features = {
@@ -84,7 +85,7 @@ export function FeatureProvider({ children }: { children: ReactNode }) {
       });
       setFeatureCache(cache);
     } catch (err) {
-      console.error('Failed to load features:', err);
+      logger.error('Failed to load features:', err);
     } finally {
       setIsLoading(false);
     }

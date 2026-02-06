@@ -22,8 +22,8 @@ import { format, subDays, startOfMonth } from 'date-fns';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { CountUp } from '../../components/ui/CountUp';
 import { BarChart } from '../../src/components/charts';
+import { useToast } from '../../src/components/ui/Toast';
 import {
   useCPQDashboard,
   useCPQTrends,
@@ -90,6 +90,7 @@ export default function CPQAnalytics() {
   const { funnel, loading: funnelLoading } = useConversionFunnel(filters);
   const { forecast, loading: forecastLoading } = useCPQForecast(3);
   const { exportData, isExporting } = useExportCPQAnalytics();
+  const { showToast } = useToast();
 
   const formatCurrency = (amount: number) => {
     const absAmount = Math.abs(amount);
@@ -108,8 +109,17 @@ export default function CPQAnalytics() {
   const handleExport = async (exportFormat: 'csv' | 'xlsx' | 'pdf') => {
     try {
       await exportData(exportFormat, filters);
+      showToast({
+        type: 'success',
+        title: 'Export Complete',
+        message: `Analytics exported as ${exportFormat.toUpperCase()} successfully`
+      });
     } catch (err) {
-      // Error handled by hook
+      showToast({
+        type: 'error',
+        title: 'Export Failed',
+        message: (err as Error).message || `Could not export analytics as ${exportFormat.toUpperCase()}`
+      });
     }
   };
 
@@ -471,7 +481,7 @@ export default function CPQAnalytics() {
               {forecast.map((period) => (
                 <div key={period.period} className="bg-[#F8F6EF] rounded-2xl p-5">
                   <p className="text-sm text-[#666] mb-1">{period.period}</p>
-                  <CountUp end={period.projectedRevenue || 0} prefix="$" className="text-2xl font-light text-[#1A1A1A] mb-3 block tabular-nums" />
+                  <span className="text-2xl font-light text-[#1A1A1A] mb-3 block tabular-nums">${(period.projectedRevenue || 0).toLocaleString()}</span>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="px-3 py-1 bg-[#EAD07D]/30 rounded-full text-xs font-semibold text-[#1A1A1A]">
                       {period.confidence || 0}% confidence

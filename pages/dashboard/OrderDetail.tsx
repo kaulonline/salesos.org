@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -817,7 +817,13 @@ export default function OrderDetail() {
                   </div>
                   <div>
                     <p className="text-xs text-[#999]">Account</p>
-                    <p className="text-sm font-medium text-[#1A1A1A]">{order.account?.name || '-'}</p>
+                    {order.accountId ? (
+                      <Link to={`/dashboard/companies/${order.accountId}`} className="text-sm font-medium text-[#1A1A1A] hover:text-[#EAD07D] transition-colors">
+                        {order.account?.name || '-'}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-medium text-[#1A1A1A]">{order.account?.name || '-'}</p>
+                    )}
                   </div>
                 </div>
 
@@ -828,9 +834,15 @@ export default function OrderDetail() {
                     </div>
                     <div>
                       <p className="text-xs text-[#999]">Contact</p>
-                      <p className="text-sm font-medium text-[#1A1A1A]">
-                        {order.contact.firstName} {order.contact.lastName}
-                      </p>
+                      {order.contactId ? (
+                        <Link to={`/dashboard/contacts/${order.contactId}`} className="text-sm font-medium text-[#1A1A1A] hover:text-[#EAD07D] transition-colors">
+                          {order.contact.firstName} {order.contact.lastName}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium text-[#1A1A1A]">
+                          {order.contact.firstName} {order.contact.lastName}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

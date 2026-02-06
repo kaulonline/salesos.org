@@ -3,6 +3,7 @@ import { Bell, Check, CheckCheck, Trash2, AlertCircle, Calendar, Users, Trending
 import { useNotifications } from '../hooks/useNotifications';
 import type { Notification, NotificationType } from '../api/notifications';
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from '../lib/logger';
 
 // Icon mapping for notification types
 const typeIcons: Record<NotificationType, React.ReactNode> = {
@@ -103,7 +104,7 @@ export const NotificationDropdown: React.FC = () => {
     try {
       await markAsRead(id);
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      logger.error('Failed to mark notification as read:', error);
     }
   };
 
@@ -111,7 +112,7 @@ export const NotificationDropdown: React.FC = () => {
     try {
       await markAllAsRead();
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      logger.error('Failed to mark all notifications as read:', error);
     }
   };
 
@@ -119,7 +120,7 @@ export const NotificationDropdown: React.FC = () => {
     try {
       await deleteNotification(id);
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      logger.error('Failed to delete notification:', error);
     }
   };
 

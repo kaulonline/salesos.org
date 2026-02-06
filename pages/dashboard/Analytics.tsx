@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { TrendingUp, Users, Target, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { CountUp } from '../../components/ui/CountUp';
 import { reportsApi, type RevenueReport, type ForecastReport, DateRange } from '../../src/api/reports';
 import { useDashboard } from '../../src/hooks';
 import { FeatureGate, Features, useCanAccess } from '../../src/components/FeatureGate';
@@ -112,7 +112,7 @@ export const Analytics: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
-          <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem] bg-gray-800" />
+          <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem] bg-[#1A1A1A]" />
           <Skeleton className="md:col-span-8 h-[400px] rounded-[2rem]" />
           <Skeleton className="md:col-span-4 h-[400px] rounded-[2rem]" />
         </div>
@@ -173,10 +173,10 @@ export const Analytics: React.FC = () => {
             </Badge>
           </div>
           <div>
-            <CountUp end={revenueReport?.closedWon || 0} prefix="$" className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums" />
+            <span className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums">{formatCurrency(revenueReport?.closedWon || 0)}</span>
             <div className="text-sm text-[#666]">Total Revenue (YTD)</div>
           </div>
-          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-[#F0EBD8] rounded-full overflow-hidden">
             <div
               className="h-full bg-[#1A1A1A] transition-all duration-500"
               style={{ width: `${Math.min(quotaAttainment, 100)}%` }}
@@ -192,7 +192,7 @@ export const Analytics: React.FC = () => {
             </div>
           </div>
           <div>
-            <CountUp end={totalLeads} className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums" />
+            <span className="text-5xl font-light text-[#1A1A1A] mb-2 block tabular-nums">{totalLeads.toLocaleString()}</span>
             <div className="text-sm text-[#666]">Total Leads</div>
           </div>
           <div className="flex gap-1 items-end h-8">
@@ -222,7 +222,7 @@ export const Analytics: React.FC = () => {
             )}
           </div>
           <div className="relative z-10">
-            <CountUp end={quotaAttainment} suffix="%" className="text-5xl font-light text-white mb-2 block tabular-nums" />
+            <span className="text-5xl font-light text-white mb-2 block tabular-nums">{quotaAttainment}%</span>
             <div className="text-sm text-white/60">Quota Attainment</div>
           </div>
         </Card>
@@ -304,9 +304,12 @@ export const Analytics: React.FC = () => {
               <p>No performer data available</p>
             </div>
           )}
-          <button className="w-full mt-8 py-3 rounded-xl border border-gray-200 text-sm font-bold text-[#1A1A1A] hover:bg-[#F8F8F6] transition-colors">
+          <Link
+            to="/dashboard/reports"
+            className="block w-full mt-8 py-3 rounded-xl border border-black/10 text-sm font-bold text-[#1A1A1A] hover:bg-[#F8F8F6] transition-colors text-center"
+          >
             View Full Leaderboard
-          </button>
+          </Link>
         </Card>
 
       </div>

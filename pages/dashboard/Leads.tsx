@@ -209,6 +209,9 @@ export const Leads: React.FC = () => {
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [scoringLead, setScoringLead] = useState<string | null>(null);
   const [convertingLead, setConvertingLead] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<string>('all');
 
   // Selection handlers
   const toggleSelectLead = (leadId: string) => {
@@ -253,12 +256,30 @@ export const Leads: React.FC = () => {
     fetchStats();
   }, [fetchStats]);
 
-  const filteredLeads = leads.filter(lead =>
-    `${lead.firstName} ${lead.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (lead.company?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (lead.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (lead.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-  );
+  const filteredLeads = leads.filter(lead => {
+    // Search filter
+    const matchesSearch = `${lead.firstName} ${lead.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lead.company?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (lead.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (lead.email?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+
+    // Status filter
+    const statusMap: Record<string, LeadStatus[]> = {
+      'All': [],
+      'New': ['NEW'],
+      'Contacted': ['CONTACTED'],
+      'Qualified': ['QUALIFIED'],
+      'Hot': [], // Hot is rating, not status
+    };
+    const matchesStatus = statusFilter === 'All' ||
+      (statusFilter === 'Hot' && lead.rating === 'HOT') ||
+      statusMap[statusFilter]?.includes(lead.status);
+
+    // Rating filter from filter menu
+    const matchesRating = ratingFilter === 'all' || lead.rating === ratingFilter;
+
+    return matchesSearch && matchesStatus && matchesRating;
+  });
 
   const handleCreateLead = async (data: CreateLeadDto) => {
     await create(data);
@@ -382,7 +403,15 @@ export const Leads: React.FC = () => {
          <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
             <div className="flex gap-2 overflow-x-auto max-w-full pb-2 md:pb-0 no-scrollbar">
                {['All', 'New', 'Contacted', 'Qualified', 'Hot'].map(f => (
-                  <button key={f} className="px-4 py-2 bg-[#F8F8F6] rounded-full text-sm font-medium text-[#666] whitespace-nowrap hover:bg-gray-200 transition-colors flex items-center gap-1">
+                  <button
+                    key={f}
+                    onClick={() => setStatusFilter(f)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                      statusFilter === f
+                        ? 'bg-[#1A1A1A] text-white'
+                        : 'bg-[#F8F8F6] text-[#666] hover:bg-gray-200'
+                    }`}
+                  >
                      {f}
                   </button>
                ))}
@@ -411,9 +440,41 @@ export const Leads: React.FC = () => {
                >
                   <Plus size={18} />
                </button>
-               <button className="w-10 h-10 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200 transition-colors shrink-0">
-                  <Filter size={16} />
-               </button>
+               <div className="relative">
+                  <button
+                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${
+                      ratingFilter !== 'all' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 'bg-[#F8F8F6] text-[#666] hover:bg-gray-200'
+                    }`}
+                  >
+                    <Filter size={16} />
+                  </button>
+                  {showFilterMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
+                      <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="px-3 py-2 text-xs font-bold text-[#999] uppercase">Filter by Rating</div>
+                        {[
+                          { value: 'all', label: 'All Ratings' },
+                          { value: 'HOT', label: 'Hot', color: 'text-red-500' },
+                          { value: 'WARM', label: 'Warm', color: 'text-orange-500' },
+                          { value: 'COLD', label: 'Cold', color: 'text-blue-500' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => { setRatingFilter(opt.value); setShowFilterMenu(false); }}
+                            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
+                              ratingFilter === opt.value ? 'bg-[#EAD07D]/20 font-medium' : 'hover:bg-[#F8F8F6]'
+                            }`}
+                          >
+                            <span className={opt.color || 'text-[#666]'}>●</span>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+               </div>
                <button
                  onClick={() => setShowImportModal(true)}
                  className="px-4 py-2 rounded-full border border-gray-200 flex items-center gap-2 text-sm font-medium hover:bg-gray-50 shrink-0"

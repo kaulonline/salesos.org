@@ -1,6 +1,7 @@
 import { queryClient } from './queryClient';
 import { queryKeys } from './queryKeys';
 import { captureError, addBreadcrumb } from './errorTracking';
+import { logger } from './logger';
 
 type MessageHandler = (data: unknown) => void;
 type ConnectionHandler = () => void;
@@ -47,7 +48,7 @@ class WebSocketManager {
 
   private log(message: string, ...args: unknown[]) {
     if (this.options.debug) {
-      console.log(`[WebSocket] ${message}`, ...args);
+      logger.ws(message, ...args);
     }
   }
 
@@ -145,6 +146,7 @@ class WebSocketManager {
 
     // Map entity names to query key factories
     const entityKeyMap: Record<string, () => readonly string[]> = {
+      // Core entities
       lead: () => queryKeys.leads.all,
       contact: () => queryKeys.contacts.all,
       company: () => queryKeys.companies.all,
@@ -154,6 +156,28 @@ class WebSocketManager {
       task: () => queryKeys.tasks.all,
       meeting: () => queryKeys.meetings.all,
       activity: () => queryKeys.activities.all,
+      // CPQ entities
+      quote: () => queryKeys.quotes.all,
+      order: () => queryKeys.orders.all,
+      product: () => queryKeys.products.all,
+      priceBook: () => queryKeys.priceBooks.all,
+      pricebook: () => queryKeys.priceBooks.all,
+      discountRule: () => queryKeys.discountRules.all,
+      taxRate: () => queryKeys.taxRates.all,
+      // Sales entities
+      pipeline: () => queryKeys.pipelines.all,
+      territory: () => queryKeys.territories.all,
+      campaign: () => queryKeys.campaigns.all,
+      playbook: () => queryKeys.playbooks.all,
+      // Configuration entities
+      emailTemplate: () => queryKeys.emailTemplates.all,
+      webhook: () => queryKeys.webhooks.all,
+      approvalWorkflow: () => queryKeys.approvalWorkflows.all,
+      approvalRequest: () => queryKeys.approvalRequests.all,
+      customField: () => queryKeys.customFields.all,
+      webForm: () => queryKeys.webForms.all,
+      assignmentRule: () => queryKeys.assignmentRules.all,
+      esignature: () => queryKeys.esignature.all,
     };
 
     const getQueryKey = entityKeyMap[entity!];

@@ -15,6 +15,7 @@ import type {
   GatewayConfig,
   UpdateGatewayConfigDto,
 } from '../api/payments';
+import { logger } from '../lib/logger';
 
 // ============= Billing Customer Hook =============
 
@@ -30,7 +31,7 @@ export function useBillingCustomer() {
       const data = await paymentsApi.getBillingCustomer();
       setCustomer(data);
     } catch (err) {
-      console.error('Failed to fetch billing customer:', err);
+      logger.error('Failed to fetch billing customer:', err);
       setError('Failed to load billing information');
     } finally {
       setLoading(false);
@@ -47,7 +48,7 @@ export function useBillingCustomer() {
       setCustomer(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update billing customer:', err);
+      logger.error('Failed to update billing customer:', err);
       throw err;
     }
   };
@@ -58,7 +59,7 @@ export function useBillingCustomer() {
       window.open(session.url, '_blank');
       return session;
     } catch (err) {
-      console.error('Failed to create customer portal session:', err);
+      logger.error('Failed to create customer portal session:', err);
       throw err;
     }
   };
@@ -98,7 +99,7 @@ export function useSubscriptions(initialParams?: {
       setSubscriptions(response.data);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch subscriptions:', err);
+      logger.error('Failed to fetch subscriptions:', err);
       setError('Failed to load subscriptions');
       setSubscriptions([]);
     } finally {
@@ -116,7 +117,7 @@ export function useSubscriptions(initialParams?: {
       setSubscriptions(prev => prev.map(s => s.id === id ? updated : s));
       return updated;
     } catch (err) {
-      console.error('Failed to cancel subscription:', err);
+      logger.error('Failed to cancel subscription:', err);
       throw err;
     }
   };
@@ -127,7 +128,7 @@ export function useSubscriptions(initialParams?: {
       setSubscriptions(prev => prev.map(s => s.id === id ? updated : s));
       return updated;
     } catch (err) {
-      console.error('Failed to resume subscription:', err);
+      logger.error('Failed to resume subscription:', err);
       throw err;
     }
   };
@@ -138,7 +139,7 @@ export function useSubscriptions(initialParams?: {
       setSubscriptions(prev => prev.map(s => s.id === id ? updated : s));
       return updated;
     } catch (err) {
-      console.error('Failed to change subscription plan:', err);
+      logger.error('Failed to change subscription plan:', err);
       throw err;
     }
   };
@@ -182,7 +183,7 @@ export function useInvoices(initialParams?: {
       setInvoices(response.data);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch invoices:', err);
+      logger.error('Failed to fetch invoices:', err);
       setError('Failed to load invoices');
       setInvoices([]);
     } finally {
@@ -219,7 +220,7 @@ export function usePaymentMethods() {
       const data = await paymentsApi.getPaymentMethods();
       setPaymentMethods(data);
     } catch (err) {
-      console.error('Failed to fetch payment methods:', err);
+      logger.error('Failed to fetch payment methods:', err);
       setError('Failed to load payment methods');
       setPaymentMethods([]);
     } finally {
@@ -237,7 +238,7 @@ export function usePaymentMethods() {
       setPaymentMethods(prev => [...prev, newMethod]);
       return newMethod;
     } catch (err) {
-      console.error('Failed to add payment method:', err);
+      logger.error('Failed to add payment method:', err);
       throw err;
     }
   };
@@ -247,7 +248,7 @@ export function usePaymentMethods() {
       await paymentsApi.removePaymentMethod(id);
       setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
     } catch (err) {
-      console.error('Failed to remove payment method:', err);
+      logger.error('Failed to remove payment method:', err);
       throw err;
     }
   };
@@ -260,7 +261,7 @@ export function usePaymentMethods() {
         isDefault: pm.id === id,
       })));
     } catch (err) {
-      console.error('Failed to set default payment method:', err);
+      logger.error('Failed to set default payment method:', err);
       throw err;
     }
   };
@@ -301,7 +302,7 @@ export function useCheckout() {
       });
       return session;
     } catch (err: any) {
-      console.error('Failed to create checkout session:', err);
+      logger.error('Failed to create checkout session:', err);
       setError(err.response?.data?.message || 'Failed to create checkout session');
       throw err;
     } finally {
@@ -314,7 +315,7 @@ export function useCheckout() {
       const result = await paymentsApi.validateCoupon({ code, licenseTypeId, amount });
       return result;
     } catch (err) {
-      console.error('Failed to validate coupon:', err);
+      logger.error('Failed to validate coupon:', err);
       return { valid: false, message: 'Failed to validate coupon' };
     }
   };
@@ -326,7 +327,7 @@ export function useCheckout() {
       const session = await paymentsApi.createCustomerPortalSession();
       return session;
     } catch (err: any) {
-      console.error('Failed to create portal session:', err);
+      logger.error('Failed to create portal session:', err);
       setError(err.response?.data?.message || 'Failed to open billing portal');
       throw err;
     } finally {
@@ -357,7 +358,7 @@ export function usePaymentsDashboard() {
       const data = await adminPaymentsApi.getDashboard();
       setDashboard(data);
     } catch (err) {
-      console.error('Failed to fetch payments dashboard:', err);
+      logger.error('Failed to fetch payments dashboard:', err);
       setError('Failed to load payment analytics');
     } finally {
       setLoading(false);
@@ -405,7 +406,7 @@ export function useTransactions(initialParams?: {
       setTransactions(response.data);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch transactions:', err);
+      logger.error('Failed to fetch transactions:', err);
       setError('Failed to load transactions');
       setTransactions([]);
     } finally {
@@ -423,7 +424,7 @@ export function useTransactions(initialParams?: {
       setTransactions(prev => prev.map(t => t.id === id ? updated : t));
       return updated;
     } catch (err) {
-      console.error('Failed to refund payment:', err);
+      logger.error('Failed to refund payment:', err);
       throw err;
     }
   };
@@ -465,7 +466,7 @@ export function useCoupons(initialParams?: {
       setCoupons(response.data);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch coupons:', err);
+      logger.error('Failed to fetch coupons:', err);
       setError('Failed to load coupons');
       setCoupons([]);
     } finally {
@@ -483,7 +484,7 @@ export function useCoupons(initialParams?: {
       setCoupons(prev => [newCoupon, ...prev]);
       return newCoupon;
     } catch (err) {
-      console.error('Failed to create coupon:', err);
+      logger.error('Failed to create coupon:', err);
       throw err;
     }
   };
@@ -494,7 +495,7 @@ export function useCoupons(initialParams?: {
       setCoupons(prev => prev.map(c => c.id === id ? updated : c));
       return updated;
     } catch (err) {
-      console.error('Failed to update coupon:', err);
+      logger.error('Failed to update coupon:', err);
       throw err;
     }
   };
@@ -504,7 +505,7 @@ export function useCoupons(initialParams?: {
       await adminPaymentsApi.deleteCoupon(id);
       setCoupons(prev => prev.filter(c => c.id !== id));
     } catch (err) {
-      console.error('Failed to delete coupon:', err);
+      logger.error('Failed to delete coupon:', err);
       throw err;
     }
   };
@@ -538,7 +539,7 @@ export function useGatewayConfigs() {
       const data = await adminPaymentsApi.getGatewayConfigs();
       setConfigs(data);
     } catch (err) {
-      console.error('Failed to fetch gateway configs:', err);
+      logger.error('Failed to fetch gateway configs:', err);
       setError('Failed to load gateway configurations');
       setConfigs([]);
     } finally {
@@ -556,7 +557,7 @@ export function useGatewayConfigs() {
       setConfigs(prev => prev.map(c => c.provider === provider ? updated : c));
       return updated;
     } catch (err) {
-      console.error('Failed to update gateway config:', err);
+      logger.error('Failed to update gateway config:', err);
       throw err;
     }
   };
@@ -569,7 +570,7 @@ export function useGatewayConfigs() {
       await fetchConfigs();
       return result;
     } catch (err) {
-      console.error('Failed to test connection:', err);
+      logger.error('Failed to test connection:', err);
       throw err;
     } finally {
       setTesting(null);

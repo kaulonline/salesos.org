@@ -11,6 +11,7 @@ import { FeatureProvider } from './src/components/FeatureGate';
 import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
 import { NoiseOverlay } from './components/ui/NoiseOverlay';
+import { ToastProvider } from './src/components/ui/Toast';
 import DesignSystem from './src/pages/DesignSystem';
 
 // Initialize error tracking
@@ -50,6 +51,7 @@ const Deals = lazy(() => import('./pages/dashboard/Deals').then(m => ({ default:
 const DealDetail = lazy(() => import('./pages/dashboard/DealDetail').then(m => ({ default: m.DealDetail })));
 const LeadDetail = lazy(() => import('./pages/dashboard/LeadDetail').then(m => ({ default: m.LeadDetail })));
 const ContactDetail = lazy(() => import('./pages/dashboard/ContactDetail').then(m => ({ default: m.ContactDetail })));
+const AccountDetail = lazy(() => import('./pages/dashboard/AccountDetail').then(m => ({ default: m.AccountDetail })));
 const Revenue = lazy(() => import('./pages/dashboard/Revenue').then(m => ({ default: m.Revenue })));
 const Calendar = lazy(() => import('./pages/dashboard/Calendar').then(m => ({ default: m.Calendar })));
 const Analytics = lazy(() => import('./pages/dashboard/Analytics').then(m => ({ default: m.Analytics })));
@@ -330,6 +332,13 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <Companies />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="companies/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <AccountDetail />
                 </Suspense>
               </PageErrorBoundary>
             } />
@@ -704,7 +713,9 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <FeatureProvider>
-            <AppContent />
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
           </FeatureProvider>
         </AuthProvider>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}

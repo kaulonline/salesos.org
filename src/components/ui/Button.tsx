@@ -6,14 +6,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     variant?: "primary" | "secondary" | "outline" | "ghost" | "link" | "accent";
     size?: "default" | "sm" | "lg" | "icon";
     isLoading?: boolean;
+    /** Accessible label for icon-only buttons */
+    "aria-label"?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant = "primary", size = "default", isLoading, children, disabled, ...props }, ref) => {
+    ({ className, variant = "primary", size = "default", isLoading, children, disabled, "aria-label": ariaLabel, ...props }, ref) => {
         return (
             <button
                 ref={ref}
                 disabled={isLoading || disabled}
+                aria-busy={isLoading}
+                aria-disabled={isLoading || disabled}
+                aria-label={ariaLabel}
                 className={cn(
                     "inline-flex items-center justify-center rounded-full font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
                     {

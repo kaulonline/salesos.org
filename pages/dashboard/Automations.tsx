@@ -32,6 +32,7 @@ import {
   Building2,
   ListTodo,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -393,9 +394,12 @@ export const Automations: React.FC = () => {
             this feature.
           </p>
           {user?.role === 'ADMIN' && (
-            <button className="px-6 py-3 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-black transition-colors">
+            <Link
+              to="/dashboard/admin"
+              className="px-6 py-3 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-black transition-colors"
+            >
               Enable in Admin Settings
-            </button>
+            </Link>
           )}
         </div>
       </div>

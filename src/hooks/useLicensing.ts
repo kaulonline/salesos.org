@@ -10,6 +10,7 @@ import type {
   LicenseStatus,
   PreGeneratedKeyStatus,
 } from '../api/licensing';
+import { logger } from '../lib/logger';
 
 // Licensing Dashboard Hook
 export function useLicensingDashboard() {
@@ -24,7 +25,7 @@ export function useLicensingDashboard() {
       const data = await licensingApi.getDashboard();
       setDashboard(data);
     } catch (err) {
-      console.error('Failed to fetch licensing dashboard:', err);
+      logger.error('Failed to fetch licensing dashboard:', err);
       setError('Failed to load licensing dashboard');
     } finally {
       setLoading(false);
@@ -51,7 +52,7 @@ export function useLicenseTypes() {
       const data = await licensingApi.getLicenseTypes();
       setTypes(data);
     } catch (err) {
-      console.error('Failed to fetch license types:', err);
+      logger.error('Failed to fetch license types:', err);
       setError('Failed to load license types');
     } finally {
       setLoading(false);
@@ -68,7 +69,7 @@ export function useLicenseTypes() {
       setTypes(prev => [...prev, created]);
       return created;
     } catch (err) {
-      console.error('Failed to create license type:', err);
+      logger.error('Failed to create license type:', err);
       throw err;
     }
   };
@@ -79,7 +80,7 @@ export function useLicenseTypes() {
       setTypes(prev => prev.map(t => t.id === id ? updated : t));
       return updated;
     } catch (err) {
-      console.error('Failed to update license type:', err);
+      logger.error('Failed to update license type:', err);
       throw err;
     }
   };
@@ -89,7 +90,7 @@ export function useLicenseTypes() {
       await licensingApi.deleteLicenseType(id);
       setTypes(prev => prev.filter(t => t.id !== id));
     } catch (err) {
-      console.error('Failed to delete license type:', err);
+      logger.error('Failed to delete license type:', err);
       throw err;
     }
   };
@@ -110,7 +111,7 @@ export function useLicenseFeatures(category?: string) {
       const data = await licensingApi.getLicenseFeatures(category);
       setFeatures(data);
     } catch (err) {
-      console.error('Failed to fetch license features:', err);
+      logger.error('Failed to fetch license features:', err);
       setError('Failed to load license features');
     } finally {
       setLoading(false);
@@ -127,7 +128,7 @@ export function useLicenseFeatures(category?: string) {
       setFeatures(prev => [...prev, created]);
       return created;
     } catch (err) {
-      console.error('Failed to create license feature:', err);
+      logger.error('Failed to create license feature:', err);
       throw err;
     }
   };
@@ -138,7 +139,7 @@ export function useLicenseFeatures(category?: string) {
       setFeatures(prev => prev.map(f => f.id === id ? updated : f));
       return updated;
     } catch (err) {
-      console.error('Failed to update license feature:', err);
+      logger.error('Failed to update license feature:', err);
       throw err;
     }
   };
@@ -148,7 +149,7 @@ export function useLicenseFeatures(category?: string) {
       await licensingApi.deleteLicenseFeature(id);
       setFeatures(prev => prev.filter(f => f.id !== id));
     } catch (err) {
-      console.error('Failed to delete license feature:', err);
+      logger.error('Failed to delete license feature:', err);
       throw err;
     }
   };
@@ -184,7 +185,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(response.data || response.items || []);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch user licenses:', err);
+      logger.error('Failed to fetch user licenses:', err);
       setError('Failed to load user licenses');
     } finally {
       setLoading(false);
@@ -209,7 +210,7 @@ export function useUserLicenses(initialParams?: {
       setTotal(prev => prev + 1);
       return created;
     } catch (err) {
-      console.error('Failed to assign license:', err);
+      logger.error('Failed to assign license:', err);
       throw err;
     }
   };
@@ -220,7 +221,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to update license:', err);
+      logger.error('Failed to update license:', err);
       throw err;
     }
   };
@@ -231,7 +232,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to renew license:', err);
+      logger.error('Failed to renew license:', err);
       throw err;
     }
   };
@@ -242,7 +243,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to revoke license:', err);
+      logger.error('Failed to revoke license:', err);
       throw err;
     }
   };
@@ -253,7 +254,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to suspend license:', err);
+      logger.error('Failed to suspend license:', err);
       throw err;
     }
   };
@@ -264,7 +265,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to resume license:', err);
+      logger.error('Failed to resume license:', err);
       throw err;
     }
   };
@@ -275,7 +276,7 @@ export function useUserLicenses(initialParams?: {
       setLicenses(prev => prev.map(l => l.id === id ? updated : l));
       return updated;
     } catch (err) {
-      console.error('Failed to change license type:', err);
+      logger.error('Failed to change license type:', err);
       throw err;
     }
   };
@@ -324,7 +325,7 @@ export function usePreGeneratedKeys(initialParams?: {
       setKeys(response.data || response.items || []);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch pre-generated keys:', err);
+      logger.error('Failed to fetch pre-generated keys:', err);
       setError('Failed to load license keys');
     } finally {
       setLoading(false);
@@ -349,7 +350,7 @@ export function usePreGeneratedKeys(initialParams?: {
       setTotal(prev => prev + newKeys.length);
       return newKeys;
     } catch (err) {
-      console.error('Failed to generate keys:', err);
+      logger.error('Failed to generate keys:', err);
       throw err;
     }
   };
@@ -365,7 +366,7 @@ export function usePreGeneratedKeys(initialParams?: {
       ));
       return license;
     } catch (err) {
-      console.error('Failed to assign key to user:', err);
+      logger.error('Failed to assign key to user:', err);
       throw err;
     }
   };
@@ -375,7 +376,7 @@ export function usePreGeneratedKeys(initialParams?: {
       await licensingApi.revokeKey(id);
       setKeys(prev => prev.map(k => k.id === id ? { ...k, status: 'REVOKED' as PreGeneratedKeyStatus } : k));
     } catch (err) {
-      console.error('Failed to revoke key:', err);
+      logger.error('Failed to revoke key:', err);
       throw err;
     }
   };
@@ -420,7 +421,7 @@ export function useLicenseAuditLogs(initialParams?: {
       setLogs(response.data || response.items || []);
       setTotal(response.total);
     } catch (err) {
-      console.error('Failed to fetch license audit logs:', err);
+      logger.error('Failed to fetch license audit logs:', err);
       setError('Failed to load audit logs');
     } finally {
       setLoading(false);
@@ -452,7 +453,7 @@ export function useMyLicense() {
       setLicense(licenseData);
       setFeatures(featuresData);
     } catch (err) {
-      console.error('Failed to fetch my license:', err);
+      logger.error('Failed to fetch my license:', err);
       setError('Failed to load license information');
     } finally {
       setLoading(false);
@@ -472,7 +473,7 @@ export function useMyLicense() {
       setFeatures(featuresData);
       return newLicense;
     } catch (err) {
-      console.error('Failed to apply license key:', err);
+      logger.error('Failed to apply license key:', err);
       throw err;
     }
   };
@@ -481,7 +482,7 @@ export function useMyLicense() {
     try {
       return await licensingApi.checkAccess(featureKey);
     } catch (err) {
-      console.error('Failed to check feature access:', err);
+      logger.error('Failed to check feature access:', err);
       return { hasAccess: false };
     }
   };

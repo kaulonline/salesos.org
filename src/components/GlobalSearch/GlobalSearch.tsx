@@ -23,6 +23,7 @@ import { productsApi, Product } from '../../api/products';
 import { campaignsApi } from '../../api/campaigns';
 import { tasksApi } from '../../api/tasks';
 import type { Campaign, Task } from '../../types';
+import { logger } from '../../lib/logger';
 
 interface SearchResult {
   id: string;
@@ -290,7 +291,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
       setResults(allResults.slice(0, 15));
       setSelectedIndex(0);
     } catch (error) {
-      console.error('Search failed:', error);
+      logger.error('Search failed:', error);
       setResults([]);
     } finally {
       setLoading(false);

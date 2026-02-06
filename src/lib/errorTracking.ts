@@ -8,12 +8,16 @@ interface ErrorContext {
   extra?: Record<string, unknown>;
 }
 
+const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
 // Initialize Sentry for production error tracking
 export function initErrorTracking() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
 
   if (!dsn) {
-    console.info('[ErrorTracking] Sentry DSN not configured, error tracking disabled');
+    if (isDev) {
+      console.info('[ErrorTracking] Sentry DSN not configured, error tracking disabled');
+    }
     return;
   }
 
@@ -72,7 +76,9 @@ export function initErrorTracking() {
     ],
   });
 
-  console.info('[ErrorTracking] Sentry initialized');
+  if (isDev) {
+    console.info('[ErrorTracking] Sentry initialized');
+  }
 }
 
 // Capture an error with optional context

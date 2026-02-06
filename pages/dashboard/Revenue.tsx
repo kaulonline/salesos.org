@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ArrowUpRight, CheckCircle2, Clock, FileCheck, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { CountUp } from '../../components/ui/CountUp';
 import { useDeals } from '../../src/hooks';
 import type { Opportunity } from '../../src/types';
 import { AreaChart } from '../../src/components/charts';
@@ -46,9 +46,12 @@ const getStatusInfo = (deal: Opportunity) => {
 };
 
 export const Revenue: React.FC = () => {
+  const navigate = useNavigate();
   const { deals, pipelineStats, forecast, loading, error, fetchPipelineStats, fetchForecast } = useDeals();
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchPipelineStats();
@@ -79,6 +82,17 @@ export const Revenue: React.FC = () => {
   const filteredDeals = useMemo(() => {
     let filtered = deals;
 
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(d => {
+        if (statusFilter === 'won') return d.isWon;
+        if (statusFilter === 'lost') return d.isClosed && !d.isWon;
+        if (statusFilter === 'proposal') return d.stage === 'PROPOSAL_PRICE_QUOTE' || d.stage === 'NEGOTIATION_REVIEW';
+        if (statusFilter === 'active') return !d.isClosed;
+        return true;
+      });
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(d =>
@@ -93,28 +107,19 @@ export const Revenue: React.FC = () => {
       const dateB = new Date(b.closeDate || b.updatedAt);
       return dateB.getTime() - dateA.getTime();
     }).slice(0, 10);
-  }, [deals, searchQuery]);
+  }, [deals, searchQuery, statusFilter]);
 
-  // Forecast chart data
+  // Forecast chart data - only use real data, no fake data generation
   const forecastData = useMemo(() => {
-    if (!forecast?.byMonth) {
-      // Generate placeholder data based on pipeline stats
-      const baseValue = pipelineStats?.avgDealSize || 10000;
-      return [
-        { month: 'Now', value: metrics.totalCollected },
-        { month: '+1', value: baseValue * 0.8 },
-        { month: '+2', value: baseValue * 1.0 },
-        { month: '+3', value: baseValue * 1.2 },
-        { month: '+4', value: baseValue * 0.9 },
-        { month: '+5', value: baseValue * 1.4 },
-      ];
+    if (!forecast?.byMonth || forecast.byMonth.length === 0) {
+      return [];
     }
 
     return forecast.byMonth.slice(0, 6).map(m => ({
       month: new Date(m.month + '-01').toLocaleDateString('en-US', { month: 'short' }),
       value: m.forecast,
     }));
-  }, [forecast, pipelineStats, metrics.totalCollected]);
+  }, [forecast]);
 
   // Normalize data for chart
   const maxValue = Math.max(...forecastData.map(d => d.value), 1);
@@ -169,7 +174,7 @@ export const Revenue: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Skeleton className="h-[160px] rounded-[2rem]" />
             <Skeleton className="h-[160px] rounded-[2rem]" />
-            <Skeleton className="h-[160px] rounded-[2rem] bg-gray-800" />
+            <Skeleton className="h-[160px] rounded-[2rem] bg-[#1A1A1A]" />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -177,7 +182,7 @@ export const Revenue: React.FC = () => {
             <Skeleton className="h-[500px] rounded-[2rem]" />
           </div>
           <div className="lg:col-span-4 space-y-6">
-            <Skeleton className="h-[340px] rounded-[2rem] bg-gray-800" />
+            <Skeleton className="h-[340px] rounded-[2rem] bg-[#1A1A1A]" />
             <Skeleton className="h-[200px] rounded-[2rem] bg-[#EAD07D]" />
           </div>
         </div>
@@ -222,7 +227,7 @@ export const Revenue: React.FC = () => {
               )}
             </div>
             <div>
-              <CountUp end={metrics.totalCollected} prefix="$" className="text-3xl font-medium text-[#1A1A1A] block tabular-nums" />
+              <span className="text-3xl font-medium text-[#1A1A1A] block tabular-nums">{formatCurrency(metrics.totalCollected)}</span>
               <div className="text-sm text-[#666] mt-1">Closed Won Revenue</div>
             </div>
           </Card>
@@ -234,7 +239,7 @@ export const Revenue: React.FC = () => {
               </div>
             </div>
             <div>
-              <CountUp end={metrics.outstandingAmount} prefix="$" className="text-3xl font-medium text-[#1A1A1A] block tabular-nums" />
+              <span className="text-3xl font-medium text-[#1A1A1A] block tabular-nums">{formatCurrency(metrics.outstandingAmount)}</span>
               <div className="text-sm text-[#666] mt-1">Open Pipeline</div>
             </div>
           </Card>
@@ -247,7 +252,7 @@ export const Revenue: React.FC = () => {
               </div>
             </div>
             <div className="relative z-10">
-              <CountUp end={metrics.projectedMRR} prefix="$" className="text-3xl font-medium text-white block tabular-nums" />
+              <span className="text-3xl font-medium text-white block tabular-nums">{formatCurrency(metrics.projectedMRR)}</span>
               <div className="text-sm text-white/60 mt-1">Weighted Pipeline</div>
             </div>
           </Card>
@@ -261,7 +266,7 @@ export const Revenue: React.FC = () => {
             <h2 className="text-xl font-bold">Opportunities</h2>
             <div className="flex gap-2 w-full md:w-auto">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" size={14} />
                 <input
                   type="text"
                   placeholder="Search opportunities or accounts..."
@@ -270,16 +275,48 @@ export const Revenue: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <button className="w-9 h-9 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-gray-200">
-                <Filter size={14} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilterMenu(!showFilterMenu)}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                    statusFilter !== 'all' ? 'bg-[#EAD07D] text-[#1A1A1A]' : 'bg-[#F8F8F6] text-[#666] hover:bg-[#F0EBD8]'
+                  }`}
+                >
+                  <Filter size={14} />
+                </button>
+                {showFilterMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
+                    <div className="absolute right-0 top-12 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-3 py-2 text-xs font-bold text-[#999] uppercase">Filter by Status</div>
+                      {[
+                        { value: 'all', label: 'All Deals' },
+                        { value: 'won', label: 'Won' },
+                        { value: 'lost', label: 'Lost' },
+                        { value: 'proposal', label: 'Proposal' },
+                        { value: 'active', label: 'Active' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setStatusFilter(opt.value); setShowFilterMenu(false); }}
+                          className={`w-full text-left px-3 py-2 text-sm ${
+                            statusFilter === opt.value ? 'bg-[#EAD07D]/20 font-medium' : 'hover:bg-[#F8F8F6]'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-left border-b border-gray-100">
+                <tr className="text-left border-b border-black/5">
                   <th className="pb-4 pl-4 text-xs font-bold text-[#999] uppercase tracking-wider">Opportunity Name</th>
                   <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Account</th>
                   <th className="pb-4 text-xs font-bold text-[#999] uppercase tracking-wider">Close Date</th>
@@ -292,12 +329,12 @@ export const Revenue: React.FC = () => {
                   filteredDeals.map((deal) => {
                     const statusInfo = getStatusInfo(deal);
                     return (
-                      <tr key={deal.id} className="group hover:bg-[#F8F8F6] transition-colors border-b border-gray-50 last:border-0">
+                      <tr key={deal.id} className="group hover:bg-[#F8F8F6] transition-colors border-b border-black/5 last:border-0">
                         <td className="py-4 pl-4 font-medium text-[#1A1A1A] rounded-l-xl max-w-[200px] truncate">
                           {deal.name}
                         </td>
                         <td className="py-4 text-[#666] flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-[#1A1A1A]">
+                          <div className="w-6 h-6 rounded-full bg-[#F0EBD8] flex items-center justify-center text-[10px] font-bold text-[#1A1A1A]">
                             {(deal.account?.name || 'U')[0]}
                           </div>
                           <span className="truncate max-w-[120px]">{deal.account?.name || 'Unknown'}</span>
@@ -334,28 +371,40 @@ export const Revenue: React.FC = () => {
                 <h3 className="font-bold text-white text-lg">Revenue Forecast</h3>
                 <p className="text-white/60 text-xs">Projected pipeline value</p>
               </div>
-              <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm">
+              <button
+                onClick={() => navigate('/dashboard/forecast')}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm"
+                title="View Forecast"
+              >
                 <ArrowUpRight size={14} className="text-white" />
               </button>
             </div>
 
             <div className="flex-1 w-full">
-              <AreaChart
-                data={forecastData}
-                dataKey="value"
-                xAxisKey="month"
-                height={180}
-                color="#EAD07D"
-                gradientId="revenueForecastGradient"
-                showGrid={false}
-                tooltipFormatter={(value) => formatShortCurrency(value)}
-              />
+              {forecastData.length > 0 ? (
+                <AreaChart
+                  data={forecastData}
+                  dataKey="value"
+                  xAxisKey="month"
+                  height={180}
+                  color="#EAD07D"
+                  gradientId="revenueForecastGradient"
+                  showGrid={false}
+                  tooltipFormatter={(value) => formatShortCurrency(value)}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <TrendingUp size={32} className="text-white/30 mb-3" />
+                  <p className="text-white/60 text-sm">No forecast data available</p>
+                  <p className="text-white/40 text-xs mt-1">Close deals to generate projections</p>
+                </div>
+              )}
             </div>
           </Card>
 
           <Card variant="yellow" padding="lg" className="relative overflow-hidden">
             <h3 className="font-bold text-lg mb-2 text-[#1A1A1A]">Expected Close</h3>
-            <CountUp end={totalUpcoming} prefix="$" className="text-4xl font-medium mb-8 text-[#1A1A1A] block tabular-nums" />
+            <span className="text-4xl font-medium mb-8 text-[#1A1A1A] block tabular-nums">{formatCurrency(totalUpcoming)}</span>
 
             <div className="space-y-3 relative z-10">
               {upcomingPayouts.length > 0 ? (

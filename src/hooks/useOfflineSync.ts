@@ -11,6 +11,7 @@ import {
 } from '../lib/offlineStorage';
 import client from '../api/client';
 import { captureError } from '../lib/errorTracking';
+import { logger } from '../lib/logger';
 
 const MAX_RETRIES = 3;
 const SYNC_INTERVAL = 30 * 1000; // 30 seconds
@@ -25,8 +26,8 @@ export function useOfflineSync() {
 
   // Initialize offline storage
   useEffect(() => {
-    initOfflineStorage().catch(console.error);
-    cleanupExpired().catch(console.error);
+    initOfflineStorage().catch((err) => logger.error('Failed to initialize offline storage:', err));
+    cleanupExpired().catch((err) => logger.error('Failed to cleanup expired entries:', err));
   }, []);
 
   // Track online/offline status

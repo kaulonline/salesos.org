@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, useEffect, useState } from '
 import { useAuth } from './AuthContext';
 import { profilesApi } from '../api/profiles';
 import type { Profile, PermissionModule, PermissionAction, DataAccessLevel } from '../types';
+import { logger } from '../lib/logger';
 
 interface PermissionContextType {
   profile: Profile | null;
@@ -83,7 +84,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
       setProfile(userProfile);
     } catch (err) {
-      console.error('Failed to fetch user profile:', err);
+      logger.error('Failed to fetch user profile:', err);
       setError('Failed to load permissions');
       // Set a default profile with basic permissions
       setProfile(null);

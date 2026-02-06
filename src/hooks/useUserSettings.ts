@@ -9,6 +9,7 @@ import type {
   StorageUsage,
   UpdateProfileDto,
 } from '../api/users';
+import { logger } from '../lib/logger';
 
 // User Profile Hook
 export function useUserProfile() {
@@ -24,7 +25,7 @@ export function useUserProfile() {
       const data = await usersApi.getProfile();
       setProfile(data);
     } catch (err) {
-      console.error('Failed to fetch profile:', err);
+      logger.error('Failed to fetch profile:', err);
       setError('Failed to load profile');
     } finally {
       setLoading(false);
@@ -42,7 +43,7 @@ export function useUserProfile() {
       setProfile(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update profile:', err);
+      logger.error('Failed to update profile:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -56,7 +57,7 @@ export function useUserProfile() {
       setProfile(prev => prev ? { ...prev, avatarUrl: result.avatarUrl } : null);
       return result;
     } catch (err) {
-      console.error('Failed to upload avatar:', err);
+      logger.error('Failed to upload avatar:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -69,7 +70,7 @@ export function useUserProfile() {
       await usersApi.deleteAvatar();
       setProfile(prev => prev ? { ...prev, avatarUrl: undefined } : null);
     } catch (err) {
-      console.error('Failed to delete avatar:', err);
+      logger.error('Failed to delete avatar:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -102,7 +103,7 @@ export function useUserPreferences() {
       const data = await usersApi.getPreferences();
       setPreferences(data);
     } catch (err) {
-      console.error('Failed to fetch preferences:', err);
+      logger.error('Failed to fetch preferences:', err);
       setError('Failed to load preferences');
     } finally {
       setLoading(false);
@@ -120,7 +121,7 @@ export function useUserPreferences() {
       setPreferences(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update preferences:', err);
+      logger.error('Failed to update preferences:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -144,7 +145,7 @@ export function useEmailPreferences() {
       const data = await usersApi.getEmailPreferences();
       setPreferences(data);
     } catch (err) {
-      console.error('Failed to fetch email preferences:', err);
+      logger.error('Failed to fetch email preferences:', err);
       setError('Failed to load email preferences');
     } finally {
       setLoading(false);
@@ -162,7 +163,7 @@ export function useEmailPreferences() {
       setPreferences(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update email preferences:', err);
+      logger.error('Failed to update email preferences:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -186,7 +187,7 @@ export function usePrivacyPreferences() {
       const data = await usersApi.getPrivacyPreferences();
       setPreferences(data);
     } catch (err) {
-      console.error('Failed to fetch privacy preferences:', err);
+      logger.error('Failed to fetch privacy preferences:', err);
       setError('Failed to load privacy preferences');
     } finally {
       setLoading(false);
@@ -204,7 +205,7 @@ export function usePrivacyPreferences() {
       setPreferences(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update privacy preferences:', err);
+      logger.error('Failed to update privacy preferences:', err);
       throw err;
     } finally {
       setSaving(false);
@@ -227,7 +228,7 @@ export function useQuotaProgress(period?: 'monthly' | 'quarterly' | 'yearly') {
       const data = await usersApi.getQuotaProgress(period);
       setQuota(data);
     } catch (err) {
-      console.error('Failed to fetch quota progress:', err);
+      logger.error('Failed to fetch quota progress:', err);
       setError('Failed to load quota progress');
     } finally {
       setLoading(false);
@@ -244,7 +245,7 @@ export function useQuotaProgress(period?: 'monthly' | 'quarterly' | 'yearly') {
       setQuota(updated);
       return updated;
     } catch (err) {
-      console.error('Failed to update quota:', err);
+      logger.error('Failed to update quota:', err);
       throw err;
     }
   };
@@ -265,7 +266,7 @@ export function useStorageUsage() {
       const data = await usersApi.getStorageUsage();
       setStorage(data);
     } catch (err) {
-      console.error('Failed to fetch storage usage:', err);
+      logger.error('Failed to fetch storage usage:', err);
       setError('Failed to load storage usage');
     } finally {
       setLoading(false);
@@ -281,7 +282,7 @@ export function useStorageUsage() {
       await usersApi.clearConversations();
       await fetchStorage();
     } catch (err) {
-      console.error('Failed to clear conversations:', err);
+      logger.error('Failed to clear conversations:', err);
       throw err;
     }
   };
@@ -291,7 +292,7 @@ export function useStorageUsage() {
       await usersApi.clearCache();
       await fetchStorage();
     } catch (err) {
-      console.error('Failed to clear cache:', err);
+      logger.error('Failed to clear cache:', err);
       throw err;
     }
   };

@@ -17,6 +17,7 @@ import {
   ImportResult,
   FieldMapping,
 } from '../../api/importExport';
+import { logger } from '../../lib/logger';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -105,7 +106,7 @@ export function ImportModal({ isOpen, onClose, entityType, onSuccess }: ImportMo
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Failed to download template:', err);
+      logger.error('Failed to download template:', err);
     }
   };
 
