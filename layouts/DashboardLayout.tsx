@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -8,6 +8,8 @@ import { useAuth } from '../src/context/AuthContext';
 import { FloatingChat } from '../components/FloatingChat';
 import { NotificationDropdown } from '../src/components/NotificationDropdown';
 import { AlertsDropdown } from '../src/components/AlertsDropdown';
+import { OnboardingWizard, useOnboarding } from '../src/components/onboarding/OnboardingWizard';
+import { ProductTour, useProductTour, DASHBOARD_TOUR_STEPS } from '../src/components/ProductTour';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
@@ -19,6 +21,8 @@ export const DashboardLayout: React.FC = () => {
   const [showAIMenu, setShowAIMenu] = useState(false);
   const { user, logout } = useAuth();
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
+  const { showOnboarding, completeOnboarding } = useOnboarding();
+  const { isOpen: tourOpen, closeTour, completeTour, startTour } = useProductTour('dashboard');
 
   const handleLogout = () => {
     logout();
@@ -79,6 +83,8 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Web Forms', href: '/dashboard/settings/web-forms', icon: Globe },
     { label: 'Profiles', href: '/dashboard/settings/profiles', icon: Shield },
     { label: 'Security', href: '/dashboard/settings/security', icon: Lock },
+    { label: 'Data & Privacy', href: '/dashboard/settings/privacy', icon: Shield },
+    { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell },
     { label: 'API & Webhooks', href: '/dashboard/settings/api', icon: Key },
     // Admin-only items
     ...(isAdmin ? [
@@ -96,7 +102,7 @@ export const DashboardLayout: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group cursor-pointer mr-4 shrink-0">
+        <Link to="/" className="flex items-center gap-2 group cursor-pointer mr-4 shrink-0" data-tour="logo">
           <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-white shadow-lg shadow-[#1A1A1A]/20 transition-transform group-hover:scale-105">
             <Command size={18} />
           </div>
@@ -107,7 +113,7 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Pill Navigation - Scrollable on mobile */}
         <div className="flex items-center gap-2 mx-auto md:mx-0">
-          <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md">
+          <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md" data-tour="main-nav">
             {primaryNavItems.map((item) => {
               const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
               return (
@@ -176,6 +182,7 @@ export const DashboardLayout: React.FC = () => {
           <button
             onClick={openSearch}
             className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm group"
+            data-tour="search"
           >
             <Search size={16} />
             <span className="hidden sm:inline">Search</span>
@@ -184,7 +191,7 @@ export const DashboardLayout: React.FC = () => {
             </kbd>
           </button>
           {/* AI Dropdown */}
-          <div className="relative">
+          <div className="relative" data-tour="ai-menu">
             <button
               onClick={() => setShowAIMenu(!showAIMenu)}
               className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${aiNavItems.some(item => path.startsWith(item.href))
@@ -226,7 +233,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           {/* Settings Dropdown */}
-          <div className="relative">
+          <div className="relative" data-tour="settings-menu">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
               className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => path.startsWith(item.href))
@@ -268,10 +275,12 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <AlertsDropdown />
-          <NotificationDropdown />
+          <div data-tour="notifications">
+            <NotificationDropdown />
+          </div>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" data-tour="user-menu">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="w-10 h-10 bg-gradient-to-br from-[#EAD07D] to-[#E5C973] rounded-full flex items-center justify-center font-bold text-[#1A1A1A] shadow-md border-2 border-white cursor-pointer hover:scale-105 transition-transform"
@@ -309,6 +318,16 @@ export const DashboardLayout: React.FC = () => {
                       </Link>
                     )}
                     <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        startTour();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A] transition-colors"
+                    >
+                      <Sparkles size={16} className="text-[#EAD07D]" />
+                      Take a Tour
+                    </button>
+                    <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                     >
@@ -336,6 +355,22 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Floating AI Chat */}
       <FloatingChat />
+
+      {/* First-time User Onboarding */}
+      {showOnboarding && (
+        <OnboardingWizard
+          onComplete={completeOnboarding}
+          onSkip={completeOnboarding}
+        />
+      )}
+
+      {/* Product Tour */}
+      <ProductTour
+        steps={DASHBOARD_TOUR_STEPS}
+        isOpen={tourOpen}
+        onClose={closeTour}
+        onComplete={completeTour}
+      />
     </div>
   );
 };

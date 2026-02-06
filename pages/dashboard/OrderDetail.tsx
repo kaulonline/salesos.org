@@ -30,6 +30,9 @@ import { format } from 'date-fns';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useOrder, useOrderTimeline } from '../../src/hooks/useOrders';
 import { printOrder } from '../../src/utils/orderPdfGenerator';
+import OrderBarcode from '../../src/components/orders/OrderBarcode';
+import OrderStatusTracker from '../../src/components/orders/OrderStatusTracker';
+import ShippingCard from '../../src/components/orders/ShippingCard';
 import type { OrderStatus, PaymentStatus, FulfillmentStatus, UpdateOrderDto, Order } from '../../src/types/order';
 
 // Edit Order Modal
@@ -508,6 +511,9 @@ export default function OrderDetail() {
               {order.name && (
                 <p className="text-[#666] mt-1">{order.name}</p>
               )}
+              <div className="mt-3">
+                <OrderBarcode orderNumber={order.orderNumber} size="sm" />
+              </div>
             </div>
           </div>
 
@@ -634,6 +640,15 @@ export default function OrderDetail() {
               </div>
             </div>
 
+            {/* Status Tracker */}
+            <OrderStatusTracker
+              status={order.status}
+              orderDate={order.orderDate}
+              shippedDate={order.shippedDate}
+              deliveredDate={order.deliveredDate}
+              expectedDeliveryDate={order.expectedDeliveryDate}
+            />
+
             {/* Tabs */}
             <div className="bg-white rounded-[32px] shadow-sm border border-black/5 overflow-hidden">
               <div className="border-b border-black/5">
@@ -737,27 +752,16 @@ export default function OrderDetail() {
                       </div>
                     )}
 
-                    {order.trackingNumber && (
-                      <div>
-                        <h4 className="font-medium text-[#1A1A1A] mb-3 flex items-center gap-2">
-                          <Package className="w-4 h-4 text-[#999]" />
-                          Tracking
-                        </h4>
-                        <p className="text-sm text-[#666]">
-                          {order.trackingNumber}
-                          {order.trackingUrl && (
-                            <a
-                              href={order.trackingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-2 text-[#1A1A1A] hover:text-[#EAD07D] inline-flex items-center gap-1 font-medium"
-                            >
-                              Track <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </p>
-                      </div>
-                    )}
+                    {/* Shipping Card with carrier detection */}
+                    <div className="md:col-span-2">
+                      <ShippingCard
+                        trackingNumber={order.trackingNumber}
+                        trackingUrl={order.trackingUrl}
+                        shippedDate={order.shippedDate}
+                        expectedDeliveryDate={order.expectedDeliveryDate}
+                        deliveredDate={order.deliveredDate}
+                      />
+                    </div>
 
                     {order.notes && (
                       <div className="md:col-span-2">

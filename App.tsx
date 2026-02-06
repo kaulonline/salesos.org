@@ -12,6 +12,7 @@ import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
 import { NoiseOverlay } from './components/ui/NoiseOverlay';
 import { ToastProvider } from './src/components/ui/Toast';
+import { CookieConsent } from './src/components/CookieConsent';
 import DesignSystem from './src/pages/DesignSystem';
 
 // Initialize error tracking
@@ -84,6 +85,8 @@ const Security = lazy(() => import('./pages/dashboard/settings/Security'));
 const AssignmentRules = lazy(() => import('./pages/dashboard/settings/AssignmentRules'));
 const WebForms = lazy(() => import('./pages/dashboard/settings/WebForms'));
 const ApiSettings = lazy(() => import('./pages/dashboard/settings/ApiSettings'));
+const DataPrivacy = lazy(() => import('./pages/dashboard/settings/DataPrivacy'));
+const NotificationPreferences = lazy(() => import('./pages/dashboard/settings/NotificationPreferences'));
 
 // Phase 2 CPQ Feature Pages
 const PriceBooks = lazy(() => import('./pages/dashboard/PriceBooks'));
@@ -629,6 +632,20 @@ function AppContent() {
                 </Suspense>
               </PageErrorBoundary>
             } />
+            <Route path="settings/privacy" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <DataPrivacy />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/notifications" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <NotificationPreferences />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
           </Route>
 
           {/* Admin Routes - Protected with AdminLayout */}
@@ -702,6 +719,7 @@ function AppContent() {
         </Routes>
       </main>
       {!isAuthPage && !isDashboard && !isAdmin && !isBilling && !isPublicForm && <Footer />}
+      <CookieConsent />
     </div>
   );
 }

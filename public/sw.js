@@ -180,44 +180,115 @@ async function syncMutations() {
 
 // Handle push notifications
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  console.log('[SW] Push received:', event);
 
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: '/icon-192.png',
-    badge: '/badge-72.png',
-    tag: data.tag || 'notification',
-    data: data.data,
-    actions: data.actions || [],
+  let data = {
+    title: 'SalesOS',
+    body: 'You have a new notification',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/badge-72.png',
+    tag: 'salesos-notification',
+    data: {},
   };
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icons/icon-192.png',
+    badge: data.badge || '/icons/badge-72.png',
+    tag: data.tag || 'salesos-notification',
+    data: data.data || {},
+    vibrate: [100, 50, 100],
+    requireInteraction: data.requireInteraction || false,
+    actions: data.actions || [],
+    timestamp: data.timestamp || Date.now(),
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event);
   event.notification.close();
 
-  const data = event.notification.data;
-  const url = data?.url || '/dashboard';
+  const data = event.notification.data || {};
+  let targetUrl = '/dashboard';
+
+  // Handle action buttons
+  if (event.action) {
+    switch (event.action) {
+      case 'view':
+        targetUrl = data.url || '/dashboard';
+        break;
+      case 'dismiss':
+        return;
+      case 'complete':
+        // Send message to mark task complete
+        self.clients.matchAll({ type: 'window' }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'TASK_COMPLETE', taskId: data.taskId });
+          });
+        });
+        return;
+      case 'snooze':
+        // Send message to snooze notification
+        self.clients.matchAll({ type: 'window' }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'SNOOZE_NOTIFICATION', data });
+          });
+        });
+        return;
+      case 'join':
+        targetUrl = data.meetingUrl || data.url || '/dashboard/calendar';
+        break;
+      default:
+        targetUrl = data.actionUrls?.[event.action] || data.url || '/dashboard';
+    }
+  } else if (data.url) {
+    targetUrl = data.url;
+  }
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clients) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Try to focus existing window
-      for (const client of clients) {
-        if (client.url.includes(url) && 'focus' in client) {
+      for (const client of clientList) {
+        if (client.url.includes(self.registration.scope) && 'focus' in client) {
+          client.navigate(targetUrl);
           return client.focus();
         }
       }
       // Open new window
       if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
+        return self.clients.openWindow(targetUrl);
       }
     })
   );
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed:', event);
+  // Track notification dismissal
+  const data = event.notification.data || {};
+  if (data.trackDismissal && data.notificationId) {
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'NOTIFICATION_DISMISSED',
+          notificationId: data.notificationId
+        });
+      });
+    });
+  }
 });
 
 // Message handling

@@ -1,5 +1,7 @@
-import type { Order } from '../types/order';
+import type { Order, OrderStatus } from '../types/order';
 import { escapeHtml } from '../lib/security';
+import JsBarcode from 'jsbarcode';
+import { detectCarrier } from './carrierDetector';
 
 // Helper to safely escape HTML and handle null/undefined values
 const safeEscape = (value: string | undefined | null, fallback = ''): string => {
@@ -25,6 +27,173 @@ const formatDate = (date?: string) => {
   });
 };
 
+const formatShortDate = (date?: string) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+// Generate barcode as SVG data URL
+function generateBarcodeDataUrl(orderNumber: string): string {
+  try {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    JsBarcode(svg, orderNumber, {
+      format: 'CODE128',
+      width: 1.5,
+      height: 35,
+      displayValue: true,
+      fontSize: 10,
+      margin: 5,
+      background: '#FFFFFF',
+      lineColor: '#1A1A1A',
+    });
+    const svgData = new XMLSerializer().serializeToString(svg);
+    return `data:image/svg+xml;base64,${btoa(svgData)}`;
+  } catch {
+    return '';
+  }
+}
+
+// Status step configuration
+const STATUS_STEPS = [
+  { key: 'ORDERED', label: 'Ordered' },
+  { key: 'CONFIRMED', label: 'Confirmed' },
+  { key: 'PROCESSING', label: 'Processing' },
+  { key: 'SHIPPED', label: 'Shipped' },
+  { key: 'DELIVERED', label: 'Delivered' },
+];
+
+const STATUS_ORDER: Record<string, number> = {
+  DRAFT: 0,
+  PENDING: 0,
+  CONFIRMED: 1,
+  PROCESSING: 2,
+  SHIPPED: 3,
+  DELIVERED: 4,
+  COMPLETED: 4,
+  CANCELLED: -1,
+  RETURNED: -1,
+};
+
+// Generate status tracker HTML
+function generateStatusTrackerHtml(order: Order): string {
+  const currentStepIndex = STATUS_ORDER[order.status] ?? -1;
+  const isCancelled = order.status === 'CANCELLED';
+  const isReturned = order.status === 'RETURNED';
+
+  if (isCancelled || isReturned) {
+    return `
+      <div style="background: ${isCancelled ? '#FEE2E2' : '#FEF3C7'}; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: center;">
+        <span style="font-weight: 600; color: ${isCancelled ? '#DC2626' : '#92400E'};">
+          Order ${isCancelled ? 'Cancelled' : 'Returned'}
+        </span>
+      </div>
+    `;
+  }
+
+  const stepsHtml = STATUS_STEPS.map((step, index) => {
+    const isCompleted = index < currentStepIndex;
+    const isCurrent = index === currentStepIndex;
+    const bgColor = isCompleted ? '#93C01F' : isCurrent ? '#EAD07D' : '#F0EBD8';
+    const textColor = isCompleted || isCurrent ? '#1A1A1A' : '#999';
+
+    let dateText = '';
+    if (step.key === 'ORDERED' && order.orderDate) {
+      dateText = formatShortDate(order.orderDate);
+    } else if (step.key === 'SHIPPED' && order.shippedDate) {
+      dateText = formatShortDate(order.shippedDate);
+    } else if (step.key === 'DELIVERED') {
+      if (order.deliveredDate) {
+        dateText = formatShortDate(order.deliveredDate);
+      } else if (order.expectedDeliveryDate && index > currentStepIndex) {
+        dateText = `Est. ${formatShortDate(order.expectedDeliveryDate)}`;
+      }
+    }
+
+    return `
+      <div style="flex: 1; text-align: center;">
+        <div style="width: 28px; height: 28px; border-radius: 8px; background: ${bgColor}; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 12px; color: ${isCompleted ? 'white' : textColor};">
+            ${isCompleted ? '✓' : index + 1}
+          </span>
+        </div>
+        <div style="font-size: 11px; font-weight: 500; color: ${textColor};">${step.label}</div>
+        <div style="font-size: 10px; color: #999; margin-top: 2px;">${dateText}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Calculate progress width
+  const progressWidth = Math.max(0, (currentStepIndex / (STATUS_STEPS.length - 1)) * 100);
+
+  return `
+    <div style="background: #F8F8F6; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">
+        Order Progress
+      </div>
+      <div style="position: relative; padding: 0 20px;">
+        <div style="position: absolute; top: 14px; left: 40px; right: 40px; height: 4px; background: #F0EBD8; border-radius: 2px;">
+          <div style="width: ${progressWidth}%; height: 100%; background: #93C01F; border-radius: 2px;"></div>
+        </div>
+        <div style="display: flex; position: relative; z-index: 1;">
+          ${stepsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Generate shipping info HTML with carrier detection
+function generateShippingInfoHtml(order: Order): string {
+  if (!order.trackingNumber && !order.shippedDate && !order.expectedDeliveryDate) {
+    return '';
+  }
+
+  const carrier = order.trackingNumber ? detectCarrier(order.trackingNumber) : null;
+  const carrierBadge = carrier
+    ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: ${carrier.bgColor}; color: ${carrier.color}; margin-right: 8px;">${carrier.name}</span>`
+    : order.trackingNumber
+    ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: #F8F8F6; color: #666;">Carrier</span>`
+    : '';
+
+  return `
+    <div style="background: #F8F8F6; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+        Shipping Information
+      </div>
+      <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+        ${order.trackingNumber ? `
+          <div>
+            ${carrierBadge}
+            <div style="font-size: 13px; color: #666; margin-top: 8px;">
+              <strong>Tracking:</strong> <code style="background: white; padding: 2px 6px; border-radius: 4px;">${safeEscape(order.trackingNumber)}</code>
+            </div>
+          </div>
+        ` : ''}
+        ${order.shippedDate ? `
+          <div>
+            <div style="font-size: 11px; color: #888;">Shipped</div>
+            <div style="font-size: 14px; font-weight: 500; color: #1A1A1A;">${formatShortDate(order.shippedDate)}</div>
+          </div>
+        ` : ''}
+        ${order.deliveredDate ? `
+          <div>
+            <div style="font-size: 11px; color: #93C01F;">Delivered</div>
+            <div style="font-size: 14px; font-weight: 500; color: #1A1A1A;">${formatShortDate(order.deliveredDate)}</div>
+          </div>
+        ` : order.expectedDeliveryDate ? `
+          <div>
+            <div style="font-size: 11px; color: #888;">Expected Delivery</div>
+            <div style="font-size: 14px; font-weight: 500; color: #1A1A1A;">${formatShortDate(order.expectedDeliveryDate)}</div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
 export function generateOrderPrintHtml(order: Order): string {
   const lineItemsRows = (order.lineItems || [])
     .map(
@@ -38,7 +207,7 @@ export function generateOrderPrintHtml(order: Order): string {
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.unitPrice)}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.discount ? `${item.discount}%` : '-'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 500;">${formatCurrency(item.total)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 500;">${formatCurrency(item.totalPrice)}</td>
       </tr>
     `
     )
@@ -57,6 +226,10 @@ export function generateOrderPrintHtml(order: Order): string {
       default: return 'background: #F2F1EA; color: #666;';
     }
   };
+
+  const barcodeDataUrl = generateBarcodeDataUrl(order.orderNumber);
+  const statusTrackerHtml = generateStatusTrackerHtml(order);
+  const shippingInfoHtml = generateShippingInfoHtml(order);
 
   return `
     <!DOCTYPE html>
@@ -85,7 +258,7 @@ export function generateOrderPrintHtml(order: Order): string {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             padding-bottom: 24px;
             border-bottom: 2px solid #93C01F;
           }
@@ -119,10 +292,21 @@ export function generateOrderPrintHtml(order: Order): string {
             text-transform: uppercase;
             margin-top: 8px;
           }
+          .barcode-container {
+            margin-top: 12px;
+            padding: 8px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            display: inline-block;
+          }
+          .barcode-container img {
+            display: block;
+          }
           .addresses {
             display: flex;
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
           }
           .address-block {
             flex: 1;
@@ -238,26 +422,35 @@ export function generateOrderPrintHtml(order: Order): string {
             <div class="order-date">Order Date: ${formatDate(order.orderDate)}</div>
             ${order.expectedDeliveryDate ? `<div class="order-date">Expected Delivery: ${formatDate(order.expectedDeliveryDate)}</div>` : ''}
             <span class="status-badge" style="${getStatusColor(order.status)}">${safeEscape(order.status)}</span>
+            ${barcodeDataUrl ? `
+              <div class="barcode-container">
+                <img src="${barcodeDataUrl}" alt="Order Barcode" />
+              </div>
+            ` : ''}
           </div>
         </div>
+
+        ${statusTrackerHtml}
+
+        ${shippingInfoHtml}
 
         <div class="addresses">
           <div class="address-block">
             <div class="address-label">Bill To</div>
             <div class="address-name">${safeEscape(order.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${order.billingStreet ? `${safeEscape(order.billingStreet)}<br>` : ''}
-              ${order.billingCity ? `${safeEscape(order.billingCity)}, ` : ''}${safeEscape(order.billingState)} ${safeEscape(order.billingPostalCode)}
-              ${order.billingCountry ? `<br>${safeEscape(order.billingCountry)}` : ''}
+              ${order.billingAddress?.street ? `${safeEscape(order.billingAddress.street)}<br>` : ''}
+              ${order.billingAddress?.city ? `${safeEscape(order.billingAddress.city)}, ` : ''}${safeEscape(order.billingAddress?.state)} ${safeEscape(order.billingAddress?.postalCode)}
+              ${order.billingAddress?.country ? `<br>${safeEscape(order.billingAddress.country)}` : ''}
             </div>
           </div>
           <div class="address-block">
             <div class="address-label">Ship To</div>
             <div class="address-name">${safeEscape(order.account?.name, 'N/A')}</div>
             <div class="address-details">
-              ${order.shippingStreet ? `${safeEscape(order.shippingStreet)}<br>` : ''}
-              ${order.shippingCity ? `${safeEscape(order.shippingCity)}, ` : ''}${safeEscape(order.shippingState)} ${safeEscape(order.shippingPostalCode)}
-              ${order.shippingCountry ? `<br>${safeEscape(order.shippingCountry)}` : ''}
+              ${order.shippingAddress?.street ? `${safeEscape(order.shippingAddress.street)}<br>` : ''}
+              ${order.shippingAddress?.city ? `${safeEscape(order.shippingAddress.city)}, ` : ''}${safeEscape(order.shippingAddress?.state)} ${safeEscape(order.shippingAddress?.postalCode)}
+              ${order.shippingAddress?.country ? `<br>${safeEscape(order.shippingAddress.country)}` : ''}
             </div>
           </div>
           <div class="address-block">
@@ -265,8 +458,6 @@ export function generateOrderPrintHtml(order: Order): string {
             <div class="address-details">
               <strong>Order Name:</strong> ${safeEscape(order.name)}<br>
               ${order.paymentTerms ? `<strong>Payment Terms:</strong> ${safeEscape(order.paymentTerms)}<br>` : ''}
-              ${order.shippingMethod ? `<strong>Shipping Method:</strong> ${safeEscape(order.shippingMethod)}<br>` : ''}
-              ${order.trackingNumber ? `<strong>Tracking #:</strong> ${safeEscape(order.trackingNumber)}` : ''}
             </div>
           </div>
         </div>
