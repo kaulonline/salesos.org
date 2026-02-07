@@ -14,6 +14,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { useToast } from '../../src/components/ui/Toast';
 import {
   useAdminDashboard,
   useAdminUsers,
@@ -33,8 +34,9 @@ import { useAuth } from '../../src/context/AuthContext';
 import type { LicenseStatus, LicenseTier, PreGeneratedKeyStatus } from '../../src/api/licensing';
 import type { Coupon, Payment, DiscountType, CouponDuration, PaymentStatus, GatewayConfig, PaymentGateway, StripeSyncResult } from '../../src/api/payments';
 import paymentsApi from '../../src/api/payments';
+import { DatabaseBackups } from '../../src/components/admin/DatabaseBackups';
 
-type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit';
+type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
 type BillingSubTab = 'overview' | 'plans' | 'licenses' | 'keys' | 'coupons' | 'transactions';
 
 const formatNumber = (num?: number) => {
@@ -120,6 +122,7 @@ const getKeyStatusBadge = (status: PreGeneratedKeyStatus) => {
 
 export const Admin: React.FC = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -134,7 +137,7 @@ export const Admin: React.FC = () => {
     // For /dashboard/admin, check query params
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'users', 'billing', 'features', 'settings', 'audit'].includes(tab)) {
+    if (tab && ['overview', 'users', 'billing', 'features', 'settings', 'backups', 'audit'].includes(tab)) {
       return tab as TabType;
     }
     return 'overview';
@@ -180,6 +183,7 @@ export const Admin: React.FC = () => {
     durationDays: 365,
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
 
   // Confirmation modal states
   const [confirmModal, setConfirmModal] = useState<{
@@ -554,6 +558,7 @@ export const Admin: React.FC = () => {
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'features', label: 'Features', icon: Zap },
     { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'backups', label: 'Backups', icon: Database },
     { id: 'audit', label: 'Audit', icon: Clock },
   ];
 
@@ -917,27 +922,60 @@ export const Admin: React.FC = () => {
                           <div className="flex items-center gap-1">
                             {u.status === 'ACTIVE' ? (
                               <button
-                                onClick={() => suspendUser(u.id)}
-                                className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
+                                onClick={async () => {
+                                  setUserActionLoading(`suspend-${u.id}`);
+                                  try {
+                                    await suspendUser(u.id);
+                                    showToast({ type: 'success', title: 'User suspended', message: `${u.name || u.email} has been suspended` });
+                                  } catch (err) {
+                                    showToast({ type: 'error', title: 'Failed to suspend user', message: err instanceof Error ? err.message : 'An error occurred' });
+                                  } finally {
+                                    setUserActionLoading(null);
+                                  }
+                                }}
+                                disabled={userActionLoading === `suspend-${u.id}`}
+                                className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Suspend"
                               >
-                                <Ban size={14} />
+                                {userActionLoading === `suspend-${u.id}` ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
                               </button>
                             ) : (
                               <button
-                                onClick={() => activateUser(u.id)}
-                                className="p-2 rounded-lg hover:bg-green-50 text-[#666] hover:text-green-600 transition-colors"
+                                onClick={async () => {
+                                  setUserActionLoading(`activate-${u.id}`);
+                                  try {
+                                    await activateUser(u.id);
+                                    showToast({ type: 'success', title: 'User activated', message: `${u.name || u.email} has been activated` });
+                                  } catch (err) {
+                                    showToast({ type: 'error', title: 'Failed to activate user', message: err instanceof Error ? err.message : 'An error occurred' });
+                                  } finally {
+                                    setUserActionLoading(null);
+                                  }
+                                }}
+                                disabled={userActionLoading === `activate-${u.id}`}
+                                className="p-2 rounded-lg hover:bg-green-50 text-[#666] hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Activate"
                               >
-                                <CheckCircle size={14} />
+                                {userActionLoading === `activate-${u.id}` ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
                               </button>
                             )}
                             <button
-                              onClick={() => resetPassword(u.id)}
-                              className="p-2 rounded-lg hover:bg-blue-50 text-[#666] hover:text-blue-600 transition-colors"
+                              onClick={async () => {
+                                setUserActionLoading(`reset-${u.id}`);
+                                try {
+                                  await resetPassword(u.id);
+                                  showToast({ type: 'success', title: 'Password reset email sent', message: `Reset instructions sent to ${u.email}` });
+                                } catch (err) {
+                                  showToast({ type: 'error', title: 'Failed to reset password', message: err instanceof Error ? err.message : 'An error occurred' });
+                                } finally {
+                                  setUserActionLoading(null);
+                                }
+                              }}
+                              disabled={userActionLoading === `reset-${u.id}`}
+                              className="p-2 rounded-lg hover:bg-blue-50 text-[#666] hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Reset Password"
                             >
-                              <Key size={14} />
+                              {userActionLoading === `reset-${u.id}` ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
                             </button>
                             <button
                               className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] transition-colors"
@@ -2756,6 +2794,11 @@ export const Admin: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Backups Tab */}
+      {activeTab === 'backups' && (
+        <DatabaseBackups />
       )}
 
       {/* Audit Tab */}

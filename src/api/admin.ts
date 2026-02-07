@@ -131,6 +131,76 @@ export interface Integration {
   updatedAt: string;
 }
 
+// Database Backup Types
+export type BackupStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'DELETED';
+export type BackupType = 'FULL' | 'INCREMENTAL' | 'SCHEMA_ONLY' | 'DATA_ONLY';
+
+export interface DatabaseBackup {
+  id: string;
+  type: BackupType;
+  status: BackupStatus;
+  filename: string;
+  filePath?: string;
+  size: string; // BigInt as string for JSON serialization
+  checksum?: string;
+  description?: string;
+  compressed: boolean;
+  encrypted: boolean;
+  startedAt?: string;
+  completedAt?: string;
+  duration?: number;
+  expiresAt?: string;
+  retentionDays: number;
+  errorMessage?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  databaseName?: string;
+  tableCount?: number;
+  rowCount?: string;
+}
+
+export interface BackupSchedule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  cronExpression: string;
+  timezone: string;
+  backupType: BackupType;
+  compressed: boolean;
+  retentionDays: number;
+  lastRunAt?: string;
+  lastRunStatus?: BackupStatus;
+  nextRunAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupStats {
+  totalBackups: number;
+  completedBackups: number;
+  failedBackups: number;
+  totalSizeBytes: string;
+  oldestBackup: string | null;
+  newestBackup: string | null;
+  scheduledBackups: number;
+}
+
+export interface CreateBackupRequest {
+  type?: BackupType;
+  description?: string;
+  compressed?: boolean;
+  retentionDays?: number;
+}
+
+export interface CreateBackupScheduleRequest {
+  name: string;
+  cronExpression?: string;
+  backupType?: BackupType;
+  retentionDays?: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -325,6 +395,67 @@ export const adminApi = {
 
   updateSetting: async (key: string, value: unknown): Promise<void> => {
     await client.put(`/admin/settings/${key}`, { value });
+  },
+
+  // Database Backups
+  getBackups: async (params?: {
+    status?: BackupStatus;
+    type?: BackupType;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ backups: DatabaseBackup[]; total: number }> => {
+    const response = await client.get('/admin/backups', { params });
+    return response.data;
+  },
+
+  getBackup: async (id: string): Promise<DatabaseBackup> => {
+    const response = await client.get(`/admin/backups/${id}`);
+    return response.data;
+  },
+
+  createBackup: async (data: CreateBackupRequest): Promise<DatabaseBackup> => {
+    const response = await client.post('/admin/backups', data);
+    return response.data;
+  },
+
+  deleteBackup: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await client.delete(`/admin/backups/${id}`);
+    return response.data;
+  },
+
+  getBackupStats: async (): Promise<BackupStats> => {
+    const response = await client.get('/admin/backups/stats');
+    return response.data;
+  },
+
+  downloadBackup: (id: string): string => {
+    // Return the URL for downloading - browser will handle the download
+    return `/api/admin/backups/${id}/download`;
+  },
+
+  cleanupExpiredBackups: async (): Promise<{ deleted: number }> => {
+    const response = await client.post('/admin/backups/cleanup');
+    return response.data;
+  },
+
+  // Backup Schedules
+  getBackupSchedules: async (): Promise<BackupSchedule[]> => {
+    const response = await client.get('/admin/backups/schedules');
+    return response.data;
+  },
+
+  createBackupSchedule: async (data: CreateBackupScheduleRequest): Promise<BackupSchedule> => {
+    const response = await client.post('/admin/backups/schedules', data);
+    return response.data;
+  },
+
+  updateBackupSchedule: async (id: string, data: Partial<BackupSchedule>): Promise<BackupSchedule> => {
+    const response = await client.patch(`/admin/backups/schedules/${id}`, data);
+    return response.data;
+  },
+
+  deleteBackupSchedule: async (id: string): Promise<void> => {
+    await client.delete(`/admin/backups/schedules/${id}`);
   },
 };
 
