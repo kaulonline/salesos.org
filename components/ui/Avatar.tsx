@@ -1,22 +1,32 @@
 import React from 'react';
 
-interface AvatarProps {
+export interface AvatarProps {
   src?: string;
   alt?: string;
+  name?: string;
   fallback?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   border?: boolean;
 }
 
-export const Avatar: React.FC<AvatarProps> = ({ 
-  src, 
-  alt = "User", 
-  fallback = "U", 
-  size = 'md', 
-  className = '', 
+const getInitials = (name?: string): string => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+export const Avatar: React.FC<AvatarProps> = ({
+  src,
+  alt = "User",
+  name,
+  fallback,
+  size = 'md',
+  className = '',
   border = false
 }) => {
+  const displayFallback = fallback || getInitials(name);
   const sizes = {
     sm: "w-8 h-8 text-xs",
     md: "w-10 h-10 text-sm",
@@ -31,7 +41,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       {src ? (
         <img src={src} alt={alt} className="w-full h-full object-cover" />
       ) : (
-        <span>{fallback}</span>
+        <span>{displayFallback}</span>
       )}
     </div>
   );

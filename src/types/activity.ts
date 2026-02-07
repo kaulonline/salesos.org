@@ -73,4 +73,6 @@ export interface ActivityFilters {
   userId?: string;
   startDate?: string;
   endDate?: string;
+  limit?: number;
+  offset?: number;
 }

@@ -119,6 +119,7 @@ export interface ConvertLeadResult {
 }
 
 export interface LeadStats {
+  total: number;
   totalLeads: number;
   newLeads: number;
   qualifiedLeads: number;

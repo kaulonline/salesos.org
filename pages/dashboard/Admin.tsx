@@ -786,7 +786,7 @@ export const Admin: React.FC = () => {
                 Recent Activity
               </h3>
               <button
-                onClick={() => setActiveTab('audit')}
+                onClick={() => navigate('/dashboard/admin?tab=audit')}
                 className="text-sm text-[#666] hover:text-[#1A1A1A] flex items-center gap-1 font-medium"
               >
                 View All <ChevronRight size={14} />

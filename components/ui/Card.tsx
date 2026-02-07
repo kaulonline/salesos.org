@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from "../../src/lib/utils";
 
 export interface CardProps extends HTMLMotionProps<"div"> {
-  variant?: "default" | "small" | "dark" | "flat" | "yellow";
+  variant?: "default" | "small" | "dark" | "flat" | "yellow" | "ghost";
   padding?: "none" | "sm" | "md" | "lg";
 }
 
@@ -31,6 +31,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             "bg-[#1A1A1A] text-white rounded-[32px] p-6 shadow-lg hover:shadow-xl": variant === "dark",
             "bg-transparent border-none shadow-none p-0": variant === "flat",
             "bg-[#EAD07D] rounded-[24px] p-5 shadow-sm hover:shadow-md": variant === "yellow",
+            "bg-white/50 rounded-[32px] p-6 border border-black/5 backdrop-blur-sm": variant === "ghost",
           },
           padding && paddingClasses[padding],
           className

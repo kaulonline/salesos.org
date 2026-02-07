@@ -1,29 +1,38 @@
 import React from 'react';
 import { cn } from '../../utils/cn'; // Assuming you might have a utility, otherwise I'll stick to template literals
 
+type BadgeVariant =
+  | 'neutral' | 'dark' | 'yellow' | 'green' | 'red' | 'blue' | 'purple' | 'outline'
+  | 'default' | 'warning' | 'success' | 'danger' | 'gray';
+
 interface BadgeProps {
-  variant?: 'neutral' | 'dark' | 'yellow' | 'green' | 'red' | 'blue' | 'purple' | 'outline';
+  variant?: BadgeVariant;
   size?: 'sm' | 'md';
   dot?: boolean;
   className?: string;
   children: React.ReactNode;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ 
-  variant = 'neutral', 
+export const Badge: React.FC<BadgeProps> = ({
+  variant = 'neutral',
   size = 'md',
-  dot = false, 
-  className = '', 
-  children 
+  dot = false,
+  className = '',
+  children
 }) => {
   const baseStyles = "inline-flex items-center justify-center font-bold uppercase tracking-wider rounded-full whitespace-nowrap";
-  
-  const variants = {
+
+  const variants: Record<BadgeVariant, string> = {
     neutral: "bg-[#F8F8F6] text-[#666]",
+    default: "bg-[#F8F8F6] text-[#666]",
+    gray: "bg-[#F8F8F6] text-[#666]",
     dark: "bg-[#1A1A1A] text-white",
     yellow: "bg-[#EAD07D] text-[#1A1A1A]",
+    warning: "bg-[#EAD07D] text-[#1A1A1A]",
     green: "bg-[#93C01F]/10 text-[#5a7a0c]",
+    success: "bg-[#93C01F]/10 text-[#5a7a0c]",
     red: "bg-red-100 text-red-700",
+    danger: "bg-red-100 text-red-700",
     blue: "bg-blue-100 text-blue-700",
     purple: "bg-purple-100 text-purple-700",
     outline: "bg-transparent border border-black/10 text-[#666]",

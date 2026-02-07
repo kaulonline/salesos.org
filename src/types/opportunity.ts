@@ -126,6 +126,7 @@ export interface OpportunityAnalysis {
 export interface PipelineStats {
   totalValue: number;
   totalDeals: number;
+  totalOpportunities: number;
   avgDealSize: number;
   weightedPipeline: number;
   byStage: {

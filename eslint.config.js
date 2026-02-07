@@ -1,13 +1,11 @@
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
   js.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'playwright-report/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'playwright-report/**', 'public/**'],
   },
   {
     files: ['**/*.{ts,tsx}'],
@@ -21,6 +19,7 @@ export default [
         },
       },
       globals: {
+        // Browser globals
         window: 'readonly',
         document: 'readonly',
         navigator: 'readonly',
@@ -37,28 +36,82 @@ export default [
         URLSearchParams: 'readonly',
         localStorage: 'readonly',
         sessionStorage: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
+        prompt: 'readonly',
+        // React
+        React: 'readonly',
+        // DOM types
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLSpanElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        HTMLSelectElement: 'readonly',
+        HTMLMetaElement: 'readonly',
+        HTMLLinkElement: 'readonly',
+        Node: 'readonly',
+        Element: 'readonly',
+        DOMRect: 'readonly',
+        DOMException: 'readonly',
+        // Events
         Event: 'readonly',
         CustomEvent: 'readonly',
         KeyboardEvent: 'readonly',
         MouseEvent: 'readonly',
+        FocusEvent: 'readonly',
+        EventListener: 'readonly',
+        // APIs
         Request: 'readonly',
         Response: 'readonly',
         Headers: 'readonly',
         AbortController: 'readonly',
+        IntersectionObserver: 'readonly',
+        MutationObserver: 'readonly',
+        ResizeObserver: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        WebSocket: 'readonly',
+        // Node.js
         process: 'readonly',
         Buffer: 'readonly',
         __dirname: 'readonly',
+        // Encoding
         btoa: 'readonly',
         atob: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
+        // XML/DOM
         XMLSerializer: 'readonly',
         DOMParser: 'readonly',
+        // Browser APIs
         Notification: 'readonly',
+        NotificationOptions: 'readonly',
         ServiceWorker: 'readonly',
+        ServiceWorkerRegistration: 'readonly',
+        PushSubscription: 'readonly',
+        PushSubscriptionOptionsInit: 'readonly',
         indexedDB: 'readonly',
         IDBDatabase: 'readonly',
+        IDBKeyRange: 'readonly',
         Intl: 'readonly',
+        crypto: 'readonly',
+        performance: 'readonly',
+        FileList: 'readonly',
+        FileReader: 'readonly',
+        Image: 'readonly',
+        Audio: 'readonly',
+        Video: 'readonly',
+        // Service Worker globals
+        self: 'readonly',
+        caches: 'readonly',
+        clients: 'readonly',
+        skipWaiting: 'readonly',
+        importScripts: 'readonly',
       },
     },
     plugins: {
@@ -71,9 +124,29 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-prototype-builtins': 'warn',
       'prefer-const': 'error',
       'no-var': 'error',
+    },
+  },
+  // Test files configuration
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**/*.ts'],
+    languageOptions: {
+      globals: {
+        vi: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        test: 'readonly',
+        jest: 'readonly',
+      },
     },
   },
 ];

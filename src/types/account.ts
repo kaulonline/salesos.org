@@ -6,7 +6,7 @@ export type AccountType =
   | 'COMPETITOR'
   | 'OTHER';
 
-export type AccountStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'CHURNED';
+export type AccountStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'CHURNED' | 'AT_RISK';
 
 export type AccountRating = 'HOT' | 'WARM' | 'COLD';
 

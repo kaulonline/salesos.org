@@ -17,6 +17,7 @@ export interface LicenseType {
   defaultDurationDays: number;
   trialDurationDays?: number;
   maxUsers?: number;
+  maxLeads?: number;
   maxConversations?: number;
   maxMeetings?: number;
   maxDocuments?: number;
@@ -25,6 +26,7 @@ export interface LicenseType {
   isPublic: boolean;
   sortOrder: number;
   features?: LicenseFeature[];
+  userCount?: number;
   _count?: {
     userLicenses: number;
   };

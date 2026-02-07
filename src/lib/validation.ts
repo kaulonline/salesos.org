@@ -49,7 +49,7 @@ export const validators = {
   phone: (message = 'Please enter a valid phone number'): Validator<string> => (value) => {
     if (!value) return null;
     // Allow various formats: +1234567890, (123) 456-7890, 123-456-7890, etc.
-    const phoneRegex = /^[\d\s\-\(\)\+\.]+$/;
+    const phoneRegex = /^[\d\s\-()+.]+$/;
     const digitsOnly = value.replace(/\D/g, '');
     if (!phoneRegex.test(value) || digitsOnly.length < 7 || digitsOnly.length > 15) {
       return message;
@@ -231,7 +231,7 @@ export const securityValidators = {
     const sqlPatterns = [
       /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b)/i,
       /(\b(OR|AND)\s+[\d\w]+\s*=\s*[\d\w]+)/i,
-      /(--|\#|\/\*)/,
+      /(--|#|\/\*)/,
       /(\bEXEC\b|\bEXECUTE\b)/i,
       /(';|";)/,
     ];
