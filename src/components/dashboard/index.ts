@@ -6,3 +6,4 @@ export { MeetingsCalendar } from './MeetingsCalendar';
 export { PipelineSummaryCard } from './PipelineSummaryCard';
 export { ActionItemsCard } from './ActionItemsCard';
 export { RevenueForecastCard } from './RevenueForecastCard';
+export { AIFeaturesCard } from './AIFeaturesCard';

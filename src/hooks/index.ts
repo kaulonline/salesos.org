@@ -140,3 +140,29 @@ export {
 // Real-time Collaboration hooks
 export { useEntityLock } from './useEntityLock';
 export { useEntityPresence } from './useEntityPresence';
+
+// AI Integration hooks
+export {
+  useAIStatus,
+  useGenerateEmailDraft,
+  useAnalyzeDeal,
+  useScoreLead,
+  useSummarizeMeeting,
+  useSuggestFollowUp,
+  useAICompletion,
+  useTestAIConnection,
+  useTestAIProvider,
+} from './useAI';
+
+// Data Enrichment hooks
+export {
+  useEnrichmentStatus,
+  useEnrichmentProviders,
+  useEnrichLead,
+  useEnrichContact,
+  useEnrichAccount,
+  useBulkEnrich,
+  usePreviewEnrichment,
+  useTestEnrichmentConnection,
+  useTestEnrichmentProvider,
+} from './useEnrichment';

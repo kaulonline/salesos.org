@@ -14,6 +14,7 @@ import {
   PipelineSummaryCard,
   ActionItemsCard,
   RevenueForecastCard,
+  AIFeaturesCard,
   DailyActivity,
 } from '../../src/components/dashboard';
 
@@ -260,6 +261,11 @@ export const DashboardHome: React.FC = () => {
               onTaskClick={setSelectedTask}
             />
           </div>
+        </div>
+
+        {/* AI Features Section */}
+        <div className="mt-6">
+          <AIFeaturesCard />
         </div>
 
         {/* AI Forecast Section */}

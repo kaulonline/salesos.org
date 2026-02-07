@@ -16,6 +16,7 @@ import {
   CloseWonModal,
   CloseLostModal,
 } from '../../src/components/deals';
+import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai';
 import type { OpportunityStage } from '../../src/types';
 
 export const DealDetail: React.FC = () => {
@@ -240,6 +241,7 @@ export const DealDetail: React.FC = () => {
             onAdvanceStage={handleAdvanceStage}
             onCloseWon={() => setShowCloseWonModal(true)}
             onCloseLost={() => setShowCloseLostModal(true)}
+            onEnriched={() => refetch()}
             analyzingDeal={analyzingDeal}
             stageUpdating={stageUpdating}
           />
@@ -270,6 +272,27 @@ export const DealDetail: React.FC = () => {
                 onSetPrimary={setPrimary}
                 isAdding={isAddingContact}
                 isRemoving={isRemovingContact}
+              />
+
+              {/* AI Deal Analysis Widget */}
+              <DealAnalysisWidget
+                deal={{
+                  id: deal.id,
+                  name: deal.name,
+                  value: deal.amount || 0,
+                  stage: deal.stage,
+                  probability: deal.probability,
+                  notes: deal.needsAnalysis,
+                  daysInStage: deal.lastActivityDate
+                    ? Math.floor((Date.now() - new Date(deal.lastActivityDate).getTime()) / (1000 * 60 * 60 * 24))
+                    : undefined,
+                  contacts: buyerCommittee?.map((c) => ({
+                    name: `${c.firstName} ${c.lastName}`,
+                    title: c.title || '',
+                    engagement: c.role || 'stakeholder',
+                  })),
+                  competitors: deal.competitors,
+                }}
               />
             </div>
 

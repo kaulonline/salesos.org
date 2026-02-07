@@ -114,6 +114,36 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D] resize-none"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-[#666] mb-1">
+              Pain Points <span className="text-[#999] font-normal">(comma-separated)</span>
+            </label>
+            <textarea
+              value={(editForm.painPoints || []).join(', ')}
+              onChange={(e) => setEditForm({
+                ...editForm,
+                painPoints: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+              })}
+              rows={2}
+              placeholder="e.g., Manual processes, Lack of visibility, Slow response times"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D] resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#666] mb-1">
+              Competitors <span className="text-[#999] font-normal">(comma-separated)</span>
+            </label>
+            <textarea
+              value={(editForm.competitors || []).join(', ')}
+              onChange={(e) => setEditForm({
+                ...editForm,
+                competitors: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+              })}
+              rows={2}
+              placeholder="e.g., CompetitorA, CompetitorB, CompetitorC"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D] resize-none"
+            />
+          </div>
         </div>
         <div className="flex justify-end gap-3 p-6 border-t border-gray-100 shrink-0">
           <button

@@ -21,6 +21,41 @@ import type { AgentAlert, AgentType, AlertPriority } from '../api/agentAlerts';
 import { formatDistanceToNow } from 'date-fns';
 import { logger } from '../lib/logger';
 
+// Entity type to route mapping
+const entityRouteMap: Record<string, string> = {
+  opportunity: 'deals',
+  deal: 'deals',
+  lead: 'leads',
+  contact: 'contacts',
+  account: 'companies',
+  company: 'companies',
+  quote: 'quotes',
+  order: 'orders',
+};
+
+// Entity type to display label mapping
+const entityLabelMap: Record<string, string> = {
+  opportunity: 'deal',
+  deal: 'deal',
+  lead: 'lead',
+  contact: 'contact',
+  account: 'company',
+  company: 'company',
+  quote: 'quote',
+  order: 'order',
+};
+
+// Helper to get the correct route for an entity
+const getEntityRoute = (entityType: string, entityId: string): string => {
+  const routeSegment = entityRouteMap[entityType.toLowerCase()] || `${entityType.toLowerCase()}s`;
+  return `/dashboard/${routeSegment}/${entityId}`;
+};
+
+// Helper to get the display label for an entity
+const getEntityLabel = (entityType: string): string => {
+  return entityLabelMap[entityType.toLowerCase()] || entityType.toLowerCase();
+};
+
 // Agent type icon mapping
 const agentIcons: Record<AgentType, React.ReactNode> = {
   DEAL_HEALTH: <TrendingUp size={16} />,
@@ -209,10 +244,10 @@ const AlertItem: React.FC<AlertItemProps> = ({
           {/* View Entity Link */}
           {alert.entityType && alert.entityId && (
             <Link
-              to={`/dashboard/${alert.entityType.toLowerCase()}s/${alert.entityId}`}
+              to={getEntityRoute(alert.entityType, alert.entityId)}
               className="inline-flex items-center gap-1 text-xs font-medium text-[#EAD07D] hover:text-[#1A1A1A] transition-colors"
             >
-              View {alert.entityType.toLowerCase()}
+              View {getEntityLabel(alert.entityType)}
               <ExternalLink size={12} />
             </Link>
           )}

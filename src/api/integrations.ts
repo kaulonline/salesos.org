@@ -225,7 +225,124 @@ export const calendarIntegrationsApi = {
   },
 };
 
+// ==================== THIRD-PARTY INTEGRATIONS ====================
+
+export type IntegrationType =
+  | 'zoominfo' | 'snowflake' | 'slack' | 'teams' | 'zoom' | 'intercom'
+  | 'linkedin' | 'apollo' | 'gong' | 'clearbit' | 'hubspot' | 'salesforce'
+  | 'marketo' | 'stripe' | 'quickbooks' | 'xero' | 'docusign' | 'pandadoc'
+  | 'dropbox' | 'gdrive' | 'segment' | 'looker' | 'zapier' | 'make'
+  | 'calendly' | 'okta' | 'auth0' | 'openai' | 'anthropic';
+
+export interface IntegrationStatus {
+  connected: boolean;
+  configured: boolean;
+  lastSyncAt?: string | null;
+  error?: string | null;
+}
+
+export interface IntegrationConfig {
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  webhookUrl?: string;
+  [key: string]: string | undefined;
+}
+
+export const thirdPartyIntegrationsApi = {
+  /**
+   * Get status of a specific integration
+   */
+  getStatus: async (integrationType: IntegrationType): Promise<IntegrationStatus> => {
+    try {
+      const response = await apiClient.get(`/integrations/${integrationType}/status`);
+      return response.data;
+    } catch (error: any) {
+      // If endpoint doesn't exist, return not configured
+      if (error.response?.status === 404) {
+        return { connected: false, configured: false };
+      }
+      return { connected: false, configured: false, error: error.message };
+    }
+  },
+
+  /**
+   * Get current configuration for an integration (masked for security)
+   * Returns audit info about who configured it and when
+   */
+  getConfig: async (integrationType: IntegrationType): Promise<{
+    configured: boolean;
+    config: Record<string, string>;
+    configuredBy?: { id: string; name: string; email: string } | null;
+    configuredAt?: string | null;
+  }> => {
+    try {
+      const response = await apiClient.get(`/integrations/${integrationType}/config`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return { configured: false, config: {}, configuredBy: null, configuredAt: null };
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get status of all integrations
+   */
+  getAllStatuses: async (): Promise<Record<IntegrationType, IntegrationStatus>> => {
+    try {
+      const response = await apiClient.get('/integrations/status');
+      return response.data;
+    } catch {
+      // Return empty object if endpoint doesn't exist
+      return {} as Record<IntegrationType, IntegrationStatus>;
+    }
+  },
+
+  /**
+   * Test connection for an integration
+   */
+  testConnection: async (integrationType: IntegrationType): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post(`/integrations/${integrationType}/test`);
+    return response.data;
+  },
+
+  /**
+   * Configure an integration (API key based)
+   */
+  configure: async (integrationType: IntegrationType, config: IntegrationConfig): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post(`/integrations/${integrationType}/configure`, config);
+    return response.data;
+  },
+
+  /**
+   * Initiate OAuth flow for OAuth-based integrations
+   */
+  initiateOAuth: async (integrationType: IntegrationType): Promise<{ success: boolean; authUrl: string }> => {
+    const response = await apiClient.post(`/integrations/${integrationType}/connect`);
+    return response.data;
+  },
+
+  /**
+   * Disconnect an integration
+   */
+  disconnect: async (integrationType: IntegrationType): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.delete(`/integrations/${integrationType}/disconnect`);
+    return response.data;
+  },
+
+  /**
+   * Trigger sync for an integration
+   */
+  triggerSync: async (integrationType: IntegrationType): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post(`/integrations/${integrationType}/sync`);
+    return response.data;
+  },
+};
+
 export default {
   email: emailIntegrationsApi,
   calendar: calendarIntegrationsApi,
+  thirdParty: thirdPartyIntegrationsApi,
 };

@@ -28,15 +28,23 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { IntegrationConfigModal, ConfigType } from '../../src/components/integrations';
 import {
   emailIntegrationsApi,
   calendarIntegrationsApi,
+  thirdPartyIntegrationsApi,
   EmailConnection,
   CalendarConnection,
   EmailProvider,
   CalendarProvider,
   ConnectionStatus,
+  IntegrationType,
+  IntegrationStatus,
 } from '../../src/api/integrations';
+
+// Logo.dev API for fetching company logos
+const LOGO_DEV_PUBLIC_KEY = 'pk_W2MYKZXiSAS4WfncVJ8b1A';
+const getLogoUrl = (domain: string) => `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_KEY}`;
 
 interface Integration {
   id: string;
@@ -51,23 +59,61 @@ interface Integration {
   provider?: EmailProvider | CalendarProvider;
   connectionId?: string;
   configured?: boolean;
+  integrationType?: IntegrationType; // For third-party integrations
+  oauthBased?: boolean; // Whether this integration uses OAuth
+  configType?: ConfigType; // Type of configuration modal to show
 }
 
-// Static integrations that aren't yet implemented
+// Static integrations - organized by implementation status
 const STATIC_INTEGRATIONS: Integration[] = [
-  { id: 'slack', name: 'Slack', description: 'Get deal alerts, team notifications, and AI summaries in Slack.', logo: '💬', category: 'communication', status: 'disconnected', popular: true },
-  { id: 'stripe', name: 'Stripe', description: 'Sync payments, invoices, and revenue data automatically.', logo: '💳', category: 'payment', status: 'disconnected', popular: true },
-  { id: 'hubspot', name: 'HubSpot', description: 'Two-way sync contacts, deals, and marketing data.', logo: '🔶', category: 'analytics', status: 'disconnected', popular: true },
-  { id: 'salesforce', name: 'Salesforce', description: 'Import existing CRM data and sync bidirectionally.', logo: '☁️', category: 'analytics', status: 'disconnected', popular: true },
-  { id: 'zoom', name: 'Zoom', description: 'Auto-log meetings, record calls, and generate AI transcripts.', logo: '📹', category: 'communication', status: 'disconnected', popular: true },
-  { id: 'docusign', name: 'DocuSign', description: 'Send contracts and track e-signatures from within deals.', logo: '✍️', category: 'storage', status: 'disconnected', popular: false },
-  { id: 'dropbox', name: 'Dropbox', description: 'Attach and share files directly from Dropbox.', logo: '📦', category: 'storage', status: 'disconnected', popular: false },
-  { id: 'linkedin', name: 'LinkedIn Sales Nav', description: 'Enrich contacts and track prospect activity.', logo: '💼', category: 'analytics', status: 'disconnected', popular: true },
-  { id: 'zapier', name: 'Zapier', description: 'Connect 5000+ apps with custom automations.', logo: '⚡', category: 'analytics', status: 'disconnected', popular: true },
-  { id: 'intercom', name: 'Intercom', description: 'Sync customer conversations and support tickets.', logo: '💭', category: 'communication', status: 'disconnected', popular: false },
-  { id: 'okta', name: 'Okta SSO', description: 'Enterprise single sign-on and user provisioning.', logo: '🔐', category: 'security', status: 'disconnected', popular: false },
-  { id: 'quickbooks', name: 'QuickBooks', description: 'Sync invoices, payments, and financial data.', logo: '📊', category: 'payment', status: 'disconnected', popular: false },
-  { id: 'segment', name: 'Segment', description: 'Customer data platform integration.', logo: '🎯', category: 'analytics', status: 'disconnected', popular: false },
+  // Communication Integrations (OAuth-based)
+  { id: 'slack', name: 'Slack', description: 'Get deal alerts, team notifications, and AI summaries in Slack channels.', logo: getLogoUrl('slack.com'), category: 'communication', status: 'disconnected', popular: true, configured: true, integrationType: 'slack', oauthBased: true, configType: 'oauth' },
+  { id: 'teams', name: 'Microsoft Teams', description: 'Collaborate on deals and get notifications directly in Teams.', logo: getLogoUrl('microsoft.com'), category: 'communication', status: 'disconnected', popular: true, configured: true, integrationType: 'teams', oauthBased: true, configType: 'oauth' },
+  { id: 'zoom', name: 'Zoom', description: 'Auto-log meetings, record calls, and generate AI transcripts.', logo: getLogoUrl('zoom.us'), category: 'communication', status: 'disconnected', popular: true, configured: true, integrationType: 'zoom', oauthBased: true, configType: 'oauth' },
+  { id: 'intercom', name: 'Intercom', description: 'Sync customer conversations and support tickets.', logo: getLogoUrl('intercom.com'), category: 'communication', status: 'disconnected', popular: false, configured: true, integrationType: 'intercom', oauthBased: true, configType: 'oauth' },
+
+  // Sales Intelligence & Data Enrichment
+  { id: 'zoominfo', name: 'ZoomInfo', description: 'Enrich contacts with verified B2B data, intent signals, and org charts.', logo: getLogoUrl('zoominfo.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'zoominfo', oauthBased: false, configType: 'api_key' },
+  { id: 'linkedin', name: 'LinkedIn Sales Nav', description: 'Enrich contacts and track prospect activity on LinkedIn.', logo: getLogoUrl('linkedin.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'linkedin', oauthBased: true, configType: 'oauth' },
+  { id: 'apollo', name: 'Apollo.io', description: 'Access 270M+ contacts with verified emails and phone numbers.', logo: getLogoUrl('apollo.io'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'apollo', oauthBased: false, configType: 'api_key' },
+  { id: 'gong', name: 'Gong', description: 'AI-powered revenue intelligence from call recordings and emails.', logo: getLogoUrl('gong.io'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'gong', oauthBased: true, configType: 'oauth' },
+  { id: 'clearbit', name: 'Clearbit', description: 'Real-time data enrichment for leads and accounts.', logo: getLogoUrl('clearbit.com'), category: 'analytics', status: 'disconnected', popular: false, configured: true, integrationType: 'clearbit', oauthBased: false, configType: 'api_key' },
+
+  // CRM & Marketing Automation
+  { id: 'hubspot', name: 'HubSpot', description: 'Two-way sync contacts, deals, and marketing automation data.', logo: getLogoUrl('hubspot.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'hubspot', oauthBased: true, configType: 'oauth' },
+  { id: 'salesforce', name: 'Salesforce', description: 'Import existing CRM data and sync bidirectionally.', logo: getLogoUrl('salesforce.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'salesforce', oauthBased: true, configType: 'oauth' },
+  { id: 'marketo', name: 'Marketo', description: 'Sync marketing leads, campaigns, and engagement data.', logo: getLogoUrl('marketo.com'), category: 'analytics', status: 'disconnected', popular: false, configured: true, integrationType: 'marketo', oauthBased: false, configType: 'multi_field' },
+
+  // Payment & Finance (OAuth-based)
+  { id: 'stripe', name: 'Stripe', description: 'Sync payments, subscriptions, invoices, and revenue data.', logo: getLogoUrl('stripe.com'), category: 'payment', status: 'disconnected', popular: true, configured: true, integrationType: 'stripe', oauthBased: true, configType: 'oauth' },
+  { id: 'quickbooks', name: 'QuickBooks', description: 'Sync invoices, payments, and financial reports.', logo: getLogoUrl('intuit.com'), category: 'payment', status: 'disconnected', popular: true, configured: true, integrationType: 'quickbooks', oauthBased: true, configType: 'oauth' },
+  { id: 'xero', name: 'Xero', description: 'Connect accounting data, invoices, and financial insights.', logo: getLogoUrl('xero.com'), category: 'payment', status: 'disconnected', popular: false, configured: true, integrationType: 'xero', oauthBased: true, configType: 'oauth' },
+
+  // Document & E-Signature (OAuth-based)
+  { id: 'docusign', name: 'DocuSign', description: 'Send contracts and track e-signatures from within deals.', logo: getLogoUrl('docusign.com'), category: 'storage', status: 'disconnected', popular: true, configured: true, integrationType: 'docusign', oauthBased: true, configType: 'oauth' },
+  { id: 'pandadoc', name: 'PandaDoc', description: 'Create proposals, quotes, and contracts with e-signatures.', logo: getLogoUrl('pandadoc.com'), category: 'storage', status: 'disconnected', popular: true, configured: true, integrationType: 'pandadoc', oauthBased: true, configType: 'oauth' },
+  { id: 'dropbox', name: 'Dropbox', description: 'Attach and share files directly from Dropbox.', logo: getLogoUrl('dropbox.com'), category: 'storage', status: 'disconnected', popular: false, configured: true, integrationType: 'dropbox', oauthBased: true, configType: 'oauth' },
+  { id: 'gdrive', name: 'Google Drive', description: 'Store and access sales documents from Google Drive.', logo: getLogoUrl('google.com'), category: 'storage', status: 'disconnected', popular: true, configured: true, integrationType: 'gdrive', oauthBased: true, configType: 'oauth' },
+
+  // Data & Analytics
+  { id: 'snowflake', name: 'Snowflake', description: 'Sync CRM data to your data warehouse for advanced analytics.', logo: getLogoUrl('snowflake.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'snowflake', oauthBased: false, configType: 'multi_field' },
+  { id: 'segment', name: 'Segment', description: 'Customer data platform for unified analytics.', logo: getLogoUrl('segment.com'), category: 'analytics', status: 'disconnected', popular: false, configured: true, integrationType: 'segment', oauthBased: false, configType: 'api_key' },
+  { id: 'looker', name: 'Looker', description: 'Create custom dashboards and reports from CRM data.', logo: getLogoUrl('looker.com'), category: 'analytics', status: 'disconnected', popular: false, configured: true, integrationType: 'looker', oauthBased: false, configType: 'multi_field' },
+
+  // Automation & Integration (Webhook-based)
+  { id: 'zapier', name: 'Zapier', description: 'Connect 6000+ apps with no-code automations (Zaps).', logo: getLogoUrl('zapier.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'zapier', oauthBased: false, configType: 'webhook' },
+  { id: 'make', name: 'Make (Integromat)', description: 'Build complex workflows with visual automation builder.', logo: getLogoUrl('make.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'make', oauthBased: false, configType: 'webhook' },
+
+  // Scheduling (OAuth-based)
+  { id: 'calendly', name: 'Calendly', description: 'Let prospects book meetings directly on your calendar.', logo: getLogoUrl('calendly.com'), category: 'calendar', status: 'disconnected', popular: true, configured: true, integrationType: 'calendly', oauthBased: true, configType: 'oauth' },
+
+  // Security & SSO (OAuth-based)
+  { id: 'okta', name: 'Okta SSO', description: 'Enterprise single sign-on and user provisioning.', logo: getLogoUrl('okta.com'), category: 'security', status: 'disconnected', popular: true, configured: true, integrationType: 'okta', oauthBased: true, configType: 'oauth' },
+  { id: 'auth0', name: 'Auth0', description: 'Flexible authentication and identity management.', logo: getLogoUrl('auth0.com'), category: 'security', status: 'disconnected', popular: false, configured: true, integrationType: 'auth0', oauthBased: true, configType: 'oauth' },
+
+  // AI & Productivity (API key-based)
+  { id: 'openai', name: 'OpenAI', description: 'Power AI features with GPT-4 for emails, summaries, and insights.', logo: getLogoUrl('openai.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'openai', oauthBased: false, configType: 'api_key' },
+  { id: 'anthropic', name: 'Claude AI', description: 'Advanced AI assistant for sales intelligence and automation.', logo: getLogoUrl('anthropic.com'), category: 'analytics', status: 'disconnected', popular: true, configured: true, integrationType: 'anthropic', oauthBased: false, configType: 'api_key' },
 ];
 
 const CATEGORIES = [
@@ -117,6 +163,7 @@ export const IntegrationsPage: React.FC = () => {
   const [calendarConnections, setCalendarConnections] = useState<CalendarConnection[]>([]);
   const [availableEmailIntegrations, setAvailableEmailIntegrations] = useState<Integration[]>([]);
   const [availableCalendarIntegrations, setAvailableCalendarIntegrations] = useState<Integration[]>([]);
+  const [thirdPartyStatuses, setThirdPartyStatuses] = useState<Record<string, IntegrationStatus>>({});
 
   // Action states
   const [connecting, setConnecting] = useState<string | null>(null);
@@ -129,6 +176,17 @@ export const IntegrationsPage: React.FC = () => {
     isOpen: boolean;
     integration: Integration | null;
   }>({ isOpen: false, integration: null });
+
+  // Config modal state
+  const [configModal, setConfigModal] = useState<{
+    isOpen: boolean;
+    integration: Integration | null;
+    isEditing: boolean;
+    existingConfig?: Record<string, string>;
+    configuredBy?: { id: string; name: string; email: string } | null;
+    configuredAt?: string | null;
+  }>({ isOpen: false, integration: null, isEditing: false });
+
 
   // Handle OAuth redirect result
   useEffect(() => {
@@ -166,22 +224,24 @@ export const IntegrationsPage: React.FC = () => {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [emailConns, calendarConns, emailAvailable, calendarAvailable] = await Promise.all([
+      const [emailConns, calendarConns, emailAvailable, calendarAvailable, allStatuses] = await Promise.all([
         emailIntegrationsApi.getConnections().catch(() => ({ connections: [] })),
         calendarIntegrationsApi.getConnections().catch(() => ({ connections: [] })),
         emailIntegrationsApi.getAvailable().catch(() => ({ integrations: [] })),
         calendarIntegrationsApi.getAvailable().catch(() => ({ integrations: [] })),
+        thirdPartyIntegrationsApi.getAllStatuses().catch(() => ({})),
       ]);
 
       setEmailConnections(emailConns.connections || []);
       setCalendarConnections(calendarConns.connections || []);
+      setThirdPartyStatuses(allStatuses);
 
       // Map available email integrations
       const emailIntegrations: Integration[] = (emailAvailable.integrations || []).map(int => ({
         id: `email-${int.provider.toLowerCase()}`,
         name: int.name,
         description: int.description,
-        logo: int.provider === 'GMAIL' ? '📧' : '📬',
+        logo: int.provider === 'GMAIL' ? getLogoUrl('gmail.com') : getLogoUrl('outlook.com'),
         category: 'email' as const,
         status: 'disconnected' as const,
         popular: true,
@@ -194,7 +254,7 @@ export const IntegrationsPage: React.FC = () => {
         id: `calendar-${int.provider.toLowerCase()}`,
         name: int.name,
         description: int.description,
-        logo: int.provider === 'GOOGLE' ? '📅' : '📆',
+        logo: int.provider === 'GOOGLE' ? getLogoUrl('google.com') : getLogoUrl('outlook.com'),
         category: 'calendar' as const,
         status: 'disconnected' as const,
         popular: true,
@@ -222,7 +282,7 @@ export const IntegrationsPage: React.FC = () => {
       id: `email-conn-${conn.id}`,
       name: conn.provider === EmailProvider.GMAIL ? 'Gmail' : 'Microsoft Outlook',
       description: conn.email,
-      logo: conn.provider === EmailProvider.GMAIL ? '📧' : '📬',
+      logo: conn.provider === EmailProvider.GMAIL ? getLogoUrl('gmail.com') : getLogoUrl('outlook.com'),
       category: 'email' as const,
       status: mapConnectionStatus(conn.status),
       lastSync: formatLastSync(conn.lastSyncAt),
@@ -236,7 +296,7 @@ export const IntegrationsPage: React.FC = () => {
       id: `calendar-conn-${conn.id}`,
       name: conn.provider === CalendarProvider.GOOGLE ? 'Google Calendar' : 'Outlook Calendar',
       description: conn.email,
-      logo: conn.provider === CalendarProvider.GOOGLE ? '📅' : '📆',
+      logo: conn.provider === CalendarProvider.GOOGLE ? getLogoUrl('google.com') : getLogoUrl('outlook.com'),
       category: 'calendar' as const,
       status: mapConnectionStatus(conn.status),
       lastSync: formatLastSync(conn.lastSyncAt),
@@ -253,8 +313,21 @@ export const IntegrationsPage: React.FC = () => {
     ...availableCalendarIntegrations.filter(int =>
       !calendarConnections.some(conn => conn.provider === int.provider)
     ),
-    // Static integrations
-    ...STATIC_INTEGRATIONS,
+    // Static integrations with real-time status from API
+    ...STATIC_INTEGRATIONS.map(int => {
+      const status = int.integrationType ? thirdPartyStatuses[int.integrationType] : undefined;
+      if (status) {
+        return {
+          ...int,
+          status: status.connected ? 'connected' as const : 'disconnected' as const,
+          // Keep configured: true for static integrations - they're always available
+          // The API's configured field indicates if credentials exist, not if it's available
+          configured: true,
+          lastSync: status.lastSyncAt ? formatLastSync(status.lastSyncAt) : undefined,
+        };
+      }
+      return int;
+    }),
   ];
 
   const filteredIntegrations = integrations.filter(int => {
@@ -271,37 +344,55 @@ export const IntegrationsPage: React.FC = () => {
   const totalDataPoints = integrations.reduce((sum, i) => sum + (i.dataPoints || 0), 0);
 
   const handleConnect = async (integration: Integration) => {
-    if (!integration.provider || !integration.configured) {
-      setNotification({
-        type: 'error',
-        message: integration.configured === false
-          ? `${integration.name} is not configured. Please configure OAuth credentials in the backend.`
-          : 'This integration is not yet available.',
-      });
+    // Handle email/calendar integrations with provider
+    if (integration.provider) {
+      // If not configured, show config modal to enter OAuth credentials
+      if (!integration.configured) {
+        // Create a modified integration object for the modal
+        const modalIntegration = {
+          ...integration,
+          integrationType: integration.id, // Use id as integrationType for the modal
+          configType: 'oauth' as ConfigType,
+        };
+        setConfigModal({ isOpen: true, integration: modalIntegration, isEditing: false });
+        return;
+      }
+
+      // Already configured - initiate OAuth flow
+      setConnecting(integration.id);
+      try {
+        let result;
+        if (integration.category === 'email') {
+          result = await emailIntegrationsApi.initiateOAuth(integration.provider as EmailProvider);
+        } else if (integration.category === 'calendar') {
+          result = await calendarIntegrationsApi.initiateOAuth(integration.provider as CalendarProvider);
+        }
+
+        if (result?.authUrl) {
+          window.location.href = result.authUrl;
+        }
+      } catch (error: any) {
+        setNotification({
+          type: 'error',
+          message: error.response?.data?.message || 'Failed to initiate connection',
+        });
+      } finally {
+        setConnecting(null);
+      }
       return;
     }
 
-    setConnecting(integration.id);
-    try {
-      let result;
-      if (integration.category === 'email') {
-        result = await emailIntegrationsApi.initiateOAuth(integration.provider as EmailProvider);
-      } else if (integration.category === 'calendar') {
-        result = await calendarIntegrationsApi.initiateOAuth(integration.provider as CalendarProvider);
-      }
-
-      if (result?.authUrl) {
-        // Redirect to OAuth provider
-        window.location.href = result.authUrl;
-      }
-    } catch (error: any) {
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to initiate connection',
-      });
-    } finally {
-      setConnecting(null);
+    // Handle third-party integrations - always show config modal
+    if (integration.integrationType) {
+      setConfigModal({ isOpen: true, integration, isEditing: false });
+      return;
     }
+
+    // Fallback for integrations without integrationType
+    setNotification({
+      type: 'error',
+      message: 'This integration is not yet available.',
+    });
   };
 
   const handleSync = async (integration: Integration) => {
@@ -331,6 +422,39 @@ export const IntegrationsPage: React.FC = () => {
     setDisconnectModal({ isOpen: true, integration });
   };
 
+  const handleEditIntegration = async (integration: Integration) => {
+    // Fetch existing config for the integration
+    const integrationType = integration.integrationType || integration.id;
+    try {
+      const { configured, config, configuredBy, configuredAt } = await thirdPartyIntegrationsApi.getConfig(integrationType as IntegrationType);
+      if (configured) {
+        setConfigModal({
+          isOpen: true,
+          integration,
+          isEditing: true,
+          existingConfig: config,
+          configuredBy,
+          configuredAt,
+        });
+      } else {
+        // No existing config, open in create mode
+        setConfigModal({
+          isOpen: true,
+          integration,
+          isEditing: false,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch integration config:', error);
+      // Fall back to opening the modal without existing values
+      setConfigModal({
+        isOpen: true,
+        integration,
+        isEditing: false,
+      });
+    }
+  };
+
   const confirmDisconnect = async () => {
     const integration = disconnectModal.integration;
     if (!integration?.connectionId) return;
@@ -353,6 +477,55 @@ export const IntegrationsPage: React.FC = () => {
       });
     } finally {
       setDisconnecting(null);
+    }
+  };
+
+  const handleConfigSubmit = async (values: Record<string, string>) => {
+    const integration = configModal.integration;
+    if (!integration) return;
+
+    try {
+      // Determine the integration type for API calls
+      const integrationType = integration.integrationType || integration.id;
+
+      // Save the configuration via the generic configure endpoint
+      await thirdPartyIntegrationsApi.configure(integrationType as IntegrationType, values);
+
+      // For OAuth integrations (including email/calendar), try to initiate OAuth flow
+      if (integration.oauthBased || integration.configType === 'oauth' || integration.provider) {
+        setConfigModal({ isOpen: false, integration: null, isEditing: false });
+        setNotification({ type: 'success', message: `${integration.name} credentials saved. Initiating connection...` });
+
+        // Try to initiate OAuth flow
+        try {
+          let result;
+          if (integration.provider && integration.category === 'email') {
+            result = await emailIntegrationsApi.initiateOAuth(integration.provider as EmailProvider);
+          } else if (integration.provider && integration.category === 'calendar') {
+            result = await calendarIntegrationsApi.initiateOAuth(integration.provider as CalendarProvider);
+          } else {
+            result = await thirdPartyIntegrationsApi.initiateOAuth(integrationType as IntegrationType);
+          }
+
+          if (result?.authUrl) {
+            window.location.href = result.authUrl;
+          } else {
+            setNotification({ type: 'success', message: `${integration.name} configured successfully!` });
+            loadData();
+          }
+        } catch {
+          // OAuth flow failed, but credentials are saved
+          setNotification({ type: 'success', message: `${integration.name} credentials saved. Restart the backend to apply changes.` });
+          loadData();
+        }
+      } else {
+        // Non-OAuth integrations - just show success
+        setNotification({ type: 'success', message: `${integration.name} configured successfully!` });
+        setConfigModal({ isOpen: false, integration: null, isEditing: false });
+        loadData();
+      }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to configure integration');
     }
   };
 
@@ -516,8 +689,13 @@ export const IntegrationsPage: React.FC = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm">
-                    {integration.logo}
+                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden">
+                    <img
+                      src={integration.logo}
+                      alt={integration.name}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(integration.name)}&background=EAD07D&color=1A1A1A&size=64`; }}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -539,6 +717,16 @@ export const IntegrationsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    {/* Settings/Edit button for third-party integrations */}
+                    {integration.integrationType && (
+                      <button
+                        onClick={() => handleEditIntegration(integration)}
+                        className="p-2 rounded-lg hover:bg-white transition-colors"
+                        title="Edit settings"
+                      >
+                        <Settings size={16} className="text-[#666]" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleSync(integration)}
                       disabled={syncing === integration.id}
@@ -582,8 +770,13 @@ export const IntegrationsPage: React.FC = () => {
                 className="p-5 border-[#EAD07D]/30 bg-[#EAD07D]/10"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm">
-                    {integration.logo}
+                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden">
+                    <img
+                      src={integration.logo}
+                      alt={integration.name}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(integration.name)}&background=EAD07D&color=1A1A1A&size=64`; }}
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -622,21 +815,25 @@ export const IntegrationsPage: React.FC = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#F8F8F6] flex items-center justify-center text-2xl group-hover:bg-[#EAD07D]/20 transition-colors">
-                    {integration.logo}
+                  <div className="w-12 h-12 rounded-xl bg-[#F8F8F6] flex items-center justify-center group-hover:bg-[#EAD07D]/20 transition-colors overflow-hidden">
+                    <img
+                      src={integration.logo}
+                      alt={integration.name}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(integration.name)}&background=F8F8F6&color=1A1A1A&size=64`; }}
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-[#1A1A1A] group-hover:text-[#EAD07D] transition-colors">{integration.name}</h3>
                       {integration.popular && <Badge variant="yellow" size="sm">Popular</Badge>}
-                      {integration.configured === false && <Badge variant="neutral" size="sm">Not Configured</Badge>}
                     </div>
                     <p className="text-sm text-[#666] line-clamp-2">{integration.description}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => handleConnect(integration)}
-                  disabled={connecting === integration.id || integration.configured === false}
+                  disabled={connecting === integration.id}
                   className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group-hover:bg-[#1A1A1A] group-hover:text-white group-hover:border-[#1A1A1A]"
                 >
                   {connecting === integration.id ? (
@@ -679,6 +876,25 @@ export const IntegrationsPage: React.FC = () => {
         confirmLabel="Disconnect"
         variant="warning"
       />
+
+      {/* Integration Configuration Modal */}
+      {configModal.integration && (
+        <IntegrationConfigModal
+          isOpen={configModal.isOpen}
+          onClose={() => setConfigModal({ isOpen: false, integration: null, isEditing: false })}
+          onSubmit={handleConfigSubmit}
+          integration={{
+            id: configModal.integration.integrationType || configModal.integration.id,
+            name: configModal.integration.name,
+            logo: configModal.integration.logo,
+            configType: configModal.integration.configType || 'api_key',
+          }}
+          isEditing={configModal.isEditing}
+          existingConfig={configModal.existingConfig}
+          configuredBy={configModal.configuredBy}
+          configuredAt={configModal.configuredAt}
+        />
+      )}
     </div>
   );
 };

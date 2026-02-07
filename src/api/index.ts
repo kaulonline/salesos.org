@@ -133,6 +133,38 @@ export { default as playbooksApi } from './playbooks';
 // Outcome-based billing
 export { default as outcomeBillingApi, adminOutcomeBillingApi } from './outcomeBilling';
 
+// AI and Data Enrichment APIs
+export { default as aiApi } from './ai';
+export { default as enrichmentApi } from './enrichment';
+
+// Re-export AI types
+export type {
+  EmailDraftRequest,
+  EmailDraftResponse,
+  DealAnalysisRequest,
+  DealAnalysisResponse,
+  LeadScoreRequest,
+  LeadScoreResponse,
+  MeetingSummaryRequest,
+  MeetingSummaryResponse,
+  FollowUpRequest,
+  FollowUpResponse,
+  AIStatusResponse,
+} from './ai';
+
+// Re-export Enrichment types
+export type {
+  EnrichmentProvider,
+  EntityType,
+  EnrichedPersonData,
+  EnrichedCompanyData,
+  EnrichmentResult,
+  BulkEnrichmentResult,
+  ProviderStatus,
+  EnrichmentStatusResponse,
+  EnrichmentPreview,
+} from './enrichment';
+
 // Re-export outcome billing types
 export type {
   OutcomePricingModel,

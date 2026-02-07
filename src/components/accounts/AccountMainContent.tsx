@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Briefcase, Users, Edit3, Calendar, AlertTriangle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -18,12 +17,18 @@ interface AccountMainContentProps {
   account: Account;
   revenue?: RevenueData | null;
   onEdit: () => void;
+  onNewDeal: () => void;
+  onAddContact: () => void;
+  onSchedule: () => void;
 }
 
 export const AccountMainContent: React.FC<AccountMainContentProps> = ({
   account,
   revenue,
   onEdit,
+  onNewDeal,
+  onAddContact,
+  onSchedule,
 }) => {
   return (
     <div className="lg:col-span-8 space-y-6">
@@ -90,24 +95,24 @@ export const AccountMainContent: React.FC<AccountMainContentProps> = ({
       <Card className="p-6">
         <h3 className="text-lg font-medium text-[#1A1A1A] mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Link
-            to="/dashboard/deals"
+          <button
+            onClick={onNewDeal}
             className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
           >
             <Briefcase size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
             <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">
               New Deal
             </span>
-          </Link>
-          <Link
-            to="/dashboard/contacts"
+          </button>
+          <button
+            onClick={onAddContact}
             className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
           >
             <Users size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
             <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">
               Add Contact
             </span>
-          </Link>
+          </button>
           <button
             onClick={onEdit}
             className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
@@ -115,13 +120,13 @@ export const AccountMainContent: React.FC<AccountMainContentProps> = ({
             <Edit3 size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
             <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">Edit</span>
           </button>
-          <Link
-            to="/dashboard/calendar"
+          <button
+            onClick={onSchedule}
             className="flex flex-col items-center gap-2 p-4 bg-[#1A1A1A] rounded-xl hover:bg-[#333] transition-colors group"
           >
             <Calendar size={20} className="text-white" />
             <span className="text-xs font-medium text-white">Schedule</span>
-          </Link>
+          </button>
         </div>
       </Card>
 

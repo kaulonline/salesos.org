@@ -18,6 +18,24 @@ import type { AgentAlert, AgentType, AlertPriority } from '../api/agentAlerts';
 import { formatDistanceToNow } from 'date-fns';
 import { logger } from '../lib/logger';
 
+// Entity type to route mapping
+const entityRouteMap: Record<string, string> = {
+  opportunity: 'deals',
+  deal: 'deals',
+  lead: 'leads',
+  contact: 'contacts',
+  account: 'companies',
+  company: 'companies',
+  quote: 'quotes',
+  order: 'orders',
+};
+
+// Helper to get the correct route for an entity
+const getEntityRoute = (entityType: string, entityId: string): string => {
+  const routeSegment = entityRouteMap[entityType.toLowerCase()] || `${entityType.toLowerCase()}s`;
+  return `/dashboard/${routeSegment}/${entityId}`;
+};
+
 // Agent type icon mapping
 const agentIcons: Record<AgentType, React.ReactNode> = {
   DEAL_HEALTH: <TrendingUp size={14} />,
@@ -72,9 +90,9 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onAcknowledge, onDismiss, 
   const styles = priorityStyles[alert.priority];
   const healthScore = alert.metadata?.healthScore;
 
-  // Build entity link
+  // Build entity link using proper route mapping
   const entityLink = alert.entityType && alert.entityId
-    ? `/dashboard/${alert.entityType.toLowerCase()}s/${alert.entityId}`
+    ? getEntityRoute(alert.entityType, alert.entityId)
     : null;
 
   return (
