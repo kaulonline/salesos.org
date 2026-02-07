@@ -1,0 +1,40 @@
+module.exports = {
+  apps: [
+    {
+      name: 'salesos-backend',
+      cwd: './api',
+      script: 'dist/src/main.js',
+      node_args: '--enable-source-maps',
+      env: {
+        NODE_ENV: 'production',
+      },
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_memory_restart: '500M',
+      error_file: './logs/backend-error.log',
+      out_file: './logs/backend-out.log',
+      log_file: './logs/backend-combined.log',
+      time: true,
+      listen_timeout: 30000,
+    },
+    {
+      name: 'salesos-frontend',
+      cwd: './',
+      script: 'node_modules/.bin/serve',
+      args: '-s dist -l 3000',
+      env: {
+        NODE_ENV: 'production',
+      },
+      watch: false,
+      instances: 1,
+      autorestart: true,
+      max_memory_restart: '200M',
+      error_file: './logs/frontend-error.log',
+      out_file: './logs/frontend-out.log',
+      log_file: './logs/frontend-combined.log',
+      time: true,
+    },
+  ],
+};
