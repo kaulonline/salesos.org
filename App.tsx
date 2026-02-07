@@ -111,6 +111,11 @@ const WinLoss = lazy(() => import('./pages/dashboard/WinLoss').then(m => ({ defa
 const Playbooks = lazy(() => import('./pages/dashboard/Playbooks').then(m => ({ default: m.Playbooks })));
 const ConversationIntelligence = lazy(() => import('./pages/dashboard/ConversationIntelligence').then(m => ({ default: m.ConversationIntelligence })));
 
+// Siebel CRM Concepts - Splits, Competitors, Assets, Partners
+const Competitors = lazy(() => import('./pages/dashboard/Competitors').then(m => ({ default: m.Competitors })));
+const Assets = lazy(() => import('./pages/dashboard/Assets').then(m => ({ default: m.Assets })));
+const Partners = lazy(() => import('./pages/dashboard/Partners').then(m => ({ default: m.Partners })));
+
 // Admin Outcome Billing
 const OutcomePricing = lazy(() => import('./pages/dashboard/OutcomePricing').then(m => ({ default: m.OutcomePricing })));
 
@@ -598,6 +603,27 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <ConversationIntelligence />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="competitors" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Competitors />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="assets" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Assets />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="partners" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Partners />
                 </Suspense>
               </PageErrorBoundary>
             } />

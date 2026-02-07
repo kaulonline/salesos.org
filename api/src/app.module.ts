@@ -89,6 +89,10 @@ import { DigitalWorkersModule } from './digital-workers/digital-workers.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { OutcomeBillingModule } from './outcome-billing/outcome-billing.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
+import { SplitsModule } from './splits/splits.module';
+import { CompetitorsModule } from './competitors/competitors.module';
+import { AssetsModule } from './assets/assets.module';
+import { PartnersModule } from './partners/partners.module';
 
 @Module({
   imports: [
@@ -193,6 +197,10 @@ import { CollaborationModule } from './collaboration/collaboration.module';
     DigitalWorkersModule, // AI Digital Workers - signals, coaching agenda, recommendations
     IntegrationsModule, // External integrations - Snowflake, ZoomInfo, Microsoft 365
     CollaborationModule, // Real-time collaboration - presence tracking and record locking
+    SplitsModule, // Revenue splits - multi-rep credit allocation on deals
+    CompetitorsModule, // Competitor intelligence - battlecards and win/loss analysis
+    AssetsModule, // Asset/Installed base - customer-owned product tracking
+    PartnersModule, // Partner relationship management - deal registration portal
   ],
   controllers: [AppController],
   providers: [

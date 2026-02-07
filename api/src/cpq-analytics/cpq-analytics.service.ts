@@ -1071,23 +1071,49 @@ export class CpqAnalyticsService {
         ? monthlyValues.reduce((sum, m) => sum + m.value, 0) / monthlyValues.length
         : 0;
 
-    // Get current pipeline (sent quotes)
+    // Get current pipeline (SENT and DRAFT quotes) with expected close dates
     const pipeline = await this.prisma.quote.findMany({
       where: {
         ...where,
-        status: 'SENT',
+        status: { in: ['SENT', 'DRAFT'] },
       },
-      select: { totalPrice: true },
+      select: {
+        totalPrice: true,
+        validUntil: true,
+        createdAt: true,
+        status: true,
+      },
     });
 
-    const pipelineValue = pipeline.reduce(
-      (sum, q) => sum + Number(q.totalPrice || 0),
-      0,
-    );
-    const pipelineCount = pipeline.length;
+    // Group pipeline quotes by expected close month
+    const now = new Date();
+    const pipelineByMonth = new Map<string, { count: number; value: number; sentCount: number; draftCount: number }>();
+
+    pipeline.forEach((quote) => {
+      // Use validUntil as expected close date, fall back to 30 days from creation
+      let expectedClose = quote.validUntil || new Date(quote.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      // If validUntil is in the past, assume it closes this month or next
+      if (expectedClose < now) {
+        expectedClose = new Date(now);
+        expectedClose.setMonth(expectedClose.getMonth() + 1);
+      }
+
+      const key = `${expectedClose.getFullYear()}-${expectedClose.getMonth()}`;
+      const existing = pipelineByMonth.get(key) || { count: 0, value: 0, sentCount: 0, draftCount: 0 };
+
+      // Weight DRAFT quotes at 30% probability, SENT at 60%
+      const weight = quote.status === 'SENT' ? 0.6 : 0.3;
+
+      pipelineByMonth.set(key, {
+        count: existing.count + 1,
+        value: existing.value + Number(quote.totalPrice || 0) * weight,
+        sentCount: existing.sentCount + (quote.status === 'SENT' ? 1 : 0),
+        draftCount: existing.draftCount + (quote.status === 'DRAFT' ? 1 : 0),
+      });
+    });
 
     // Generate forecast for upcoming periods - return array matching CPQForecast type
-    const now = new Date();
     const forecastArray: {
       period: string;
       projectedQuotes: number;
@@ -1100,20 +1126,47 @@ export class CpqAnalyticsService {
     for (let i = 1; i <= periods; i++) {
       const forecastDate = new Date(now);
       forecastDate.setMonth(forecastDate.getMonth() + i);
+      const monthKey = `${forecastDate.getFullYear()}-${forecastDate.getMonth()}`;
 
-      // Calculate confidence based on historical data availability
-      const confidence = monthlyData.size >= 3 ? 75 : monthlyData.size >= 1 ? 50 : 25;
+      // Get pipeline data for this specific month
+      const monthPipeline = pipelineByMonth.get(monthKey) || { count: 0, value: 0, sentCount: 0, draftCount: 0 };
+
+      // Only use pipeline data if we have quotes for this month, otherwise show $0
+      const hasMonthPipeline = monthPipeline.count > 0;
+      const projectedQuotes = monthPipeline.count;
+      const projectedRevenue = monthPipeline.value;
+
+      // Calculate confidence based on pipeline composition
+      let confidence: number;
+      if (hasMonthPipeline) {
+        // SENT quotes = higher confidence (60%), DRAFT = lower (30%)
+        const sentRatio = monthPipeline.sentCount / monthPipeline.count;
+        confidence = Math.round(30 + (sentRatio * 30)); // 30-60% based on quote status mix
+      } else {
+        confidence = 0; // No pipeline = no forecast
+      }
+
+      const factors: string[] = [];
+      if (monthPipeline.sentCount > 0) {
+        factors.push(`${monthPipeline.sentCount} sent`);
+      }
+      if (monthPipeline.draftCount > 0) {
+        factors.push(`${monthPipeline.draftCount} draft`);
+      }
+      if (!hasMonthPipeline) {
+        factors.push('No quotes expected');
+      }
 
       forecastArray.push({
         period: forecastDate.toLocaleDateString('en-US', {
           month: 'short',
           year: 'numeric',
         }),
-        projectedQuotes: Math.round(avgMonthlyCount),
-        projectedOrders: Math.round(avgMonthlyCount * 0.3), // Assume 30% conversion
-        projectedRevenue: Math.round(avgMonthlyValue),
+        projectedQuotes,
+        projectedOrders: Math.round(projectedQuotes * 0.3), // Assume 30% conversion
+        projectedRevenue: Math.round(projectedRevenue),
         confidence,
-        factors: ['Historical trend', 'Current pipeline'],
+        factors,
       });
     }
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -61,6 +61,9 @@ export const DashboardLayout: React.FC = () => {
     'email-templates': Mail,
     'territories': Map,
     'playbooks': BookOpen,
+    'competitors': Swords,
+    'assets': HardDrive,
+    'partners': Handshake,
   };
 
   // Build dynamic "More" menu based on user preferences

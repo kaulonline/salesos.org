@@ -12,6 +12,9 @@ export const MENU_CATEGORIES = {
       { id: 'quotes', label: 'Quotes', href: '/dashboard/quotes' },
       { id: 'orders', label: 'Orders', href: '/dashboard/orders' },
       { id: 'cpq-analytics', label: 'CPQ Analytics', href: '/dashboard/cpq-analytics' },
+      { id: 'competitors', label: 'Competitors', href: '/dashboard/competitors' },
+      { id: 'assets', label: 'Assets', href: '/dashboard/assets' },
+      { id: 'partners', label: 'Partners', href: '/dashboard/partners' },
     ],
   },
   analytics: {
@@ -84,6 +87,29 @@ const getDefaultPreferences = (): MenuPreferences => {
   return prefs;
 };
 
+// Merge saved preferences with current menu structure to add new items
+const mergeWithDefaults = (saved: MenuPreferences): MenuPreferences => {
+  const defaults = getDefaultPreferences();
+  const merged: MenuPreferences = {
+    enabledCategories: [...new Set([...saved.enabledCategories, ...defaults.enabledCategories])],
+    enabledItems: { ...saved.enabledItems },
+  };
+
+  // Add any new items that weren't in saved preferences
+  Object.entries(MENU_CATEGORIES).forEach(([categoryId, category]) => {
+    const savedItems = saved.enabledItems[categoryId] || [];
+    const allItemIds = category.items.map(item => item.id);
+
+    // Find items that exist in menu but not in saved preferences (new items)
+    const newItems = allItemIds.filter(id => !savedItems.includes(id));
+
+    // Add new items to enabled list (they should be visible by default)
+    merged.enabledItems[categoryId] = [...savedItems, ...newItems];
+  });
+
+  return merged;
+};
+
 export interface MenuPreferences {
   enabledCategories: string[];
   enabledItems: Record<string, string[]>;
@@ -120,7 +146,8 @@ export const MenuPreferencesProvider: React.FC<{ children: React.ReactNode }> = 
         if (user?.id) {
           const response = await client.get('/users/me/preferences');
           if (response.data?.menuPreferences) {
-            setPreferences(response.data.menuPreferences);
+            // Merge with defaults to include any new menu items
+            setPreferences(mergeWithDefaults(response.data.menuPreferences));
             setIsLoading(false);
             return;
           }
@@ -133,7 +160,8 @@ export const MenuPreferencesProvider: React.FC<{ children: React.ReactNode }> = 
       const stored = localStorage.getItem(`${STORAGE_KEY}_${user?.id || 'guest'}`);
       if (stored) {
         try {
-          setPreferences(JSON.parse(stored));
+          // Merge with defaults to include any new menu items
+          setPreferences(mergeWithDefaults(JSON.parse(stored)));
         } catch {
           setPreferences(getDefaultPreferences());
         }

@@ -101,6 +101,17 @@ model User {
 
   // Playbooks
   playbooks Playbook[]
+
+  // Revenue Splits
+  opportunitySplits      OpportunitySplit[] @relation("SplitUser")
+  approvedSplits         OpportunitySplit[] @relation("SplitApprover")
+
+  // Partner Management
+  partnerMemberships     PartnerUser[]      @relation("PartnerUsers")
+  managedPartners        Partner[]          @relation("PartnerManager")
+  approvedDealRegs       DealRegistration[] @relation("DealRegApprover")
+  rejectedDealRegs       DealRegistration[] @relation("DealRegRejecter")
+  convertedDealRegs      DealRegistration[] @relation("DealRegConverter")
 }
 
 // Salesforce OAuth Connection
@@ -659,6 +670,14 @@ model Account {
   // Digital Worker - Account Signals
   signals AccountSignal[]
 
+  // Asset/Installed Base
+  assets           Asset[]
+  supportContracts SupportContract[]
+
+  // Partner Relationships
+  partnerAccounts  PartnerAccount[]
+  dealRegistrations DealRegistration[]
+
   // Multi-tenant
   organization Organization? @relation("OrganizationAccounts", fields: [organizationId], references: [id], onDelete: SetNull)
 
@@ -807,6 +826,15 @@ model Opportunity {
   emailThreads    EmailThread[]
   meetingSessions MeetingSession[] // Meeting Intelligence
   callHistory     CallHistory[]            @relation("OpportunityCallHistory") // Voice call history
+
+  // Revenue Splits
+  splits              OpportunitySplit[]
+
+  // Competitor Intelligence
+  opportunityCompetitors OpportunityCompetitor[]
+
+  // Partner Deal Registration
+  dealRegistration    DealRegistration?
 
   // Multi-tenant
   organization Organization? @relation("OrganizationOpportunities", fields: [organizationId], references: [id], onDelete: SetNull)
@@ -1645,6 +1673,10 @@ model Product {
   // Relations
   owner     User            @relation(fields: [ownerId], references: [id])
   lineItems QuoteLineItem[]
+
+  // Asset/Installed Base
+  assets            Asset[]            @relation("AssetProduct")
+  competitorProducts CompetitorProduct[] @relation("ComparableProduct")
 
   // Multi-tenant
   organization Organization? @relation("OrganizationProducts", fields: [organizationId], references: [id], onDelete: SetNull)
@@ -3095,6 +3127,13 @@ model Organization {
   products       Product[]       @relation("OrganizationProducts")
   territories    Territory[]     @relation("OrganizationTerritories")
   playbooks      Playbook[]      @relation("OrganizationPlaybooks")
+
+  // Siebel CRM Concepts
+  competitors        Competitor[]       @relation("OrganizationCompetitors")
+  assets             Asset[]            @relation("OrganizationAssets")
+  supportContracts   SupportContract[]  @relation("OrganizationSupportContracts")
+  partners           Partner[]          @relation("OrganizationPartners")
+  dealRegistrations  DealRegistration[] @relation("OrganizationDealRegistrations")
 
   // Outcome-based billing
   outcomePricingPlan OutcomePricingPlan?
@@ -7572,4 +7611,465 @@ model EntityPresence {
   @@index([entityType, entityId])
   @@index([lastSeenAt])
   @@map("entity_presence")
+}
+
+// ============================================================================
+// REVENUE SPLITS - Multi-rep credit allocation on deals
+// ============================================================================
+
+enum SplitType {
+  REVENUE   // Standard revenue split
+  OVERLAY   // Overlay rep (solutions engineer, specialist)
+  QUOTA     // Counts toward quota only
+  REFERRAL  // Referral credit
+  MANAGEMENT // Management override
+}
+
+enum SplitStatus {
+  PENDING   // Awaiting approval
+  APPROVED  // Approved by manager
+  REJECTED  // Rejected
+  LOCKED    // Deal closed, split locked
+}
+
+model OpportunitySplit {
+  id             String      @id @default(cuid())
+  opportunityId  String
+  organizationId String?
+  userId         String      // Rep receiving credit
+  splitType      SplitType   @default(REVENUE)
+  splitPercent   Float       // 0-100
+  splitAmount    Float?      // Cached: opportunity.amount * percent / 100
+  includeInQuota Boolean     @default(true)
+  includeInForecast Boolean  @default(true)
+  status         SplitStatus @default(PENDING)
+  approvedById   String?
+  approvedAt     DateTime?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user           User        @relation("SplitUser", fields: [userId], references: [id])
+  approvedBy     User?       @relation("SplitApprover", fields: [approvedById], references: [id])
+
+  @@unique([opportunityId, userId, splitType])
+  @@index([opportunityId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("opportunity_splits")
+}
+
+// ============================================================================
+// COMPETITOR INTELLIGENCE - Battlecards and win/loss analysis
+// ============================================================================
+
+enum CompetitorTier {
+  PRIMARY     // Main competitors
+  SECONDARY   // Occasional competitors
+  EMERGING    // Up-and-coming threats
+  INDIRECT    // Different solution, same budget
+}
+
+enum CompetitorStatus {
+  ACTIVE
+  INACTIVE
+  ACQUIRED
+  MERGED
+}
+
+enum ThreatLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Competitor {
+  id              String           @id @default(cuid())
+  organizationId  String?
+  name            String
+  website         String?
+  logoUrl         String?
+  description     String?
+  tier            CompetitorTier   @default(SECONDARY)
+  status          CompetitorStatus @default(ACTIVE)
+  strengths       String[]
+  weaknesses      String[]
+  differentiators String[]
+  targetMarket    String?
+  pricingModel    String?
+  winsAgainst     Int              @default(0)
+  lossesAgainst   Int              @default(0)
+  winRateAgainst  Float?           // Calculated: wins / (wins + losses)
+
+  // AI-generated cache fields
+  aiWinLossAnalysis    Json?       // Cached win/loss pattern analysis
+  aiWinLossGeneratedAt DateTime?   // When the analysis was generated
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  products          CompetitorProduct[]
+  battlecards       Battlecard[]
+  opportunityLinks  OpportunityCompetitor[]
+
+  organization Organization? @relation("OrganizationCompetitors", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([tier])
+  @@index([status])
+  @@map("competitors")
+}
+
+model CompetitorProduct {
+  id                    String   @id @default(cuid())
+  competitorId          String
+  name                  String
+  comparableToProductId String?  // Our product this competes with
+  featureGaps           String[] // Features they lack vs us
+  featureAdvantages     String[] // Features they have over us
+  positioning           String?
+  pricingInfo           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  competitor            Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  comparableToProduct   Product?   @relation("ComparableProduct", fields: [comparableToProductId], references: [id])
+
+  @@index([competitorId])
+  @@map("competitor_products")
+}
+
+model Battlecard {
+  id                 String   @id @default(cuid())
+  competitorId       String
+  title              String
+  overview           String?
+  keyTalkingPoints   String[]
+  objectionHandling  Json?    // { objection: string, response: string }[]
+  trapQuestions      String[] // Questions to ask that highlight competitor weaknesses
+  winThemes          String[]
+  loseThemes         String[]
+  differentiators    String[] // Key differentiators to emphasize
+  pricingComparison  String?
+  isActive           Boolean  @default(true)
+  isAiGenerated      Boolean  @default(false) // Whether this was AI-generated
+  version            Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  competitor         Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@index([competitorId])
+  @@index([isActive])
+  @@index([isAiGenerated])
+  @@map("battlecards")
+}
+
+model OpportunityCompetitor {
+  id                  String      @id @default(cuid())
+  opportunityId       String
+  competitorId        String
+  isPrimary           Boolean     @default(false) // Primary competitor on deal
+  threatLevel         ThreatLevel @default(MEDIUM)
+  notes               String?
+  wasCompetitorWinner Boolean?    // Set on close-lost if this competitor won
+  lossReasons         String[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  opportunity         Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  competitor          Competitor  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, competitorId])
+  @@index([opportunityId])
+  @@index([competitorId])
+  @@map("opportunity_competitors")
+}
+
+// ============================================================================
+// ASSET/INSTALLED BASE - Customer-owned product tracking
+// ============================================================================
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  PENDING      // Pending installation/activation
+  RETURNED
+  UNDER_REPAIR
+}
+
+enum SupportContractType {
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+  CUSTOM
+}
+
+model Asset {
+  id                String      @id @default(cuid())
+  accountId         String
+  organizationId    String?
+  productId         String?
+  name              String
+  serialNumber      String?     @unique
+  status            AssetStatus @default(ACTIVE)
+  quantity          Int         @default(1)
+  purchaseDate      DateTime?
+  installDate       DateTime?
+  warrantyStartDate DateTime?
+  warrantyEndDate   DateTime?
+  renewalDate       DateTime?
+  renewalValue      Float?
+  licenseKey        String?
+  seatCount         Int?
+  seatsUsed         Int?
+  version           String?
+  configuration     Json?
+  supportContractId String?
+  notes             String?
+  metadata          Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  account           Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  product           Product?          @relation("AssetProduct", fields: [productId], references: [id])
+  supportContract   SupportContract?  @relation(fields: [supportContractId], references: [id])
+
+  organization Organization? @relation("OrganizationAssets", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([productId])
+  @@index([renewalDate])
+  @@index([warrantyEndDate])
+  @@index([organizationId])
+  @@index([status])
+  @@map("assets")
+}
+
+model SupportContract {
+  id             String              @id @default(cuid())
+  accountId      String
+  organizationId String?
+  contractNumber String              @unique
+  name           String
+  type           SupportContractType @default(STANDARD)
+  startDate      DateTime
+  endDate        DateTime
+  contractValue  Float
+  annualValue    Float?
+  slaLevel       String?             // e.g., "Gold", "Platinum", "24x7"
+  responseTime   Int?                // SLA response time in hours
+  autoRenew      Boolean             @default(false)
+  renewalNotice  Int?                // Days notice required for non-renewal
+  status         ContractStatus      @default(ACTIVATED)
+  notes          String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  coveredAssets  Asset[]
+  account        Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  organization Organization? @relation("OrganizationSupportContracts", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([endDate])
+  @@index([organizationId])
+  @@index([status])
+  @@map("support_contracts")
+}
+
+// ============================================================================
+// PARTNER RELATIONSHIP MANAGEMENT (PRM) - Partner Portal
+// ============================================================================
+
+enum PartnerStatus {
+  PROSPECT     // Interested but not yet onboarded
+  PENDING      // Application submitted, under review
+  APPROVED     // Active partner
+  SUSPENDED    // Temporarily suspended
+  TERMINATED   // Partnership ended
+}
+
+enum PartnerTier {
+  REGISTERED   // Basic tier
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum PartnerType {
+  RESELLER          // Sells our products
+  REFERRAL          // Refers leads for commission
+  TECHNOLOGY        // Technology integration partner
+  SYSTEM_INTEGRATOR // Implementation/services partner
+  OEM               // OEM/white-label partner
+  AFFILIATE         // Affiliate marketing partner
+}
+
+enum DealRegistrationStatus {
+  DRAFT         // Partner started but not submitted
+  PENDING       // Submitted, awaiting review
+  UNDER_REVIEW  // Being reviewed by partner manager
+  APPROVED      // Approved, protection active
+  REJECTED      // Rejected (duplicate, unqualified, etc.)
+  EXPIRED       // Approval period expired
+  CONVERTED     // Converted to opportunity
+  WON           // Deal closed-won
+  LOST          // Deal closed-lost
+}
+
+enum PartnerUserRole {
+  ADMIN    // Partner admin - full access
+  MANAGER  // Can manage deals and users
+  MEMBER   // Standard partner user
+  VIEWER   // Read-only access
+}
+
+model Partner {
+  id               String        @id @default(cuid())
+  organizationId   String?
+  companyName      String
+  website          String?
+  logoUrl          String?
+  type             PartnerType   @default(RESELLER)
+  tier             PartnerTier   @default(REGISTERED)
+  status           PartnerStatus @default(PROSPECT)
+  commissionRate   Float?        // Default commission percentage
+  discountRate     Float?        // Default discount from list price
+  portalEnabled    Boolean       @default(false)
+  totalRevenue     Float         @default(0)
+  totalDeals       Int           @default(0)
+  totalRegistrations Int         @default(0)
+  partnerManagerId String?       // Internal partner manager
+  contractStartDate DateTime?
+  contractEndDate   DateTime?
+  territory        String?
+  industry         String[]
+  certifications   String[]
+  notes            String?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  accounts          PartnerAccount[]
+  dealRegistrations DealRegistration[]
+  users             PartnerUser[]
+  partnerManager    User?              @relation("PartnerManager", fields: [partnerManagerId], references: [id])
+
+  organization Organization? @relation("OrganizationPartners", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, companyName])
+  @@index([organizationId])
+  @@index([status])
+  @@index([tier])
+  @@index([type])
+  @@index([partnerManagerId])
+  @@map("partners")
+}
+
+model PartnerUser {
+  id         String          @id @default(cuid())
+  partnerId  String
+  userId     String
+  role       PartnerUserRole @default(MEMBER)
+  isPrimary  Boolean         @default(false)
+  isActive   Boolean         @default(true)
+  invitedAt  DateTime        @default(now())
+  acceptedAt DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  partner    Partner         @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user       User            @relation("PartnerUsers", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, userId])
+  @@index([partnerId])
+  @@index([userId])
+  @@map("partner_users")
+}
+
+model PartnerAccount {
+  id          String   @id @default(cuid())
+  partnerId   String
+  accountId   String
+  isExclusive Boolean  @default(false) // Exclusive partner for this account
+  assignedAt  DateTime @default(now())
+  expiresAt   DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, accountId])
+  @@index([partnerId])
+  @@index([accountId])
+  @@map("partner_accounts")
+}
+
+model DealRegistration {
+  id                 String                 @id @default(cuid())
+  partnerId          String
+  organizationId     String?
+  registrationNumber String                 @unique @default(cuid())
+
+  // Lead/Account info (may not exist in system yet)
+  accountName        String
+  accountId          String?                // Link to existing account if found
+  contactName        String
+  contactEmail       String
+  contactPhone       String?
+  contactTitle       String?
+
+  // Deal details
+  estimatedValue     Float?
+  estimatedCloseDate DateTime?
+  productInterest    String[]
+  useCase            String?
+  competitorInfo     String?
+
+  // Status workflow
+  status             DealRegistrationStatus @default(PENDING)
+  approvedAt         DateTime?
+  approvedById       String?
+  approvedUntil      DateTime?              // Protection expiration
+  rejectedAt         DateTime?
+  rejectedById       String?
+  rejectionReason    String?
+
+  // Commission
+  commissionRate     Float?                 // Override partner default
+  estimatedCommission Float?
+
+  // Conversion
+  opportunityId      String?                @unique
+  convertedAt        DateTime?
+  convertedById      String?
+
+  notes              String?
+  metadata           Json?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  partner            Partner                @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  opportunity        Opportunity?           @relation(fields: [opportunityId], references: [id])
+  account            Account?               @relation(fields: [accountId], references: [id])
+  approvedBy         User?                  @relation("DealRegApprover", fields: [approvedById], references: [id])
+  rejectedBy         User?                  @relation("DealRegRejecter", fields: [rejectedById], references: [id])
+  convertedBy        User?                  @relation("DealRegConverter", fields: [convertedById], references: [id])
+
+  organization Organization? @relation("OrganizationDealRegistrations", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([organizationId])
+  @@index([accountId])
+  @@index([approvedUntil])
+  @@map("deal_registrations")
 }

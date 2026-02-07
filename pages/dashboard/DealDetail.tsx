@@ -17,6 +17,7 @@ import {
   CloseLostModal,
 } from '../../src/components/deals';
 import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai';
+import { SplitManager } from '../../components/splits';
 import type { OpportunityStage } from '../../src/types';
 
 export const DealDetail: React.FC = () => {
@@ -293,6 +294,12 @@ export const DealDetail: React.FC = () => {
                   })),
                   competitors: deal.competitors,
                 }}
+              />
+
+              {/* Revenue Splits */}
+              <SplitManager
+                opportunityId={deal.id}
+                dealAmount={deal.amount || 0}
               />
             </div>
 
