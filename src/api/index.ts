@@ -129,3 +129,22 @@ export type { WebhookFilters, WebhookLogFilters } from './webhooks';
 // Territory and Playbook APIs
 export { default as territoriesApi } from './territories';
 export { default as playbooksApi } from './playbooks';
+
+// Outcome-based billing
+export { default as outcomeBillingApi, adminOutcomeBillingApi } from './outcomeBilling';
+
+// Re-export outcome billing types
+export type {
+  OutcomePricingModel,
+  OutcomeEventStatus,
+  PricingTier,
+  OutcomePricingPlan,
+  OutcomeEvent,
+  FeeCalculation,
+  OutcomeBillingStats,
+  AdminDashboardStats as OutcomeBillingAdminDashboardStats,
+  CreateOutcomePricingPlanDto,
+  UpdateOutcomePricingPlanDto,
+  ListOutcomeEventsParams,
+  ListOutcomePlansParams,
+} from './outcomeBilling';

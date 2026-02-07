@@ -11,22 +11,26 @@ import {
   RefreshCw,
   Trash2,
   Star,
+  Target,
 } from 'lucide-react';
 import {
   useBillingCustomer,
   useSubscriptions,
   useInvoices,
   usePaymentMethods,
+  useMyOutcomePlan,
 } from '../../src/hooks';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { OutcomeChargesTab } from './OutcomeChargesTab';
 
 export const BillingPortal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment-methods'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment-methods' | 'outcome-charges'>('overview');
 
   const { customer, loading: customerLoading, openCustomerPortal, updateCustomer } = useBillingCustomer();
   const { subscriptions, loading: subsLoading, cancelSubscription, resumeSubscription } = useSubscriptions();
   const { invoices, loading: invoicesLoading } = useInvoices({ limit: 10 });
   const { paymentMethods, loading: pmLoading, removePaymentMethod, setDefaultPaymentMethod } = usePaymentMethods();
+  const { plan: outcomePlan, loading: outcomePlanLoading } = useMyOutcomePlan();
 
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [editingBilling, setEditingBilling] = useState(false);
@@ -104,7 +108,7 @@ export const BillingPortal: React.FC = () => {
     }
   };
 
-  const loading = customerLoading || subsLoading || invoicesLoading || pmLoading;
+  const loading = customerLoading || subsLoading || invoicesLoading || pmLoading || outcomePlanLoading;
 
   if (loading) {
     return (
@@ -119,11 +123,12 @@ export const BillingPortal: React.FC = () => {
       <h1 className="text-2xl font-bold text-[#1A1A1A] mb-6">Billing & Subscription</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-8 w-fit">
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-8 w-fit flex-wrap">
         {[
           { id: 'overview', label: 'Overview', icon: Settings },
           { id: 'invoices', label: 'Invoices', icon: Receipt },
           { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard },
+          ...(outcomePlan ? [{ id: 'outcome-charges', label: 'Outcome Charges', icon: Target }] : []),
         ].map((tab) => (
           <button
             key={tab.id}
@@ -411,6 +416,11 @@ export const BillingPortal: React.FC = () => {
             + Add Payment Method
           </button>
         </div>
+      )}
+
+      {/* Outcome Charges Tab */}
+      {activeTab === 'outcome-charges' && outcomePlan && (
+        <OutcomeChargesTab />
       )}
 
       <ConfirmationModal

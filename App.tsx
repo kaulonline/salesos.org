@@ -110,6 +110,9 @@ const WinLoss = lazy(() => import('./pages/dashboard/WinLoss').then(m => ({ defa
 const Playbooks = lazy(() => import('./pages/dashboard/Playbooks').then(m => ({ default: m.Playbooks })));
 const ConversationIntelligence = lazy(() => import('./pages/dashboard/ConversationIntelligence').then(m => ({ default: m.ConversationIntelligence })));
 
+// Admin Outcome Billing
+const OutcomePricing = lazy(() => import('./pages/dashboard/OutcomePricing').then(m => ({ default: m.OutcomePricing })));
+
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
 const CheckoutCancel = lazy(() => import('./pages/billing/Cancel').then(m => ({ default: m.CheckoutCancel })));
@@ -440,6 +443,13 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <Admin />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="admin/outcome-pricing" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <OutcomePricing />
                 </Suspense>
               </PageErrorBoundary>
             } />

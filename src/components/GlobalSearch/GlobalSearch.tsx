@@ -15,14 +15,14 @@ import {
   Megaphone,
   CheckSquare,
 } from 'lucide-react';
-import { leadsApi, Lead } from '../../api/leads';
-import { contactsApi, Contact } from '../../api/contacts';
-import { accountsApi, Account } from '../../api/accounts';
-import { opportunitiesApi, Opportunity } from '../../api/opportunities';
-import { productsApi, Product } from '../../api/products';
+import { leadsApi } from '../../api/leads';
+import { contactsApi } from '../../api/contacts';
+import { accountsApi } from '../../api/accounts';
+import { opportunitiesApi } from '../../api/opportunities';
+import { productsApi } from '../../api/products';
 import { campaignsApi } from '../../api/campaigns';
 import { tasksApi } from '../../api/tasks';
-import type { Campaign, Task } from '../../types';
+import type { Lead, Contact, Account, Opportunity, Product, Campaign, Task } from '../../types';
 import { logger } from '../../lib/logger';
 
 interface SearchResult {

@@ -194,7 +194,7 @@ export function useRealtimeNotifications() {
 // Hook for typing indicators (e.g., in chat or collaborative editing)
 export function useTypingIndicator(channelId: string) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribe = wsManager.subscribe('typing', (data: unknown) => {

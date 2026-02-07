@@ -19,10 +19,14 @@ export type ConditionOperator =
   | 'ENDS_WITH'
   | 'GREATER_THAN'
   | 'GREATER_THAN_OR_EQUAL'
+  | 'GREATER_OR_EQUAL' // Alias
   | 'LESS_THAN'
   | 'LESS_THAN_OR_EQUAL'
+  | 'LESS_OR_EQUAL' // Alias
   | 'IN'
   | 'NOT_IN'
+  | 'IN_LIST' // Alias for IN
+  | 'NOT_IN_LIST' // Alias for NOT_IN
   | 'IS_EMPTY'
   | 'IS_NOT_EMPTY'
   | 'BETWEEN';
@@ -75,6 +79,11 @@ export interface AssignmentRule {
   lastExecutedAt?: string;
   createdAt: string;
   updatedAt: string;
+  stats?: {
+    executionCount: number;
+    successRate?: number;
+    lastExecutedAt?: string;
+  };
 }
 
 export interface CreateAssignmentRuleDto {
@@ -132,6 +141,12 @@ export interface AssignmentRuleStats {
   byEntity: Record<AssignmentRuleEntity, number>;
   byMethod: Record<AssignmentMethod, number>;
   topRules: { id: string; name: string; executionCount: number }[];
+  // Aliases for backward compatibility
+  total?: number;
+  active?: number;
+  inactive?: number;
+  totalAssignments?: number;
+  assignmentsToday?: number;
 }
 
 export interface ReorderAssignmentRulesDto {

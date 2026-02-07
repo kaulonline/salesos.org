@@ -77,73 +77,37 @@ export const DIFFERENTIATORS: Differentiator[] = [
   },
 ];
 
-export const PRICING_TIERS: PricingTier[] = [
+// Legacy pricing tiers kept for backwards compatibility - deprecated
+export const PRICING_TIERS: PricingTier[] = [];
+
+// Outcome-based pricing models
+export const OUTCOME_PRICING_MODELS = [
   {
-    name: 'Starter',
-    price: '$29',
-    period: '/ month',
-    description: 'Perfect for small teams getting started with AI-powered sales. Essential tools to close deals faster.',
-    features: [
-      'Up to 3 team members',
-      '1,000 AI conversations/month',
-      'Lead & contact management',
-      'Basic pipeline tracking',
-      'Email integration',
-      'Mobile app access',
-    ],
-    notIncluded: [
-      'Advanced analytics',
-      'Custom integrations',
-      'Priority support',
-    ],
-    highlight: false,
-    badge: 'Starter',
-    cta: 'Start Free Trial',
-  },
-  {
-    name: 'Professional',
-    price: '$79',
-    originalPrice: '$99',
-    period: '/ month',
-    description: 'For growing sales teams that need advanced AI insights and automation to scale revenue.',
-    features: [
-      'Up to 10 team members',
-      '10,000 AI conversations/month',
-      'Advanced pipeline analytics',
-      'Meeting intelligence & recording',
-      'Custom fields & workflows',
-      'Salesforce & HubSpot sync',
-      'API access',
-      'Priority email support',
-    ],
-    notIncluded: [
-      'Dedicated success manager',
-      'Custom SLA',
-    ],
+    id: 'revenue-share',
+    name: 'Revenue Share',
+    description: 'Pay a percentage of each closed deal',
+    rate: '2.5%',
+    example: '$100k deal = $2,500 fee',
     highlight: true,
     badge: 'Most Popular',
-    cta: 'Start Free Trial',
   },
   {
-    name: 'Enterprise',
-    price: '$199',
-    period: '/ month',
-    description: 'Full-featured solution for large teams with custom requirements and enterprise-grade security.',
-    features: [
-      'Unlimited team members',
-      'Unlimited AI conversations',
-      'Advanced forecasting & analytics',
-      'Custom integrations & webhooks',
-      'SSO & advanced security',
-      'Dedicated success manager',
-      'Custom SLA & onboarding',
-      '24/7 priority support',
-      'Data residency options',
-    ],
-    notIncluded: [],
+    id: 'tiered-flat',
+    name: 'Tiered Flat Fee',
+    description: 'Fixed fees based on deal size brackets',
+    rate: 'From $250',
+    example: '$500 for deals under $50k',
     highlight: false,
-    badge: 'Enterprise',
-    cta: 'Contact Sales',
+    badge: 'Predictable',
+  },
+  {
+    id: 'flat-per-deal',
+    name: 'Flat Per Deal',
+    description: 'Same fee regardless of deal size',
+    rate: '$250/deal',
+    example: 'Simple, consistent pricing',
+    highlight: false,
+    badge: 'Simple',
   },
 ];
 

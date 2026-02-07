@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  background-color: #F2F1EA;
+  color: #1A1A1A;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F2F1EA;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D1D1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Dashboard specific styles */
+.dash-card {
+  background: #FFFFFF;
+  border-radius: 2rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.02);
+}
+.dash-card-dark {
+  background: #1A1A1A;
+  color: white;
+  border-radius: 2rem;
+}
+.nav-pill-active {
+  background-color: #1A1A1A;
+  color: white;
+}
+.nav-pill-inactive {
+  color: #666;
+}
+.nav-pill-inactive:hover {
+  color: #1A1A1A;
+  background-color: rgba(0,0,0,0.05);
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Tilt card styles */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+}
+.tilt-card:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.02);
+}
+
+/* Spotlight/cursor glow effect helper */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(234, 208, 125, 0.15) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+/* Magnetic button effect */
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+}
+
+/* Glass morphism enhancement */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.glass-dark {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

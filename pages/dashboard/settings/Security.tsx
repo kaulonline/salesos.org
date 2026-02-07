@@ -21,11 +21,12 @@ import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../../src/components/ui/ConfirmationModal';
 import { useTwoFactorStatus, useTwoFactorSetup, useTrustedDevices, useBackupCodes } from '../../../src/hooks/useTwoFactor';
+import type { TwoFactorSetupResponse, BackupCodesResponse } from '../../../src/types';
 
 interface SetupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setupData: { qrCode: string; secret: string; backupCodes: string[] } | null;
+  setupData: TwoFactorSetupResponse | null;
   onVerify: (code: string) => Promise<void>;
 }
 
@@ -98,7 +99,7 @@ const SetupModal: React.FC<SetupModalProps> = ({ isOpen, onClose, setupData, onV
 
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-white border border-gray-200 rounded-2xl">
-                  <img src={setupData.qrCode} alt="2FA QR Code" className="w-48 h-48" />
+                  <img src={setupData.qrCodeDataUrl} alt="2FA QR Code" className="w-48 h-48" />
                 </div>
               </div>
 
@@ -207,8 +208,8 @@ const SetupModal: React.FC<SetupModalProps> = ({ isOpen, onClose, setupData, onV
 interface BackupCodesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  codes: { code: string; usedAt: string | null }[];
-  onRegenerate: (password: string) => Promise<void>;
+  codes: BackupCodesResponse | null;
+  onRegenerate: (password: string) => Promise<BackupCodesResponse>;
 }
 
 const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, codes, onRegenerate }) => {
@@ -217,11 +218,12 @@ const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, co
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [pendingPassword, setPendingPassword] = useState<string | null>(null);
 
-  const availableCodes = codes.filter(c => !c.usedAt);
-  const usedCodes = codes.filter(c => c.usedAt);
+  const codesList = codes?.codes ?? [];
+  const availableCodes = codesList.slice(0, codes?.remainingCount ?? codesList.length);
+  const usedCount = codes?.usedCount ?? 0;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(availableCodes.map(c => c.code).join('\n'));
+    navigator.clipboard.writeText(availableCodes.join('\n'));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -259,19 +261,19 @@ const BackupCodesModal: React.FC<BackupCodesModalProps> = ({ isOpen, onClose, co
 
         <div className="p-8 pt-6">
           <p className="text-[#666] text-sm mb-4">
-            {availableCodes.length} of {codes.length} codes remaining
+            {availableCodes.length} of {codesList.length} codes remaining ({usedCount} used)
           </p>
 
           <div className="bg-[#F8F8F6] rounded-xl p-4 mb-4">
             <div className="grid grid-cols-2 gap-2">
-              {codes.map((item, i) => (
+              {codesList.map((code, i) => (
                 <code
                   key={i}
                   className={`text-sm font-mono py-1 ${
-                    item.usedAt ? 'text-[#999] line-through' : 'text-[#1A1A1A]'
+                    i >= availableCodes.length ? 'text-[#999] line-through' : 'text-[#1A1A1A]'
                   }`}
                 >
-                  {item.code}
+                  {code}
                 </code>
               ))}
             </div>
@@ -329,7 +331,7 @@ export default function SecurityPage() {
   const { devices, remove: removeDevice } = useTrustedDevices();
   const { codes, regenerate } = useBackupCodes();
 
-  const [setupData, setSetupData] = useState<{ qrCode: string; secret: string; backupCodes: string[] } | null>(null);
+  const [setupData, setSetupData] = useState<TwoFactorSetupResponse | null>(null);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [disabling, setDisabling] = useState(false);
@@ -398,9 +400,9 @@ export default function SecurityPage() {
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              status?.enabled ? 'bg-[#93C01F]/20' : 'bg-[#F8F8F6]'
+              status?.isEnabled ? 'bg-[#93C01F]/20' : 'bg-[#F8F8F6]'
             }`}>
-              {status?.enabled ? (
+              {status?.isEnabled ? (
                 <Lock size={24} className="text-[#1A1A1A]" />
               ) : (
                 <Unlock size={24} className="text-[#666]" />
@@ -409,16 +411,16 @@ export default function SecurityPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-medium text-[#1A1A1A]">Two-Factor Authentication</h3>
-                <Badge variant={status?.enabled ? 'green' : 'neutral'} size="sm">
-                  {status?.enabled ? 'Enabled' : 'Disabled'}
+                <Badge variant={status?.isEnabled ? 'green' : 'neutral'} size="sm">
+                  {status?.isEnabled ? 'Enabled' : 'Disabled'}
                 </Badge>
               </div>
               <p className="text-[#666] text-sm mt-1">
-                {status?.enabled
+                {status?.isEnabled
                   ? 'Your account is protected with two-factor authentication.'
                   : 'Add an extra layer of security by requiring a verification code when signing in.'}
               </p>
-              {status?.enabled && status.enabledAt && (
+              {status?.isEnabled && status.enabledAt && (
                 <p className="text-xs text-[#888] mt-2">
                   Enabled on {new Date(status.enabledAt).toLocaleDateString()}
                 </p>
@@ -426,7 +428,7 @@ export default function SecurityPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            {status?.enabled ? (
+            {status?.isEnabled ? (
               <button
                 onClick={handleDisable}
                 disabled={disabling}
@@ -447,7 +449,7 @@ export default function SecurityPage() {
       </Card>
 
       {/* Backup Codes */}
-      {status?.enabled && (
+      {status?.isEnabled && (
         <Card className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
@@ -461,7 +463,7 @@ export default function SecurityPage() {
                 </p>
                 {codes && (
                   <p className="text-xs text-[#888] mt-2">
-                    {codes.filter(c => !c.usedAt).length} of {codes.length} codes available
+                    {codes.remainingCount} of {codes.codes.length} codes available
                   </p>
                 )}
               </div>
@@ -477,7 +479,7 @@ export default function SecurityPage() {
       )}
 
       {/* Trusted Devices */}
-      {status?.enabled && (
+      {status?.isEnabled && (
         <Card className="p-6">
           <div className="mb-6">
             <div className="flex items-center gap-3">
@@ -504,7 +506,7 @@ export default function SecurityPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
-                      {device.deviceType === 'mobile' ? (
+                      {device.os?.toLowerCase().includes('ios') || device.os?.toLowerCase().includes('android') ? (
                         <Smartphone size={20} className="text-[#666]" />
                       ) : (
                         <Monitor size={20} className="text-[#666]" />
@@ -517,7 +519,7 @@ export default function SecurityPage() {
                         <span>{device.location || 'Unknown location'}</span>
                         <span>·</span>
                         <Clock size={12} />
-                        <span>Last used {new Date(device.lastUsed).toLocaleDateString()}</span>
+                        <span>Last used {new Date(device.lastUsedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>

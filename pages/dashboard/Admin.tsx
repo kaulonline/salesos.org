@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Edit, Eye, Copy, AlertTriangle, Crown, Star, Sparkles,
   ToggleLeft, ToggleRight, ChevronDown, X, Loader2, Check, Filter,
   Download, Upload, Calendar, Mail, UserPlus, ArrowUpRight, ArrowDownRight,
-  BarChart3, PieChart, FileText, Lock, Bell
+  BarChart3, PieChart, FileText, Lock, Bell, Target, Receipt
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -29,6 +29,9 @@ import {
   useTransactions,
   usePaymentsDashboard,
   useGatewayConfigs,
+  useAdminOutcomePlans,
+  useAdminOutcomeEvents,
+  useAdminOutcomeDashboard,
 } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import type { LicenseStatus, LicenseTier, PreGeneratedKeyStatus } from '../../src/api/licensing';
@@ -37,7 +40,7 @@ import paymentsApi from '../../src/api/payments';
 import { DatabaseBackups } from '../../src/components/admin/DatabaseBackups';
 
 type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
-type BillingSubTab = 'overview' | 'plans' | 'licenses' | 'keys' | 'coupons' | 'transactions';
+type BillingSubTab = 'dashboard' | 'pricing-plans' | 'events' | 'invoices';
 
 const formatNumber = (num?: number) => {
   if (!num) return '0';
@@ -143,7 +146,7 @@ export const Admin: React.FC = () => {
     return 'overview';
   }, [location.pathname, location.search]);
 
-  const [billingSubTab, setBillingSubTab] = useState<BillingSubTab>('overview');
+  const [billingSubTab, setBillingSubTab] = useState<BillingSubTab>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -264,6 +267,33 @@ export const Admin: React.FC = () => {
   } = useTransactions();
   const { dashboard: paymentsDashboard } = usePaymentsDashboard();
   const { configs: gatewayConfigs, loading: gatewaysLoading, updateConfig: updateGatewayConfig, testConnection: testGatewayConnection, testing: testingGateway, refetch: refetchGateways } = useGatewayConfigs();
+
+  // Outcome billing hooks
+  const {
+    dashboard: outcomeDashboard,
+    loading: outcomeDashboardLoading,
+    refetch: refetchOutcomeDashboard,
+  } = useAdminOutcomeDashboard();
+  const {
+    plans: outcomePlans,
+    total: outcomePlansTotal,
+    loading: outcomePlansLoading,
+    refetch: refetchOutcomePlans,
+    createPlan: createOutcomePlan,
+    updatePlan: updateOutcomePlan,
+    deletePlan: deleteOutcomePlan,
+  } = useAdminOutcomePlans();
+  const {
+    events: outcomeEvents,
+    total: outcomeEventsTotal,
+    loading: outcomeEventsLoading,
+    refetch: refetchOutcomeEvents,
+    waiveEvent,
+    voidEvent,
+    resolveReview,
+    generateInvoice,
+    processBilling,
+  } = useAdminOutcomeEvents();
 
   // Gateway config editing state
   const [editingGateway, setEditingGateway] = useState<PaymentGateway | null>(null);
@@ -563,12 +593,10 @@ export const Admin: React.FC = () => {
   ];
 
   const billingTabs = [
-    { id: 'overview', label: 'Revenue', icon: BarChart3 },
-    { id: 'plans', label: 'Plans', icon: Package },
-    { id: 'licenses', label: 'Licenses', icon: FileText },
-    { id: 'keys', label: 'Keys', icon: Key },
-    { id: 'coupons', label: 'Coupons', icon: Star },
-    { id: 'transactions', label: 'Transactions', icon: CreditCard },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'pricing-plans', label: 'Pricing Plans', icon: Target },
+    { id: 'events', label: 'Outcome Events', icon: TrendingUp },
+    { id: 'invoices', label: 'Invoices', icon: Receipt },
   ];
 
   return (
@@ -1039,12 +1067,47 @@ export const Admin: React.FC = () => {
             ))}
           </div>
 
-          {/* Revenue Overview */}
-          {billingSubTab === 'overview' && (
+          {/* Dashboard - Outcome Billing Overview */}
+          {billingSubTab === 'dashboard' && (
             <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Outcome-Based Billing</h3>
+                  <p className="text-sm text-[#666]">You only earn when your customers succeed</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      refetchOutcomeDashboard();
+                      refetchOutcomeEvents();
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
+                    <RefreshCw size={14} />
+                    Refresh
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await processBilling();
+                        showToast({ type: 'success', title: 'Billing processed successfully' });
+                        refetchOutcomeEvents();
+                        refetchOutcomeDashboard();
+                      } catch (err) {
+                        showToast({ type: 'error', title: 'Failed to process billing' });
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
+                    <DollarSign size={14} />
+                    Generate Invoices
+                  </button>
+                </div>
+              </div>
+
               {/* Revenue Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {licensingLoading ? (
+                {outcomeDashboardLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-32 rounded-2xl" />
                   ))
@@ -1053,12 +1116,12 @@ export const Admin: React.FC = () => {
                     <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-green-600/70 uppercase tracking-wider">Monthly Revenue</p>
+                          <p className="text-[10px] font-bold text-green-600/70 uppercase tracking-wider">Total Revenue</p>
                           <p className="text-2xl font-light text-green-700 mt-1">
-                            {formatCurrency(calculatedRevenue.monthly)}
+                            {formatCurrency(outcomeDashboard?.totalLifetimeRevenue || 0)}
                           </p>
                           <p className="text-xs text-green-600/70 mt-2">
-                            {licensingDashboard?.activeLicenses || 0} active licenses
+                            All-time outcome billing
                           </p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
@@ -1070,12 +1133,12 @@ export const Admin: React.FC = () => {
                     <Card className="p-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Annual Revenue</p>
+                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">This Month</p>
                           <p className="text-2xl font-light text-[#1A1A1A] mt-1">
-                            {formatCurrency(calculatedRevenue.yearly)}
+                            {formatCurrency(outcomeDashboard?.currentMonthFees || 0)}
                           </p>
                           <p className="text-xs text-[#666] mt-2">
-                            Projected: {formatCurrency(calculatedRevenue.projected)}
+                            {outcomeDashboard?.currentMonthDeals || 0} deals closed
                           </p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center">
@@ -1087,16 +1150,16 @@ export const Admin: React.FC = () => {
                     <Card className="p-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Active Licenses</p>
+                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Active Plans</p>
                           <p className="text-2xl font-light text-[#1A1A1A] mt-1">
-                            {licensingDashboard?.activeLicenses || 0}
+                            {outcomeDashboard?.activePlans || outcomePlansTotal || 0}
                           </p>
                           <p className="text-xs text-[#666] mt-2">
-                            {licensingDashboard?.trialLicenses || 0} on trial
+                            Organizations enrolled
                           </p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center">
-                          <FileText size={18} className="text-[#666]" />
+                        <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                          <Target size={18} className="text-[#1A1A1A]" />
                         </div>
                       </div>
                     </Card>
@@ -1104,16 +1167,16 @@ export const Admin: React.FC = () => {
                     <Card className="p-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Total Licenses</p>
-                          <p className="text-2xl font-light text-[#1A1A1A] mt-1">
-                            {licensingDashboard?.totalLicenses || 0}
+                          <p className="text-[10px] font-bold text-[#999] uppercase tracking-wider">Pending Review</p>
+                          <p className="text-2xl font-light text-[#EAD07D] mt-1">
+                            {outcomeDashboard?.flaggedForReview || 0}
                           </p>
                           <p className="text-xs text-[#666] mt-2">
-                            {licensingDashboard?.expiredLicenses || 0} expired
+                            Events flagged
                           </p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
-                          <BarChart3 size={18} className="text-[#1A1A1A]" />
+                        <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center">
+                          <AlertTriangle size={18} className="text-[#EAD07D]" />
                         </div>
                       </div>
                     </Card>
@@ -1121,714 +1184,311 @@ export const Admin: React.FC = () => {
                 )}
               </div>
 
-              {/* Revenue by Tier */}
+              {/* Quick Actions & Recent Activity */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
                   <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
-                    <PieChart size={18} className="text-[#EAD07D]" />
-                    Licenses by Tier
+                    <Target size={18} className="text-[#EAD07D]" />
+                    How It Works
                   </h3>
-                  <div className="space-y-3">
-                    {(['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'] as LicenseTier[]).map((tier) => {
-                      const count = licensingDashboard?.byTier?.[tier] || 0;
-                      const total = licensingDashboard?.totalLicenses || 1;
-                      const percentage = Math.round((count / total) * 100) || 0;
-                      return (
-                        <div key={tier}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-[#666]">{tier}</span>
-                            <span className="text-sm font-bold text-[#1A1A1A]">{count}</span>
-                          </div>
-                          <div className="h-2 bg-[#F2F1EA] rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                tier === 'ENTERPRISE' ? 'bg-green-500' :
-                                tier === 'PROFESSIONAL' ? 'bg-[#1A1A1A]' :
-                                tier === 'STARTER' ? 'bg-[#EAD07D]' : 'bg-[#888]'
-                              }`}
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="space-y-4">
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 rounded-full bg-[#EAD07D] flex items-center justify-center text-sm font-bold text-[#1A1A1A] shrink-0">1</div>
+                      <div>
+                        <p className="font-medium text-[#1A1A1A]">Customer closes a deal</p>
+                        <p className="text-sm text-[#666]">When an opportunity is marked as won in the CRM</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 rounded-full bg-[#EAD07D] flex items-center justify-center text-sm font-bold text-[#1A1A1A] shrink-0">2</div>
+                      <div>
+                        <p className="font-medium text-[#1A1A1A]">Fee is calculated</p>
+                        <p className="text-sm text-[#666]">Based on their pricing plan (% of deal or flat fee)</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 rounded-full bg-[#EAD07D] flex items-center justify-center text-sm font-bold text-[#1A1A1A] shrink-0">3</div>
+                      <div>
+                        <p className="font-medium text-[#1A1A1A]">Monthly invoice generated</p>
+                        <p className="text-sm text-[#666]">All fees are consolidated into one invoice</p>
+                      </div>
+                    </div>
                   </div>
                 </Card>
 
                 <Card className="p-6">
                   <h3 className="font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <Activity size={18} className="text-[#EAD07D]" />
-                    Licenses by Status
+                    Recent Outcome Events
                   </h3>
-                  <div className="space-y-3">
-                    {(['ACTIVE', 'TRIAL', 'EXPIRED', 'SUSPENDED'] as LicenseStatus[]).map((status) => {
-                      const count = licensingDashboard?.byStatus?.[status] || 0;
-                      return (
-                        <div key={status} className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-2 h-2 rounded-full ${
-                              status === 'ACTIVE' ? 'bg-green-500' :
-                              status === 'TRIAL' ? 'bg-[#EAD07D]' :
-                              status === 'EXPIRED' ? 'bg-[#888]' : 'bg-red-500'
-                            }`} />
-                            <span className="text-sm text-[#666]">{status}</span>
+                  {outcomeEventsLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-12 rounded-xl" />
+                      ))}
+                    </div>
+                  ) : (outcomeEvents || []).length === 0 ? (
+                    <p className="text-[#666] text-center py-8">No outcome events yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(outcomeEvents || []).slice(0, 5).map((event) => (
+                        <div key={event.id} className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
+                          <div>
+                            <p className="text-sm font-medium text-[#1A1A1A]">{event.opportunityName}</p>
+                            <p className="text-xs text-[#666]">{event.accountName}</p>
                           </div>
-                          <span className="font-bold text-[#1A1A1A]">{count}</span>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-green-600">{formatCurrency(event.feeAmount)}</p>
+                            <Badge
+                              variant={
+                                event.status === 'PAID' ? 'green' :
+                                event.status === 'INVOICED' ? 'yellow' :
+                                event.status === 'PENDING' ? 'outline' : 'red'
+                              }
+                              size="sm"
+                            >
+                              {event.status.replace(/_/g, ' ')}
+                            </Badge>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                      <button
+                        onClick={() => setBillingSubTab('events')}
+                        className="w-full text-center py-2 text-sm text-[#666] hover:text-[#1A1A1A] font-medium"
+                      >
+                        View all events →
+                      </button>
+                    </div>
+                  )}
                 </Card>
               </div>
             </div>
           )}
 
-          {/* Plans Management */}
-          {billingSubTab === 'plans' && (
+          {/* Pricing Plans Management */}
+          {billingSubTab === 'pricing-plans' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A]">Subscription Plans</h3>
-                  <p className="text-sm text-[#666]">Manage your pricing tiers and features</p>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Outcome Pricing Plans</h3>
+                  <p className="text-sm text-[#666]">Configure how organizations are charged for closed deals</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingPlan(null);
-                    setPlanForm({
-                      name: '', slug: '', description: '', tier: 'STARTER',
-                      priceMonthly: 0, priceYearly: 0, currency: 'USD',
-                      maxUsers: 5, maxConversations: 1000, maxLeads: 500, maxDocuments: 100,
-                      isActive: true, isPublic: true,
-                    });
-                    setShowCreatePlanModal(true);
-                  }}
+                <a
+                  href="/dashboard/admin/outcome-pricing"
                   className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Plus size={14} />
                   New Plan
-                </button>
+                </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {typesLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-64 rounded-2xl" />
-                  ))
-                ) : (licenseTypes || []).length === 0 ? (
-                  <Card className="col-span-full p-12 text-center">
+              {/* Pricing Models Explained */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-5 border-2 border-[#EAD07D]">
+                  <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-3">
+                    <TrendingUp size={18} className="text-[#1A1A1A]" />
+                  </div>
+                  <h4 className="font-bold text-[#1A1A1A] mb-1">Revenue Share</h4>
+                  <p className="text-xs text-[#666] mb-2">Charge a percentage of each closed deal</p>
+                  <p className="text-sm font-medium text-[#EAD07D]">Default: 2.5% of deal value</p>
+                </Card>
+                <Card className="p-5">
+                  <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center mb-3">
+                    <BarChart3 size={18} className="text-[#666]" />
+                  </div>
+                  <h4 className="font-bold text-[#1A1A1A] mb-1">Tiered Pricing</h4>
+                  <p className="text-xs text-[#666] mb-2">Different fees based on deal size</p>
+                  <p className="text-sm font-medium text-[#666]">e.g., $100 for deals under $10K</p>
+                </Card>
+                <Card className="p-5">
+                  <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center mb-3">
+                    <DollarSign size={18} className="text-[#666]" />
+                  </div>
+                  <h4 className="font-bold text-[#1A1A1A] mb-1">Flat Fee</h4>
+                  <p className="text-xs text-[#666] mb-2">Fixed amount per closed deal</p>
+                  <p className="text-sm font-medium text-[#666]">e.g., $500 per deal</p>
+                </Card>
+                <Card className="p-5">
+                  <div className="w-10 h-10 rounded-xl bg-[#F2F1EA] flex items-center justify-center mb-3">
+                    <Target size={18} className="text-[#666]" />
+                  </div>
+                  <h4 className="font-bold text-[#1A1A1A] mb-1">Monthly Cap</h4>
+                  <p className="text-xs text-[#666] mb-2">Maximum monthly charge limit</p>
+                  <p className="text-sm font-medium text-[#666]">Protects customer costs</p>
+                </Card>
+              </div>
+
+              {/* Profitability Safeguards */}
+              <Card className="p-6 bg-gradient-to-r from-[#1A1A1A] to-[#333] text-white">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Shield size={18} className="text-[#EAD07D]" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold mb-1">Profitability Safeguards</h4>
+                    <p className="text-sm text-white/60">Default settings to ensure we don't lose money</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <p className="text-xs text-white/40 mb-1">Min Fee Per Deal</p>
+                    <p className="text-xl font-bold text-[#EAD07D]">$100</p>
+                    <p className="text-xs text-white/60 mt-1">Even if % calculation is lower</p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <p className="text-xs text-white/40 mb-1">Min Deal Value</p>
+                    <p className="text-xl font-bold text-[#EAD07D]">$5,000</p>
+                    <p className="text-xs text-white/60 mt-1">Skip billing for small deals</p>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <p className="text-xs text-white/40 mb-1">Platform Access Fee</p>
+                    <p className="text-xl font-bold text-[#EAD07D]">$49/mo</p>
+                    <p className="text-xs text-white/60 mt-1">Covers non-closing users</p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Plans List */}
+              <Card className="overflow-hidden">
+                <div className="p-6 border-b border-[#F2F1EA]">
+                  <h4 className="font-bold text-[#1A1A1A]">Active Pricing Plans</h4>
+                </div>
+                {outcomePlansLoading ? (
+                  <div className="p-6 space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 rounded-xl" />
+                    ))}
+                  </div>
+                ) : (outcomePlans || []).length === 0 ? (
+                  <div className="p-12 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
-                      <Package size={24} className="text-[#999]" />
+                      <Target size={24} className="text-[#999]" />
                     </div>
-                    <h4 className="font-bold text-[#1A1A1A] mb-2">No Plans Yet</h4>
-                    <p className="text-sm text-[#666] mb-4">Create your first subscription plan</p>
-                    <button
-                      onClick={() => setShowCreatePlanModal(true)}
-                      className="px-4 py-2 rounded-xl bg-[#EAD07D] text-[#1A1A1A] font-medium text-sm hover:bg-[#E5C56B] transition-colors"
+                    <h4 className="font-bold text-[#1A1A1A] mb-2">No Pricing Plans</h4>
+                    <p className="text-sm text-[#666] mb-4">Create your first outcome pricing plan</p>
+                    <a
+                      href="/dashboard/admin/outcome-pricing"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#EAD07D] text-[#1A1A1A] font-medium text-sm hover:bg-[#d4bc6f] transition-colors"
                     >
+                      <Plus size={14} />
                       Create Plan
-                    </button>
-                  </Card>
+                    </a>
+                  </div>
                 ) : (
-                  (licenseTypes || []).map((plan) => (
-                    <Card key={plan.id} className={`p-5 relative overflow-hidden ${
-                      plan.tier === 'ENTERPRISE' ? 'bg-gradient-to-br from-[#1A1A1A] to-[#333] text-white' :
-                      plan.tier === 'PROFESSIONAL' ? 'bg-gradient-to-br from-[#EAD07D]/20 to-[#EAD07D]/5' : ''
-                    }`}>
-                      {plan.tier === 'ENTERPRISE' && (
-                        <div className="absolute top-3 right-3">
-                          <Crown size={16} className="text-[#EAD07D]" />
+                  <div className="divide-y divide-[#F2F1EA]">
+                    {(outcomePlans || []).map((plan) => (
+                      <div key={plan.id} className="p-4 hover:bg-[#FAFAFA] transition-colors">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                              plan.isActive ? 'bg-green-100' : 'bg-gray-100'
+                            }`}>
+                              <Target size={20} className={plan.isActive ? 'text-green-600' : 'text-gray-400'} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-[#1A1A1A]">{plan.organization?.name || 'Unknown'}</p>
+                              <p className="text-sm text-[#666]">
+                                {plan.pricingModel === 'REVENUE_SHARE' && `${plan.revenueSharePercent}% revenue share`}
+                                {plan.pricingModel === 'FLAT_PER_DEAL' && `$${((plan.flatFeePerDeal || 0) / 100).toFixed(0)} per deal`}
+                                {plan.pricingModel === 'TIERED_FLAT_FEE' && 'Tiered pricing'}
+                                {plan.pricingModel === 'HYBRID' && `Hybrid - ${plan.outcomePercent}%`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <Badge variant={plan.isActive ? 'green' : 'outline'} size="sm">
+                              {plan.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                            {plan.grantsFullAccess && (
+                              <Badge variant="dark" size="sm">Full Access</Badge>
+                            )}
+                            <a
+                              href={`/dashboard/admin/outcome-pricing?org=${plan.organizationId}`}
+                              className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] hover:text-[#1A1A1A] transition-colors"
+                            >
+                              <Edit size={16} />
+                            </a>
+                          </div>
                         </div>
-                      )}
-                      <div className="mb-4">
-                        {getTierBadge(plan.tier)}
-                      </div>
-                      <h4 className={`font-bold text-lg mb-1 ${plan.tier === 'ENTERPRISE' ? 'text-white' : 'text-[#1A1A1A]'}`}>
-                        {plan.name}
-                      </h4>
-                      <p className={`text-xs mb-4 ${plan.tier === 'ENTERPRISE' ? 'text-white/60' : 'text-[#666]'}`}>
-                        {plan.description || 'No description'}
-                      </p>
-                      <div className="mb-4">
-                        <span className={`text-2xl font-light ${plan.tier === 'ENTERPRISE' ? 'text-white' : 'text-[#1A1A1A]'}`}>
-                          {formatCurrency(plan.priceMonthly)}
-                        </span>
-                        <span className={`text-xs ${plan.tier === 'ENTERPRISE' ? 'text-white/50' : 'text-[#888]'}`}>/mo</span>
-                      </div>
-                      <div className={`space-y-2 text-xs ${plan.tier === 'ENTERPRISE' ? 'text-white/70' : 'text-[#666]'}`}>
-                        {plan.maxUsers && (
-                          <div className="flex items-center gap-2">
-                            <Users size={12} />
-                            <span>{plan.maxUsers === -1 ? 'Unlimited' : plan.maxUsers} users</span>
-                          </div>
-                        )}
-                        {plan.maxConversations && (
-                          <div className="flex items-center gap-2">
-                            <Zap size={12} />
-                            <span>{plan.maxConversations === -1 ? 'Unlimited' : formatNumber(plan.maxConversations)} AI chats</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                        <span className={`text-xs ${plan.tier === 'ENTERPRISE' ? 'text-white/50' : 'text-[#888]'}`}>
-                          {plan._count?.userLicenses || 0} active
-                        </span>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingPlan(plan);
-                              setPlanForm({
-                                name: plan.name || '',
-                                slug: plan.slug || '',
-                                description: plan.description || '',
-                                tier: plan.tier || 'STARTER',
-                                priceMonthly: plan.priceMonthly || 0,
-                                priceYearly: plan.priceYearly || 0,
-                                currency: plan.currency || 'USD',
-                                maxUsers: plan.maxUsers ?? 5,
-                                maxConversations: plan.maxConversations ?? 1000,
-                                maxLeads: plan.maxLeads ?? 500,
-                                maxDocuments: plan.maxDocuments ?? 100,
-                                isActive: plan.isActive ?? true,
-                                isPublic: plan.isPublic ?? true,
-                              });
-                              setShowCreatePlanModal(true);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                            plan.tier === 'ENTERPRISE'
-                              ? 'hover:bg-white/10 text-white/60'
-                              : 'hover:bg-[#F2F1EA] text-[#888]'
-                          }`}
-                            title="Edit Plan"
-                          >
-                            <Edit size={12} />
-                          </button>
-                          <button
-                            onClick={() => setConfirmModal({
-                              isOpen: true,
-                              type: 'deletePlan',
-                              itemId: plan.id,
-                              itemName: plan.name,
-                            })}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                            plan.tier === 'ENTERPRISE'
-                              ? 'hover:bg-white/10 text-white/60'
-                              : 'hover:bg-red-50 text-[#888] hover:text-red-600'
-                          }`}
-                            title="Delete Plan"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                        {/* Profitability Safeguards */}
+                        <div className="ml-16 flex flex-wrap gap-3 text-xs">
+                          {plan.minFeePerDeal && (
+                            <span className="px-2 py-1 bg-[#F8F8F6] rounded-md text-[#666]">
+                              Min Fee: {formatCurrency(plan.minFeePerDeal)}
+                            </span>
+                          )}
+                          {plan.minDealValue && (
+                            <span className="px-2 py-1 bg-[#F8F8F6] rounded-md text-[#666]">
+                              Min Deal: {formatCurrency(plan.minDealValue)}
+                            </span>
+                          )}
+                          {plan.platformAccessFee && (
+                            <span className="px-2 py-1 bg-[#EAD07D]/20 rounded-md text-[#1A1A1A]">
+                              Platform: {formatCurrency(plan.platformAccessFee)}/mo
+                            </span>
+                          )}
+                          {plan.monthlyCap && (
+                            <span className="px-2 py-1 bg-blue-50 rounded-md text-blue-700">
+                              Cap: {formatCurrency(plan.monthlyCap)}/mo
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </Card>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* User Licenses */}
-          {billingSubTab === 'licenses' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A]">User Licenses</h3>
-                  <p className="text-sm text-[#666]">Manage individual user subscriptions</p>
-                </div>
-                <button
-                  onClick={() => setShowAssignLicenseModal(true)}
-                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <UserPlus size={14} />
-                  Assign License
-                </button>
-              </div>
-
-              <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
-                      <tr>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">User</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Plan</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Expires</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#F2F1EA]">
-                      {licensesLoading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                          <tr key={i}>
-                            <td colSpan={5} className="py-4 px-6">
-                              <Skeleton className="h-12 rounded-xl" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (userLicenses || []).length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-12 text-center text-[#666]">
-                            No licenses assigned yet
-                          </td>
-                        </tr>
-                      ) : (
-                        (userLicenses || []).map((license) => (
-                          <tr key={license.id} className="hover:bg-[#FAFAFA] transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <Avatar src={license.user?.avatarUrl} name={license.user?.name || license.user?.email} size="sm" />
-                                <div>
-                                  <p className="font-medium text-[#1A1A1A]">
-                                    {license.user?.firstName && license.user?.lastName
-                                      ? `${license.user.firstName} ${license.user.lastName}`
-                                      : license.user?.name || 'Unknown'}
-                                  </p>
-                                  <p className="text-xs text-[#666]">{license.user?.email}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              {license.licenseType ? getTierBadge(license.licenseType.tier) : <span className="text-[#666]">-</span>}
-                            </td>
-                            <td className="py-4 px-6">
-                              {getStatusBadge(license.status)}
-                              {license.isTrial && (
-                                <Badge variant="outline" size="sm" className="ml-1">Trial</Badge>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-sm text-[#666]">
-                              {formatDate(license.endDate)}
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-1">
-                                {license.status === 'ACTIVE' && (
-                                  <button
-                                    onClick={() => suspendLicense(license.id)}
-                                    className="p-2 rounded-lg hover:bg-yellow-50 text-[#666] hover:text-yellow-600 transition-colors"
-                                    title="Suspend"
-                                  >
-                                    <Ban size={14} />
-                                  </button>
-                                )}
-                                {license.status === 'SUSPENDED' && (
-                                  <button
-                                    onClick={() => resumeLicense(license.id)}
-                                    className="p-2 rounded-lg hover:bg-green-50 text-[#666] hover:text-green-600 transition-colors"
-                                    title="Resume"
-                                  >
-                                    <CheckCircle size={14} />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => renewLicense(license.id)}
-                                  className="p-2 rounded-lg hover:bg-blue-50 text-[#666] hover:text-blue-600 transition-colors"
-                                  title="Renew"
-                                >
-                                  <RefreshCw size={14} />
-                                </button>
-                                <button
-                                  onClick={() => revokeLicense(license.id)}
-                                  className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
-                                  title="Revoke"
-                                >
-                                  <XCircle size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
               </Card>
             </div>
           )}
 
-          {/* License Keys */}
-          {billingSubTab === 'keys' && (
+          {/* Outcome Events */}
+          {billingSubTab === 'events' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A]">License Keys</h3>
-                  <p className="text-sm text-[#666]">Pre-generated keys for distribution</p>
-                </div>
-                <button
-                  onClick={() => setShowGenerateKeysModal(true)}
-                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <Plus size={14} />
-                  Generate Keys
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Available</p>
-                  <p className="text-2xl font-light text-green-600">
-                    {(licenseKeys || []).filter(k => k.status === 'AVAILABLE').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Claimed</p>
-                  <p className="text-2xl font-light text-[#EAD07D]">
-                    {(licenseKeys || []).filter(k => k.status === 'CLAIMED').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Expired</p>
-                  <p className="text-2xl font-light text-[#888]">
-                    {(licenseKeys || []).filter(k => k.status === 'EXPIRED').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Revoked</p>
-                  <p className="text-2xl font-light text-red-500">
-                    {(licenseKeys || []).filter(k => k.status === 'REVOKED').length}
-                  </p>
-                </Card>
-              </div>
-
-              <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
-                      <tr>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Key</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Plan</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Claimed By</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#F2F1EA]">
-                      {keysLoading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                          <tr key={i}>
-                            <td colSpan={5} className="py-4 px-6">
-                              <Skeleton className="h-12 rounded-xl" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (licenseKeys || []).length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-12 text-center text-[#666]">
-                            No license keys generated yet
-                          </td>
-                        </tr>
-                      ) : (
-                        (licenseKeys || []).map((key) => (
-                          <tr key={key.id} className="hover:bg-[#FAFAFA] transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <code className="text-xs font-mono bg-[#F8F8F6] px-2 py-1 rounded">
-                                  {key.licenseKey.slice(0, 8)}...{key.licenseKey.slice(-4)}
-                                </code>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(key.licenseKey)}
-                                  className="p-1 rounded hover:bg-[#F2F1EA] text-[#888] hover:text-[#1A1A1A] transition-colors"
-                                  title="Copy"
-                                >
-                                  <Copy size={12} />
-                                </button>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              {key.licenseType ? getTierBadge(key.licenseType.tier) : <span className="text-[#666]">-</span>}
-                            </td>
-                            <td className="py-4 px-6">
-                              {getKeyStatusBadge(key.status)}
-                              {key.isTrial && (
-                                <Badge variant="outline" size="sm" className="ml-1">Trial</Badge>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-sm text-[#666]">
-                              {key.claimedBy ? key.claimedBy.email : '-'}
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-1">
-                                {key.status === 'AVAILABLE' && (
-                                  <button
-                                    onClick={() => revokeKey(key.id)}
-                                    className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
-                                    title="Revoke"
-                                  >
-                                    <XCircle size={14} />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* Coupons Management */}
-          {billingSubTab === 'coupons' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A]">Discount Coupons</h3>
-                  <p className="text-sm text-[#666]">Manage promotional codes and discounts</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setCouponForm({
-                      code: '',
-                      name: '',
-                      description: '',
-                      discountType: 'PERCENTAGE',
-                      discountValue: 10,
-                      duration: 'ONCE',
-                      durationMonths: 3,
-                      maxRedemptions: undefined,
-                      expiresAt: '',
-                      syncToStripe: true,
-                    });
-                    setEditingCoupon(null);
-                    setShowCreateCouponModal(true);
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <Plus size={14} />
-                  New Coupon
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Active</p>
-                  <p className="text-2xl font-light text-green-600">
-                    {(coupons || []).filter(c => c.isActive).length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Total Redemptions</p>
-                  <p className="text-2xl font-light text-[#EAD07D]">
-                    {(coupons || []).reduce((sum, c) => sum + (c.timesRedeemed || 0), 0)}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Expired</p>
-                  <p className="text-2xl font-light text-[#888]">
-                    {(coupons || []).filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Total Coupons</p>
-                  <p className="text-2xl font-light text-[#1A1A1A]">
-                    {(coupons || []).length}
-                  </p>
-                </Card>
-              </div>
-
-              <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
-                      <tr>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Code</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Discount</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Duration</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Redemptions</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#F2F1EA]">
-                      {couponsLoading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                          <tr key={i}>
-                            <td colSpan={6} className="py-4 px-6">
-                              <Skeleton className="h-12 rounded-xl" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (coupons || []).length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-12 text-center text-[#666]">
-                            No coupons created yet
-                          </td>
-                        </tr>
-                      ) : (
-                        (coupons || []).map((coupon) => (
-                          <tr key={coupon.id} className="hover:bg-[#FAFAFA] transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <code className="text-sm font-mono font-bold bg-[#EAD07D]/20 text-[#1A1A1A] px-2 py-1 rounded">
-                                  {coupon.code}
-                                </code>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(coupon.code)}
-                                  className="p-1 rounded hover:bg-[#F2F1EA] text-[#888] hover:text-[#1A1A1A] transition-colors"
-                                  title="Copy"
-                                >
-                                  <Copy size={12} />
-                                </button>
-                              </div>
-                              {coupon.name && (
-                                <p className="text-xs text-[#666] mt-1">{coupon.name}</p>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="font-bold text-[#1A1A1A]">
-                                {coupon.discountType === 'PERCENTAGE'
-                                  ? `${coupon.discountValue}%`
-                                  : formatCurrency(coupon.discountValue)}
-                              </span>
-                              <span className="text-xs text-[#666] ml-1">off</span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <Badge variant="outline" size="sm">
-                                {coupon.duration === 'ONCE' && 'One-time'}
-                                {coupon.duration === 'FOREVER' && 'Forever'}
-                                {coupon.duration === 'REPEATING' && `${coupon.durationMonths || 0} months`}
-                              </Badge>
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="text-sm text-[#666]">
-                                {coupon.timesRedeemed || 0}
-                                {coupon.maxRedemptions && ` / ${coupon.maxRedemptions}`}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              {coupon.isActive ? (
-                                coupon.expiresAt && new Date(coupon.expiresAt) < new Date() ? (
-                                  <Badge variant="outline" size="sm">Expired</Badge>
-                                ) : coupon.maxRedemptions && (coupon.timesRedeemed || 0) >= coupon.maxRedemptions ? (
-                                  <Badge variant="yellow" size="sm">Maxed Out</Badge>
-                                ) : (
-                                  <Badge variant="green" size="sm">Active</Badge>
-                                )
-                              ) : (
-                                <Badge variant="outline" size="sm">Inactive</Badge>
-                              )}
-                              {coupon.stripeCouponId && (
-                                <Badge variant="dark" size="sm" className="ml-1">Stripe</Badge>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => {
-                                    setEditingCoupon(coupon);
-                                    setCouponForm({
-                                      code: coupon.code,
-                                      name: coupon.name || '',
-                                      description: coupon.description || '',
-                                      discountType: coupon.discountType,
-                                      discountValue: coupon.discountValue,
-                                      duration: coupon.duration,
-                                      durationMonths: coupon.durationMonths || 3,
-                                      maxRedemptions: coupon.maxRedemptions,
-                                      expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : '',
-                                      syncToStripe: !!coupon.stripeCouponId,
-                                    });
-                                    setShowCreateCouponModal(true);
-                                  }}
-                                  className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] hover:text-[#1A1A1A] transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit size={14} />
-                                </button>
-                                <button
-                                  onClick={() => setConfirmModal({
-                                    isOpen: true,
-                                    type: 'deleteCoupon',
-                                    itemId: coupon.id,
-                                    itemName: coupon.code,
-                                  })}
-                                  className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* Transactions History */}
-          {billingSubTab === 'transactions' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A]">Transaction History</h3>
-                  <p className="text-sm text-[#666]">View all payment transactions</p>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Outcome Events</h3>
+                  <p className="text-sm text-[#666]">All deals that triggered outcome billing</p>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => refetchTransactions()}
+                    onClick={() => refetchOutcomeEvents()}
                     className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium"
                   >
                     <RefreshCw size={14} />
                     Refresh
                   </button>
-                  <button
-                    onClick={handleExportTransactions}
-                    className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 text-sm font-medium"
-                  >
-                    <Download size={14} />
-                    Export
-                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50">
-                  <p className="text-xs font-bold text-green-600/70 uppercase tracking-wider mb-1">Successful</p>
-                  <p className="text-2xl font-light text-green-700">
-                    {(transactions || []).filter(t => t.status === 'SUCCEEDED').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Pending</p>
-                  <p className="text-2xl font-light text-[#EAD07D]">
-                    {(transactions || []).filter(t => t.status === 'PENDING').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Failed</p>
-                  <p className="text-2xl font-light text-red-500">
-                    {(transactions || []).filter(t => t.status === 'FAILED').length}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider mb-1">Refunded</p>
-                  <p className="text-2xl font-light text-[#888]">
-                    {(transactions || []).filter(t => t.status === 'REFUNDED').length}
-                  </p>
-                </Card>
+              {/* Event Status Filter */}
+              <div className="flex gap-2">
+                {['ALL', 'PENDING', 'INVOICED', 'PAID', 'FLAGGED_FOR_REVIEW'].map((status) => (
+                  <button
+                    key={status}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-[#F2F1EA] text-[#666] hover:bg-[#F8F8F6]"
+                  >
+                    {status.replace(/_/g, ' ')}
+                  </button>
+                ))}
               </div>
 
+              {/* Events Table */}
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
                       <tr>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Transaction ID</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Customer</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Amount</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Gateway</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Deal</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Organization</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Deal Value</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Fee</th>
                         <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
-                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Date</th>
+                        <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Closed Date</th>
                         <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F2F1EA]">
-                      {transactionsLoading ? (
+                      {outcomeEventsLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
                           <tr key={i}>
                             <td colSpan={7} className="py-4 px-6">
@@ -1836,71 +1496,100 @@ export const Admin: React.FC = () => {
                             </td>
                           </tr>
                         ))
-                      ) : (transactions || []).length === 0 ? (
+                      ) : (outcomeEvents || []).length === 0 ? (
                         <tr>
                           <td colSpan={7} className="py-12 text-center text-[#666]">
-                            No transactions yet
+                            <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
+                              <Target size={24} className="text-[#999]" />
+                            </div>
+                            No outcome events yet. Events are created when deals are closed.
                           </td>
                         </tr>
                       ) : (
-                        (transactions || []).map((transaction) => (
-                          <tr key={transaction.id} className="hover:bg-[#FAFAFA] transition-colors">
-                            <td className="py-4 px-6">
-                              <code className="text-xs font-mono bg-[#F8F8F6] px-2 py-1 rounded">
-                                {transaction.id.slice(0, 12)}...
-                              </code>
-                            </td>
+                        (outcomeEvents || []).map((event) => (
+                          <tr key={event.id} className="hover:bg-[#FAFAFA] transition-colors">
                             <td className="py-4 px-6">
                               <div>
-                                <p className="text-sm font-medium text-[#1A1A1A]">
-                                  {transaction.customer?.user?.name || transaction.customer?.user?.email || 'Unknown'}
-                                </p>
-                                <p className="text-xs text-[#666]">{transaction.customer?.user?.email}</p>
+                                <p className="text-sm font-medium text-[#1A1A1A]">{event.opportunityName}</p>
+                                <p className="text-xs text-[#666]">{event.accountName}</p>
                               </div>
                             </td>
-                            <td className="py-4 px-6">
-                              <span className="font-bold text-[#1A1A1A]">
-                                {formatCurrency(transaction.amount)}
-                              </span>
-                              <span className="text-xs text-[#666] ml-1 uppercase">{transaction.currency}</span>
+                            <td className="py-4 px-6 text-sm text-[#666]">
+                              {event.outcomePricingPlan?.organization?.name || 'Unknown'}
                             </td>
                             <td className="py-4 px-6">
-                              <Badge
-                                variant={transaction.gateway === 'STRIPE' ? 'dark' : 'yellow'}
-                                size="sm"
-                              >
-                                {transaction.gateway}
-                              </Badge>
+                              <span className="font-medium text-[#1A1A1A]">{formatCurrency(event.dealAmount)}</span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="font-bold text-green-600">{formatCurrency(event.feeAmount)}</span>
                             </td>
                             <td className="py-4 px-6">
                               <Badge
                                 variant={
-                                  transaction.status === 'SUCCEEDED' ? 'green' :
-                                  transaction.status === 'PENDING' ? 'yellow' :
-                                  transaction.status === 'REFUNDED' ? 'outline' : 'red'
+                                  event.status === 'PAID' ? 'green' :
+                                  event.status === 'INVOICED' ? 'yellow' :
+                                  event.status === 'PENDING' ? 'outline' :
+                                  event.status === 'FLAGGED_FOR_REVIEW' ? 'red' : 'outline'
                                 }
                                 size="sm"
                               >
-                                {transaction.status}
+                                {event.status.replace(/_/g, ' ')}
                               </Badge>
                             </td>
                             <td className="py-4 px-6 text-sm text-[#666]">
-                              {formatDate(transaction.createdAt)}
+                              {formatDate(event.closedDate)}
                             </td>
                             <td className="py-4 px-6">
                               <div className="flex items-center gap-1">
-                                {transaction.status === 'SUCCEEDED' && (
+                                {event.status === 'FLAGGED_FOR_REVIEW' && (
+                                  <>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await resolveReview(event.id, 'approve');
+                                          showToast({ type: 'success', title: 'Event approved' });
+                                          refetchOutcomeEvents();
+                                        } catch {
+                                          showToast({ type: 'error', title: 'Failed to approve' });
+                                        }
+                                      }}
+                                      className="p-2 rounded-lg hover:bg-green-50 text-[#666] hover:text-green-600 transition-colors"
+                                      title="Approve"
+                                    >
+                                      <Check size={14} />
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await resolveReview(event.id, 'void', 'Admin voided');
+                                          showToast({ type: 'success', title: 'Event voided' });
+                                          refetchOutcomeEvents();
+                                        } catch {
+                                          showToast({ type: 'error', title: 'Failed to void' });
+                                        }
+                                      }}
+                                      className="p-2 rounded-lg hover:bg-red-50 text-[#666] hover:text-red-600 transition-colors"
+                                      title="Void"
+                                    >
+                                      <XCircle size={14} />
+                                    </button>
+                                  </>
+                                )}
+                                {event.status === 'PENDING' && (
                                   <button
-                                    onClick={() => setConfirmModal({
-                                      isOpen: true,
-                                      type: 'refundPayment',
-                                      itemId: transaction.id,
-                                      itemName: `${formatCurrency(transaction.amount)} payment`,
-                                    })}
+                                    onClick={async () => {
+                                      try {
+                                        await waiveEvent(event.id, 'Admin waived');
+                                        showToast({ type: 'success', title: 'Fee waived' });
+                                        refetchOutcomeEvents();
+                                      } catch {
+                                        showToast({ type: 'error', title: 'Failed to waive' });
+                                      }
+                                    }}
                                     className="p-2 rounded-lg hover:bg-yellow-50 text-[#666] hover:text-yellow-600 transition-colors"
-                                    title="Refund"
+                                    title="Waive Fee"
                                   >
-                                    <RefreshCw size={14} />
+                                    <Ban size={14} />
                                   </button>
                                 )}
                                 <button
@@ -1916,6 +1605,45 @@ export const Admin: React.FC = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Invoices */}
+          {billingSubTab === 'invoices' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1A1A1A]">Outcome Invoices</h3>
+                  <p className="text-sm text-[#666]">Monthly invoices generated from outcome billing</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await processBilling();
+                      showToast({ type: 'success', title: 'Invoices generated successfully' });
+                    } catch {
+                      showToast({ type: 'error', title: 'Failed to generate invoices' });
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <DollarSign size={14} />
+                  Generate Invoices
+                </button>
+              </div>
+
+              <Card className="overflow-hidden">
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
+                    <Receipt size={24} className="text-[#999]" />
+                  </div>
+                  <h4 className="font-bold text-[#1A1A1A] mb-2">Invoice Management</h4>
+                  <p className="text-sm text-[#666] mb-4">
+                    Invoices are automatically generated on each organization's billing day.<br/>
+                    Use "Generate Invoices" to manually trigger invoice creation for all pending events.
+                  </p>
                 </div>
               </Card>
             </div>

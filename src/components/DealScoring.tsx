@@ -99,7 +99,7 @@ export const DealScoring: React.FC<DealScoringProps> = ({
   };
 
   const calculateStakeholderScore = (): ScoreFactor => {
-    let score = hasDecisionMaker ? 20 : 10;
+    const score = hasDecisionMaker ? 20 : 10;
 
     return {
       name: 'Stakeholders',
@@ -113,7 +113,7 @@ export const DealScoring: React.FC<DealScoringProps> = ({
 
   const calculateCompetitiveScore = (): ScoreFactor => {
     // If no competitor or competitor identified with strategy
-    let score = hasCompetitor ? 12 : 15;
+    const score = hasCompetitor ? 12 : 15;
 
     return {
       name: 'Competitive',
@@ -126,7 +126,7 @@ export const DealScoring: React.FC<DealScoringProps> = ({
   };
 
   const calculateNextStepsScore = (): ScoreFactor => {
-    let score = hasNextSteps ? 15 : 5;
+    const score = hasNextSteps ? 15 : 5;
 
     return {
       name: 'Next Steps',

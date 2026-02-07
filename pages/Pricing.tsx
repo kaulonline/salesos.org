@@ -1,529 +1,500 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check, X, Sparkles, Zap, Crown, ArrowRight, Shield, Clock, Users } from 'lucide-react';
-import { useLicenseTypes, useCheckout } from '../src/hooks';
+import {
+  Check,
+  TrendingUp,
+  DollarSign,
+  Target,
+  Shield,
+  Zap,
+  ArrowRight,
+  Calculator,
+  Users,
+  BarChart3,
+  Award,
+  CheckCircle2,
+  HelpCircle
+} from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
-import { PRICING_TIERS } from '../constants';
-import { Button } from '../components/ui/Button';
 import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
-import type { LicenseType } from '../src/api/licensing';
-import type { CouponValidation } from '../src/api/payments';
 
-const getDiscountDescription = (validation: CouponValidation): string => {
-  if (!validation.coupon) return 'Discount applied';
-  const { coupon, discountAmount } = validation;
-  if (coupon.discountType === 'PERCENTAGE') {
-    return `${coupon.discountValue}% off${coupon.duration === 'FOREVER' ? ' forever' : coupon.duration === 'REPEATING' ? ` for ${coupon.durationMonths} months` : ''}`;
-  }
-  if (discountAmount) {
-    return `$${(discountAmount / 100).toFixed(2)} off`;
-  }
-  return `$${(coupon.discountValue / 100).toFixed(2)} off`;
-};
+// Pricing model examples for the calculator
+const EXAMPLE_DEALS = [
+  { name: 'Small Deal', amount: 10000, fee: 250 },
+  { name: 'Medium Deal', amount: 50000, fee: 1250 },
+  { name: 'Large Deal', amount: 150000, fee: 3750 },
+  { name: 'Enterprise Deal', amount: 500000, fee: 12500 },
+];
 
-const formatCurrency = (cents?: number) => {
-  if (!cents) return '$0';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-};
+const PRICING_MODELS = [
+  {
+    id: 'revenue-share',
+    name: 'Revenue Share',
+    description: 'Pay a percentage of each closed deal',
+    icon: TrendingUp,
+    example: '2.5% of deal value',
+    highlight: true,
+    popular: true,
+  },
+  {
+    id: 'tiered-flat',
+    name: 'Tiered Flat Fee',
+    description: 'Fixed fees based on deal size brackets',
+    icon: BarChart3,
+    example: '$500 for deals under $50k',
+    highlight: false,
+    popular: false,
+  },
+  {
+    id: 'flat-per-deal',
+    name: 'Flat Per Deal',
+    description: 'Same fee regardless of deal size',
+    icon: DollarSign,
+    example: '$250 per closed deal',
+    highlight: false,
+    popular: false,
+  },
+  {
+    id: 'hybrid',
+    name: 'Hybrid',
+    description: 'Low base + reduced outcome fees',
+    icon: Zap,
+    example: '$99/mo + 1% of deals',
+    highlight: false,
+    popular: false,
+  },
+];
 
-const getTierBadge = (tier: string): string => {
-  switch (tier) {
-    case 'STARTER':
-      return 'Starter';
-    case 'PROFESSIONAL':
-      return 'Most Popular';
-    case 'ENTERPRISE':
-      return 'Enterprise';
-    default:
-      return tier;
-  }
-};
+const BENEFITS = [
+  {
+    icon: Shield,
+    title: 'Zero Upfront Risk',
+    description: 'No subscription fees. Start using SalesOS today and only pay when you close deals.',
+  },
+  {
+    icon: Target,
+    title: 'Aligned Incentives',
+    description: 'We succeed when you succeed. Our pricing motivates us to help you close more deals.',
+  },
+  {
+    icon: Award,
+    title: 'Monthly Caps Available',
+    description: 'Set a maximum monthly charge to keep your costs predictable and controlled.',
+  },
+  {
+    icon: Users,
+    title: 'Unlimited Users',
+    description: 'Add your entire sales team without per-seat charges. Scale freely.',
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    question: 'How does outcome-based billing work?',
+    answer: 'When your sales team closes a deal in SalesOS, we automatically calculate the fee based on your pricing plan. Fees are invoiced monthly, and you only pay for actual results.',
+  },
+  {
+    question: 'What happens if a deal is reopened or cancelled?',
+    answer: 'If a closed deal is reopened, it gets flagged for review. Our team will work with you to determine the appropriate action - we can waive or void the fee if needed.',
+  },
+  {
+    question: 'Is there a minimum deal value?',
+    answer: 'You can set a minimum deal value threshold. Deals below this amount won\'t incur any fees, perfect for filtering out small transactions.',
+  },
+  {
+    question: 'Can I set a monthly cap on fees?',
+    answer: 'Yes! You can configure a monthly cap to ensure predictable costs. Once you hit the cap, additional deals that month are free.',
+  },
+  {
+    question: 'How are payments processed?',
+    answer: 'We generate monthly invoices with a detailed breakdown of each deal. Pay via credit card, ACH, or wire transfer through our secure payment portal.',
+  },
+  {
+    question: 'Can I switch between pricing models?',
+    answer: 'Yes, you can request to change your pricing model. Changes take effect at the start of the next billing period.',
+  },
+];
 
 export const PricingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual');
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidation | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [calculatorValue, setCalculatorValue] = useState(50000);
+  const [selectedFaq, setSelectedFaq] = useState<number | null>(null);
+  const revenueSharePercent = 2.5;
+  const calculatedFee = Math.round(calculatorValue * (revenueSharePercent / 100));
 
-  const { types: licenseTypes, loading } = useLicenseTypes();
-  const { createCheckoutSession, validateCoupon, loading: checkoutLoading } = useCheckout();
-
-  const handleSelectPlan = async (plan: LicenseType | typeof PRICING_TIERS[0]) => {
-    // Check if it's API plan or fallback plan
-    const isApiPlan = 'id' in plan && 'priceMonthly' in plan;
-
-    if (!isApiPlan) {
-      // Fallback plan - just navigate to contact or signup
-      if (plan.name === 'Enterprise') {
-        navigate('/contact');
-      } else if (!isAuthenticated) {
-        navigate('/signup');
-      }
-      return;
-    }
-
-    const licenseType = plan as LicenseType;
-
-    if (!isAuthenticated) {
-      navigate(`/signup?plan=${licenseType.slug}&billing=${billingCycle}`);
-      return;
-    }
-
-    setSelectedPlan(licenseType.id);
-    setCouponError(null);
-
-    try {
-      let validCoupon: string | undefined;
-      if (couponCode) {
-        const validation = await validateCoupon(couponCode, licenseType.id);
-        if (!validation.valid) {
-          setCouponError(validation.message || 'Invalid coupon');
-          setSelectedPlan(null);
-          return;
-        }
-        validCoupon = couponCode;
-        setCouponSuccess(`Coupon applied: ${getDiscountDescription(validation)}`);
-      }
-
-      const session = await createCheckoutSession(
-        licenseType.id,
-        billingCycle === 'annual' ? 'yearly' : 'monthly',
-        { couponCode: validCoupon }
-      );
-
-      if (session.url) {
-        window.location.href = session.url;
-      }
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-
-      // Handle existing subscription error - redirect to subscription page with upgrade params
-      const errorData = error?.response?.data;
-      if (errorData?.code === 'EXISTING_SUBSCRIPTION') {
-        navigate(`/dashboard/subscription?upgrade=true&targetPlan=${licenseType.id}&billingCycle=${billingCycle === 'annual' ? 'yearly' : 'monthly'}`);
-        return;
-      }
-
-      setCouponError(errorData?.message || 'Failed to start checkout. Please try again.');
-      setSelectedPlan(null);
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/signup');
     }
   };
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-
-    setCouponError(null);
-    setCouponSuccess(null);
-    setAppliedCoupon(null);
-
-    try {
-      const validation = await validateCoupon(couponCode);
-      if (validation.valid) {
-        setAppliedCoupon(validation);
-        setCouponSuccess(`Coupon valid: ${getDiscountDescription(validation)}`);
-      } else {
-        setCouponError(validation.message || 'Invalid coupon code');
-      }
-    } catch {
-      setCouponError('Failed to validate coupon');
-    }
-  };
-
-  // Calculate discounted price
-  const getDiscountedPrice = (originalPrice: number): number => {
-    if (!appliedCoupon?.coupon) return originalPrice;
-    const { discountType, discountValue } = appliedCoupon.coupon;
-    if (String(discountType).toUpperCase().includes('PERCENT') && discountValue > 0) {
-      return Math.round(originalPrice * (1 - discountValue / 100));
-    } else if (discountValue > 0) {
-      return Math.max(0, originalPrice - discountValue);
-    }
-    return originalPrice;
-  };
-
-  // Use API plans if available, otherwise fallback to constants
-  const hasApiPlans = licenseTypes && licenseTypes.length > 0;
-  const sortedApiPlans = hasApiPlans
-    ? [...licenseTypes].filter(p => p.isPublic && p.isActive && p.tier !== 'FREE' && p.tier !== 'CUSTOM')
-        .sort((a, b) => (a.priceMonthly || 0) - (b.priceMonthly || 0))
-    : [];
-
-  const yearlyDiscount = 20;
-
-  // Render API-driven card
-  const renderApiCard = (plan: LicenseType) => {
-    const isHighlight = plan.tier === 'PROFESSIONAL';
-    const monthlyPrice = plan.priceMonthly || 0;
-    const yearlyPrice = plan.priceYearly || monthlyPrice * 12 * (1 - yearlyDiscount / 100);
-    const basePrice = billingCycle === 'annual' ? Math.round(yearlyPrice / 12) : monthlyPrice;
-    const displayPrice = getDiscountedPrice(basePrice);
-    const hasDiscount = appliedCoupon?.coupon && displayPrice < basePrice;
-    const isLoading = selectedPlan === plan.id && checkoutLoading;
-
-    return (
-      <div
-        key={plan.id}
-        className={`relative group rounded-[2.5rem] p-8 lg:p-10 flex flex-col transition-all duration-300 w-full min-h-[700px]
-          ${isHighlight
-            ? 'bg-[#1A1A1A] text-white shadow-2xl ring-4 ring-[#EAD07D]/20 scale-100 lg:scale-105 z-10'
-            : 'bg-[#F2F1EA] md:bg-[#F0F0E8] text-[#1A1A1A] border border-black/5 shadow-lg'
-          }
-        `}
-      >
-        {/* Top Tab / Badge */}
-        <div
-          className={`absolute -top-[1px] -right-[1px] h-12 px-6 flex items-center justify-center rounded-bl-2xl rounded-tr-[2.4rem] text-xs font-bold uppercase tracking-wider
-            ${isHighlight
-              ? 'bg-[#EAD07D] text-[#1A1A1A]'
-              : 'bg-[#E0E0D8] text-[#1A1A1A]/60'
-            }
-          `}
-        >
-          {getTierBadge(plan.tier)}
-          <div className={`absolute top-0 -left-4 w-4 h-4 bg-transparent shadow-[4px_-4px_0_0_rgba(0,0,0,0)] ${isHighlight ? 'shadow-[#EAD07D]' : 'shadow-[#E0E0D8]'} rounded-tr-lg`}></div>
-          <div className={`absolute -bottom-4 right-0 w-4 h-4 bg-transparent shadow-[4px_-4px_0_0_rgba(0,0,0,0)] ${isHighlight ? 'shadow-[#EAD07D]' : 'shadow-[#E0E0D8]'} rounded-tr-lg`}></div>
-        </div>
-
-        {/* Card Content */}
-        <div className="mb-8 mt-4 text-center">
-          <h3 className={`text-xl font-medium mb-4 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>{plan.name}</h3>
-
-          <div className="flex items-center justify-center gap-3 mb-2">
-            {(hasDiscount || (billingCycle === 'annual' && monthlyPrice > 0)) && (
-              <span className={`text-2xl font-medium line-through decoration-2 ${isHighlight ? 'text-gray-500' : 'text-gray-400'}`}>
-                {hasDiscount ? formatCurrency(basePrice) : formatCurrency(monthlyPrice)}
-              </span>
-            )}
-            <span className={`text-6xl font-sans font-medium tracking-tight ${isHighlight ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>
-              {formatCurrency(displayPrice)}
-            </span>
-          </div>
-
-          {hasDiscount && (
-            <p className="text-xs font-semibold text-[#93C01F] mb-2">
-              {appliedCoupon?.coupon?.discountType === 'PERCENTAGE'
-                ? `${appliedCoupon.coupon.discountValue}% off applied`
-                : `${formatCurrency(appliedCoupon?.coupon?.discountValue || 0)} off applied`}
-            </p>
-          )}
-
-          <p className={`text-xs font-medium uppercase tracking-wide mb-6 ${isHighlight ? 'text-gray-400' : 'text-gray-500'}`}>
-            {billingCycle === 'annual'
-              ? `${formatCurrency(hasDiscount ? getDiscountedPrice(yearlyPrice) : yearlyPrice)} billed yearly`
-              : `${formatCurrency(hasDiscount ? getDiscountedPrice(monthlyPrice * 12) : monthlyPrice * 12)} billed yearly`}
-          </p>
-
-          <p className={`text-sm leading-relaxed max-w-[260px] mx-auto ${isHighlight ? 'text-gray-400' : 'text-gray-500'}`}>
-            {plan.description}
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div className={`h-px w-full my-6 ${isHighlight ? 'bg-white/10' : 'bg-black/5'}`} />
-
-        {/* Features List */}
-        <div className="flex-1 space-y-4 mb-10">
-          {plan.maxUsers && (
-            <div className="flex items-start gap-4 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-[#93C01F] flex items-center justify-center shrink-0 mt-0.5 text-white">
-                <Check size={10} strokeWidth={4} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>
-                {plan.maxUsers === -1 ? 'Unlimited' : `Up to ${plan.maxUsers}`} team members
-              </span>
-            </div>
-          )}
-          {plan.maxConversations && (
-            <div className="flex items-start gap-4 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-[#93C01F] flex items-center justify-center shrink-0 mt-0.5 text-white">
-                <Check size={10} strokeWidth={4} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>
-                {plan.maxConversations === -1 ? 'Unlimited' : plan.maxConversations.toLocaleString()} AI conversations/mo
-              </span>
-            </div>
-          )}
-          {plan.maxDocuments && (
-            <div className="flex items-start gap-4 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-[#93C01F] flex items-center justify-center shrink-0 mt-0.5 text-white">
-                <Check size={10} strokeWidth={4} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>
-                {plan.maxDocuments === -1 ? 'Unlimited' : plan.maxDocuments.toLocaleString()} documents
-              </span>
-            </div>
-          )}
-          {plan.features?.slice(0, 5).map((feature, idx) => (
-            <div key={idx} className="flex items-start gap-4 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-[#93C01F] flex items-center justify-center shrink-0 mt-0.5 text-white">
-                <Check size={10} strokeWidth={4} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>{feature.name}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Button */}
-        <button
-          onClick={() => handleSelectPlan(plan)}
-          disabled={isLoading || plan.tier === 'FREE'}
-          className={`w-full py-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-            plan.tier === 'FREE'
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              : isHighlight
-              ? 'bg-white text-[#1A1A1A] hover:bg-gray-100'
-              : 'bg-[#F2F1EA] border border-[#1A1A1A]/10 text-[#1A1A1A] hover:bg-white'
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              Processing...
-            </>
-          ) : (
-            'Start Free Trial'
-          )}
-        </button>
-      </div>
-    );
-  };
-
-  // Render fallback card from constants
-  const renderFallbackCard = (tier: typeof PRICING_TIERS[0]) => {
-    const isHighlight = tier.highlight;
-
-    return (
-      <div
-        key={tier.name}
-        className={`relative group rounded-[2.5rem] p-8 lg:p-10 flex flex-col transition-all duration-300 w-full min-h-[700px]
-          ${isHighlight
-            ? 'bg-[#1A1A1A] text-white shadow-2xl ring-4 ring-[#EAD07D]/20 scale-100 lg:scale-105 z-10'
-            : 'bg-[#F2F1EA] md:bg-[#F0F0E8] text-[#1A1A1A] border border-black/5 shadow-lg'
-          }
-        `}
-      >
-        {/* Top Tab / Badge */}
-        <div
-          className={`absolute -top-[1px] -right-[1px] h-12 px-6 flex items-center justify-center rounded-bl-2xl rounded-tr-[2.4rem] text-xs font-bold uppercase tracking-wider
-            ${isHighlight
-              ? 'bg-[#EAD07D] text-[#1A1A1A]'
-              : 'bg-[#E0E0D8] text-[#1A1A1A]/60'
-            }
-          `}
-        >
-          {tier.badge}
-          <div className={`absolute top-0 -left-4 w-4 h-4 bg-transparent shadow-[4px_-4px_0_0_rgba(0,0,0,0)] ${isHighlight ? 'shadow-[#EAD07D]' : 'shadow-[#E0E0D8]'} rounded-tr-lg`}></div>
-          <div className={`absolute -bottom-4 right-0 w-4 h-4 bg-transparent shadow-[4px_-4px_0_0_rgba(0,0,0,0)] ${isHighlight ? 'shadow-[#EAD07D]' : 'shadow-[#E0E0D8]'} rounded-tr-lg`}></div>
-        </div>
-
-        {/* Card Content */}
-        <div className="mb-8 mt-4 text-center">
-          <h3 className={`text-xl font-medium mb-4 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>{tier.name}</h3>
-
-          <div className="flex items-center justify-center gap-3 mb-2">
-            {tier.originalPrice && billingCycle === 'annual' && (
-              <span className={`text-2xl font-medium line-through decoration-2 ${isHighlight ? 'text-gray-500' : 'text-gray-400'}`}>
-                {tier.originalPrice}
-              </span>
-            )}
-            <span className={`text-6xl font-sans font-medium tracking-tight ${isHighlight ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>
-              {tier.price}
-            </span>
-          </div>
-
-          <p className={`text-xs font-medium uppercase tracking-wide mb-6 ${isHighlight ? 'text-gray-400' : 'text-gray-500'}`}>
-            {billingCycle === 'annual'
-              ? `$${Math.round(parseInt(tier.price.slice(1)) * 12 * 0.8)} billed yearly`
-              : `$${parseInt(tier.price.slice(1)) * 12} billed yearly`}
-          </p>
-
-          <p className={`text-sm leading-relaxed max-w-[260px] mx-auto ${isHighlight ? 'text-gray-400' : 'text-gray-500'}`}>
-            {tier.description}
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div className={`h-px w-full my-6 ${isHighlight ? 'bg-white/10' : 'bg-black/5'}`} />
-
-        {/* Features List */}
-        <div className="flex-1 space-y-4 mb-10">
-          {tier.features.map((feature, idx) => (
-            <div key={idx} className="flex items-start gap-4 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-[#93C01F] flex items-center justify-center shrink-0 mt-0.5 text-white">
-                <Check size={10} strokeWidth={4} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'opacity-90' : 'opacity-70'}`}>{feature}</span>
-            </div>
-          ))}
-
-          {tier.notIncluded?.map((feature, idx) => (
-            <div key={`not-${idx}`} className="flex items-start gap-4 text-[14px]">
-              <div className={`w-5 h-5 flex items-center justify-center shrink-0 mt-0.5 ${isHighlight ? 'text-gray-600' : 'text-gray-400'}`}>
-                <X size={16} strokeWidth={2} />
-              </div>
-              <span className={`flex-1 ${isHighlight ? 'text-gray-600' : 'text-gray-400 line-through'}`}>{feature}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Button */}
-        <button
-          onClick={() => handleSelectPlan(tier)}
-          className={`w-full py-4 rounded-full font-bold text-sm ${
-            isHighlight
-              ? 'bg-white text-[#1A1A1A] hover:bg-gray-100'
-              : 'bg-[#F2F1EA] border border-[#1A1A1A]/10 text-[#1A1A1A] hover:bg-white'
-          }`}
-        >
-          {tier.cta}
-        </button>
-      </div>
-    );
+  const handleContactSales = () => {
+    navigate('/contact');
   };
 
   return (
     <>
-    <SEOHead {...SEO_CONFIGS.pricing} />
-    <div className="min-h-screen bg-[#F2F1EA]">
+      <SEOHead {...SEO_CONFIGS.pricing} />
+      <div className="min-h-screen bg-[#F2F1EA]">
+        {/* Hero Section */}
+        <section className="py-20 md:py-32 relative overflow-hidden">
+          {/* Background Effects */}
+          <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[120px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-[#93C01F]/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <section className="py-20 md:py-32 relative overflow-hidden">
-        {/* Background Glow */}
-        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-[#EAD07D]/5 blur-[100px] rounded-full pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-sm mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#93C01F] animate-pulse" />
-                <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">14-Day Free Trial</span>
+          <div className="max-w-7xl mx-auto px-6">
+            {/* Header */}
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#93C01F]/10 border border-[#93C01F]/20 mb-6">
+                <TrendingUp size={16} className="text-[#93C01F]" />
+                <span className="text-sm font-semibold text-[#1A1A1A]">Outcome-Based Pricing</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-[#1A1A1A] mb-2">Pricing</h1>
-              <p className="text-[#666] text-lg">Choose the right plan for your team.</p>
+
+              <h1 className="text-4xl md:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight">
+                Pay When You{' '}
+                <span className="text-[#EAD07D]">Win</span>
+              </h1>
+
+              <p className="text-xl text-[#666] mb-8 leading-relaxed">
+                No upfront subscriptions. No per-seat fees. You only pay when your team closes deals.
+                Our success is tied directly to yours.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  onClick={handleGetStarted}
+                  className="px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-semibold text-lg hover:bg-[#333] transition-all flex items-center gap-2 shadow-lg"
+                >
+                  Start Free <ArrowRight size={20} />
+                </button>
+                <button
+                  onClick={handleContactSales}
+                  className="px-8 py-4 bg-white text-[#1A1A1A] rounded-full font-semibold text-lg border border-black/10 hover:bg-[#F8F8F6] transition-all"
+                >
+                  Talk to Sales
+                </button>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="mt-10 flex items-center justify-center gap-6 flex-wrap text-sm text-[#666]">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-[#93C01F]" />
+                  No credit card required
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-[#93C01F]" />
+                  Free until you close deals
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-[#93C01F]" />
+                  Cancel anytime
+                </span>
+              </div>
             </div>
 
-            {/* Toggle Switch */}
-            <div className="bg-white p-1 rounded-full border border-black/5 flex items-center relative">
-              <button
-                onClick={() => setBillingCycle('annual')}
-                className={`relative z-10 px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${billingCycle === 'annual' ? 'text-white' : 'text-[#666] hover:text-[#1A1A1A]'}`}
-              >
-                Annual
-                {billingCycle === 'annual' && (
-                  <span className="ml-2 text-[10px] bg-[#EAD07D] text-[#1A1A1A] px-2 py-0.5 rounded-full font-bold">
-                    SAVE 20%
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`relative z-10 px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${billingCycle === 'monthly' ? 'text-white' : 'text-[#666] hover:text-[#1A1A1A]'}`}
-              >
-                Monthly
-              </button>
+            {/* Value Proposition Card */}
+            <div className="bg-[#1A1A1A] rounded-[2.5rem] p-8 md:p-12 text-center max-w-4xl mx-auto relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#EAD07D]/10 blur-[80px] rounded-full" />
 
-              {/* Sliding Pill Background */}
-              <div
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#1A1A1A] rounded-full transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${billingCycle === 'monthly' ? 'translate-x-[100%]' : 'translate-x-0'}`}
-              />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EAD07D] text-[#1A1A1A] font-bold text-sm mb-6">
+                  <Zap size={16} />
+                  Most Popular
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Revenue Share Model
+                </h2>
+
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <span className="text-6xl md:text-8xl font-bold text-[#EAD07D]">2.5%</span>
+                  <span className="text-xl text-white/60 text-left">
+                    of each<br />closed deal
+                  </span>
+                </div>
+
+                <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
+                  Close a $100,000 deal? Pay just $2,500. No deal? Pay nothing.
+                  It's that simple.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {EXAMPLE_DEALS.map((deal) => (
+                    <div key={deal.name} className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                      <p className="text-white/40 text-xs mb-1">{deal.name}</p>
+                      <p className="text-white font-semibold">${deal.amount.toLocaleString()}</p>
+                      <p className="text-[#EAD07D] text-sm font-medium">Fee: ${deal.fee.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleGetStarted}
+                  className="px-8 py-4 bg-white text-[#1A1A1A] rounded-full font-bold text-lg hover:bg-gray-100 transition-all"
+                >
+                  Get Started Free
+                </button>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Cards Grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white/60 rounded-[2.5rem] p-10 animate-pulse min-h-[700px]">
-                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4" />
-                  <div className="h-10 bg-gray-200 rounded w-1/2 mb-6" />
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4].map(j => (
-                      <div key={j} className="h-4 bg-gray-200 rounded" />
-                    ))}
+        {/* Calculator Section */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">
+                Calculate Your Costs
+              </h2>
+              <p className="text-[#666] text-lg">
+                See exactly what you'd pay based on your deal sizes
+              </p>
+            </div>
+
+            <div className="bg-white rounded-[2rem] p-8 md:p-10 shadow-lg border border-black/5 max-w-2xl mx-auto">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <Calculator size={24} className="text-[#1A1A1A]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A]">Fee Calculator</h3>
+                  <p className="text-sm text-[#666]">Based on 2.5% revenue share</p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-sm font-medium text-[#666] mb-3">
+                  Deal Value
+                </label>
+                <input
+                  type="range"
+                  min="5000"
+                  max="1000000"
+                  step="5000"
+                  value={calculatorValue}
+                  onChange={(e) => setCalculatorValue(parseInt(e.target.value))}
+                  className="w-full h-3 bg-[#F0EBD8] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1A1A1A] [&::-webkit-slider-thumb]:cursor-pointer"
+                />
+                <div className="flex justify-between text-sm text-[#999] mt-2">
+                  <span>$5,000</span>
+                  <span>$1,000,000</span>
+                </div>
+              </div>
+
+              <div className="bg-[#F8F8F6] rounded-2xl p-6 text-center">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-[#666] mb-1">Deal Value</p>
+                    <p className="text-3xl font-bold text-[#1A1A1A]">
+                      ${calculatorValue.toLocaleString()}
+                    </p>
                   </div>
+                  <div>
+                    <p className="text-sm text-[#666] mb-1">Your Fee</p>
+                    <p className="text-3xl font-bold text-[#93C01F]">
+                      ${calculatedFee.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-[#999] mt-4">
+                  That's only {revenueSharePercent}% of your closed deal
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Other Pricing Models */}
+        <section className="py-16 md:py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">
+                Flexible Pricing Models
+              </h2>
+              <p className="text-[#666] text-lg max-w-2xl mx-auto">
+                Choose the model that works best for your business. We'll help you find the right fit.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {PRICING_MODELS.map((model) => (
+                <div
+                  key={model.id}
+                  className={`relative rounded-[1.5rem] p-6 transition-all ${
+                    model.highlight
+                      ? 'bg-[#1A1A1A] text-white ring-4 ring-[#EAD07D]/20'
+                      : 'bg-[#F8F8F6] text-[#1A1A1A] border border-black/5'
+                  }`}
+                >
+                  {model.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#EAD07D] rounded-full text-xs font-bold text-[#1A1A1A]">
+                      MOST POPULAR
+                    </div>
+                  )}
+
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                    model.highlight ? 'bg-white/10' : 'bg-white'
+                  }`}>
+                    <model.icon size={24} className={model.highlight ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'} />
+                  </div>
+
+                  <h3 className="font-semibold text-lg mb-2">{model.name}</h3>
+                  <p className={`text-sm mb-4 ${model.highlight ? 'text-white/60' : 'text-[#666]'}`}>
+                    {model.description}
+                  </p>
+                  <p className={`text-sm font-medium ${model.highlight ? 'text-[#EAD07D]' : 'text-[#93C01F]'}`}>
+                    {model.example}
+                  </p>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              {sortedApiPlans.length > 0
-                ? sortedApiPlans.map(plan => renderApiCard(plan))
-                : PRICING_TIERS.map(tier => renderFallbackCard(tier))
-              }
-            </div>
-          )}
 
-          {/* Coupon Code Section */}
-          <div className="max-w-md mx-auto mt-16">
-            <div className="bg-white rounded-[2rem] p-6 shadow-lg border border-black/5">
-              <h4 className="font-medium text-[#1A1A1A] mb-3">Have a coupon code?</h4>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    setCouponError(null);
-                    setCouponSuccess(null);
-                  }}
-                  placeholder="Enter code"
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
-                />
-                <button
-                  onClick={handleApplyCoupon}
-                  className="px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-[#333] transition-colors"
+            <div className="text-center mt-10">
+              <button
+                onClick={handleContactSales}
+                className="px-6 py-3 bg-[#1A1A1A] text-white rounded-full font-medium hover:bg-[#333] transition-all inline-flex items-center gap-2"
+              >
+                Discuss Custom Pricing <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Section */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">
+                Why Outcome-Based Pricing?
+              </h2>
+              <p className="text-[#666] text-lg">
+                A pricing model that puts your success first
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {BENEFITS.map((benefit, index) => (
+                <div key={index} className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-black/5">
+                  <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                    <benefit.icon size={24} className="text-[#1A1A1A]" />
+                  </div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-[#666]">{benefit.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* What's Included */}
+        <section className="py-16 md:py-24 bg-[#1A1A1A]">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Everything You Need to Close Deals
+              </h2>
+              <p className="text-white/60 text-lg">
+                Full access to all features. No hidden costs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {[
+                'AI-Powered Sales Assistant',
+                'Lead & Opportunity Management',
+                'Pipeline Analytics & Forecasting',
+                'Email & Calendar Integration',
+                'Quote & Proposal Builder (CPQ)',
+                'Team Collaboration Tools',
+                'Custom Dashboards & Reports',
+                'Salesforce & HubSpot Sync',
+                'Mobile App Access',
+                'API Access',
+                'SSO & Advanced Security',
+                'Priority Support',
+              ].map((feature, index) => (
+                <div key={index} className="flex items-center gap-3 text-white">
+                  <div className="w-6 h-6 rounded-full bg-[#93C01F] flex items-center justify-center flex-shrink-0">
+                    <Check size={14} strokeWidth={3} />
+                  </div>
+                  <span className="text-white/90">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">
+                Frequently Asked Questions
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {FAQ_ITEMS.map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl border border-black/5 overflow-hidden"
                 >
-                  Apply
-                </button>
-              </div>
-              {couponError && (
-                <p className="text-sm text-red-600 mt-2">{couponError}</p>
-              )}
-              {couponSuccess && (
-                <p className="text-sm text-green-600 mt-2">{couponSuccess}</p>
-              )}
+                  <button
+                    onClick={() => setSelectedFaq(selectedFaq === index ? null : index)}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left"
+                  >
+                    <span className="font-medium text-[#1A1A1A]">{item.question}</span>
+                    <HelpCircle
+                      size={20}
+                      className={`text-[#999] transition-transform ${selectedFaq === index ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {selectedFaq === index && (
+                    <div className="px-6 pb-4">
+                      <p className="text-[#666] text-sm leading-relaxed">{item.answer}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
+        </section>
 
-          {/* Bottom Trust Indicators */}
-          <div className="mt-16 flex items-center justify-center gap-8 flex-wrap text-sm text-[#888]">
-            <span className="flex items-center gap-2">
-              <Check size={16} className="text-[#93C01F]" />
-              No credit card required
-            </span>
-            <span className="flex items-center gap-2">
-              <Check size={16} className="text-[#93C01F]" />
-              Cancel anytime
-            </span>
-            <span className="flex items-center gap-2">
-              <Check size={16} className="text-[#93C01F]" />
-              24/7 support
-            </span>
-          </div>
+        {/* Final CTA */}
+        <section className="py-16 md:py-24 bg-[#F8F8F6]">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-4">
+              Ready to Align Your CRM Costs with Results?
+            </h2>
+            <p className="text-[#666] text-lg mb-8 max-w-2xl mx-auto">
+              Join forward-thinking sales teams who only pay when they win.
+              Start using SalesOS today - it's free until you close your first deal.
+            </p>
 
-          {/* Enterprise CTA */}
-          <div className="mt-16 text-center">
-            <p className="text-[#666] mb-4">
-              Need a custom plan for your enterprise?{' '}
-              <Link to="/contact" className="text-[#1A1A1A] font-semibold hover:text-[#EAD07D] transition-colors">
-                Contact our sales team
-              </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={handleGetStarted}
+                className="px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-semibold text-lg hover:bg-[#333] transition-all flex items-center gap-2"
+              >
+                Start Free Today <ArrowRight size={20} />
+              </button>
+              <button
+                onClick={handleContactSales}
+                className="px-8 py-4 bg-white text-[#1A1A1A] rounded-full font-semibold text-lg border border-black/10 hover:bg-white transition-all"
+              >
+                Schedule a Demo
+              </button>
+            </div>
+
+            <p className="mt-8 text-sm text-[#999]">
+              No credit card required. No commitment. Just results-based pricing.
             </p>
           </div>
-        </div>
-      </section>
-
-    </div>
+        </section>
+      </div>
     </>
   );
 };

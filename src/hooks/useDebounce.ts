@@ -26,7 +26,7 @@ export function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 300
 ): T {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const callbackRef = useRef(callback);
 
   // Update callback ref when callback changes
@@ -67,9 +67,9 @@ export function useDebouncedCallbackImmediate<T extends (...args: unknown[]) => 
   delay: number = 300,
   immediate: boolean = false
 ): { debouncedFn: T; cancel: () => void; flush: () => void } {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const callbackRef = useRef(callback);
-  const argsRef = useRef<Parameters<T>>();
+  const argsRef = useRef<Parameters<T> | undefined>(undefined);
 
   useEffect(() => {
     callbackRef.current = callback;
@@ -148,7 +148,7 @@ export function useThrottledCallback<T extends (...args: unknown[]) => unknown>(
   interval: number = 300
 ): T {
   const lastExecuted = useRef<number>(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const callbackRef = useRef(callback);
 
   useEffect(() => {

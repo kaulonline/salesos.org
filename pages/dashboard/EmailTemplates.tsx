@@ -20,7 +20,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useEmailTemplates, useMergeFields } from '../../src/hooks/useEmailTemplates';
-import type { EmailTemplate, CreateEmailTemplateDto, TemplateCategory } from '../../src/types';
+import type { EmailTemplate, CreateEmailTemplateDto, UpdateEmailTemplateDto, TemplateCategory } from '../../src/types';
 import { TEMPLATE_CATEGORY_LABELS } from '../../src/types/emailTemplate';
 import { AIBuilderModal, AIBuilderTrigger } from '../../src/components/AIBuilder';
 import { AIBuilderEntityType, EmailTemplateConfig } from '../../src/types/aiBuilder';
@@ -40,7 +40,7 @@ const CATEGORY_COLORS: Record<TemplateCategory, string> = {
 interface CreateTemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: CreateEmailTemplateDto) => Promise<void>;
+  onCreate: (data: CreateEmailTemplateDto) => Promise<EmailTemplate | void>;
 }
 
 // Edit Template Modal
@@ -48,7 +48,7 @@ interface EditTemplateModalProps {
   isOpen: boolean;
   template: EmailTemplate | null;
   onClose: () => void;
-  onUpdate: (id: string, data: Partial<CreateEmailTemplateDto>) => Promise<void>;
+  onUpdate: (id: string, data: UpdateEmailTemplateDto) => Promise<EmailTemplate | void>;
 }
 
 const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template, onClose, onUpdate }) => {
@@ -101,7 +101,7 @@ const EditTemplateModal: React.FC<EditTemplateModalProps> = ({ isOpen, template,
       setFormData({
         name: template.name || '',
         subject: template.subject || '',
-        body: template.bodyHtml || template.body || '',
+        body: template.body || '',
         category: template.category || 'CUSTOM',
         isShared: template.isShared || false,
       });

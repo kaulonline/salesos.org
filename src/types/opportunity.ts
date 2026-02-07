@@ -67,6 +67,10 @@ export interface Opportunity {
     id: string;
     name: string;
   };
+  owner?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface CreateOpportunityDto {

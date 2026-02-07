@@ -605,7 +605,7 @@ export const Deals: React.FC = () => {
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
           <AlertCircle size={20} />
           <span>{error}</span>
-          <button onClick={refetch} className="ml-auto text-sm underline">Retry</button>
+          <button onClick={() => refetch()} className="ml-auto text-sm underline">Retry</button>
         </div>
       )}
 

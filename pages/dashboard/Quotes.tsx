@@ -42,7 +42,7 @@ const STATUS_CONFIG: Record<QuoteStatus, { label: string; color: string; icon: R
 interface CreateQuoteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: CreateQuoteDto) => Promise<void>;
+  onCreate: (data: CreateQuoteDto) => Promise<Quote | void>;
 }
 
 const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({ isOpen, onClose, onCreate }) => {

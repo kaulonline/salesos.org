@@ -16,6 +16,15 @@ export const logger = {
   },
 
   /**
+   * Alias for log - info level messages
+   */
+  info: (...args: unknown[]): void => {
+    if (isDev) {
+      console.info('[SalesOS]', ...args);
+    }
+  },
+
+  /**
    * Log warning messages (only in development)
    */
   warn: (...args: unknown[]): void => {

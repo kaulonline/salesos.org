@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { opportunitiesApi, OpportunityFilters } from '../api/opportunities';
 import { queryKeys } from '../lib/queryKeys';
 import type {
@@ -410,5 +410,57 @@ export function useOpportunityContacts(opportunityId: string | undefined) {
     isUpdating: updateContactMutation.isPending,
     isRemoving: removeContactMutation.isPending,
     isSettingPrimary: setPrimaryMutation.isPending,
+  };
+}
+
+/**
+ * Infinite scroll hook for large deal lists
+ * Uses cursor-based pagination for efficient loading
+ */
+const DEFAULT_PAGE_SIZE = 50;
+
+export function useDealsInfinite(filters?: Omit<OpportunityFilters, 'page' | 'limit'>) {
+  const queryClient = useQueryClient();
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: [...queryKeys.deals.all, 'infinite', filters],
+    queryFn: async ({ pageParam }) => {
+      const response = await opportunitiesApi.getAll({
+        ...filters,
+        cursor: pageParam,
+        limit: DEFAULT_PAGE_SIZE,
+      });
+      if (Array.isArray(response)) {
+        return {
+          data: response,
+          nextCursor: response.length >= DEFAULT_PAGE_SIZE ? response[response.length - 1]?.id : undefined,
+        };
+      }
+      return response;
+    },
+    getNextPageParam: (lastPage) => {
+      if (Array.isArray(lastPage)) {
+        return lastPage.length >= DEFAULT_PAGE_SIZE ? lastPage[lastPage.length - 1]?.id : undefined;
+      }
+      return lastPage.nextCursor;
+    },
+    initialPageParam: undefined as string | undefined,
+  });
+
+  const deals = infiniteQuery.data?.pages.flatMap((page) => {
+    if (Array.isArray(page)) return page;
+    return page.data || [];
+  }) ?? [];
+
+  return {
+    deals,
+    totalCount: deals.length,
+    hasNextPage: infiniteQuery.hasNextPage,
+    isFetchingNextPage: infiniteQuery.isFetchingNextPage,
+    fetchNextPage: infiniteQuery.fetchNextPage,
+    isLoading: infiniteQuery.isLoading,
+    isRefetching: infiniteQuery.isRefetching,
+    error: infiniteQuery.error?.message ?? null,
+    refetch: infiniteQuery.refetch,
   };
 }

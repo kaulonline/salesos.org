@@ -28,11 +28,48 @@ export * from './apiKey';
 export * from './aiBuilder';
 export * from './discountRule';
 export * from './taxRate';
-export * from './approvalWorkflow';
+// Re-export approvalWorkflow but exclude ConditionOperator to avoid conflict with assignmentRule
+export {
+  type ApprovalWorkflow,
+  type ApprovalStep,
+  type ApprovalCondition,
+  type ApprovalAction,
+  type ApprovalRequest,
+  type ApprovalDecision,
+  type CreateApprovalWorkflowDto,
+  type UpdateApprovalWorkflowDto,
+  type ApprovalDecisionDto,
+  type ApprovalStatus,
+  type ApprovalEntity,
+  type ApprovalTrigger,
+  type ApprovalActionType,
+  CONDITION_OPERATORS as APPROVAL_CONDITION_OPERATORS,
+} from './approvalWorkflow';
 export * from './quoteVersion';
 export * from './esignature';
 export * from './order';
-export * from './cpqAnalytics';
+// Re-export cpqAnalytics but exclude AccountRevenue to avoid conflict with account
+export {
+  type CPQDashboardMetrics,
+  type QuoteMetrics,
+  type OrderMetrics,
+  type ProductMetrics,
+  type TopProduct,
+  type CategoryCount,
+  type ConversionMetrics,
+  type StageConversion,
+  type LostReason,
+  type RevenueMetrics,
+  type MonthlyRevenue,
+  type ProductRevenue,
+  // AccountRevenue excluded - use the one from account.ts
+  type CPQTrendData,
+  type CPQAnalyticsFilters,
+  type CPQAnalyticsSnapshot,
+  type QuotePipelineData,
+  type SalesRepPerformance,
+  type CPQForecast,
+} from './cpqAnalytics';
 export * from './territory';
 export * from './playbook';
 

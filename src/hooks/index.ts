@@ -1,6 +1,6 @@
 // Core data hooks (TanStack Query powered)
-export { useLeads, useLead } from './useLeads';
-export { useDeals, useDeal, useOpportunityContacts } from './useDeals';
+export { useLeads, useLead, useLeadsInfinite } from './useLeads';
+export { useDeals, useDeal, useOpportunityContacts, useDealsInfinite } from './useDeals';
 export { usePipelines, usePipeline } from './usePipelines';
 export { useCompanies, useCompany } from './useCompanies';
 export { useContacts, useContact } from './useContacts';
@@ -47,6 +47,17 @@ export {
   useCoupons,
   useGatewayConfigs,
 } from './useBilling';
+
+// Outcome-Based Billing hooks
+export {
+  useMyOutcomePlan,
+  useMyOutcomeEvents,
+  useMyOutcomeBillingStats,
+  useAdminOutcomeDashboard,
+  useAdminOutcomePlans,
+  useAdminOutcomeEvents,
+  useAdminOrganizationOutcomeStats,
+} from './useOutcomeBilling';
 
 // User settings hooks
 export {
@@ -125,3 +136,7 @@ export {
   usePlaybookExecutions,
   usePlaybookExecution,
 } from './usePlaybooks';
+
+// Real-time Collaboration hooks
+export { useEntityLock } from './useEntityLock';
+export { useEntityPresence } from './useEntityPresence';

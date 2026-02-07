@@ -22,7 +22,7 @@ export function useOfflineSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  const syncIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   // Initialize offline storage
   useEffect(() => {

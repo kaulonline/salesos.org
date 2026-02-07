@@ -1,6 +1,8 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 // Security headers for development server
 // Note: In production, these should be configured on the web server (nginx, Apache) or CDN
@@ -28,7 +30,6 @@ const getCSPDirectives = (isDev: boolean) => {
     'style-src': [
       "'self'",
       "'unsafe-inline'", // Required for Tailwind/styled-components
-      'https://cdn.tailwindcss.com',
     ],
     'img-src': ["'self'", 'data:', 'blob:', 'https:'],
     'font-src': ["'self'", 'data:'],
@@ -84,6 +85,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [react()],
+    css: {
+      postcss: {
+        plugins: [tailwindcss, autoprefixer],
+      },
+    },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),

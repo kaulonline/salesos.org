@@ -54,7 +54,7 @@ export const Login: React.FC = () => {
   useEffect(() => {
     const fetchOAuthStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/oauth-status`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/auth/oauth-status`);
         if (response.ok) {
           const data = await response.json();
           setOauthStatus(data);
@@ -131,8 +131,8 @@ export const Login: React.FC = () => {
 
     // OAuth endpoints - redirect to the OAuth provider
     const oauthUrls: Record<string, string> = {
-      google: `${import.meta.env.VITE_API_URL || ''}/api/auth/google`,
-      apple: `${import.meta.env.VITE_API_URL || ''}/api/auth/apple`,
+      google: `${import.meta.env.VITE_API_URL || ''}/auth/google`,
+      apple: `${import.meta.env.VITE_API_URL || ''}/auth/apple`,
     };
 
     window.location.href = oauthUrls[provider];

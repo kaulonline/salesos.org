@@ -2,10 +2,10 @@
  * Security utilities for XSS prevention, CSRF protection, and input sanitization
  */
 
-import DOMPurify from 'dompurify';
+import DOMPurify, { Config } from 'dompurify';
 
 // Configure DOMPurify defaults
-const DOMPURIFY_CONFIG: DOMPurify.Config = {
+const DOMPURIFY_CONFIG: Config = {
   ALLOWED_TAGS: [
     'p', 'br', 'b', 'i', 'em', 'strong', 'u', 's', 'strike',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -27,7 +27,7 @@ const DOMPURIFY_CONFIG: DOMPurify.Config = {
 };
 
 // Strict config for user-generated content
-const STRICT_CONFIG: DOMPurify.Config = {
+const STRICT_CONFIG: Config = {
   ...DOMPURIFY_CONFIG,
   ALLOWED_TAGS: ['p', 'br', 'b', 'i', 'em', 'strong', 'u', 'a', 'span'],
   ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
@@ -52,12 +52,12 @@ export function sanitizeHtml(html: string, strict = false): string {
     }
   });
 
-  const sanitized = DOMPurify.sanitize(html, config);
+  const sanitized = DOMPurify.sanitize(html, { ...config, RETURN_TRUSTED_TYPE: false });
 
   // Remove the hook after use
   DOMPurify.removeHook('afterSanitizeAttributes');
 
-  return sanitized;
+  return sanitized as string;
 }
 
 /**

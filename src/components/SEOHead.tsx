@@ -126,9 +126,9 @@ export const SEO_CONFIGS = {
     canonicalUrl: '/features',
   },
   pricing: {
-    title: 'Pricing',
-    description: 'Simple, transparent pricing for SalesOS. Choose the plan that fits your team. Free trial available with no credit card required.',
-    keywords: 'CRM pricing, sales software pricing, SalesOS plans, sales tool cost, CRM subscription',
+    title: 'Pricing - Pay When You Win',
+    description: 'Outcome-based pricing for SalesOS. No upfront subscriptions - only pay when you close deals. Revenue share, tiered, or flat-fee options available.',
+    keywords: 'outcome based pricing, pay per deal CRM, revenue share pricing, sales software pricing, no subscription CRM, pay when you win',
     canonicalUrl: '/pricing',
   },
   integrations: {

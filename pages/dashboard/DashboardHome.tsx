@@ -1,84 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import {
-  TrendingUp,
-  Phone,
-  Mail,
-  Clock,
-  Video,
-  Target,
-  Users,
-  DollarSign,
-  Calendar,
-  CheckCircle2,
-  ArrowUpRight,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Zap,
-  Briefcase,
-  Award,
-  BarChart3,
-  PhoneCall,
-  MessageSquare,
-  UserPlus,
-  FileText,
-  AlertCircle
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Users, Target, DollarSign } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { Card } from '../../components/ui/Card';
 import { TaskDetailModal } from '../../components/TaskDetailModal';
 import { useDashboard, useDeals, useMeetings, useActivities, useTasks } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/components/ui/Toast';
 import type { Task } from '../../src/types/task';
-import { BarChart } from '../../src/components/charts';
-
-// Accordion Item Component
-const AccordionItem: React.FC<{
-  title: string;
-  icon: React.ReactNode;
-  children?: React.ReactNode;
-  defaultOpen?: boolean;
-}> = ({ title, icon, children, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border-b border-black/5 last:border-b-0">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-4 px-1 text-left hover:bg-black/[0.02] transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-[#666]">{icon}</span>
-          <span className="font-medium text-[#1A1A1A] text-sm">{title}</span>
-        </div>
-        {isOpen ? <ChevronUp size={18} className="text-[#999]" /> : <ChevronDown size={18} className="text-[#999]" />}
-      </button>
-      {isOpen && children && (
-        <div className="pb-4 px-1">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const getStageLabel = (stage: string) => {
-  const labels: Record<string, string> = {
-    'PROSPECTING': 'Prospecting',
-    'QUALIFICATION': 'Qualification',
-    'NEEDS_ANALYSIS': 'Needs Analysis',
-    'VALUE_PROPOSITION': 'Value Prop',
-    'DECISION_MAKERS_IDENTIFIED': 'Decision Makers',
-    'PERCEPTION_ANALYSIS': 'Perception',
-    'PROPOSAL_PRICE_QUOTE': 'Proposal',
-    'NEGOTIATION_REVIEW': 'Negotiation',
-    'CLOSED_WON': 'Closed Won',
-    'CLOSED_LOST': 'Closed Lost',
-  };
-  return labels[stage] || stage;
-};
+import {
+  SalesRepProfileCard,
+  SalesActivityCard,
+  DealVelocityCard,
+  MeetingsCalendar,
+  PipelineSummaryCard,
+  ActionItemsCard,
+  RevenueForecastCard,
+  DailyActivity,
+} from '../../src/components/dashboard';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
@@ -107,16 +44,6 @@ export const DashboardHome: React.FC = () => {
   const userFullName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : userName);
   const userTitle = user?.role === 'ADMIN' ? 'Sales Manager' : 'Sales Representative';
 
-  // Format currency with compact notation (K, M, B, T)
-  const formatCurrency = (value: number) => {
-    const absValue = Math.abs(value);
-    if (absValue >= 1e12) return `$${(value / 1e12).toFixed(1)}T`;
-    if (absValue >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
-    if (absValue >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
-    if (absValue >= 1e3) return `$${(value / 1e3).toFixed(1)}K`;
-    return `$${value.toFixed(0)}`;
-  };
-
   // Calculate metrics
   const winRate = pipelineStats?.winRate || 0;
   const estimatedCommission = (pipelineStats?.closedWonValue || 0) * 0.03;
@@ -127,56 +54,9 @@ export const DashboardHome: React.FC = () => {
     return openDeals.sort((a, b) => (b.amount || 0) - (a.amount || 0)).slice(0, 3);
   }, [deals]);
 
-  // Calendar month state for navigation
-  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
-
-  // Calculate displayed month based on offset
-  const displayedMonth = useMemo(() => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + calendarMonthOffset);
-    return date;
-  }, [calendarMonthOffset]);
-
-  const currentMonthLabel = displayedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const prevMonthLabel = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() - 1).toLocaleDateString('en-US', { month: 'long' });
-  const nextMonthLabel = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1).toLocaleDateString('en-US', { month: 'long' });
-
-  // Get week dates based on displayed month - first week of the month
-  const weekDates = useMemo(() => {
-    // Get the first day of the displayed month
-    const firstOfMonth = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1);
-
-    // Find the Monday of the week containing the first of the month
-    const dayOfWeek = firstOfMonth.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const startOfWeek = new Date(firstOfMonth);
-    startOfWeek.setDate(firstOfMonth.getDate() + diff);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    return Array.from({ length: 6 }, (_, i) => {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
-      return date;
-    });
-  }, [displayedMonth]);
-
-  // Filter meetings for the displayed week
-  const thisWeekMeetings = useMemo(() => {
-    if (weekDates.length === 0) return [];
-
-    const startOfWeek = weekDates[0];
-    const endOfWeek = new Date(weekDates[weekDates.length - 1]);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    return meetings.filter(m => {
-      const meetingDate = new Date(m.startTime);
-      return meetingDate >= startOfWeek && meetingDate <= endOfWeek;
-    });
-  }, [meetings, weekDates]);
-
   // Daily activity breakdown - last 7 days
-  const dailyActivities = useMemo(() => {
-    const days = [];
+  const dailyActivities: DailyActivity[] = useMemo(() => {
+    const days: DailyActivity[] = [];
     const now = new Date();
 
     for (let i = 6; i >= 0; i--) {
@@ -204,24 +84,18 @@ export const DashboardHome: React.FC = () => {
     return days;
   }, [activities]);
 
-  const maxDailyActivity = Math.max(...dailyActivities.map(d => d.total), 1);
   const totalMonthlyActivities = useMemo(() => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     return activities.filter(a => new Date(a.createdAt) >= thirtyDaysAgo).length;
   }, [activities]);
 
-  // Pending vs completed tasks
-  const pendingTasks = useMemo(() => {
-    return tasks.filter(t => t.status !== 'COMPLETED');
-  }, [tasks]);
-
-  const completedTaskCount = tasks.filter(t => t.status === 'COMPLETED').length;
-
   // Sales tasks for display
   const salesTasks = useMemo(() => {
     return tasks.slice(0, 5);
   }, [tasks]);
+
+  const completedTaskCount = tasks.filter(t => t.status === 'COMPLETED').length;
 
   // Deal velocity - average days to close
   const dealVelocity = useMemo(() => {
@@ -336,569 +210,63 @@ export const DashboardHome: React.FC = () => {
 
           {/* Sales Rep Profile Card - Left Column */}
           <div className="lg:col-span-3">
-            <div className="rounded-[32px] p-6">
-              {/* Profile Image */}
-              <div className="relative mb-4">
-                <div className="w-full aspect-square rounded-[24px] overflow-hidden bg-[#E5DCC3] shadow-inner relative">
-                  {user?.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={userName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#EAD07D] to-[#D4BC5E]">
-                      <span className="text-6xl font-light text-white">
-                        {userName.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  {/* Frosted glass overlay at bottom 15% of image */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-white/30 backdrop-blur-md border-t border-white/30" />
-                </div>
-                {/* Commission Badge */}
-                <div className="absolute bottom-4 right-4 px-4 py-2 bg-[#EAD07D] rounded-full text-sm font-semibold text-[#1A1A1A] shadow-lg">
-                  {formatCurrency(estimatedCommission)}
-                </div>
-              </div>
-
-              {/* Name & Role */}
-              <h2 className="text-xl font-semibold text-[#1A1A1A] mb-1">
-                {userFullName}
-              </h2>
-              <p className="text-sm text-[#666] mb-6">{userTitle}</p>
-
-              {/* Accordion Sections */}
-              <div className="bg-white/60 rounded-2xl px-4">
-                <AccordionItem
-                  title="Pipeline Overview"
-                  icon={<TrendingUp size={18} />}
-                  defaultOpen={true}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Open Opportunities</span>
-                      <span className="font-medium">{pipelineStats?.totalOpportunities || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Total Value</span>
-                      <span className="font-medium">{formatCurrency(totalPipeline)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Avg Deal Size</span>
-                      <span className="font-medium">
-                        {formatCurrency(totalPipeline / (pipelineStats?.totalOpportunities || 1))}
-                      </span>
-                    </div>
-                  </div>
-                </AccordionItem>
-
-                <AccordionItem
-                  title="Top Deals"
-                  icon={<Award size={18} />}
-                >
-                  {topDeals.length > 0 ? (
-                    <div className="space-y-3">
-                      {topDeals.map((deal, i) => (
-                        <Link
-                          key={deal.id}
-                          to={`/dashboard/deals/${deal.id}`}
-                          className="block hover:bg-black/5 rounded-lg p-2 -mx-2 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#EAD07D] text-xs font-semibold flex items-center justify-center">
-                              {i + 1}
-                            </span>
-                            <span className="font-medium text-[#1A1A1A] text-sm truncate flex-1">{deal.name}</span>
-                          </div>
-                          <div className="flex justify-between mt-1 ml-7">
-                            <span className="text-xs text-[#666]">{getStageLabel(deal.stage)}</span>
-                            <span className="text-xs font-medium">{formatCurrency(deal.amount || 0)}</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#666]">No active deals</p>
-                  )}
-                </AccordionItem>
-
-                <AccordionItem
-                  title="Commission & Earnings"
-                  icon={<DollarSign size={18} />}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">MTD Commission</span>
-                      <span className="font-medium text-green-600">{formatCurrency(estimatedCommission)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Closed Revenue</span>
-                      <span className="font-medium">{formatCurrency(pipelineStats?.closedWonValue || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Projected (Pipeline)</span>
-                      <span className="font-medium text-[#666]">{formatCurrency(totalPipeline * 0.03)}</span>
-                    </div>
-                  </div>
-                </AccordionItem>
-
-                <AccordionItem
-                  title="Performance Stats"
-                  icon={<BarChart3 size={18} />}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Win Rate</span>
-                      <span className="font-medium">{Math.round(winRate)}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Avg Deal Cycle</span>
-                      <span className="font-medium">{dealVelocity !== null ? `${dealVelocity} days` : '—'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#666]">Quota Attainment</span>
-                      <span className="font-medium">{quotaAttainment}%</span>
-                    </div>
-                  </div>
-                </AccordionItem>
-              </div>
-            </div>
+            <SalesRepProfileCard
+              userName={userName}
+              userFullName={userFullName}
+              userTitle={userTitle}
+              avatarUrl={user?.avatarUrl}
+              estimatedCommission={estimatedCommission}
+              totalOpportunities={pipelineStats?.totalOpportunities || 0}
+              totalPipeline={totalPipeline}
+              closedWonValue={pipelineStats?.closedWonValue || 0}
+              winRate={winRate}
+              quotaAttainment={quotaAttainment}
+              dealVelocity={dealVelocity}
+              topDeals={topDeals}
+            />
           </div>
 
           {/* Middle Section */}
           <div className="lg:col-span-6 space-y-6">
             {/* Activity & Deal Velocity Row */}
             <div className="grid grid-cols-2 gap-6">
-              {/* Sales Activity Card */}
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-[#1A1A1A]">Sales Activity</h3>
-                  <Link to="/dashboard/analytics" className="text-[#999] hover:text-[#1A1A1A]">
-                    <ArrowUpRight size={18} />
-                  </Link>
-                </div>
-
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-4xl font-light text-[#1A1A1A] tabular-nums min-w-[60px]">{totalMonthlyActivities.toLocaleString()}</span>
-                  <span className="text-sm text-[#999]">touchpoints</span>
-                </div>
-                <p className="text-xs text-[#999] mb-6">last 30 days</p>
-
-                {/* Weekly Activity Bar Chart */}
-                {totalMonthlyActivities > 0 ? (
-                  <BarChart
-                    data={dailyActivities.map((day, i) => ({
-                      name: day.label,
-                      value: day.total,
-                      isToday: day.isToday,
-                    }))}
-                    dataKey="value"
-                    xAxisKey="name"
-                    height={140}
-                    color="#F0EBD8"
-                    activeColor="#1A1A1A"
-                    activeIndex={dailyActivities.findIndex(d => d.isToday)}
-                    showGrid={false}
-                    showYAxis={false}
-                    barRadius={8}
-                    tooltipFormatter={(value) => `${value} activities`}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-center">
-                    <div>
-                      <Zap size={32} className="text-[#999] mx-auto mb-2 opacity-40" />
-                      <p className="text-sm text-[#666]">No recent activity</p>
-                      <p className="text-xs text-[#999]">Start making calls or sending emails</p>
-                    </div>
-                  </div>
-                )}
-              </Card>
-
-              {/* Deal Velocity Card */}
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#1A1A1A]">Deal Velocity</h3>
-                  <Link to="/dashboard/analytics" className="text-[#999] hover:text-[#1A1A1A]">
-                    <ArrowUpRight size={18} />
-                  </Link>
-                </div>
-
-                {/* Circular Progress */}
-                <div className="flex flex-col items-center">
-                  <div className="relative w-36 h-36 mb-4">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#F0EBD8"
-                        strokeWidth="8"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#EAD07D"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 45}`}
-                        strokeDashoffset={`${2 * Math.PI * 45 * (1 - Math.min(winRate / 100, 1))}`}
-                        className="transition-all duration-500"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-3xl font-light text-[#1A1A1A]">
-                        {dealVelocity !== null ? dealVelocity : '—'}
-                      </span>
-                      <span className="text-xs text-[#999]">
-                        {dealVelocity !== null ? 'days avg' : 'no data yet'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="flex items-center gap-4 text-center">
-                    <div className="min-w-[50px]">
-                      <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{Math.round(winRate)}%</span>
-                      <p className="text-xs text-[#999]">Win Rate</p>
-                    </div>
-                    <div className="w-px h-8 bg-black/10"></div>
-                    <div className="min-w-[50px]">
-                      <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{conversionRate}%</span>
-                      <p className="text-xs text-[#999]">Conversion</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <SalesActivityCard
+                totalMonthlyActivities={totalMonthlyActivities}
+                dailyActivities={dailyActivities}
+              />
+              <DealVelocityCard
+                dealVelocity={dealVelocity}
+                winRate={winRate}
+                conversionRate={conversionRate}
+              />
             </div>
 
-            {/* Calendar Section - Sales Meetings */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#1A1A1A]">Upcoming Meetings</h3>
-                <Link to="/dashboard/calendar" className="text-[#999] hover:text-[#1A1A1A]">
-                  <ArrowUpRight size={18} />
-                </Link>
-              </div>
-
-              {/* Month Navigation */}
-              <div className="flex items-center gap-3 mb-6">
-                <button
-                  onClick={() => setCalendarMonthOffset(prev => prev - 1)}
-                  className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all"
-                >
-                  {prevMonthLabel}
-                </button>
-                <button
-                  onClick={() => setCalendarMonthOffset(0)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                    calendarMonthOffset === 0
-                      ? 'bg-[#EAD07D] text-[#1A1A1A]'
-                      : 'bg-[#F0EBD8] text-[#666] hover:bg-[#EAD07D]'
-                  }`}
-                >
-                  {currentMonthLabel}
-                </button>
-                <button
-                  onClick={() => setCalendarMonthOffset(prev => prev + 1)}
-                  className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#666] hover:bg-[#EAD07D] transition-all"
-                >
-                  {nextMonthLabel}
-                </button>
-              </div>
-
-              {/* Week Header */}
-              <div className="grid grid-cols-7 gap-4 mb-4">
-                <div className="col-span-1"></div>
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => {
-                  const date = weekDates[i];
-                  const isToday = date?.toDateString() === new Date().toDateString();
-                  return (
-                    <div key={day} className="text-center">
-                      <p className={`text-sm font-medium ${isToday ? 'text-[#1A1A1A]' : 'text-[#999]'}`}>{day}</p>
-                      <p className={`text-lg font-medium ${isToday ? 'text-[#EAD07D]' : 'text-[#1A1A1A]'}`}>
-                        {date?.getDate()}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Time Slots */}
-              <div className="space-y-2">
-                {['9:00 am', '10:00 am', '11:00 am', '2:00 pm'].map((time, timeIndex) => {
-                  const hours = [9, 10, 11, 14];
-                  return (
-                    <div key={time} className="grid grid-cols-7 gap-4 min-h-[60px]">
-                      <div className="col-span-1 text-xs text-[#999] pt-2">{time}</div>
-                      {weekDates.map((date, dayIndex) => {
-                        const slotMeetings = thisWeekMeetings.filter(m => {
-                          const meetingDate = new Date(m.startTime);
-                          return (
-                            meetingDate.getDate() === date.getDate() &&
-                            meetingDate.getMonth() === date.getMonth() &&
-                            meetingDate.getHours() === hours[timeIndex]
-                          );
-                        });
-
-                        return (
-                          <div key={dayIndex} className="col-span-1">
-                            {slotMeetings.map(meeting => (
-                              <Link
-                                key={meeting.id}
-                                to="/dashboard/calendar"
-                                className="block bg-[#EAD07D]/30 rounded-xl p-2 hover:bg-[#EAD07D]/50 transition-all"
-                              >
-                                <p className="text-xs font-medium text-[#1A1A1A] truncate">
-                                  {meeting.title}
-                                </p>
-                                <div className="flex items-center gap-1 mt-1">
-                                  {meeting.type === 'VIDEO' ? (
-                                    <Video size={10} className="text-[#666]" />
-                                  ) : (
-                                    <Phone size={10} className="text-[#666]" />
-                                  )}
-                                  <span className="text-[10px] text-[#666]">
-                                    {meeting.account?.name || 'Client Call'}
-                                  </span>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <Link
-                to="/dashboard/calendar"
-                className="mt-4 w-full py-3 text-center text-sm font-medium text-[#666] hover:text-[#1A1A1A] block"
-              >
-                View Full Calendar →
-              </Link>
-            </Card>
+            {/* Calendar Section */}
+            <MeetingsCalendar meetings={meetings} />
           </div>
 
           {/* Right Column */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Pipeline Summary Card */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#1A1A1A]">Pipeline Summary</h3>
-                <Link to="/dashboard/deals" className="text-[#999] hover:text-[#1A1A1A]">
-                  <ArrowUpRight size={18} />
-                </Link>
-              </div>
-
-              {/* Key Pipeline Stats */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#EAD07D]/30 flex items-center justify-center">
-                      <Target size={16} className="text-[#1A1A1A]" />
-                    </div>
-                    <span className="text-sm text-[#666]">Open Deals</span>
-                  </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{totalDeals.toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                      <CheckCircle2 size={16} className="text-green-600" />
-                    </div>
-                    <span className="text-sm text-[#666]">Closed Won</span>
-                  </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">{closedWonThisMonth.toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center">
-                      <DollarSign size={16} className="text-white" />
-                    </div>
-                    <span className="text-sm text-[#666]">Avg Deal Size</span>
-                  </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A] tabular-nums">${Math.round(totalPipeline / (pipelineStats?.totalOpportunities || 1)).toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-[#F8F6EF] rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#EAD07D] flex items-center justify-center">
-                      <Clock size={16} className="text-[#1A1A1A]" />
-                    </div>
-                    <span className="text-sm text-[#666]">Deal Cycle</span>
-                  </div>
-                  <span className="text-lg font-semibold text-[#1A1A1A]">
-                    {dealVelocity !== null ? `${dealVelocity}d` : '—'}
-                  </span>
-                </div>
-              </div>
-            </Card>
-
-            {/* Sales Tasks Card - Dark Theme */}
-            <Card variant="dark" className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-semibold text-white">Action Items</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-3xl font-light text-white">{completedTaskCount}</span>
-                  <span className="text-lg text-white/50">/{tasks.length}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {salesTasks.length > 0 ? salesTasks.map((task) => {
-                  const getTaskIcon = () => {
-                    const subject = task.subject.toLowerCase();
-                    if (subject.includes('call') || subject.includes('phone')) return <PhoneCall size={14} />;
-                    if (subject.includes('email') || subject.includes('send')) return <Mail size={14} />;
-                    if (subject.includes('meeting') || subject.includes('demo')) return <Video size={14} />;
-                    if (subject.includes('proposal') || subject.includes('quote')) return <FileText size={14} />;
-                    if (subject.includes('follow')) return <MessageSquare size={14} />;
-                    return <CheckCircle2 size={14} />;
-                  };
-
-                  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
-
-                  return (
-                    <button
-                      key={task.id}
-                      onClick={() => setSelectedTask(task)}
-                      className="w-full flex items-center gap-3 group p-2 -mx-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer text-left"
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        task.status === 'COMPLETED'
-                          ? 'bg-green-500/20 text-green-500'
-                          : task.priority === 'HIGH'
-                            ? 'bg-[#EAD07D]/20 text-[#EAD07D]'
-                            : 'bg-white/10 text-white/50'
-                      }`}>
-                        {task.status === 'COMPLETED' ? (
-                          <CheckCircle2 size={16} />
-                        ) : (
-                          getTaskIcon()
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${
-                          task.status === 'COMPLETED' ? 'text-white/40 line-through' : 'text-white'
-                        }`}>
-                          {task.subject}
-                        </p>
-                        {task.dueDate && (
-                          <p className={`text-xs ${isOverdue ? 'text-red-400' : 'text-white/40'}`}>
-                            {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            {task.lead && ` • ${task.lead.firstName} ${task.lead.lastName}`}
-                          </p>
-                        )}
-                      </div>
-                      {task.status === 'COMPLETED' && (
-                        <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
-                      )}
-                      {task.priority === 'HIGH' && task.status !== 'COMPLETED' && (
-                        <AlertCircle size={16} className="text-[#EAD07D] flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                }) : (
-                  <div className="text-center py-8">
-                    <CheckCircle2 size={32} className="text-white/20 mx-auto mb-2" />
-                    <p className="text-white/50 text-sm">All caught up!</p>
-                  </div>
-                )}
-              </div>
-
-              <Link
-                to="/dashboard/tasks"
-                className="mt-6 w-full py-3 bg-white/10 text-white rounded-2xl font-medium text-sm hover:bg-white/20 flex items-center justify-center gap-2 transition-all border border-white/10"
-              >
-                View All Tasks
-                <ChevronRight size={16} />
-              </Link>
-            </Card>
+            <PipelineSummaryCard
+              totalDeals={totalDeals}
+              closedWonThisMonth={closedWonThisMonth}
+              avgDealSize={Math.round(totalPipeline / (pipelineStats?.totalOpportunities || 1))}
+              dealVelocity={dealVelocity}
+            />
+            <ActionItemsCard
+              tasks={salesTasks}
+              completedCount={completedTaskCount}
+              totalCount={tasks.length}
+              onTaskClick={setSelectedTask}
+            />
           </div>
         </div>
 
         {/* AI Forecast Section */}
-        <Card className="mt-6 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-semibold text-[#1A1A1A]">Revenue Forecast</h3>
-              <p className="text-sm text-[#666]">{forecast?.quarterName || 'Current Quarter'} Projection</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="w-3 h-3 rounded-full bg-[#1A1A1A]"></span>
-                <span className="text-[#666]">Committed</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="w-3 h-3 rounded-full bg-[#EAD07D]"></span>
-                <span className="text-[#666]">Best Case</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-baseline gap-4 mb-8">
-            <span className="text-5xl font-light text-[#1A1A1A] tabular-nums min-w-[200px]">${(forecast?.quarterBestCase || totalPipeline).toLocaleString()}</span>
-            <span className="text-sm text-[#666]">projected revenue</span>
-            {(forecast?.quarterCommit ?? 0) > 0 && (
-              <span className="px-4 py-2 bg-[#F0EBD8] rounded-full text-sm font-medium text-[#1A1A1A]">
-                {formatCurrency(forecast?.quarterCommit ?? 0)} committed
-              </span>
-            )}
-          </div>
-
-          {/* Forecast Chart */}
-          {forecast?.monthly && forecast.monthly.length > 0 ? (
-            <div className="flex items-end justify-between h-40 gap-6">
-              {(() => {
-                const maxValue = Math.max(
-                  ...forecast.monthly.map(m => Math.max(m.mostLikely || 0, m.commit || 0, m.bestCase || 0)),
-                  1
-                );
-                return forecast.monthly.map((monthData, i) => {
-                  const forecastHeight = maxValue > 0 ? ((monthData.mostLikely || monthData.bestCase || 0) / maxValue) * 100 : 0;
-                  const commitHeight = maxValue > 0 ? ((monthData.commit || 0) / maxValue) * 100 : 0;
-
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                      <div className="w-full flex gap-2 items-end h-32">
-                        <div className="flex-1 bg-[#F0EBD8] rounded-xl relative overflow-hidden h-full">
-                          <div
-                            style={{ height: `${commitHeight}%` }}
-                            className="absolute bottom-0 w-full bg-[#1A1A1A] rounded-xl transition-all duration-700"
-                          />
-                        </div>
-                        <div className="flex-1 bg-[#F0EBD8] rounded-xl relative overflow-hidden h-full">
-                          <div
-                            style={{ height: `${forecastHeight}%` }}
-                            className="absolute bottom-0 w-full bg-[#EAD07D] rounded-xl transition-all duration-700"
-                          />
-                        </div>
-                      </div>
-                      <span className="text-sm font-medium text-[#666]">
-                        {new Date(monthData.month + '-01').toLocaleDateString('en-US', { month: 'short' })}
-                      </span>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-40 text-center">
-              <div>
-                <TrendingUp size={40} className="text-[#999] mx-auto mb-3 opacity-40" />
-                <p className="text-[#666]">No forecast data available</p>
-                <p className="text-sm text-[#999]">Close some deals to see projections</p>
-              </div>
-            </div>
-          )}
-        </Card>
+        <RevenueForecastCard
+          forecast={forecast}
+          totalPipeline={totalPipeline}
+        />
       </div>
 
       {/* Task Detail Modal */}
