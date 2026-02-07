@@ -2,12 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '../components/PageLayout';
 import { FileText, Scale, AlertTriangle, CreditCard, Shield, Ban, Gavel, Mail } from 'lucide-react';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 export const Terms: React.FC = () => {
   const lastUpdated = 'February 2026';
 
   return (
-    <PageLayout title="Terms of Service" subtitle={`Last updated: ${lastUpdated}`} narrow>
+    <>
+      <SEOHead {...SEO_CONFIGS.terms} />
+      <PageLayout title="Terms of Service" subtitle={`Last updated: ${lastUpdated}`} narrow>
       <div className="bg-white rounded-[32px] p-8 lg:p-12 shadow-sm border border-black/5">
         {/* Agreement */}
         <section className="mb-10">
@@ -238,5 +241,6 @@ export const Terms: React.FC = () => {
         </div>
       </div>
     </PageLayout>
+    </>
   );
 };

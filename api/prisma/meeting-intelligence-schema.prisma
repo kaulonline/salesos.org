@@ -1,0 +1,261 @@
+// ============================================
+// MEETING INTELLIGENCE MODELS
+// Add this to the end of api/prisma/schema.prisma
+// ============================================
+
+// MEETING SESSION - Tracks recorded meetings
+model MeetingSession {
+  id                String        @id @default(cuid())
+  userId            String
+  
+  // Meeting Details
+  title             String
+  platform          MeetingPlatform
+  externalMeetingId String?       // Platform-specific meeting ID
+  meetingLink       String?
+  
+  // Scheduling
+  scheduledAt       DateTime?
+  startedAt         DateTime?
+  endedAt           DateTime?
+  duration          Int?          // Duration in minutes
+  
+  // CRM Context - Link to relevant records
+  opportunityId     String?
+  accountId         String?
+  leadId            String?
+  
+  // Recording
+  recordingUrl      String?       // Stored recording location
+  recordingStatus   RecordingStatus @default(NONE)
+  
+  // Processing Status
+  status            MeetingSessionStatus @default(SCHEDULED)
+  processingError   String?
+  
+  // Transcript
+  transcriptRaw     String?       // Full raw transcript
+  transcriptJson    Json?         // Structured with timestamps
+  
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity       Opportunity?  @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  account           Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  lead              Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  participants      MeetingParticipant[]
+  transcriptSegments TranscriptSegment[]
+  analysis          MeetingAnalysis?
+  generatedTasks    Task[]        @relation("MeetingGeneratedTasks")
+  generatedActivities Activity[]  @relation("MeetingGeneratedActivities")
+  insights          MeetingInsight[]
+}
+
+// MEETING PARTICIPANT - People in the meeting
+model MeetingParticipant {
+  id                String        @id @default(cuid())
+  meetingSessionId  String
+  
+  // Participant Identity
+  name              String
+  email             String?
+  
+  // CRM Linkage
+  contactId         String?
+  isExternal        Boolean       @default(true)  // External = client/prospect
+  
+  // Participation Stats
+  joinedAt          DateTime?
+  leftAt            DateTime?
+  speakingTime      Int?          // Seconds
+  speakingPercentage Float?
+  
+  // Analysis
+  sentiment         Sentiment?
+  engagementLevel   EngagementLevel?
+  
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  
+  meetingSession    MeetingSession @relation(fields: [meetingSessionId], references: [id], onDelete: Cascade)
+  contact           Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  segments          TranscriptSegment[]
+}
+
+// TRANSCRIPT SEGMENT - Individual speech segments
+model TranscriptSegment {
+  id                String        @id @default(cuid())
+  meetingSessionId  String
+  participantId     String?
+  
+  // Content
+  text              String
+  startTime         Float         // Seconds from meeting start
+  endTime           Float
+  
+  // Speaker identification
+  speakerLabel      String?       // "Speaker 1", "John Smith"
+  confidence        Float?
+  
+  // Analysis
+  sentiment         Sentiment?
+  topics            String[]
+  entities          Json?         // Extracted entities (companies, products, etc.)
+  
+  createdAt         DateTime      @default(now())
+  
+  meetingSession    MeetingSession @relation(fields: [meetingSessionId], references: [id], onDelete: Cascade)
+  participant       MeetingParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+}
+
+// MEETING ANALYSIS - AI-generated insights
+model MeetingAnalysis {
+  id                String        @id @default(cuid())
+  meetingSessionId  String        @unique
+  
+  // Summary
+  executiveSummary  String?
+  detailedSummary   String?
+  
+  // Key Information
+  keyPoints         String[]
+  actionItems       Json[]        // { text, assignee?, dueDate?, priority }
+  decisions         String[]
+  questions         String[]      // Open questions raised
+  concerns          String[]
+  
+  // Sales Intelligence
+  buyingSignals     Json[]        // { signal, confidence, context }
+  objections        Json[]        // { objection, response?, resolved }
+  competitors       String[]      // Mentioned competitors
+  pricingDiscussion String?
+  budgetMentioned   Float?
+  timelineMentioned String?
+  
+  // Next Steps
+  nextSteps         String[]
+  recommendedActions String[]
+  
+  // Sentiment
+  overallSentiment  Sentiment?
+  customerSentiment Sentiment?
+  sentimentTrend    Json?         // Sentiment over time
+  
+  // Engagement Metrics
+  engagementScore   Int?          // 0-100
+  talkRatio         Json?         // { internal: %, external: % }
+  questionsAsked    Int?
+  
+  // Opportunity Impact
+  stageRecommendation String?     // Suggested stage change
+  probabilityChange Float?        // +/- probability adjustment
+  riskLevel         RiskLevel?
+  
+  analyzedAt        DateTime      @default(now())
+  modelVersion      String?       // AI model used
+  
+  meetingSession    MeetingSession @relation(fields: [meetingSessionId], references: [id], onDelete: Cascade)
+}
+
+// MEETING INSIGHT - Specific insights extracted
+model MeetingInsight {
+  id                String        @id @default(cuid())
+  meetingSessionId  String
+  
+  type              InsightType
+  title             String
+  description       String
+  context           String?       // Relevant transcript excerpt
+  
+  confidence        Float?
+  priority          Priority      @default(MEDIUM)
+  
+  // CRM Impact
+  impactedEntity    String?       // "Opportunity", "Contact", etc.
+  impactedEntityId  String?
+  suggestedAction   String?
+  
+  // Status
+  isActioned        Boolean       @default(false)
+  actionedAt        DateTime?
+  actionedById      String?
+  
+  createdAt         DateTime      @default(now())
+  
+  meetingSession    MeetingSession @relation(fields: [meetingSessionId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NEW ENUMS FOR MEETING INTELLIGENCE
+// ============================================
+
+enum MeetingPlatform {
+  ZOOM
+  TEAMS
+  GOOGLE_MEET
+  WEBEX
+  OTHER
+}
+
+enum MeetingSessionStatus {
+  SCHEDULED
+  JOINING
+  ACTIVE
+  ENDED
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+enum RecordingStatus {
+  NONE
+  RECORDING
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+enum EngagementLevel {
+  HIGHLY_ENGAGED
+  ENGAGED
+  NEUTRAL
+  DISENGAGED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// SCHEMA MODIFICATIONS REQUIRED
+// Add these relations to existing models
+// ============================================
+
+// Add to User model:
+// meetingSessions  MeetingSession[]
+
+// Add to Opportunity model:
+// meetingSessions  MeetingSession[]
+
+// Add to Account model:
+// meetingSessions  MeetingSession[]
+
+// Add to Lead model:
+// meetingSessions  MeetingSession[]
+
+// Add to Contact model:
+// meetingParticipants MeetingParticipant[]
+
+// Add to Task model:
+// meetingSessionId  String?
+// meetingSession    MeetingSession? @relation("MeetingGeneratedTasks", fields: [meetingSessionId], references: [id], onDelete: SetNull)
+
+// Add to Activity model:
+// meetingSessionId  String?
+// meetingSession    MeetingSession? @relation("MeetingGeneratedActivities", fields: [meetingSessionId], references: [id], onDelete: SetNull)

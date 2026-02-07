@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { ArrowRight } from 'lucide-react';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 const POSTS = [
     { title: "The Death of the Cold Call", cat: "Strategy", date: "Mar 10" },
@@ -13,10 +14,12 @@ const POSTS = [
 
 export const Blog: React.FC = () => {
   return (
-    <PageLayout 
-      title="The Revenue Blog" 
-      subtitle="Insights, tactics, and data for modern sales leaders."
-    >
+    <>
+      <SEOHead {...SEO_CONFIGS.blog} />
+      <PageLayout
+        title="The Revenue Blog"
+        subtitle="Insights, tactics, and data for modern sales leaders."
+      >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {POSTS.map((post, i) => (
             <article key={i} className="bg-white rounded-[1.5rem] p-8 border border-black/5 hover:border-[#EAD07D] transition-all group shadow-soft hover:shadow-card cursor-pointer h-full flex flex-col">
@@ -35,5 +38,6 @@ export const Blog: React.FC = () => {
         ))}
       </div>
     </PageLayout>
+    </>
   );
 };

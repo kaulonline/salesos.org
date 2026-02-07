@@ -2,10 +2,13 @@ import React from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { Button } from '../components/ui/Button';
 import { ShieldCheck, Lock, Globe, Server, Building2, Users, Headphones, ArrowRight } from 'lucide-react';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 export const Enterprise: React.FC = () => {
   return (
-    <PageLayout
+    <>
+      <SEOHead {...SEO_CONFIGS.enterprise} />
+      <PageLayout
       title="Enterprise"
       subtitle="Security, scale, and support for global organizations. Run your revenue engine with confidence."
     >
@@ -176,5 +179,6 @@ export const Enterprise: React.FC = () => {
          </div>
       </div>
     </PageLayout>
+    </>
   );
 };

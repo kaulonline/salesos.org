@@ -1,5 +1,6 @@
 import React from 'react';
 import { PageLayout } from '../components/PageLayout';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 const CHANGES = [
     { version: 'v2.1.0', date: 'March 15, 2024', title: 'Advanced Reporting & Dark Mode', desc: 'Introduced custom report builder and system-wide dark mode preference.' },
@@ -10,11 +11,13 @@ const CHANGES = [
 
 export const Changelog: React.FC = () => {
   return (
-    <PageLayout 
-      title="Changelog" 
-      subtitle="New updates and improvements to SalesOS."
-      narrow
-    >
+    <>
+      <SEOHead {...SEO_CONFIGS.changelog} />
+      <PageLayout
+        title="Changelog"
+        subtitle="New updates and improvements to SalesOS."
+        narrow
+      >
       <div className="relative border-l-2 border-black/5 ml-4 md:ml-0 space-y-12 pl-8 md:pl-12">
         {CHANGES.map((change, i) => (
             <div key={i} className="relative">
@@ -31,5 +34,6 @@ export const Changelog: React.FC = () => {
         ))}
       </div>
     </PageLayout>
+    </>
   );
 };

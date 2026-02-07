@@ -2,12 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '../components/PageLayout';
 import { Shield, Lock, Eye, Database, Mail, Globe, Server, Clock } from 'lucide-react';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 export const Privacy: React.FC = () => {
   const lastUpdated = 'February 2026';
 
   return (
-    <PageLayout title="Privacy Policy" subtitle={`Last updated: ${lastUpdated}`} narrow>
+    <>
+      <SEOHead {...SEO_CONFIGS.privacy} />
+      <PageLayout title="Privacy Policy" subtitle={`Last updated: ${lastUpdated}`} narrow>
       <div className="bg-white rounded-[32px] p-8 lg:p-12 shadow-sm border border-black/5">
         {/* Introduction */}
         <section className="mb-10">
@@ -216,5 +219,6 @@ export const Privacy: React.FC = () => {
         </div>
       </div>
     </PageLayout>
+    </>
   );
 };

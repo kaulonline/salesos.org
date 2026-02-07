@@ -95,6 +95,9 @@ export function SEOHead({
       document.head.appendChild(script);
     }
 
+    // Dispatch event to signal SEO meta tags are ready (for pre-rendering)
+    window.dispatchEvent(new CustomEvent('seo-ready'));
+
     // Cleanup function
     return () => {
       // Reset to defaults when component unmounts

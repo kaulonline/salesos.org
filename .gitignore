@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Backend API
+api/node_modules
+api/dist
+api/.env
+api/logs
+api/uploads
+api/tmp
+api/backups
+api/backend.log
+api/zoom-sdk
+api/config/apns
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,14 +1,17 @@
 import React from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { Button } from '../components/ui/Button';
+import { SEOHead, SEO_CONFIGS } from '../src/components/SEOHead';
 
 export const Contact: React.FC = () => {
   return (
-    <PageLayout 
-      title="Get in Touch" 
-      subtitle="Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible."
-      narrow
-    >
+    <>
+      <SEOHead {...SEO_CONFIGS.contact} />
+      <PageLayout
+        title="Get in Touch"
+        subtitle="Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible."
+        narrow
+      >
       <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-card border border-black/5">
         <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -36,5 +39,6 @@ export const Contact: React.FC = () => {
         </form>
       </div>
     </PageLayout>
+    </>
   );
 };
