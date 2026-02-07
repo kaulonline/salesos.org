@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
 import { useAuth } from '../src/context/AuthContext';
+import { useMenuPreferences } from '../src/context/MenuPreferencesContext';
 import { FloatingChat } from '../components/FloatingChat';
 import { NotificationDropdown } from '../src/components/NotificationDropdown';
 import { AlertsDropdown } from '../src/components/AlertsDropdown';
@@ -23,6 +24,7 @@ export const DashboardLayout: React.FC = () => {
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
   const { showOnboarding, completeOnboarding } = useOnboarding();
   const { isOpen: tourOpen, closeTour, completeTour, startTour } = useProductTour('dashboard');
+  const { getVisibleItems, isCategoryEnabled, isItemEnabled } = useMenuPreferences();
 
   const handleLogout = () => {
     logout();
@@ -42,52 +44,107 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Opportunities', href: '/dashboard/deals' },
   ];
 
-  const secondaryNavItems = [
-    { label: 'Analytics', href: '/dashboard/analytics' },
-    { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone },
-    { label: 'Revenue', href: '/dashboard/revenue' },
-    { label: 'Forecast', href: '/dashboard/forecast', icon: Target },
-    { label: 'Calendar', href: '/dashboard/calendar' },
-    { label: 'Messages', href: '/dashboard/messages' },
-    { label: 'Products', href: '/dashboard/products', icon: Package },
-    { label: 'Quotes', href: '/dashboard/quotes', icon: FileText },
-    { label: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-    { label: 'CPQ Analytics', href: '/dashboard/cpq-analytics', icon: TrendingUp },
-    { label: 'Email Templates', href: '/dashboard/email-templates', icon: Mail },
-    { label: 'Account Health', href: '/dashboard/account-health', icon: Heart },
-    { label: 'Territories', href: '/dashboard/territories', icon: Map },
-    { label: 'Win/Loss', href: '/dashboard/win-loss', icon: PieChart },
-    { label: 'Playbooks', href: '/dashboard/playbooks', icon: BookOpen },
-  ];
+  // Icon mapping for dynamic nav items
+  const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+    'products': Package,
+    'quotes': FileText,
+    'orders': ShoppingCart,
+    'cpq-analytics': TrendingUp,
+    'analytics': BarChart3,
+    'revenue': DollarSign,
+    'forecast': Target,
+    'win-loss': PieChart,
+    'account-health': Heart,
+    'calendar': Calendar,
+    'messages': MessageSquare,
+    'campaigns': Megaphone,
+    'email-templates': Mail,
+    'territories': Map,
+    'playbooks': BookOpen,
+  };
 
-  const aiNavItems = [
-    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Brain },
-    { label: 'AI Alerts', href: '/dashboard/alerts', icon: AlertCircle },
-    { label: 'Conversations', href: '/dashboard/conversations', icon: Mic },
-    { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
-  ];
+  // Build dynamic "More" menu based on user preferences
+  const secondaryNavItems = useMemo(() => {
+    const items: Array<{ type?: 'header'; label: string; href?: string; icon?: React.ComponentType<{ size?: number; className?: string }> }> = [];
+
+    // Sales section
+    const salesItems = getVisibleItems('sales');
+    if (salesItems.length > 0) {
+      items.push({ type: 'header', label: 'Sales' });
+      salesItems.forEach(item => {
+        items.push({ label: item.label, href: item.href, icon: iconMap[item.id] });
+      });
+    }
+
+    // Analytics section
+    const analyticsItems = getVisibleItems('analytics');
+    if (analyticsItems.length > 0) {
+      items.push({ type: 'header', label: 'Analytics' });
+      analyticsItems.forEach(item => {
+        items.push({ label: item.label, href: item.href, icon: iconMap[item.id] });
+      });
+    }
+
+    // Productivity section
+    const productivityItems = getVisibleItems('productivity');
+    if (productivityItems.length > 0) {
+      items.push({ type: 'header', label: 'Productivity' });
+      productivityItems.forEach(item => {
+        items.push({ label: item.label, href: item.href, icon: iconMap[item.id] });
+      });
+    }
+
+    return items;
+  }, [getVisibleItems]);
+
+  // AI icon mapping
+  const aiIconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+    'ai-agents': Brain,
+    'ai-alerts': AlertCircle,
+    'conversations': Mic,
+    'knowledge': BookOpen,
+  };
+
+  // Build dynamic AI menu based on user preferences
+  const aiNavItems = useMemo(() => {
+    const items = getVisibleItems('ai');
+    return items.map(item => ({
+      label: item.label,
+      href: item.href,
+      icon: aiIconMap[item.id],
+    }));
+  }, [getVisibleItems]);
 
   // Check if user is admin (handle potential case differences)
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
+  // Settings organized with section headers
   const settingsNavItems = [
-    { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+    // Organization
+    { label: 'General Settings', href: '/dashboard/settings', icon: Settings },
+    { label: 'Team', href: '/dashboard/team', icon: Users },
     { label: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
-    { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+    { type: 'divider' as const, label: 'Workflow' },
+    // Workflow & Automation
     { label: 'Automations', href: '/dashboard/automations', icon: Workflow },
     { label: 'Approval Workflows', href: '/dashboard/settings/approval-workflows', icon: CheckSquare },
-    { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
-    { label: 'Team', href: '/dashboard/team', icon: Users },
-    { label: 'Custom Fields', href: '/dashboard/settings/custom-fields', icon: Columns },
     { label: 'Assignment Rules', href: '/dashboard/settings/assignment-rules', icon: GitBranch },
+    { type: 'divider' as const, label: 'Data' },
+    // Data & Customization
+    { label: 'Custom Fields', href: '/dashboard/settings/custom-fields', icon: Columns },
     { label: 'Web Forms', href: '/dashboard/settings/web-forms', icon: Globe },
-    { label: 'Profiles', href: '/dashboard/settings/profiles', icon: Shield },
+    { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
+    { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+    { type: 'divider' as const, label: 'Security' },
+    // Security & Access
+    { label: 'Profiles & Roles', href: '/dashboard/settings/profiles', icon: Shield },
     { label: 'Security', href: '/dashboard/settings/security', icon: Lock },
     { label: 'Data & Privacy', href: '/dashboard/settings/privacy', icon: Shield },
     { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell },
     { label: 'API & Webhooks', href: '/dashboard/settings/api', icon: Key },
     // Admin-only items
     ...(isAdmin ? [
+      { type: 'divider' as const, label: 'Admin' },
       { label: 'Admin Console', href: '/dashboard/admin', icon: Shield },
       { label: 'Billing Admin', href: '/dashboard/admin?tab=billing', icon: BarChart3 },
     ] : []),
@@ -134,11 +191,11 @@ export const DashboardLayout: React.FC = () => {
             })}
           </nav>
 
-          {/* More Dropdown - Outside nav to avoid overflow clipping */}
+          {/* More Dropdown - Organized with section headers */}
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => path.startsWith(item.href))
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => 'href' in item && path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white shadow-md border-[#1A1A1A]'
                   : showMoreMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
@@ -152,21 +209,29 @@ export const DashboardLayout: React.FC = () => {
             {showMoreMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {secondaryNavItems.map((item) => {
-                    const isActive = path.startsWith(item.href);
+                <div className="absolute top-full right-0 mt-2 w-52 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[70vh] overflow-y-auto">
+                  {secondaryNavItems.map((item, index) => {
+                    if ('type' in item && item.type === 'header') {
+                      return (
+                        <div key={`header-${index}`} className={`px-4 py-1.5 ${index > 0 ? 'mt-2 border-t border-gray-100 pt-3' : ''}`}>
+                          <span className="text-xs font-semibold text-[#999] uppercase tracking-wider">{item.label}</span>
+                        </div>
+                      );
+                    }
+                    const navItem = item as { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> };
+                    const isActive = path.startsWith(navItem.href);
                     return (
                       <Link
-                        key={item.href}
-                        to={item.href}
+                        key={navItem.href}
+                        to={navItem.href}
                         onClick={() => setShowMoreMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${isActive
+                        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${isActive
                             ? 'bg-[#F8F8F6] text-[#1A1A1A]'
                             : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
                           }`}
                       >
-                        {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
-                        {item.label}
+                        {navItem.icon && <navItem.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
+                        {navItem.label}
                       </Link>
                     );
                   })}
@@ -251,21 +316,30 @@ export const DashboardLayout: React.FC = () => {
             {showSettingsMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowSettingsMenu(false)} />
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {settingsNavItems.map((item) => {
-                    const isActive = path === item.href || (item.href !== '/dashboard/settings' && path.startsWith(item.href));
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[70vh] overflow-y-auto">
+                  {settingsNavItems.map((item, index) => {
+                    if ('type' in item && item.type === 'divider') {
+                      return (
+                        <div key={`divider-${index}`} className="px-4 py-2 mt-1">
+                          <div className="border-t border-gray-100" />
+                          <span className="text-xs font-semibold text-[#999] uppercase tracking-wider mt-2 block">{item.label}</span>
+                        </div>
+                      );
+                    }
+                    const navItem = item as { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> };
+                    const isActive = path === navItem.href || (navItem.href !== '/dashboard/settings' && path.startsWith(navItem.href));
                     return (
                       <Link
-                        key={item.href}
-                        to={item.href}
+                        key={navItem.href}
+                        to={navItem.href}
                         onClick={() => setShowSettingsMenu(false)}
                         className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${isActive
                             ? 'bg-[#F8F8F6] text-[#1A1A1A]'
                             : 'text-[#666] hover:bg-[#F8F8F6] hover:text-[#1A1A1A]'
                           }`}
                       >
-                        {item.icon && <item.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
-                        {item.label}
+                        {navItem.icon && <navItem.icon size={16} className={isActive ? 'text-[#EAD07D]' : 'text-[#999]'} />}
+                        {navItem.label}
                       </Link>
                     );
                   })}

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, Bell, Shield, Key, Camera, Save, Loader2, Check, AlertCircle } from 'lucide-react';
+import { User, Bell, Shield, Key, Camera, Save, Loader2, Check, AlertCircle, LayoutGrid } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -10,8 +10,9 @@ import {
   usePasswordChange,
 } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
+import { MenuCustomization } from '../../src/components/settings/MenuCustomization';
 
-type TabType = 'profile' | 'notifications' | 'security';
+type TabType = 'profile' | 'notifications' | 'security' | 'menu';
 
 export const Settings: React.FC = () => {
   const { user, logout } = useAuth();
@@ -136,6 +137,7 @@ export const Settings: React.FC = () => {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'menu', label: 'Customize Menu', icon: LayoutGrid },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
   ];
@@ -373,6 +375,13 @@ export const Settings: React.FC = () => {
                   )}
                 </button>
               </div>
+            </Card>
+          )}
+
+          {/* Menu Customization Tab */}
+          {activeTab === 'menu' && (
+            <Card className="p-8">
+              <MenuCustomization />
             </Card>
           )}
 

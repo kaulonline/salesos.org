@@ -8,6 +8,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { ErrorBoundary, PageErrorBoundary } from './src/components/ErrorBoundary';
 import { FeatureProvider } from './src/components/FeatureGate';
+import { MenuPreferencesProvider } from './src/context/MenuPreferencesContext';
 import { queryClient } from './src/lib/queryClient';
 import { initErrorTracking } from './src/lib/errorTracking';
 import { NoiseOverlay } from './components/ui/NoiseOverlay';
@@ -741,9 +742,11 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <FeatureProvider>
-            <ToastProvider>
-              <AppContent />
-            </ToastProvider>
+            <MenuPreferencesProvider>
+              <ToastProvider>
+                <AppContent />
+              </ToastProvider>
+            </MenuPreferencesProvider>
           </FeatureProvider>
         </AuthProvider>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
