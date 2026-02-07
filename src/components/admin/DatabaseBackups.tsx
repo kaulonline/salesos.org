@@ -119,7 +119,7 @@ export const DatabaseBackups: React.FC = () => {
       setSchedules(schedulesRes);
     } catch (error) {
       console.error('Failed to fetch backups:', error);
-      showToast('Failed to load backups', 'error');
+      showToast({ type: 'error', title: 'Failed to load backups' });
     } finally {
       setLoading(false);
     }
@@ -134,14 +134,14 @@ export const DatabaseBackups: React.FC = () => {
     try {
       setCreating(true);
       await adminApi.createBackup(newBackup);
-      showToast('Backup initiated successfully', 'success');
+      showToast({ type: 'success', title: 'Backup initiated successfully' });
       setShowCreateModal(false);
       setNewBackup({ type: 'FULL', description: '', compressed: true, retentionDays: 30 });
       // Refresh after a short delay to show the new backup
       setTimeout(fetchData, 1000);
     } catch (error) {
       console.error('Failed to create backup:', error);
-      showToast('Failed to create backup', 'error');
+      showToast({ type: 'error', title: 'Failed to create backup' });
     } finally {
       setCreating(false);
     }
@@ -151,19 +151,19 @@ export const DatabaseBackups: React.FC = () => {
   const handleDeleteBackup = async (id: string) => {
     try {
       await adminApi.deleteBackup(id);
-      showToast('Backup deleted successfully', 'success');
+      showToast({ type: 'success', title: 'Backup deleted successfully' });
       setShowDeleteModal(null);
       fetchData();
     } catch (error) {
       console.error('Failed to delete backup:', error);
-      showToast('Failed to delete backup', 'error');
+      showToast({ type: 'error', title: 'Failed to delete backup' });
     }
   };
 
   // Download backup
   const handleDownloadBackup = (backup: DatabaseBackup) => {
     if (backup.status !== 'COMPLETED') {
-      showToast('Backup is not available for download', 'error');
+      showToast({ type: 'error', title: 'Backup is not available for download' });
       return;
     }
     const url = adminApi.downloadBackup(backup.id);
@@ -174,11 +174,11 @@ export const DatabaseBackups: React.FC = () => {
   const handleCleanup = async () => {
     try {
       const result = await adminApi.cleanupExpiredBackups();
-      showToast(`Cleaned up ${result.deleted} expired backup(s)`, 'success');
+      showToast({ type: 'success', title: `Cleaned up ${result.deleted} expired backup(s)` });
       fetchData();
     } catch (error) {
       console.error('Failed to cleanup backups:', error);
-      showToast('Failed to cleanup backups', 'error');
+      showToast({ type: 'error', title: 'Failed to cleanup backups' });
     }
   };
 
@@ -186,13 +186,13 @@ export const DatabaseBackups: React.FC = () => {
   const handleCreateSchedule = async () => {
     try {
       await adminApi.createBackupSchedule(newSchedule);
-      showToast('Schedule created successfully', 'success');
+      showToast({ type: 'success', title: 'Schedule created successfully' });
       setShowScheduleModal(false);
       setNewSchedule({ name: '', cronExpression: '0 2 * * *', backupType: 'FULL', retentionDays: 30 });
       fetchData();
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      showToast('Failed to create schedule', 'error');
+      showToast({ type: 'error', title: 'Failed to create schedule' });
     }
   };
 
@@ -200,11 +200,11 @@ export const DatabaseBackups: React.FC = () => {
   const handleToggleSchedule = async (schedule: BackupSchedule) => {
     try {
       await adminApi.updateBackupSchedule(schedule.id, { enabled: !schedule.enabled });
-      showToast(`Schedule ${schedule.enabled ? 'disabled' : 'enabled'}`, 'success');
+      showToast({ type: 'success', title: `Schedule ${schedule.enabled ? 'disabled' : 'enabled'}` });
       fetchData();
     } catch (error) {
       console.error('Failed to toggle schedule:', error);
-      showToast('Failed to update schedule', 'error');
+      showToast({ type: 'error', title: 'Failed to update schedule' });
     }
   };
 
@@ -212,11 +212,11 @@ export const DatabaseBackups: React.FC = () => {
   const handleDeleteSchedule = async (id: string) => {
     try {
       await adminApi.deleteBackupSchedule(id);
-      showToast('Schedule deleted', 'success');
+      showToast({ type: 'success', title: 'Schedule deleted' });
       fetchData();
     } catch (error) {
       console.error('Failed to delete schedule:', error);
-      showToast('Failed to delete schedule', 'error');
+      showToast({ type: 'error', title: 'Failed to delete schedule' });
     }
   };
 

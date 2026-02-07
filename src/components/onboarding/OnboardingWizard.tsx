@@ -521,7 +521,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, 
         </div>
 
         {/* Content */}
-        <div className="p-6 min-h-[400px]">
+        <div className="p-6 h-[400px] overflow-y-auto">
           {steps[currentStep].component}
         </div>
 
