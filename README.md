@@ -18,6 +18,11 @@ salesos.org/
 ├── pages/                  # Page components
 ├── components/             # Shared UI components
 ├── layouts/                # Layout components
+├── scripts/                # Deployment & management scripts
+│   ├── install.sh         # Fresh installation script
+│   ├── backup.sh          # Create backup package
+│   ├── manage.sh          # Service management CLI
+│   └── setup-systemd.sh   # Auto-start configuration
 └── ecosystem.config.cjs    # PM2 configuration
 ```
 
@@ -170,6 +175,66 @@ npm test
 
 # Lint
 npm run lint
+```
+
+## Deployment & Backup
+
+### Fresh Installation (New Server)
+
+```bash
+# Clone the repository
+git clone <repo-url> /opt/salesos.org
+cd /opt/salesos.org
+
+# Run the installation script (installs Node.js, PostgreSQL, Redis, PM2)
+./scripts/install.sh
+```
+
+### Create Backup Package
+
+```bash
+# Creates a complete backup including database
+./scripts/backup.sh
+
+# Backup is saved to ~/salesos-backups/
+# Output: salesos-backup-YYYYMMDD_HHMMSS.tar.gz
+```
+
+### Restore from Backup
+
+```bash
+# Extract backup
+tar -xzf salesos-backup-*.tar.gz
+cd salesos-backup-*
+
+# Run restore script
+./restore.sh /opt/salesos.org
+```
+
+### Service Management
+
+```bash
+# Use the management script for common operations
+./scripts/manage.sh help
+
+# Available commands:
+./scripts/manage.sh start       # Start services
+./scripts/manage.sh stop        # Stop services
+./scripts/manage.sh restart     # Restart services
+./scripts/manage.sh status      # Show status
+./scripts/manage.sh logs        # View live logs
+./scripts/manage.sh health      # Check API health
+./scripts/manage.sh build       # Build frontend + backend
+./scripts/manage.sh migrate     # Run database migrations
+./scripts/manage.sh backup      # Create backup
+./scripts/manage.sh update      # Pull & rebuild
+```
+
+### Auto-Start on Boot
+
+```bash
+# Configure PM2 to start automatically on system boot
+./scripts/setup-systemd.sh
 ```
 
 ## License
