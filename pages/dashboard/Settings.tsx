@@ -210,13 +210,40 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-[#666] truncate">{profile?.email}</p>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#666]">Role</span>
+                <span className="text-xs text-[#666]">System Role</span>
                 <Badge variant={user?.role === 'ADMIN' ? 'dark' : 'outline'} size="sm">
                   {user?.role || 'USER'}
                 </Badge>
               </div>
+              {user?.organizationName && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#666]">Organization</span>
+                    <span className="text-xs font-medium text-[#1A1A1A] truncate max-w-[120px]" title={user.organizationName}>
+                      {user.organizationName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#666]">Org Role</span>
+                    <Badge
+                      variant={user.organizationRole === 'OWNER' || user.organizationRole === 'ADMIN' ? 'dark' : user.organizationRole === 'MANAGER' ? 'yellow' : 'outline'}
+                      size="sm"
+                    >
+                      {user.organizationRole || 'MEMBER'}
+                    </Badge>
+                  </div>
+                </>
+              )}
+              {user?.licenseTier && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#666]">License</span>
+                  <Badge variant="green" size="sm">
+                    {user.licenseTier}
+                  </Badge>
+                </div>
+              )}
             </div>
           </Card>
         </div>

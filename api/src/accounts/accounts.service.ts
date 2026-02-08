@@ -3,6 +3,8 @@ import { PrismaService } from '../database/prisma.service';
 import { Account, AccountType, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 import { EnrichmentService } from '../integrations/enrichment/enrichment.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 
 interface CreateAccountDto {
   name: string;
@@ -34,6 +36,7 @@ export class AccountsService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly workflowsService: WorkflowsService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -78,6 +81,16 @@ export class AccountsService {
         this.logger.error(`Failed to auto-enrich account ${account.id}:`, error);
       });
     }
+
+    // Trigger workflows for account creation
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_CREATED,
+      WorkflowEntityType.ACCOUNT,
+      account.id,
+      { account, ownerId, organizationId }
+    ).catch((error) => {
+      this.logger.error(`Failed to process workflows for account ${account.id}:`, error);
+    });
 
     return account;
   }
@@ -217,7 +230,7 @@ export class AccountsService {
       }
     }
 
-    return this.prisma.account.update({
+    const updated = await this.prisma.account.update({
       where: { id },
       data,
       include: {
@@ -229,6 +242,18 @@ export class AccountsService {
         },
       },
     });
+
+    // Trigger workflows for account update
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_UPDATED,
+      WorkflowEntityType.ACCOUNT,
+      id,
+      { account: updated, previousData: account, userId, organizationId }
+    ).catch((error) => {
+      this.logger.error(`Failed to process update workflows for account ${id}:`, error);
+    });
+
+    return updated;
   }
 
   // Delete account (with ownership verification)

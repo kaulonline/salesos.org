@@ -3,6 +3,8 @@ import { PrismaService } from '../database/prisma.service';
 import { AnthropicService } from '../anthropic/anthropic.service';
 import { NotificationSchedulerService } from '../notifications/notification-scheduler.service';
 import { OutcomeBillingService } from '../outcome-billing/outcome-billing.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 import { Opportunity, OpportunityStage, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 
@@ -55,6 +57,7 @@ export class OpportunitiesService {
     private readonly notificationScheduler: NotificationSchedulerService,
     @Inject(forwardRef(() => OutcomeBillingService))
     private readonly outcomeBillingService: OutcomeBillingService,
+    private readonly workflowsService: WorkflowsService,
   ) {}
 
   // Create new opportunity
@@ -96,6 +99,16 @@ export class OpportunitiesService {
     // Analyze opportunity asynchronously
     this.analyzeOpportunityAsync(opportunity.id, ownerId, organizationId).catch((err) => {
       this.logger.error(`Failed to analyze opportunity ${opportunity.id}: ${err.message}`);
+    });
+
+    // Trigger workflows for opportunity creation
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_CREATED,
+      WorkflowEntityType.OPPORTUNITY,
+      opportunity.id,
+      { opportunity, ownerId, organizationId }
+    ).catch((err) => {
+      this.logger.error(`Failed to process workflows for opportunity ${opportunity.id}: ${err.message}`);
     });
 
     return opportunity;
@@ -303,7 +316,10 @@ export class OpportunitiesService {
     );
     updateData.dealVelocity = daysInStage;
 
-    return this.prisma.opportunity.update({
+    const stageChanged = data.stage && data.stage !== opportunity.stage;
+    const previousStage = opportunity.stage;
+
+    const updated = await this.prisma.opportunity.update({
       where: { id },
       data: updateData,
       include: {
@@ -313,6 +329,30 @@ export class OpportunitiesService {
         },
       },
     });
+
+    // Trigger workflows for opportunity update
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_UPDATED,
+      WorkflowEntityType.OPPORTUNITY,
+      id,
+      { opportunity: updated, userId, organizationId, previousData: opportunity }
+    ).catch((err) => {
+      this.logger.error(`Failed to process update workflows for opportunity ${id}: ${err.message}`);
+    });
+
+    // Trigger stage changed workflow if stage changed
+    if (stageChanged) {
+      this.workflowsService.processTrigger(
+        WorkflowTriggerType.STAGE_CHANGED,
+        WorkflowEntityType.OPPORTUNITY,
+        id,
+        { opportunity: updated, previousStage, newStage: data.stage, userId, organizationId }
+      ).catch((err) => {
+        this.logger.error(`Failed to process stage change workflows for opportunity ${id}: ${err.message}`);
+      });
+    }
+
+    return updated;
   }
 
   // Move opportunity to next stage (with ownership verification)

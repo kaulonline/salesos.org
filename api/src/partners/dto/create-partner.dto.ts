@@ -77,6 +77,23 @@ export class AddPartnerUserDto {
   isPrimary?: boolean;
 }
 
+export class InvitePartnerUserDto {
+  @IsString()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsEnum(PartnerUserRole)
+  @IsOptional()
+  role?: PartnerUserRole;
+
+  @IsBoolean()
+  @IsOptional()
+  isPrimary?: boolean;
+}
+
 export class AssignAccountDto {
   @IsString()
   accountId: string;

@@ -499,48 +499,69 @@ export function generateSalesOSLoginNotificationEmail(params: {
 }): string {
   const { userName, loginTime, ipAddress, location, device, browser, securitySettingsUrl } = params;
 
-  const infoItems = [
-    { label: 'Time', value: loginTime },
-    ...(location ? [{ label: 'Location', value: location }] : []),
-    ...(ipAddress ? [{ label: 'IP Address', value: ipAddress }] : []),
-    ...(browser ? [{ label: 'Browser', value: browser }] : []),
-    ...(device ? [{ label: 'Device', value: device }] : []),
-  ];
+  // Build location string
+  const locationStr = location && location !== 'Unknown' ? location : null;
+  const deviceStr = [browser, device].filter(Boolean).join(' on ') || 'Unknown device';
 
   const content = `
-    <h1 style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 28px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark}; line-height: 1.3;">
-      New Sign-In Detected
-    </h1>
-    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
-      We noticed a new sign-in to your account
-    </p>
-
-    ${formatDivider()}
-
-    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
       ${formatGreeting(userName)}
     </p>
+
     <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
-      Your SalesOS account was just accessed. Here are the details:
+      We detected a new sign-in to your SalesOS account.
     </p>
 
-    ${formatInfoBox('Sign-In Details', infoItems)}
+    <!-- Sign-in details card -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+      <tr>
+        <td style="background-color: ${SALESOS_BRAND.colors.backgroundAlt}; border-radius: 12px; padding: 20px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding-bottom: 12px;">
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; text-transform: uppercase; letter-spacing: 0.5px;">When</span>
+                <p style="margin: 4px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">${loginTime}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px;">
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; text-transform: uppercase; letter-spacing: 0.5px;">Device</span>
+                <p style="margin: 4px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">${deviceStr}</p>
+              </td>
+            </tr>
+            ${locationStr ? `
+            <tr>
+              <td style="padding-bottom: 12px;">
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; text-transform: uppercase; letter-spacing: 0.5px;">Location</span>
+                <p style="margin: 4px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">${locationStr}</p>
+              </td>
+            </tr>
+            ` : ''}
+            ${ipAddress ? `
+            <tr>
+              <td>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; text-transform: uppercase; letter-spacing: 0.5px;">IP Address</span>
+                <p style="margin: 4px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMuted}; font-family: monospace;">${ipAddress}</p>
+              </td>
+            </tr>
+            ` : ''}
+          </table>
+        </td>
+      </tr>
+    </table>
 
-    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
-      <strong>Was this you?</strong> If yes, you can ignore this message.
+    <p style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      If this was you, no action is needed.
     </p>
-
-    ${formatSecurityNote("If you don't recognize this activity, please secure your account immediately by changing your password.")}
+    <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      Didn't sign in? <a href="${securitySettingsUrl}" style="color: ${SALESOS_BRAND.colors.dark}; font-weight: 500; text-decoration: underline;">Secure your account</a>
+    </p>
   `;
 
   return generateSalesOSTemplate({
-    preheader: 'New sign-in to your SalesOS account',
+    preheader: `New sign-in${locationStr ? ` from ${locationStr}` : ''}`,
     content,
-    ctaButton: {
-      text: 'Review Security Settings',
-      url: securitySettingsUrl,
-      style: 'secondary',
-    },
+    showLogo: true,
   });
 }
 
@@ -642,6 +663,83 @@ export function generateSalesOSInvitationEmail(params: {
     content,
     ctaButton: {
       text: 'Accept Invitation',
+      url: inviteUrl,
+      style: 'primary',
+    },
+  });
+}
+
+/**
+ * Partner Portal Invitation Email - Invite partner user to portal
+ */
+export function generateSalesOSPartnerInvitationEmail(params: {
+  partnerName: string;
+  inviterName: string;
+  inviteUrl: string;
+  role?: string;
+  expirationDays?: number;
+}): string {
+  const { partnerName, inviterName, inviteUrl, role = 'Partner User', expirationDays = 7 } = params;
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 28px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark}; line-height: 1.3;">
+      Partner Portal Access
+    </h1>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      You've been invited to the SalesOS Partner Portal
+    </p>
+
+    ${formatDivider()}
+
+    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      Hi there,
+    </p>
+    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      <strong>${inviterName}</strong> has invited you to join the SalesOS Partner Portal as a <strong>${role}</strong> for <strong>${partnerName}</strong>.
+    </p>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      The Partner Portal allows you to:
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+      <tr>
+        <td style="padding: 8px 0;">
+          <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMedium};">&#10003; Register new deals for approval</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;">
+          <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMedium};">&#10003; Track your deal pipeline and commissions</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;">
+          <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMedium};">&#10003; Access assigned accounts</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;">
+          <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMedium};">&#10003; View performance metrics</span>
+        </td>
+      </tr>
+    </table>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: ${SALESOS_BRAND.colors.goldLight}; border-radius: 12px; padding: 16px 20px;">
+      <tr>
+        <td>
+          <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMedium};">
+            This invitation expires in <strong>${expirationDays} days</strong>. Click below to set your password and access the portal.
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return generateSalesOSTemplate({
+    preheader: `You've been invited to the ${partnerName} Partner Portal on SalesOS`,
+    content,
+    ctaButton: {
+      text: 'Set Password & Access Portal',
       url: inviteUrl,
       style: 'primary',
     },
@@ -2172,6 +2270,285 @@ export function generateSalesOSExportCompleteEmail(params: {
   });
 }
 
+// ==================== ACCESS REQUEST EMAILS ====================
+
+/**
+ * Access Request - User Confirmation
+ * Sent immediately when user submits access request form
+ */
+export function generateSalesOSAccessRequestConfirmationEmail(params: {
+  userName: string;
+  requestType: string;
+}): string {
+  const { userName, requestType } = params;
+
+  const requestTypeText: Record<string, string> = {
+    FREE_TRIAL: 'free trial',
+    DEMO: 'product demo',
+    ENTERPRISE: 'enterprise inquiry',
+    PARTNER: 'partnership inquiry',
+    OTHER: 'access request',
+  };
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 28px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark}; line-height: 1.3;">
+      Request Received!
+    </h1>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      We'll be in touch within 24 hours
+    </p>
+
+    ${formatDivider()}
+
+    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      ${formatGreeting(userName)}
+    </p>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      Thank you for your interest in SalesOS! We've received your ${requestTypeText[requestType] || 'access request'} and our team is reviewing it now.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: ${SALESOS_BRAND.colors.goldLight}; border-radius: 16px; padding: 24px;">
+      <tr>
+        <td style="text-align: center;">
+          <span style="font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 48px; color: ${SALESOS_BRAND.colors.gold};">&#128640;</span>
+          <p style="margin: 16px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 16px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark};">
+            What happens next?
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid ${SALESOS_BRAND.colors.borderLight};">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 32px; vertical-align: top;">
+                <span style="display: inline-block; width: 24px; height: 24px; background: ${SALESOS_BRAND.colors.gold}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${SALESOS_BRAND.colors.dark};">1</span>
+              </td>
+              <td>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">Review</span>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; display: block; margin-top: 2px;">Our team reviews your request</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid ${SALESOS_BRAND.colors.borderLight};">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 32px; vertical-align: top;">
+                <span style="display: inline-block; width: 24px; height: 24px; background: ${SALESOS_BRAND.colors.gold}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${SALESOS_BRAND.colors.dark};">2</span>
+              </td>
+              <td>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">Contact</span>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; display: block; margin-top: 2px;">We'll reach out within 24 hours</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 32px; vertical-align: top;">
+                <span style="display: inline-block; width: 24px; height: 24px; background: ${SALESOS_BRAND.colors.gold}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${SALESOS_BRAND.colors.dark};">3</span>
+              </td>
+              <td>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textDark}; font-weight: 500;">Get Started</span>
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; display: block; margin-top: 2px;">Receive your organization code to sign up</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      In the meantime, feel free to reply to this email if you have any questions.
+    </p>
+  `;
+
+  return generateSalesOSTemplate({
+    preheader: "We've received your access request - we'll be in touch within 24 hours",
+    content,
+  });
+}
+
+/**
+ * Access Request - Admin Notification
+ * Sent to sales team when new access request is submitted
+ */
+export function generateSalesOSAccessRequestAdminNotification(params: {
+  requestId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  companyName: string;
+  companySize?: string;
+  requestType: string;
+  interests: string[];
+  adminDashboardUrl: string;
+  aiScore?: number;
+  aiPriority?: string;
+  aiSummary?: string;
+}): string {
+  const {
+    requestId,
+    firstName,
+    lastName,
+    email,
+    companyName,
+    companySize,
+    requestType,
+    interests,
+    adminDashboardUrl,
+    aiScore,
+    aiPriority,
+    aiSummary,
+  } = params;
+
+  const priorityColors: Record<string, string> = {
+    HIGH: SALESOS_BRAND.colors.success,
+    MEDIUM: SALESOS_BRAND.colors.gold,
+    LOW: SALESOS_BRAND.colors.textMuted,
+  };
+
+  const aiSection = aiScore !== undefined ? `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background: linear-gradient(135deg, ${SALESOS_BRAND.colors.dark} 0%, #2a2a2a 100%); border-radius: 16px; padding: 20px;">
+      <tr>
+        <td>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 60%;">
+                <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: ${SALESOS_BRAND.colors.gold};">AI Lead Score</span>
+                <p style="margin: 8px 0 0 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 36px; font-weight: 700; color: #fff;">${aiScore}<span style="font-size: 18px; color: rgba(255,255,255,0.5);">/100</span></p>
+              </td>
+              <td style="width: 40%; text-align: right;">
+                <span style="display: inline-block; padding: 8px 16px; background: ${priorityColors[aiPriority || 'MEDIUM']}30; border-radius: 20px; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 12px; font-weight: 600; color: ${priorityColors[aiPriority || 'MEDIUM']};">${aiPriority || 'PENDING'} PRIORITY</span>
+              </td>
+            </tr>
+          </table>
+          ${aiSummary ? `<p style="margin: 16px 0 0 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">${aiSummary}</p>` : ''}
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
+  const interestsHtml = interests.length > 0
+    ? interests.map(i => `<span style="display: inline-block; margin: 0 8px 8px 0; padding: 6px 12px; background: ${SALESOS_BRAND.colors.goldLight}; border-radius: 20px; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 12px; color: ${SALESOS_BRAND.colors.textDark};">${i}</span>`).join('')
+    : '<span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted};">Not specified</span>';
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 28px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark}; line-height: 1.3;">
+      New Access Request
+    </h1>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      ${firstName} ${lastName} from ${companyName}
+    </p>
+
+    ${formatDivider()}
+
+    ${aiSection}
+
+    ${formatInfoBox('Contact Details', [
+      { label: 'Name', value: `${firstName} ${lastName}` },
+      { label: 'Email', value: email },
+      { label: 'Company', value: companyName },
+      { label: 'Company Size', value: companySize || 'Not provided' },
+      { label: 'Request Type', value: requestType.replace('_', ' ') },
+    ])}
+
+    <div style="margin: 0 0 24px 0;">
+      <span style="font-family: ${SALESOS_BRAND.fonts.body}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: ${SALESOS_BRAND.colors.textMuted};">Interests</span>
+      <div style="margin-top: 12px;">
+        ${interestsHtml}
+      </div>
+    </div>
+
+    <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      Review this request and send an organization code if appropriate.
+    </p>
+  `;
+
+  return generateSalesOSTemplate({
+    preheader: `New access request from ${firstName} ${lastName} at ${companyName}${aiScore ? ` - AI Score: ${aiScore}/100` : ''}`,
+    content,
+    ctaButton: {
+      text: 'Review in Admin',
+      url: adminDashboardUrl,
+      style: 'primary',
+    },
+  });
+}
+
+/**
+ * Organization Code Email
+ * Sent when admin approves and sends org code to user
+ */
+export function generateSalesOSOrganizationCodeEmail(params: {
+  userName: string;
+  organizationCode: string;
+  personalMessage?: string;
+  signupUrl: string;
+}): string {
+  const { userName, organizationCode, personalMessage, signupUrl } = params;
+
+  const personalMessageHtml = personalMessage ? `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: ${SALESOS_BRAND.colors.backgroundAlt}; border-radius: 12px; padding: 16px 20px; border-left: 4px solid ${SALESOS_BRAND.colors.gold};">
+      <tr>
+        <td>
+          <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 14px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.6; font-style: italic;">
+            "${personalMessage}"
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; font-family: ${SALESOS_BRAND.fonts.heading}; font-size: 28px; font-weight: 600; color: ${SALESOS_BRAND.colors.textDark}; line-height: 1.3;">
+      Your Access is Approved!
+    </h1>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMuted}; line-height: 1.6;">
+      Use the code below to create your SalesOS account
+    </p>
+
+    ${formatDivider()}
+
+    <p style="margin: 0 0 16px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      ${formatGreeting(userName)}
+    </p>
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      Great news! Your access request has been approved. Use the organization code below when signing up for SalesOS:
+    </p>
+
+    ${formatCodeBox(organizationCode)}
+
+    <p style="margin: 0 0 24px 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 13px; color: ${SALESOS_BRAND.colors.textMuted}; text-align: center;">
+      Copy this code and paste it in the "Organization Code" field during signup
+    </p>
+
+    ${personalMessageHtml}
+
+    <p style="margin: 0; font-family: ${SALESOS_BRAND.fonts.body}; font-size: 15px; color: ${SALESOS_BRAND.colors.textMedium}; line-height: 1.7;">
+      Click the button below to get started. We can't wait to help you transform your sales process!
+    </p>
+  `;
+
+  return generateSalesOSTemplate({
+    preheader: `Your SalesOS access is approved! Use code: ${organizationCode}`,
+    content,
+    ctaButton: {
+      text: 'Create Your Account',
+      url: signupUrl,
+      style: 'gold',
+    },
+  });
+}
+
 // ==================== EXPORT ALL ====================
 
 export const SalesOSEmailTemplates = {
@@ -2216,6 +2593,11 @@ export const SalesOSEmailTemplates = {
   // Reports & Data
   weeklySummary: generateSalesOSWeeklySummaryEmail,
   exportComplete: generateSalesOSExportCompleteEmail,
+
+  // Access Requests
+  accessRequestConfirmation: generateSalesOSAccessRequestConfirmationEmail,
+  accessRequestAdminNotification: generateSalesOSAccessRequestAdminNotification,
+  organizationCode: generateSalesOSOrganizationCodeEmail,
 };
 
 export default SalesOSEmailTemplates;

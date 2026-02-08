@@ -3,11 +3,13 @@ import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { PrismaModule } from '../database/prisma.module';
 import { EnrichmentModule } from '../integrations/enrichment/enrichment.module';
+import { WorkflowsModule } from '../workflows/workflows.module';
 
 @Module({
   imports: [
     PrismaModule,
     forwardRef(() => EnrichmentModule),
+    WorkflowsModule,
   ],
   controllers: [AccountsController],
   providers: [AccountsService],

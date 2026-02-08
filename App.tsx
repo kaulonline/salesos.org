@@ -28,6 +28,8 @@ import { VerifyEmail } from './pages/VerifyEmail';
 import { AcceptInvite } from './pages/AcceptInvite';
 
 // Lazy-loaded public pages
+const PartnerInvite = lazy(() => import('./pages/PartnerInvite'));
+const RequestAccess = lazy(() => import('./pages/RequestAccess'));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
 const FeaturesPage = lazy(() => import('./pages/FeaturesPage').then(m => ({ default: m.FeaturesPage })));
 const Integrations = lazy(() => import('./pages/Integrations').then(m => ({ default: m.Integrations })));
@@ -119,6 +121,19 @@ const Partners = lazy(() => import('./pages/dashboard/Partners').then(m => ({ de
 // Admin Outcome Billing
 const OutcomePricing = lazy(() => import('./pages/dashboard/OutcomePricing').then(m => ({ default: m.OutcomePricing })));
 
+// Partner Portal
+const PartnerPortalLayout = lazy(() => import('./layouts/PartnerPortalLayout').then(m => ({ default: m.PartnerPortalLayout })));
+const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard').then(m => ({ default: m.PortalDashboard })));
+const PortalRegistrations = lazy(() => import('./pages/portal/PortalRegistrations').then(m => ({ default: m.PortalRegistrations })));
+const PortalDeals = lazy(() => import('./pages/portal/PortalDeals').then(m => ({ default: m.PortalDeals })));
+const PortalAccounts = lazy(() => import('./pages/portal/PortalAccounts').then(m => ({ default: m.PortalAccounts })));
+const NewRegistration = lazy(() => import('./pages/portal/NewRegistration').then(m => ({ default: m.NewRegistration })));
+const RegistrationDetail = lazy(() => import('./pages/portal/RegistrationDetail').then(m => ({ default: m.RegistrationDetail })));
+const PortalSecurity = lazy(() => import('./pages/portal/PortalSecurity').then(m => ({ default: m.PortalSecurity })));
+const PortalHelpCenter = lazy(() => import('./pages/portal/PortalHelpCenter').then(m => ({ default: m.PortalHelpCenter })));
+const PortalAgreement = lazy(() => import('./pages/portal/PortalAgreement').then(m => ({ default: m.PortalAgreement })));
+const PortalSupport = lazy(() => import('./pages/portal/PortalSupport').then(m => ({ default: m.PortalSupport })));
+
 // Billing Pages
 const CheckoutSuccess = lazy(() => import('./pages/billing/Success').then(m => ({ default: m.CheckoutSuccess })));
 const CheckoutCancel = lazy(() => import('./pages/billing/Cancel').then(m => ({ default: m.CheckoutCancel })));
@@ -154,9 +169,10 @@ const PricingPageWrapper = () => (
 
 function AppContent() {
   const { pathname } = useLocation();
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/verify-email' || pathname === '/invite';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/verify-email' || pathname === '/invite' || pathname === '/request-access';
   const isDashboard = pathname.startsWith('/dashboard');
   const isAdmin = pathname.startsWith('/admin');
+  const isPortal = pathname.startsWith('/portal');
   const isBilling = pathname.startsWith('/billing');
   const isPublicForm = pathname.startsWith('/forms/');
 
@@ -169,7 +185,7 @@ function AppContent() {
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
       {/* Global subtle noise overlay for premium feel */}
       <NoiseOverlay opacity={0.02} blend="soft-light" />
-      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && !isPublicForm && <Navbar />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isPortal && !isBilling && !isPublicForm && <Navbar />}
       <main>
         <Routes>
           {/* Public Routes */}
@@ -268,6 +284,16 @@ function AppContent() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/invite" element={<AcceptInvite />} />
+          <Route path="/partner-invite" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PartnerInvite />
+            </Suspense>
+          } />
+          <Route path="/request-access" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <RequestAccess />
+            </Suspense>
+          } />
 
           {/* Dashboard Routes - Protected and Lazy Loaded */}
           <Route path="/dashboard" element={
@@ -683,6 +709,13 @@ function AppContent() {
                 </Suspense>
               </PageErrorBoundary>
             } />
+            <Route path="settings/approval-workflows" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <ApprovalWorkflows />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
           </Route>
 
           {/* Admin Routes - Protected with AdminLayout */}
@@ -751,11 +784,91 @@ function AppContent() {
             } />
           </Route>
 
+          {/* Partner Portal Routes */}
+          <Route path="/portal" element={
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <PartnerPortalLayout />
+              </Suspense>
+            </ProtectedRoute>
+          }>
+            <Route index element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalDashboard />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="registrations" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalRegistrations />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="registrations/new" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <NewRegistration />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="registrations/:id" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <RegistrationDetail />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="deals" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalDeals />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="accounts" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalAccounts />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="security" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalSecurity />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="help" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalHelpCenter />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="agreement" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalAgreement />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="support" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <PortalSupport />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+          </Route>
+
           {/* Catch-all route */}
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      {!isAuthPage && !isDashboard && !isAdmin && !isBilling && !isPublicForm && <Footer />}
+      {!isAuthPage && !isDashboard && !isAdmin && !isPortal && !isBilling && !isPublicForm && <Footer />}
       <CookieConsent />
     </div>
   );

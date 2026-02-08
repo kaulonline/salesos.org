@@ -112,6 +112,16 @@ model User {
   approvedDealRegs       DealRegistration[] @relation("DealRegApprover")
   rejectedDealRegs       DealRegistration[] @relation("DealRegRejecter")
   convertedDealRegs      DealRegistration[] @relation("DealRegConverter")
+
+  // Access Requests (assigned for follow-up)
+  assignedAccessRequests AccessRequest[]    @relation("AssignedAccessRequests")
+
+  // Approval Workflows
+  createdApprovalWorkflows ApprovalWorkflow[]  @relation("ApprovalWorkflowCreator")
+  approvalStepsAssigned    ApprovalStep[]      @relation("ApprovalStepApprover")
+  approvalRequestsSubmitted ApprovalRequest[]  @relation("ApprovalRequestor")
+  approvalDecisionsMade    ApprovalDecision[]  @relation("ApprovalDecisionApprover")
+  approvalDelegationsReceived ApprovalDecision[] @relation("ApprovalDecisionDelegate")
 }
 
 // Salesforce OAuth Connection
@@ -583,6 +593,9 @@ model Lead {
   emailThreads    EmailThread[]
   meetingSessions MeetingSession[] // Meeting Intelligence
   callHistory     CallHistory[]    @relation("LeadCallHistory") // Voice call history
+
+  // Access Request conversion tracking
+  accessRequest   AccessRequest?   @relation("AccessRequestLead")
 
   @@index([organizationId])
   @@index([organizationId, ownerId])
@@ -3137,6 +3150,10 @@ model Organization {
 
   // Outcome-based billing
   outcomePricingPlan OutcomePricingPlan?
+
+  // Approval Workflows
+  approvalWorkflows  ApprovalWorkflow[]  @relation("OrganizationApprovalWorkflows")
+  approvalRequests   ApprovalRequest[]   @relation("OrganizationApprovalRequests")
 
   @@index([status])
   @@index([domain])
@@ -8072,4 +8089,260 @@ model DealRegistration {
   @@index([accountId])
   @@index([approvedUntil])
   @@map("deal_registrations")
+}
+
+// ==================== ACCESS REQUEST (LEAD QUALIFICATION) ====================
+
+enum AccessRequestStatus {
+  PENDING     // New request, not yet reviewed
+  CONTACTED   // Sales has reached out
+  QUALIFIED   // Qualified as a good fit
+  APPROVED    // Approved, org code being sent
+  REJECTED    // Not a fit / spam
+  CONVERTED   // Converted to a lead/user
+}
+
+enum AccessRequestType {
+  FREE_TRIAL  // Wants to try the product
+  DEMO        // Wants a demo
+  ENTERPRISE  // Enterprise inquiry
+  PARTNER     // Partnership inquiry
+  OTHER       // Other
+}
+
+// AccessRequest - Captures interest from users without org codes
+// Flow: User submits form → Sales reviews → Sends org code → User signs up
+model AccessRequest {
+  id                String              @id @default(cuid())
+
+  // Contact Information
+  firstName         String
+  lastName          String
+  email             String
+  phone             String?
+
+  // Company Information
+  companyName       String
+  jobTitle          String?
+  companySize       String?             // "1-10", "11-50", "51-200", etc.
+  industry          String?
+  website           String?
+
+  // Request Details
+  requestType       AccessRequestType   @default(FREE_TRIAL)
+  interests         String[]            // ["CRM", "AI Coaching", "Analytics"]
+  message           String?
+  howHeard          String?             // "Google", "Referral", "LinkedIn", etc.
+
+  // Status & Tracking
+  status            AccessRequestStatus @default(PENDING)
+  assignedToId      String?
+  assignedTo        User?               @relation("AssignedAccessRequests", fields: [assignedToId], references: [id])
+
+  // Conversion Tracking
+  convertedLeadId   String?             @unique
+  convertedLead     Lead?               @relation("AccessRequestLead", fields: [convertedLeadId], references: [id])
+  organizationCodeSent String?          // The org code sent to this user
+
+  // Metadata for tracking
+  ipAddress         String?
+  userAgent         String?
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+
+  // Admin Notes
+  internalNotes     String?
+  rejectionReason   String?
+
+  // AI-Powered Insights & Enrichment
+  aiScore           Int?                // 0-100 AI-calculated lead score
+  aiPriority        String?             // HIGH, MEDIUM, LOW
+  aiInsights        Json?               // Structured AI analysis
+  aiCompanyInfo     Json?               // Enriched company data
+  aiRecommendedActions String[]         // AI-suggested next steps
+  aiSummary         String?             // AI-generated summary
+  aiEnrichedAt      DateTime?           // When AI enrichment was performed
+
+  // Timestamps
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  contactedAt       DateTime?
+  convertedAt       DateTime?
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@index([aiScore])
+  @@index([aiPriority])
+  @@map("access_requests")
+}
+
+// ==================== APPROVAL WORKFLOWS ====================
+// Multi-level approval chains for quotes, orders, contracts, and discounts
+
+enum ApprovalEntity {
+  QUOTE
+  DISCOUNT
+  ORDER
+  CONTRACT
+}
+
+enum ApproverType {
+  USER          // Specific user must approve
+  ROLE          // Anyone with specified role can approve
+  MANAGER       // Submitter's direct manager
+  SKIP_LEVEL_MANAGER  // Submitter's manager's manager
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum ApprovalAction {
+  APPROVE
+  REJECT
+  DELEGATE
+  ESCALATE
+}
+
+model ApprovalWorkflow {
+  id           String          @id @default(cuid())
+  name         String
+  description  String?
+  entity       ApprovalEntity
+  conditions   Json            @default("[]") // WorkflowCondition[]
+  isActive     Boolean         @default(true)
+  priority     Int             @default(0) // Higher priority evaluated first
+  
+  // Relations
+  steps        ApprovalStep[]
+  requests     ApprovalRequest[]
+  
+  // Audit
+  createdById  String
+  createdBy    User            @relation("ApprovalWorkflowCreator", fields: [createdById], references: [id])
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation("OrganizationApprovalWorkflows", fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([entity])
+  @@index([isActive])
+  @@index([organizationId])
+  @@map("approval_workflows")
+}
+
+model ApprovalStep {
+  id                    String        @id @default(cuid())
+  workflowId            String
+  workflow              ApprovalWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  order                 Int           // Step sequence (1, 2, 3...)
+  name                  String
+  description           String?
+  
+  // Approver configuration
+  approverType          ApproverType
+  approverId            String?       // User ID if type is USER
+  approver              User?         @relation("ApprovalStepApprover", fields: [approverId], references: [id])
+  roleId                String?       // Profile ID if type is ROLE
+  
+  // Automation
+  autoApproveAfterHours Int?          // Auto-approve after N hours
+  autoRejectAfterHours  Int?          // Auto-reject after N hours
+  
+  // Settings
+  requireComment        Boolean       @default(false)
+  allowDelegation       Boolean       @default(true)
+  
+  // Relations
+  decisions             ApprovalDecision[]
+  
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([workflowId])
+  @@index([order])
+  @@map("approval_steps")
+}
+
+model ApprovalRequest {
+  id                String          @id @default(cuid())
+  workflowId        String
+  workflow          ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+  
+  // Entity being approved
+  entityType        ApprovalEntity
+  entityId          String
+  entityName        String
+  entityDetails     Json?           // Snapshot of entity at submission time
+  
+  // Requester
+  requestedById     String
+  requestedBy       User            @relation("ApprovalRequestor", fields: [requestedById], references: [id])
+  
+  // Progress
+  currentStepOrder  Int             @default(1)
+  status            ApprovalStatus  @default(PENDING)
+  
+  // Decisions
+  decisions         ApprovalDecision[]
+  
+  // Timestamps
+  submittedAt       DateTime        @default(now())
+  completedAt       DateTime?
+  expiresAt         DateTime?
+  
+  // Multi-tenancy
+  organizationId    String
+  organization      Organization    @relation("OrganizationApprovalRequests", fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([workflowId])
+  @@index([entityType, entityId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([organizationId])
+  @@map("approval_requests")
+}
+
+model ApprovalDecision {
+  id              String          @id @default(cuid())
+  requestId       String
+  request         ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  stepId          String
+  step            ApprovalStep    @relation(fields: [stepId], references: [id])
+  stepOrder       Int
+  
+  // Decision maker
+  approverId      String
+  approver        User            @relation("ApprovalDecisionApprover", fields: [approverId], references: [id])
+  
+  // Decision
+  action          ApprovalAction
+  comment         String?
+  
+  // Delegation
+  delegatedToId   String?
+  delegatedTo     User?           @relation("ApprovalDecisionDelegate", fields: [delegatedToId], references: [id])
+  
+  decidedAt       DateTime        @default(now())
+  
+  createdAt       DateTime        @default(now())
+
+  @@index([requestId])
+  @@index([stepId])
+  @@index([approverId])
+  @@map("approval_decisions")
 }

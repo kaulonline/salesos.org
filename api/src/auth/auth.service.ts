@@ -207,7 +207,7 @@ export class AuthService {
             where: { userId: user.id, isActive: true },
             include: {
                 organization: {
-                    select: { id: true, status: true }
+                    select: { id: true, status: true, name: true }
                 }
             }
         });
@@ -287,14 +287,35 @@ export class AuthService {
                     ? await this.getLocationFromIp(ipAddress || '')
                     : 'Unknown';
 
-                await this.premiumEmailService.sendLoginNotificationEmail(user.email, {
+                // Check if user is a partner user to link to correct security page
+                let isPortalUser = false;
+                try {
+                    const portalUser = await this.prisma.partnerUser.findFirst({
+                        where: {
+                            userId: user.id,
+                            isActive: true,
+                            partner: {
+                                portalEnabled: true,
+                                status: 'APPROVED',
+                            },
+                        },
+                        select: { id: true },
+                    });
+                    isPortalUser = !!portalUser;
+                    this.logger.log(`Portal user check for ${user.email}: isPortalUser=${isPortalUser}, found=${!!portalUser}`);
+                } catch (e) {
+                    this.logger.warn(`Partner check error for ${user.email}: ${e.message}`);
+                }
+
+                await this.salesOSEmailService.sendLoginNotificationEmail({
+                    to: user.email,
                     userName: user.name || 'there',
                     loginTime,
                     ipAddress: ipAddress || 'Unknown',
                     location,
                     device,
                     browser,
-                    securityUrl: `${this.appUrl}/settings/security`,
+                    isPortalUser,
                 });
             } catch (err) {
                 this.logger.warn(`Failed to send login notification to ${user.email}: ${err.message}`);
@@ -314,6 +335,11 @@ export class AuthService {
             licenseStatus?: string;
             licenseTier?: string;
             licenseExpiry?: string;
+        } = {};
+        let partnerData: {
+            isPartnerUser?: boolean;
+            partnerId?: string;
+            partnerRole?: string;
         } = {};
 
         try {
@@ -368,6 +394,36 @@ export class AuthService {
             this.logger.warn(`Failed to fetch org/license info for user ${user.id}: ${e.message}`);
         }
 
+        // Check if user is a partner user (for Partner Portal access)
+        try {
+            const partnerUser = await this.prisma.partnerUser.findFirst({
+                where: {
+                    userId: user.id,
+                    isActive: true,
+                    partner: {
+                        portalEnabled: true,
+                        status: 'APPROVED',
+                    },
+                },
+                select: {
+                    partnerId: true,
+                    role: true,
+                },
+            });
+
+            if (partnerUser) {
+                partnerData = {
+                    isPartnerUser: true,
+                    partnerId: partnerUser.partnerId,
+                    partnerRole: partnerUser.role,
+                };
+                this.logger.log(`User ${user.email} is a partner user (partner: ${partnerUser.partnerId})`);
+            }
+        } catch (e) {
+            // Non-critical, ignore partner lookup errors
+            this.logger.warn(`Failed to fetch partner info for user ${user.id}: ${e.message}`);
+        }
+
         // Generate CSRF token bound to this session
         const csrfToken = this.csrfService.generateCsrfToken(jti);
 
@@ -382,6 +438,7 @@ export class AuthService {
                 role: user.role,
                 ...organizationData,
                 ...licenseData,
+                ...partnerData,
             },
         };
     }
@@ -1026,6 +1083,127 @@ export class AuthService {
     }
 
     /**
+     * Accept partner portal invitation
+     * Sets password, activates user, and activates partner membership
+     */
+    async acceptPartnerInvite(token: string, password: string, name?: string, ipAddress?: string, userAgent?: string) {
+        // Hash the provided token to compare with stored hash
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        // Find user by hashed invite token
+        const users = await this.prisma.user.findMany({
+            where: {
+                settings: {
+                    path: ['partnerInvite', 'hashedToken'],
+                    equals: hashedToken,
+                },
+            },
+        });
+
+        if (users.length === 0) {
+            throw new BadRequestException('Invalid or expired invitation token');
+        }
+
+        const user = users[0];
+        const settings = user.settings as any;
+        const inviteData = settings?.partnerInvite;
+
+        if (!inviteData || inviteData.hashedToken !== hashedToken) {
+            throw new BadRequestException('Invalid or expired invitation token');
+        }
+
+        // Check if token has expired
+        if (new Date(inviteData.expiresAt) < new Date()) {
+            throw new BadRequestException('Invitation has expired. Please request a new invitation.');
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt();
+        const newPasswordHash = await bcrypt.hash(password, salt);
+
+        // Update user: set password, activate, clear invite data, optionally set name
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash: newPasswordHash,
+                status: 'ACTIVE',
+                name: name || user.name,
+                settings: {
+                    ...settings,
+                    partnerInvite: null, // Clear invite data
+                },
+            },
+        });
+
+        // Activate the partner user membership and add to partner's organization
+        if (inviteData.partnerId) {
+            await this.prisma.partnerUser.updateMany({
+                where: {
+                    userId: user.id,
+                    partnerId: inviteData.partnerId,
+                },
+                data: {
+                    isActive: true,
+                },
+            });
+
+            // Get the partner's organization and add the user as a member
+            const partner = await this.prisma.partner.findUnique({
+                where: { id: inviteData.partnerId },
+                select: { organizationId: true },
+            });
+
+            if (partner?.organizationId) {
+                // Check if user is already a member of the organization
+                const existingMembership = await this.prisma.organizationMember.findUnique({
+                    where: {
+                        userId_organizationId: {
+                            userId: user.id,
+                            organizationId: partner.organizationId,
+                        },
+                    },
+                });
+
+                if (!existingMembership) {
+                    // Create organization membership for the partner user
+                    await this.prisma.organizationMember.create({
+                        data: {
+                            organizationId: partner.organizationId,
+                            userId: user.id,
+                            role: 'MEMBER', // Partner users get basic member role in the org
+                            isActive: true,
+                        },
+                    });
+                    this.logger.log(`Created organization membership for partner user ${user.email}`);
+                }
+            }
+        }
+
+        await this.applicationLogService.logTransaction(
+            'AuthService.acceptPartnerInvite',
+            'PARTNER_INVITE_ACCEPTED',
+            TransactionStatus.SUCCESS,
+            `Partner invitation accepted: ${user.email}`,
+            {
+                category: LogCategory.AUTH,
+                userId: user.id,
+                entityType: 'User',
+                entityId: user.id,
+                metadata: { ipAddress, partnerId: inviteData.partnerId },
+                tags: ['partner-invite', 'accepted'],
+            }
+        );
+
+        this.logger.log(`Partner invitation accepted for ${user.email}`);
+
+        return {
+            success: true,
+            message: 'Your account has been activated. You can now log in to the Partner Portal.',
+            email: user.email,
+        };
+    }
+
+    /**
      * Request magic link login - generates token and sends email
      */
     async requestMagicLink(email: string, ipAddress?: string, userAgent?: string, origin?: string) {
@@ -1197,14 +1375,35 @@ export class AuthService {
                     ? await this.getLocationFromIp(ipAddress || '')
                     : 'Unknown';
 
-                await this.premiumEmailService.sendLoginNotificationEmail(userEmail, {
+                // Check if user is a partner user to link to correct security page
+                let isPortalUser = false;
+                try {
+                    const portalUser = await this.prisma.partnerUser.findFirst({
+                        where: {
+                            userId: userId,
+                            isActive: true,
+                            partner: {
+                                portalEnabled: true,
+                                status: 'APPROVED',
+                            },
+                        },
+                        select: { id: true },
+                    });
+                    isPortalUser = !!portalUser;
+                    this.logger.log(`Portal user check (magic-link) for ${userEmail}: isPortalUser=${isPortalUser}, found=${!!portalUser}`);
+                } catch (e) {
+                    this.logger.warn(`Partner check error (magic-link) for ${userEmail}: ${e.message}`);
+                }
+
+                await this.salesOSEmailService.sendLoginNotificationEmail({
+                    to: userEmail,
                     userName: userName || 'there',
                     loginTime,
                     ipAddress: ipAddress || 'Unknown',
                     location,
                     device,
                     browser,
-                    securityUrl: `${this.appUrl}/settings/security`,
+                    isPortalUser,
                 });
             } catch (err) {
                 this.logger.warn(`Failed to send login notification to ${userEmail}: ${err.message}`);

@@ -37,9 +37,12 @@ import { useAuth } from '../../src/context/AuthContext';
 import type { LicenseStatus, LicenseTier, PreGeneratedKeyStatus } from '../../src/api/licensing';
 import type { Coupon, Payment, DiscountType, CouponDuration, PaymentStatus, GatewayConfig, PaymentGateway, StripeSyncResult } from '../../src/api/payments';
 import paymentsApi from '../../src/api/payments';
+import organizationsApi, { Organization, OrganizationMember, OrganizationCode } from '../../src/api/organizations';
+import accessRequestsApi from '../../src/api/access-requests';
+import type { AccessRequest, AccessRequestStatus, AccessRequestStats } from '../../src/types/access-request';
 import { DatabaseBackups } from '../../src/components/admin/DatabaseBackups';
 
-type TabType = 'overview' | 'users' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
+type TabType = 'overview' | 'users' | 'access-requests' | 'organizations' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
 type BillingSubTab = 'dashboard' | 'pricing-plans' | 'events' | 'invoices';
 
 const formatNumber = (num?: number) => {
@@ -133,6 +136,8 @@ export const Admin: React.FC = () => {
   const activeTab = useMemo<TabType>(() => {
     const path = location.pathname;
     if (path.includes('/admin/users')) return 'users';
+    if (path.includes('/admin/access-requests')) return 'access-requests';
+    if (path.includes('/admin/organizations')) return 'organizations';
     if (path.includes('/admin/billing')) return 'billing';
     if (path.includes('/admin/features')) return 'features';
     if (path.includes('/admin/settings') || path.includes('/admin/system')) return 'settings';
@@ -140,7 +145,7 @@ export const Admin: React.FC = () => {
     // For /dashboard/admin, check query params
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'users', 'billing', 'features', 'settings', 'backups', 'audit'].includes(tab)) {
+    if (tab && ['overview', 'users', 'access-requests', 'organizations', 'billing', 'features', 'settings', 'backups', 'audit'].includes(tab)) {
       return tab as TabType;
     }
     return 'overview';
@@ -150,6 +155,17 @@ export const Admin: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+
+  // Access Requests state
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
+  const [accessRequestStats, setAccessRequestStats] = useState<AccessRequestStats | null>(null);
+  const [accessRequestsLoading, setAccessRequestsLoading] = useState(false);
+  const [accessRequestStatusFilter, setAccessRequestStatusFilter] = useState<AccessRequestStatus | ''>('');
+  const [selectedAccessRequest, setSelectedAccessRequest] = useState<AccessRequest | null>(null);
+  const [showAccessRequestDetailModal, setShowAccessRequestDetailModal] = useState(false);
+  const [showSendOrgCodeModal, setShowSendOrgCodeModal] = useState(false);
+  const [sendOrgCodeForm, setSendOrgCodeForm] = useState({ organizationCode: '', personalMessage: '' });
+  const [sendOrgCodeLoading, setSendOrgCodeLoading] = useState(false);
   const [usersPage, setUsersPage] = useState(1);
   const [showAuditFilterMenu, setShowAuditFilterMenu] = useState(false);
   const [auditActionFilter, setAuditActionFilter] = useState<string>('all');
@@ -197,6 +213,36 @@ export const Admin: React.FC = () => {
   }>({ isOpen: false, type: null, itemId: null, itemName: '' });
   const [confirmLoading, setConfirmLoading] = useState(false);
 
+  // Organizations state
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(false);
+  const [orgsTotal, setOrgsTotal] = useState(0);
+  const [orgsPage, setOrgsPage] = useState(1);
+  const [orgsSearch, setOrgsSearch] = useState('');
+  const [orgsStatusFilter, setOrgsStatusFilter] = useState('');
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [orgMembers, setOrgMembers] = useState<OrganizationMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+
+  // Organization CRUD modals
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
+  const [showEditOrgModal, setShowEditOrgModal] = useState(false);
+  const [showDeleteOrgModal, setShowDeleteOrgModal] = useState(false);
+  const [showGenCodeModal, setShowGenCodeModal] = useState(false);
+  const [orgFormData, setOrgFormData] = useState({ name: '', slug: '', contactEmail: '', status: 'ACTIVE' });
+  const [orgFormLoading, setOrgFormLoading] = useState(false);
+  const [orgCodes, setOrgCodes] = useState<any[]>([]);
+  const [orgCodesLoading, setOrgCodesLoading] = useState(false);
+  const [genCodeForm, setGenCodeForm] = useState({ maxUses: 100, expiresInDays: 365, defaultRole: 'MEMBER' });
+
+  // User CRUD modals
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [userFormData, setUserFormData] = useState({ name: '', email: '', role: 'USER', status: 'ACTIVE' });
+  const [userFormLoading, setUserFormLoading] = useState(false);
+  const [userActionsMenuId, setUserActionsMenuId] = useState<string | null>(null);
+
   // Check if user is admin (handle case sensitivity)
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
@@ -221,6 +267,8 @@ export const Admin: React.FC = () => {
     suspendUser,
     activateUser,
     resetPassword,
+    updateUser,
+    deleteUser,
     refetch: refetchUsers,
   } = useAdminUsers({ search: searchQuery, role: selectedRole, status: selectedStatus, page: usersPage });
   const { flags, loading: flagsLoading, toggleFlag } = useFeatureFlags();
@@ -519,6 +567,53 @@ export const Admin: React.FC = () => {
     return logs.filter(l => l.action.toLowerCase().includes(auditActionFilter.toLowerCase()));
   }, [logs, auditActionFilter]);
 
+  // User edit/delete handlers
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setUserFormData({
+      name: user.name || '',
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    });
+    setShowEditUserModal(true);
+    setUserActionsMenuId(null);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+    setUserFormLoading(true);
+    try {
+      await updateUser(selectedUser.id, {
+        name: userFormData.name,
+        role: userFormData.role as any,
+        status: userFormData.status as any,
+      });
+      showToast('User updated successfully', 'success');
+      setShowEditUserModal(false);
+      setSelectedUser(null);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to update user', 'error');
+    } finally {
+      setUserFormLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setUserFormLoading(true);
+    try {
+      await deleteUser(selectedUser.id);
+      showToast('User deleted successfully', 'success');
+      setShowDeleteUserModal(false);
+      setSelectedUser(null);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to delete user', 'error');
+    } finally {
+      setUserFormLoading(false);
+    }
+  };
+
   // Pagination handlers
   const handlePreviousPage = () => {
     if (usersPage > 1) {
@@ -546,6 +641,258 @@ export const Admin: React.FC = () => {
       fetchOAuthConfig();
     }
   }, [activeTab]);
+
+  // Fetch organizations when Organizations tab is active
+  const fetchOrganizations = async () => {
+    setOrgsLoading(true);
+    try {
+      const result = await organizationsApi.getAll(orgsPage, 20, orgsStatusFilter || undefined, orgsSearch || undefined);
+      setOrganizations(result.organizations || []);
+      setOrgsTotal(result.total || 0);
+    } catch (err) {
+      console.error('Failed to fetch organizations:', err);
+      showToast('Failed to load organizations', 'error');
+    } finally {
+      setOrgsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'organizations') {
+      fetchOrganizations();
+    }
+  }, [activeTab, orgsPage, orgsSearch, orgsStatusFilter]);
+
+  // Fetch access requests when Access Requests tab is active
+  const fetchAccessRequests = async () => {
+    setAccessRequestsLoading(true);
+    try {
+      const [requestsResult, statsResult] = await Promise.all([
+        accessRequestsApi.getAll({ status: accessRequestStatusFilter || undefined, search: searchQuery }),
+        accessRequestsApi.getStats(),
+      ]);
+      setAccessRequests(requestsResult.requests || []);
+      setAccessRequestStats(statsResult);
+    } catch (err) {
+      console.error('Failed to fetch access requests:', err);
+      showToast('Failed to load access requests', 'error');
+    } finally {
+      setAccessRequestsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'access-requests') {
+      fetchAccessRequests();
+    }
+  }, [activeTab, accessRequestStatusFilter, searchQuery]);
+
+  // Access Request actions
+  const handleUpdateAccessRequestStatus = async (id: string, status: AccessRequestStatus) => {
+    try {
+      await accessRequestsApi.update(id, { status });
+      showToast('Status updated successfully', 'success');
+      fetchAccessRequests();
+    } catch (err) {
+      showToast('Failed to update status', 'error');
+    }
+  };
+
+  const handleSendOrgCode = async () => {
+    if (!selectedAccessRequest || !sendOrgCodeForm.organizationCode) {
+      showToast('Please enter an organization code', 'error');
+      return;
+    }
+    setSendOrgCodeLoading(true);
+    try {
+      await accessRequestsApi.sendOrgCode(selectedAccessRequest.id, {
+        organizationCode: sendOrgCodeForm.organizationCode,
+        personalMessage: sendOrgCodeForm.personalMessage || undefined,
+      });
+      showToast('Organization code sent successfully', 'success');
+      setShowSendOrgCodeModal(false);
+      setSendOrgCodeForm({ organizationCode: '', personalMessage: '' });
+      setSelectedAccessRequest(null);
+      fetchAccessRequests();
+    } catch (err) {
+      showToast('Failed to send organization code', 'error');
+    } finally {
+      setSendOrgCodeLoading(false);
+    }
+  };
+
+  const handleConvertToLead = async (id: string) => {
+    try {
+      const result = await accessRequestsApi.convertToLead(id);
+      showToast(`Converted to lead successfully`, 'success');
+      fetchAccessRequests();
+    } catch (err) {
+      showToast('Failed to convert to lead', 'error');
+    }
+  };
+
+  const handleReEnrichAccessRequest = async (id: string) => {
+    try {
+      await accessRequestsApi.reEnrich(id);
+      showToast('AI enrichment started', 'success');
+      // Refresh after a delay to allow AI enrichment to complete
+      setTimeout(() => fetchAccessRequests(), 3000);
+    } catch (err) {
+      showToast('Failed to re-enrich', 'error');
+    }
+  };
+
+  // Fetch organization members when an org is selected
+  const fetchOrgMembers = async (orgId: string) => {
+    setMembersLoading(true);
+    try {
+      const members = await organizationsApi.getMembers(orgId, true);
+      setOrgMembers(members || []);
+    } catch (err) {
+      console.error('Failed to fetch members:', err);
+      showToast('Failed to load organization members', 'error');
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  // Create organization
+  const handleCreateOrg = async () => {
+    if (!orgFormData.name || !orgFormData.slug) {
+      showToast('Name and slug are required', 'error');
+      return;
+    }
+    setOrgFormLoading(true);
+    try {
+      await organizationsApi.create({
+        name: orgFormData.name,
+        slug: orgFormData.slug.toLowerCase().replace(/\s+/g, '-'),
+        contactEmail: orgFormData.contactEmail || undefined,
+      });
+      showToast('Organization created successfully', 'success');
+      setShowCreateOrgModal(false);
+      setOrgFormData({ name: '', slug: '', contactEmail: '', status: 'ACTIVE' });
+      fetchOrganizations();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to create organization', 'error');
+    } finally {
+      setOrgFormLoading(false);
+    }
+  };
+
+  // Update organization
+  const handleUpdateOrg = async () => {
+    if (!selectedOrg) return;
+    setOrgFormLoading(true);
+    try {
+      await organizationsApi.update(selectedOrg.id, {
+        name: orgFormData.name,
+        slug: orgFormData.slug,
+        contactEmail: orgFormData.contactEmail || undefined,
+        status: orgFormData.status as any,
+      });
+      showToast('Organization updated successfully', 'success');
+      setShowEditOrgModal(false);
+      fetchOrganizations();
+      // Update selected org
+      setSelectedOrg({ ...selectedOrg, ...orgFormData } as Organization);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to update organization', 'error');
+    } finally {
+      setOrgFormLoading(false);
+    }
+  };
+
+  // Delete organization
+  const [forceDeleteOrg, setForceDeleteOrg] = useState(false);
+
+  const handleDeleteOrg = async () => {
+    if (!selectedOrg) return;
+    setOrgFormLoading(true);
+    try {
+      await organizationsApi.delete(selectedOrg.id, forceDeleteOrg);
+      showToast('Organization deleted successfully', 'success');
+      setShowDeleteOrgModal(false);
+      setSelectedOrg(null);
+      setOrgMembers([]);
+      setForceDeleteOrg(false);
+      fetchOrganizations();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to delete organization', 'error');
+    } finally {
+      setOrgFormLoading(false);
+    }
+  };
+
+  // Remove member from organization
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
+  const handleRemoveMember = async (memberId: string, userId: string) => {
+    if (!selectedOrg) return;
+    setRemovingMemberId(memberId);
+    try {
+      await organizationsApi.removeMember(selectedOrg.id, userId);
+      showToast('Member removed successfully', 'success');
+      fetchOrgMembers(selectedOrg.id);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to remove member', 'error');
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
+
+  // Fetch organization codes
+  const fetchOrgCodes = async (orgId: string) => {
+    setOrgCodesLoading(true);
+    try {
+      const codes = await organizationsApi.getCodes(orgId);
+      setOrgCodes(codes || []);
+    } catch (err) {
+      console.error('Failed to fetch codes:', err);
+    } finally {
+      setOrgCodesLoading(false);
+    }
+  };
+
+  // Generate organization code
+  const handleGenerateCode = async () => {
+    if (!selectedOrg) return;
+    setOrgFormLoading(true);
+    try {
+      await organizationsApi.createCode(selectedOrg.id, {
+        maxUses: genCodeForm.maxUses,
+        expiresAt: new Date(Date.now() + genCodeForm.expiresInDays * 24 * 60 * 60 * 1000).toISOString(),
+        defaultRole: genCodeForm.defaultRole,
+      });
+      showToast('Registration code generated successfully', 'success');
+      fetchOrgCodes(selectedOrg.id);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to generate code', 'error');
+    } finally {
+      setOrgFormLoading(false);
+    }
+  };
+
+  // Open edit modal with current org data
+  const openEditOrgModal = () => {
+    if (selectedOrg) {
+      setOrgFormData({
+        name: selectedOrg.name,
+        slug: selectedOrg.slug,
+        contactEmail: selectedOrg.contactEmail || '',
+        status: selectedOrg.status,
+      });
+      setShowEditOrgModal(true);
+    }
+  };
+
+  // Open code generation modal
+  const openGenCodeModal = () => {
+    if (selectedOrg) {
+      fetchOrgCodes(selectedOrg.id);
+      setShowGenCodeModal(true);
+    }
+  };
 
   // Calculate revenue from license types
   const calculatedRevenue = useMemo(() => {
@@ -585,6 +932,8 @@ export const Admin: React.FC = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'access-requests', label: 'Access Requests', icon: UserPlus },
+    { id: 'organizations', label: 'Organizations', icon: Building2 },
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'features', label: 'Features', icon: Zap },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -1005,12 +1354,40 @@ export const Admin: React.FC = () => {
                             >
                               {userActionLoading === `reset-${u.id}` ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
                             </button>
-                            <button
-                              className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] transition-colors"
-                              title="More"
-                            >
-                              <MoreHorizontal size={14} />
-                            </button>
+                            <div className="relative">
+                              <button
+                                onClick={() => setUserActionsMenuId(userActionsMenuId === u.id ? null : u.id)}
+                                className="p-2 rounded-lg hover:bg-[#F2F1EA] text-[#666] transition-colors"
+                                title="More"
+                              >
+                                <MoreHorizontal size={14} />
+                              </button>
+                              {userActionsMenuId === u.id && (
+                                <>
+                                  <div className="fixed inset-0 z-40" onClick={() => setUserActionsMenuId(null)} />
+                                  <div className="absolute right-0 top-10 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                                    <button
+                                      onClick={() => handleEditUser(u)}
+                                      className="w-full text-left px-4 py-2 text-sm text-[#1A1A1A] hover:bg-[#F8F8F6] flex items-center gap-2"
+                                    >
+                                      <Edit size={14} />
+                                      Edit User
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedUser(u);
+                                        setShowDeleteUserModal(true);
+                                        setUserActionsMenuId(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                      <Trash2 size={14} />
+                                      Delete User
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -1043,6 +1420,751 @@ export const Admin: React.FC = () => {
               </div>
             )}
           </Card>
+        </div>
+      )}
+
+      {/* Access Requests Tab */}
+      {activeTab === 'access-requests' && (
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider">Total Requests</p>
+                  <p className="text-2xl font-light text-[#1A1A1A] mt-1">{accessRequestStats?.total || 0}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <UserPlus size={18} className="text-[#1A1A1A]" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider">Pending</p>
+                  <p className="text-2xl font-light text-[#EAD07D] mt-1">{accessRequestStats?.pending || 0}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <Clock size={18} className="text-[#EAD07D]" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider">This Week</p>
+                  <p className="text-2xl font-light text-[#1A1A1A] mt-1">{accessRequestStats?.thisWeek || 0}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-[#F8F8F6] flex items-center justify-center">
+                  <Calendar size={18} className="text-[#666]" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-[#999] uppercase tracking-wider">Conversion Rate</p>
+                  <p className="text-2xl font-light text-green-600 mt-1">{accessRequestStats?.conversionRate || '0%'}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                  <TrendingUp size={18} className="text-green-600" />
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Filters and Actions */}
+          <Card className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or company..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={accessRequestStatusFilter}
+                  onChange={(e) => setAccessRequestStatusFilter(e.target.value as AccessRequestStatus | '')}
+                  className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="QUALIFIED">Qualified</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="CONVERTED">Converted</option>
+                </select>
+                <button
+                  onClick={fetchAccessRequests}
+                  className="px-4 py-2.5 rounded-xl border border-[#F2F1EA] hover:bg-[#F8F8F6] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <RefreshCw size={14} />
+                  Refresh
+                </button>
+                <button
+                  onClick={() => accessRequestsApi.exportCsv(accessRequestStatusFilter || undefined)}
+                  className="px-4 py-2.5 rounded-xl border border-[#F2F1EA] hover:bg-[#F8F8F6] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <Download size={14} />
+                  Export
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Access Requests Table */}
+          <Card className="overflow-hidden">
+            {accessRequestsLoading ? (
+              <div className="p-6 space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 rounded-xl" />
+                ))}
+              </div>
+            ) : accessRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-2xl bg-[#F8F8F6] flex items-center justify-center mx-auto mb-4">
+                  <UserPlus size={24} className="text-[#999]" />
+                </div>
+                <p className="text-[#666]">No access requests found</p>
+                <p className="text-sm text-[#999] mt-1">Requests will appear here when users submit the form</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#F2F1EA]">
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">Contact</th>
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">Company</th>
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">Type</th>
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">AI Score</th>
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">Status</th>
+                    <th className="px-6 py-4 text-left font-medium text-[#666]">Created</th>
+                    <th className="px-6 py-4 text-right font-medium text-[#666]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accessRequests.map((request) => (
+                    <tr key={request.id} className="border-b border-[#F2F1EA] hover:bg-[#F8F8F6]/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={`${request.firstName} ${request.lastName}`} size={36} />
+                          <div>
+                            <p className="font-medium text-[#1A1A1A]">{request.firstName} {request.lastName}</p>
+                            <p className="text-xs text-[#666]">{request.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-[#1A1A1A]">{request.companyName}</p>
+                        <p className="text-xs text-[#666]">{request.jobTitle || 'N/A'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant={request.requestType === 'ENTERPRISE' ? 'dark' : request.requestType === 'DEMO' ? 'yellow' : 'outline'} size="sm">
+                          {request.requestType}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        {request.aiScore !== undefined && request.aiScore !== null ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-[#F2F1EA] rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  request.aiScore >= 70 ? 'bg-green-500' :
+                                  request.aiScore >= 40 ? 'bg-[#EAD07D]' : 'bg-red-400'
+                                }`}
+                                style={{ width: `${request.aiScore}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-[#1A1A1A]">{request.aiScore}</span>
+                            {request.aiPriority && (
+                              <Badge
+                                variant={request.aiPriority === 'HIGH' ? 'green' : request.aiPriority === 'MEDIUM' ? 'yellow' : 'outline'}
+                                size="sm"
+                              >
+                                {request.aiPriority}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[#999] text-xs">Pending...</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge
+                          variant={
+                            request.status === 'CONVERTED' ? 'green' :
+                            request.status === 'APPROVED' ? 'green' :
+                            request.status === 'QUALIFIED' ? 'yellow' :
+                            request.status === 'CONTACTED' ? 'yellow' :
+                            request.status === 'REJECTED' ? 'red' : 'outline'
+                          }
+                          size="sm"
+                        >
+                          {request.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-[#666]">
+                        {formatDate(request.createdAt)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              setSelectedAccessRequest(request);
+                              setShowAccessRequestDetailModal(true);
+                            }}
+                            className="p-2 rounded-lg hover:bg-white transition-colors text-[#666] hover:text-[#1A1A1A]"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          {request.status === 'PENDING' && (
+                            <button
+                              onClick={() => handleUpdateAccessRequestStatus(request.id, 'CONTACTED')}
+                              className="p-2 rounded-lg hover:bg-white transition-colors text-[#666] hover:text-[#1A1A1A]"
+                              title="Mark Contacted"
+                            >
+                              <Mail size={16} />
+                            </button>
+                          )}
+                          {(request.status === 'CONTACTED' || request.status === 'QUALIFIED' || request.status === 'APPROVED') && (
+                            <button
+                              onClick={() => {
+                                setSelectedAccessRequest(request);
+                                setShowSendOrgCodeModal(true);
+                              }}
+                              className="p-2 rounded-lg hover:bg-[#EAD07D]/20 transition-colors text-[#EAD07D]"
+                              title="Send Org Code"
+                            >
+                              <Key size={16} />
+                            </button>
+                          )}
+                          {!request.convertedLeadId && request.status !== 'REJECTED' && (
+                            <button
+                              onClick={() => handleConvertToLead(request.id)}
+                              className="p-2 rounded-lg hover:bg-green-100 transition-colors text-green-600"
+                              title="Convert to Lead"
+                            >
+                              <ArrowUpRight size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleReEnrichAccessRequest(request.id)}
+                            className="p-2 rounded-lg hover:bg-white transition-colors text-[#666] hover:text-[#1A1A1A]"
+                            title="Re-enrich with AI"
+                          >
+                            <Sparkles size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Access Request Detail Modal */}
+      {showAccessRequestDetailModal && selectedAccessRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA] shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Access Request Details</h2>
+                <p className="text-sm text-[#666]">{selectedAccessRequest.email}</p>
+              </div>
+              <button onClick={() => setShowAccessRequestDetailModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              {/* Contact Info */}
+              <div>
+                <h3 className="font-semibold text-[#1A1A1A] mb-3">Contact Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Name</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.firstName} {selectedAccessRequest.lastName}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Email</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.email}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Phone</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.phone || 'Not provided'}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Job Title</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.jobTitle || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Company Info */}
+              <div>
+                <h3 className="font-semibold text-[#1A1A1A] mb-3">Company Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Company</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.companyName}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Size</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.companySize || 'Not provided'}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Industry</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.industry || 'Not provided'}</p>
+                  </div>
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Website</p>
+                    <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.website || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Request Details */}
+              <div>
+                <h3 className="font-semibold text-[#1A1A1A] mb-3">Request Details</h3>
+                <div className="space-y-3">
+                  <div className="bg-[#F8F8F6] rounded-xl p-3">
+                    <p className="text-xs text-[#999]">Request Type</p>
+                    <Badge variant="dark" size="sm" className="mt-1">{selectedAccessRequest.requestType}</Badge>
+                  </div>
+                  {selectedAccessRequest.interests && selectedAccessRequest.interests.length > 0 && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-3">
+                      <p className="text-xs text-[#999] mb-2">Interests</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedAccessRequest.interests.map((interest, i) => (
+                          <Badge key={i} variant="outline" size="sm">{interest}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedAccessRequest.message && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-3">
+                      <p className="text-xs text-[#999]">Message</p>
+                      <p className="text-sm text-[#1A1A1A] mt-1">{selectedAccessRequest.message}</p>
+                    </div>
+                  )}
+                  {selectedAccessRequest.howHeard && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-3">
+                      <p className="text-xs text-[#999]">How They Heard About Us</p>
+                      <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.howHeard}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* AI Insights */}
+              {selectedAccessRequest.aiScore !== undefined && (
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
+                    <Sparkles size={16} className="text-[#EAD07D]" />
+                    AI Insights
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-r from-[#EAD07D]/10 to-transparent rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-[#1A1A1A]">Lead Score</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-[#1A1A1A]">{selectedAccessRequest.aiScore}</span>
+                          <span className="text-[#666]">/ 100</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-3 bg-[#F2F1EA] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            selectedAccessRequest.aiScore >= 70 ? 'bg-green-500' :
+                            selectedAccessRequest.aiScore >= 40 ? 'bg-[#EAD07D]' : 'bg-red-400'
+                          }`}
+                          style={{ width: `${selectedAccessRequest.aiScore}%` }}
+                        />
+                      </div>
+                    </div>
+                    {selectedAccessRequest.aiSummary && (
+                      <div className="bg-[#F8F8F6] rounded-xl p-3">
+                        <p className="text-xs text-[#999]">AI Summary</p>
+                        <p className="text-sm text-[#1A1A1A] mt-1">{selectedAccessRequest.aiSummary}</p>
+                      </div>
+                    )}
+                    {selectedAccessRequest.aiRecommendedActions && selectedAccessRequest.aiRecommendedActions.length > 0 && (
+                      <div className="bg-[#F8F8F6] rounded-xl p-3">
+                        <p className="text-xs text-[#999] mb-2">Recommended Actions</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedAccessRequest.aiRecommendedActions.map((action, i) => (
+                            <li key={i} className="text-sm text-[#1A1A1A]">{action}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Status Update */}
+              <div>
+                <h3 className="font-semibold text-[#1A1A1A] mb-3">Update Status</h3>
+                <div className="flex flex-wrap gap-2">
+                  {(['PENDING', 'CONTACTED', 'QUALIFIED', 'APPROVED', 'REJECTED'] as AccessRequestStatus[]).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        handleUpdateAccessRequestStatus(selectedAccessRequest.id, status);
+                        setSelectedAccessRequest({ ...selectedAccessRequest, status });
+                      }}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                        selectedAccessRequest.status === status
+                          ? 'bg-[#1A1A1A] text-white'
+                          : 'bg-[#F8F8F6] text-[#666] hover:bg-[#F2F1EA]'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-[#F2F1EA] shrink-0">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAccessRequestDetailModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAccessRequestDetailModal(false);
+                    setShowSendOrgCodeModal(true);
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#EAD07D] text-[#1A1A1A] font-medium hover:bg-[#EAD07D]/80 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Key size={16} />
+                  Send Org Code
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Org Code Modal */}
+      {showSendOrgCodeModal && selectedAccessRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA]">
+              <div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Send Organization Code</h2>
+                <p className="text-sm text-[#666]">to {selectedAccessRequest.email}</p>
+              </div>
+              <button onClick={() => setShowSendOrgCodeModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Organization Code *</label>
+                <input
+                  type="text"
+                  value={sendOrgCodeForm.organizationCode}
+                  onChange={(e) => setSendOrgCodeForm({ ...sendOrgCodeForm, organizationCode: e.target.value.toUpperCase() })}
+                  placeholder="Enter or generate a code"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Personal Message (optional)</label>
+                <textarea
+                  value={sendOrgCodeForm.personalMessage}
+                  onChange={(e) => setSendOrgCodeForm({ ...sendOrgCodeForm, personalMessage: e.target.value })}
+                  placeholder="Add a personalized message..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => {
+                  setShowSendOrgCodeModal(false);
+                  setSendOrgCodeForm({ organizationCode: '', personalMessage: '' });
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendOrgCode}
+                disabled={sendOrgCodeLoading || !sendOrgCodeForm.organizationCode}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {sendOrgCodeLoading && <Loader2 size={16} className="animate-spin" />}
+                Send Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Organizations Tab */}
+      {activeTab === 'organizations' && (
+        <div className="space-y-6">
+          {/* Search and Filters */}
+          <Card className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
+                <input
+                  type="text"
+                  placeholder="Search organizations..."
+                  value={orgsSearch}
+                  onChange={(e) => setOrgsSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={orgsStatusFilter}
+                  onChange={(e) => setOrgsStatusFilter(e.target.value)}
+                  className="px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="">All Status</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+                <button
+                  onClick={fetchOrganizations}
+                  className="px-4 py-2.5 rounded-xl border border-[#F2F1EA] hover:bg-[#F8F8F6] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <RefreshCw size={14} />
+                  Refresh
+                </button>
+                <button
+                  onClick={() => {
+                    setOrgFormData({ name: '', slug: '', contactEmail: '', status: 'ACTIVE' });
+                    setShowCreateOrgModal(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <Plus size={14} />
+                  Create Organization
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Organizations List */}
+            <Card className="lg:col-span-2 overflow-hidden">
+              <div className="p-4 border-b border-[#F2F1EA] flex items-center justify-between">
+                <h3 className="font-semibold text-[#1A1A1A]">Organizations ({orgsTotal})</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Organization</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Members</th>
+                      <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F2F1EA]">
+                    {orgsLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i}>
+                          <td colSpan={4} className="py-4 px-6">
+                            <Skeleton className="h-12 rounded-xl" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : organizations.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-12 text-center text-[#666]">
+                          No organizations found
+                        </td>
+                      </tr>
+                    ) : (
+                      organizations.map((org) => (
+                        <tr
+                          key={org.id}
+                          onClick={() => {
+                            setSelectedOrg(org);
+                            fetchOrgMembers(org.id);
+                          }}
+                          className={`hover:bg-[#FAFAFA] transition-colors cursor-pointer ${selectedOrg?.id === org.id ? 'bg-[#EAD07D]/10' : ''}`}
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                                <Building2 size={18} className="text-[#1A1A1A]" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-[#1A1A1A]">{org.name}</p>
+                                <p className="text-xs text-[#666]">{org.slug}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">{getStatusBadge(org.status)}</td>
+                          <td className="py-4 px-6 text-sm text-[#666]">
+                            {org._count?.members || 0} members
+                          </td>
+                          <td className="py-4 px-6 text-sm text-[#666]">
+                            {formatDate(org.createdAt)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {orgsTotal > 20 && (
+                <div className="p-4 border-t border-[#F2F1EA] flex items-center justify-between">
+                  <p className="text-sm text-[#666]">
+                    Showing {(orgsPage - 1) * 20 + 1} - {Math.min(orgsPage * 20, orgsTotal)} of {orgsTotal}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setOrgsPage(p => Math.max(1, p - 1))}
+                      disabled={orgsPage === 1}
+                      className="px-4 py-2 rounded-lg border border-[#F2F1EA] text-sm font-medium hover:bg-[#F8F8F6] transition-colors disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setOrgsPage(p => p + 1)}
+                      disabled={orgsPage >= Math.ceil(orgsTotal / 20)}
+                      className="px-4 py-2 rounded-lg bg-[#1A1A1A] text-white text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Organization Details / Members */}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-[#F2F1EA]">
+                <h3 className="font-semibold text-[#1A1A1A]">
+                  {selectedOrg ? selectedOrg.name : 'Select an Organization'}
+                </h3>
+              </div>
+              {selectedOrg ? (
+                <div className="p-4 space-y-4">
+                  {/* Org Info */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#666]">Status</span>
+                      {getStatusBadge(selectedOrg.status)}
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#666]">Slug</span>
+                      <span className="font-medium text-[#1A1A1A]">{selectedOrg.slug}</span>
+                    </div>
+                    {selectedOrg.contactEmail && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-[#666]">Contact</span>
+                        <span className="font-medium text-[#1A1A1A]">{selectedOrg.contactEmail}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2 border-t border-[#F2F1EA] pt-4">
+                    <button
+                      onClick={openEditOrgModal}
+                      className="flex-1 px-3 py-2 rounded-lg border border-[#F2F1EA] text-sm font-medium hover:bg-[#F8F8F6] transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Edit size={14} />
+                      Edit
+                    </button>
+                    <button
+                      onClick={openGenCodeModal}
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#EAD07D] text-[#1A1A1A] text-sm font-medium hover:bg-[#d4ba6a] transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Key size={14} />
+                      Codes
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteOrgModal(true)}
+                      className="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Members List */}
+                  <div className="border-t border-[#F2F1EA] pt-4">
+                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-3">Members ({orgMembers.length})</h4>
+                    {membersLoading ? (
+                      <div className="space-y-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-12 rounded-xl" />
+                        ))}
+                      </div>
+                    ) : orgMembers.length === 0 ? (
+                      <p className="text-sm text-[#666] text-center py-4">No members</p>
+                    ) : (
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                        {orgMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-3 rounded-xl bg-[#F8F8F6]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar src={member.user?.avatarUrl} name={member.user?.name || member.user?.email} size="sm" />
+                              <div>
+                                <p className="text-sm font-medium text-[#1A1A1A]">{member.user?.name || 'No name'}</p>
+                                <p className="text-xs text-[#666]">{member.user?.email}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getRoleBadge(member.role)}
+                              {!member.isActive && (
+                                <Badge variant="outline" size="sm">Inactive</Badge>
+                              )}
+                              <button
+                                onClick={() => handleRemoveMember(member.id, member.userId)}
+                                disabled={removingMemberId === member.id}
+                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                title="Remove member"
+                              >
+                                {removingMemberId === member.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-[#666]">
+                  <Building2 size={40} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Click on an organization to view details and members</p>
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       )}
 
@@ -3262,6 +4384,451 @@ export const Admin: React.FC = () => {
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors"
               >
                 {editingCoupon ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Organization Modal */}
+      {showCreateOrgModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA]">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Create Organization</h2>
+              <button onClick={() => setShowCreateOrgModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Organization Name *</label>
+                <input
+                  type="text"
+                  value={orgFormData.name}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  placeholder="Acme Corporation"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Slug *</label>
+                <input
+                  type="text"
+                  value={orgFormData.slug}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  placeholder="acme-corporation"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Contact Email</label>
+                <input
+                  type="email"
+                  value={orgFormData.contactEmail}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, contactEmail: e.target.value })}
+                  placeholder="admin@acme.com"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => setShowCreateOrgModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateOrg}
+                disabled={orgFormLoading || !orgFormData.name || !orgFormData.slug}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {orgFormLoading && <Loader2 size={16} className="animate-spin" />}
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Organization Modal */}
+      {showEditOrgModal && selectedOrg && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA]">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Organization</h2>
+              <button onClick={() => setShowEditOrgModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Organization Name *</label>
+                <input
+                  type="text"
+                  value={orgFormData.name}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Slug *</label>
+                <input
+                  type="text"
+                  value={orgFormData.slug}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Contact Email</label>
+                <input
+                  type="email"
+                  value={orgFormData.contactEmail}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, contactEmail: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-1">Status</label>
+                <select
+                  value={orgFormData.status}
+                  onChange={(e) => setOrgFormData({ ...orgFormData, status: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => setShowEditOrgModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateOrg}
+                disabled={orgFormLoading || !orgFormData.name || !orgFormData.slug}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {orgFormLoading && <Loader2 size={16} className="animate-spin" />}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Organization Modal */}
+      {showDeleteOrgModal && selectedOrg && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={28} className="text-red-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">Delete Organization</h2>
+              <p className="text-[#666] text-sm mb-4">
+                Are you sure you want to delete <strong>{selectedOrg.name}</strong>? This action cannot be undone.
+              </p>
+              {orgMembers.length > 0 && (
+                <div className="bg-[#F8F8F6] rounded-xl p-4 text-left">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={forceDeleteOrg}
+                      onChange={(e) => setForceDeleteOrg(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-[#1A1A1A]">Force delete with {orgMembers.length} member{orgMembers.length > 1 ? 's' : ''}</p>
+                      <p className="text-xs text-[#666] mt-0.5">This will remove all members and delete the organization</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => { setShowDeleteOrgModal(false); setForceDeleteOrg(false); }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteOrg}
+                disabled={orgFormLoading || (orgMembers.length > 0 && !forceDeleteOrg)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {orgFormLoading && <Loader2 size={16} className="animate-spin" />}
+                {forceDeleteOrg ? 'Force Delete' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Organization Code Modal */}
+      {showGenCodeModal && selectedOrg && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA] shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold text-[#1A1A1A]">Registration Codes</h2>
+                <p className="text-sm text-[#666]">{selectedOrg.name}</p>
+              </div>
+              <button onClick={() => setShowGenCodeModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* Generate New Code */}
+              <div className="bg-[#F8F8F6] rounded-xl p-4 mb-6">
+                <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">Generate New Code</h3>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-medium text-[#666] mb-1">Max Uses</label>
+                    <input
+                      type="number"
+                      value={genCodeForm.maxUses}
+                      onChange={(e) => setGenCodeForm({ ...genCodeForm, maxUses: parseInt(e.target.value) || 1 })}
+                      min={1}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#666] mb-1">Expires In (Days)</label>
+                    <input
+                      type="number"
+                      value={genCodeForm.expiresInDays}
+                      onChange={(e) => setGenCodeForm({ ...genCodeForm, expiresInDays: parseInt(e.target.value) || 30 })}
+                      min={1}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#666] mb-1">Default Role</label>
+                    <select
+                      value={genCodeForm.defaultRole}
+                      onChange={(e) => setGenCodeForm({ ...genCodeForm, defaultRole: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-[#F2F1EA] focus:border-[#EAD07D] outline-none text-sm"
+                    >
+                      <option value="MEMBER">Member</option>
+                      <option value="MANAGER">Manager</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={handleGenerateCode}
+                  disabled={orgFormLoading}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {orgFormLoading && <Loader2 size={16} className="animate-spin" />}
+                  <Key size={16} />
+                  Generate Code
+                </button>
+              </div>
+
+              {/* Existing Codes */}
+              <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">Existing Codes</h3>
+              {orgCodesLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 rounded-xl" />
+                  ))}
+                </div>
+              ) : orgCodes.length === 0 ? (
+                <div className="text-center py-8 text-[#666]">
+                  <Key size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No registration codes yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {orgCodes.map((code: OrganizationCode) => (
+                    <div key={code.id} className="flex items-center justify-between p-4 rounded-xl border border-[#F2F1EA] hover:bg-[#F8F8F6]">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <code className="text-sm font-mono font-bold text-[#1A1A1A] bg-[#EAD07D]/20 px-2 py-0.5 rounded">
+                            {code.code}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(code.code);
+                              showToast('Code copied to clipboard', 'success');
+                            }}
+                            className="text-[#666] hover:text-[#1A1A1A]"
+                          >
+                            <Copy size={14} />
+                          </button>
+                          {getStatusBadge(code.status)}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-[#666]">
+                          <span>Uses: {code.currentUses}/{code.maxUses}</span>
+                          <span>Role: {code.defaultRole}</span>
+                          {code.expiresAt && (
+                            <span>Expires: {formatDate(code.expiresAt)}</span>
+                          )}
+                        </div>
+                      </div>
+                      {code.status === 'ACTIVE' && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await organizationsApi.revokeCode(code.id);
+                              showToast('Code revoked', 'success');
+                              fetchOrgCodes(selectedOrg.id);
+                            } catch (err) {
+                              showToast('Failed to revoke code', 'error');
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 text-xs font-medium"
+                        >
+                          Revoke
+                        </button>
+                      )}
+                      {code.status === 'REVOKED' && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await organizationsApi.reactivateCode(code.id);
+                              showToast('Code reactivated', 'success');
+                              fetchOrgCodes(selectedOrg.id);
+                            } catch (err) {
+                              showToast('Failed to reactivate code', 'error');
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-700 text-xs font-medium"
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-[#F2F1EA] shrink-0">
+              <button
+                onClick={() => setShowGenCodeModal(false)}
+                className="w-full px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA]">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit User</h2>
+              <button onClick={() => setShowEditUserModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Name</label>
+                <input
+                  type="text"
+                  value={userFormData.name}
+                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  placeholder="User name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Email</label>
+                <input
+                  type="email"
+                  value={userFormData.email}
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F2F1EA] border border-transparent text-[#666] text-sm cursor-not-allowed"
+                />
+                <p className="text-xs text-[#999] mt-1">Email cannot be changed</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Role</label>
+                <select
+                  value={userFormData.role}
+                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="USER">User</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Status</label>
+                <select
+                  value={userFormData.status}
+                  onChange={(e) => setUserFormData({ ...userFormData, status: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="PENDING_VERIFICATION">Pending Verification</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => setShowEditUserModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateUser}
+                disabled={userFormLoading}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {userFormLoading && <Loader2 size={16} className="animate-spin" />}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Modal */}
+      {showDeleteUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={28} className="text-red-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">Delete User</h2>
+              <p className="text-[#666] text-sm">
+                Are you sure you want to delete <strong>{selectedUser.name || selectedUser.email}</strong>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+              <button
+                onClick={() => setShowDeleteUserModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={userFormLoading}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {userFormLoading && <Loader2 size={16} className="animate-spin" />}
+                Delete User
               </button>
             </div>
           </div>

@@ -734,6 +734,23 @@ export const Automations: React.FC = () => {
         </Card>
       )}
 
+      {/* Create Automation Modal */}
+      {showCreateModal && (
+        <CreateAutomationModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={async (data) => {
+            try {
+              await workflowsApi.create(data);
+              await fetchWorkflows();
+              setShowCreateModal(false);
+              setActiveTab('active');
+            } catch (error) {
+              console.error('Failed to create workflow:', error);
+            }
+          }}
+        />
+      )}
+
       {/* AI Builder Modal */}
       <AIBuilderModal
         isOpen={showAIBuilder}
@@ -753,6 +770,290 @@ export const Automations: React.FC = () => {
         variant="danger"
         loading={deleteLoading}
       />
+    </div>
+  );
+};
+
+// Create Automation Modal Component
+interface CreateAutomationModalProps {
+  onClose: () => void;
+  onCreate: (data: CreateWorkflowRequest) => Promise<void>;
+}
+
+const CreateAutomationModal: React.FC<CreateAutomationModalProps> = ({ onClose, onCreate }) => {
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    triggerType: WorkflowTriggerType;
+    triggerEntity: WorkflowEntityType;
+    actions: { type: WorkflowActionType; config: Record<string, unknown> }[];
+  }>({
+    name: '',
+    description: '',
+    triggerType: WorkflowTriggerType.RECORD_CREATED,
+    triggerEntity: WorkflowEntityType.LEAD,
+    actions: [],
+  });
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) return;
+    setSaving(true);
+    try {
+      await onCreate({
+        name: formData.name,
+        description: formData.description,
+        triggerType: formData.triggerType,
+        triggerEntity: formData.triggerEntity,
+        actions: formData.actions,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addAction = (type: WorkflowActionType) => {
+    const defaultConfigs: Record<WorkflowActionType, Record<string, unknown>> = {
+      [WorkflowActionType.SEND_EMAIL]: { emailType: 'welcome', subject: 'Welcome!' },
+      [WorkflowActionType.CREATE_TASK]: { subject: 'Follow up', dueInDays: 3, priority: 'NORMAL' },
+      [WorkflowActionType.SEND_NOTIFICATION]: { title: 'Notification', message: '', notifyOwner: true },
+      [WorkflowActionType.ASSIGN_OWNER]: { roundRobin: true },
+      [WorkflowActionType.UPDATE_FIELD]: { field: '', value: '' },
+      [WorkflowActionType.WEBHOOK_CALL]: { url: '', method: 'POST' },
+      [WorkflowActionType.ADD_TAG]: { tag: '' },
+      [WorkflowActionType.REMOVE_TAG]: { tag: '' },
+      [WorkflowActionType.CREATE_ACTIVITY]: { type: 'NOTE', subject: 'Activity logged' },
+    };
+    setFormData({
+      ...formData,
+      actions: [...formData.actions, { type, config: defaultConfigs[type] || {} }],
+    });
+  };
+
+  const removeAction = (index: number) => {
+    setFormData({
+      ...formData,
+      actions: formData.actions.filter((_, i) => i !== index),
+    });
+  };
+
+  const triggerTypes = [
+    { value: WorkflowTriggerType.RECORD_CREATED, label: 'Record Created', icon: Plus },
+    { value: WorkflowTriggerType.RECORD_UPDATED, label: 'Record Updated', icon: Edit },
+    { value: WorkflowTriggerType.STAGE_CHANGED, label: 'Stage Changed', icon: Target },
+    { value: WorkflowTriggerType.FIELD_CHANGED, label: 'Field Changed', icon: GitBranch },
+    { value: WorkflowTriggerType.TIME_BASED, label: 'Time-Based', icon: Clock },
+  ];
+
+  const entityTypes = [
+    { value: WorkflowEntityType.LEAD, label: 'Lead', icon: Users },
+    { value: WorkflowEntityType.CONTACT, label: 'Contact', icon: Users },
+    { value: WorkflowEntityType.ACCOUNT, label: 'Account', icon: Building2 },
+    { value: WorkflowEntityType.OPPORTUNITY, label: 'Opportunity', icon: Target },
+    { value: WorkflowEntityType.TASK, label: 'Task', icon: ListTodo },
+  ];
+
+  const actionTypes = [
+    { value: WorkflowActionType.SEND_EMAIL, label: 'Send Email', icon: Mail },
+    { value: WorkflowActionType.CREATE_TASK, label: 'Create Task', icon: ListTodo },
+    { value: WorkflowActionType.SEND_NOTIFICATION, label: 'Send Notification', icon: Bell },
+    { value: WorkflowActionType.ASSIGN_OWNER, label: 'Assign Owner', icon: Users },
+    { value: WorkflowActionType.CREATE_ACTIVITY, label: 'Log Activity', icon: FileText },
+    { value: WorkflowActionType.UPDATE_FIELD, label: 'Update Field', icon: Edit },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div>
+            <h2 className="text-xl font-bold text-[#1A1A1A]">Create Automation</h2>
+            <p className="text-sm text-[#666]">Step {step} of 3</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-[#F8F8F6] rounded-lg">
+            <X size={20} className="text-[#666]" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {step === 1 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-2">Automation Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Welcome New Leads"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-2">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="What does this automation do?"
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-3">When should this run?</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {triggerTypes.map((trigger) => {
+                    const Icon = trigger.icon;
+                    return (
+                      <button
+                        key={trigger.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, triggerType: trigger.value })}
+                        className={`p-4 rounded-xl border-2 text-left transition-all ${
+                          formData.triggerType === trigger.value
+                            ? 'border-[#EAD07D] bg-[#EAD07D]/10'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon size={20} className="mb-2 text-[#1A1A1A]" />
+                        <div className="font-medium text-[#1A1A1A]">{trigger.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-3">For which entity?</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {entityTypes.map((entity) => {
+                    const Icon = entity.icon;
+                    return (
+                      <button
+                        key={entity.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, triggerEntity: entity.value })}
+                        className={`p-4 rounded-xl border-2 text-center transition-all ${
+                          formData.triggerEntity === entity.value
+                            ? 'border-[#EAD07D] bg-[#EAD07D]/10'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon size={20} className="mx-auto mb-2 text-[#1A1A1A]" />
+                        <div className="font-medium text-sm text-[#1A1A1A]">{entity.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[#666] mb-3">What should happen?</label>
+
+                {/* Current Actions */}
+                {formData.actions.length > 0 && (
+                  <div className="space-y-3 mb-4">
+                    {formData.actions.map((action, index) => {
+                      const ActionIcon = getActionIcon(action.type);
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-4 bg-[#F8F8F6] rounded-xl">
+                          <div className="w-10 h-10 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center">
+                            <ActionIcon size={18} className="text-[#1A1A1A]" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-[#1A1A1A]">
+                              {action.type.replace(/_/g, ' ')}
+                            </div>
+                            <div className="text-xs text-[#666]">
+                              {action.type === WorkflowActionType.SEND_EMAIL && 'Sends an email to the record owner'}
+                              {action.type === WorkflowActionType.CREATE_TASK && `Creates a follow-up task (due in ${action.config.dueInDays || 3} days)`}
+                              {action.type === WorkflowActionType.SEND_NOTIFICATION && 'Sends an in-app notification'}
+                              {action.type === WorkflowActionType.ASSIGN_OWNER && 'Assigns using round-robin'}
+                              {action.type === WorkflowActionType.CREATE_ACTIVITY && 'Logs an activity'}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeAction(index)}
+                            className="p-2 hover:bg-red-50 rounded-lg text-[#666] hover:text-red-600"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Add Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  {actionTypes.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <button
+                        key={action.value}
+                        type="button"
+                        onClick={() => addAction(action.value)}
+                        className="p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#EAD07D] hover:bg-[#EAD07D]/5 text-left transition-all"
+                      >
+                        <Icon size={18} className="mb-2 text-[#666]" />
+                        <div className="font-medium text-sm text-[#666]">{action.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between p-6 border-t border-gray-100">
+          <button
+            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+            className="px-6 py-2.5 text-[#666] font-medium hover:text-[#1A1A1A] transition-colors"
+          >
+            {step === 1 ? 'Cancel' : 'Back'}
+          </button>
+          <div className="flex items-center gap-3">
+            {step < 3 ? (
+              <button
+                onClick={() => setStep(step + 1)}
+                disabled={step === 1 && !formData.name.trim()}
+                className="px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={saving || formData.actions.length === 0}
+                className="px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} />
+                    Create Automation
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };

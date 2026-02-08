@@ -7,6 +7,8 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { ConvertLeadDto } from './dto/convert-lead.dto';
 import { LeadStatus, BuyingIntent, AccountType, OpportunityStage } from '@prisma/client';
 import { EnrichmentService } from '../integrations/enrichment/enrichment.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 
 @Injectable()
 export class LeadsService {
@@ -16,6 +18,7 @@ export class LeadsService {
     private prisma: PrismaService,
     private anthropic: AnthropicService,
     private applicationLogService: ApplicationLogService,
+    private workflowsService: WorkflowsService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -79,6 +82,16 @@ export class LeadsService {
           });
         });
       }
+
+      // Trigger workflows for lead creation
+      this.workflowsService.processTrigger(
+        WorkflowTriggerType.RECORD_CREATED,
+        WorkflowEntityType.LEAD,
+        lead.id,
+        { lead, userId, organizationId }
+      ).catch((error) => {
+        this.logger.error(`Failed to process workflows for lead ${lead.id}:`, error);
+      });
 
       return lead;
     } catch (error) {

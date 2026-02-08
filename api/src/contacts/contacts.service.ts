@@ -3,6 +3,8 @@ import { PrismaService } from '../database/prisma.service';
 import { Contact, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 import { EnrichmentService } from '../integrations/enrichment/enrichment.service';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 
 interface CreateContactDto {
   accountId: string;
@@ -30,6 +32,7 @@ export class ContactsService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly workflowsService: WorkflowsService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -87,6 +90,16 @@ export class ContactsService {
         this.logger.error(`Failed to auto-enrich contact ${contact.id}:`, error);
       });
     }
+
+    // Trigger workflows for contact creation
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_CREATED,
+      WorkflowEntityType.CONTACT,
+      contact.id,
+      { contact, ownerId, organizationId }
+    ).catch((error) => {
+      this.logger.error(`Failed to process workflows for contact ${contact.id}:`, error);
+    });
 
     return contact;
   }
@@ -200,7 +213,7 @@ export class ContactsService {
       throw new NotFoundException(`Contact ${id} not found`);
     }
 
-    return this.prisma.contact.update({
+    const updated = await this.prisma.contact.update({
       where: { id },
       data,
       include: {
@@ -215,6 +228,18 @@ export class ContactsService {
         },
       },
     });
+
+    // Trigger workflows for contact update
+    this.workflowsService.processTrigger(
+      WorkflowTriggerType.RECORD_UPDATED,
+      WorkflowEntityType.CONTACT,
+      id,
+      { contact: updated, previousData: contact, userId, organizationId }
+    ).catch((error) => {
+      this.logger.error(`Failed to process update workflows for contact ${id}:`, error);
+    });
+
+    return updated;
   }
 
   // Delete contact (with ownership verification)

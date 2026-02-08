@@ -1,6 +1,38 @@
 # SalesOS CRM - Project Guidelines
 
-## Project Overview
+## IMPORTANT: Current Focus
+
+**DO NOT modify SalesOS CRM code.** Current development focus is on the **Sales Coaching AI** solution located at:
+- **Frontend**: `/opt/IRIS_Sales_GPT/Sales UI/sales-coaching-ai/`
+- **Backend**: `/opt/IRIS_Sales_GPT/api/src/coaching/`
+
+All new feature development should target the Sales Coaching platform.
+
+---
+
+## Sales Coaching AI - Active Development
+
+### Project Location
+- **Frontend**: `/opt/IRIS_Sales_GPT/Sales UI/sales-coaching-ai/`
+- **Backend API**: `/opt/IRIS_Sales_GPT/api/`
+- **Coaching Module**: `/opt/IRIS_Sales_GPT/api/src/coaching/`
+
+### Tech Stack (Sales Coaching)
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
+- **Backend**: NestJS, Prisma ORM, PostgreSQL
+- **Real-time**: Socket.io for live coaching sessions
+- **AI**: Claude API for coaching insights
+
+### Key Components
+- `PracticePanel.tsx` - Main practice/roleplay interface
+- `CoachingAgendaPanel.tsx` - Agenda management for 1:1s
+- `RealtimeCoachingPanel.tsx` - Live coaching during calls
+- `AccountSignals.tsx` - Account health signals
+- `DynamicWidgets.tsx` - Configurable dashboard widgets
+
+---
+
+## SalesOS CRM - Reference Only
 
 SalesOS is an AI-powered Sales CRM and Revenue Intelligence platform built with React (Vite) frontend and NestJS backend.
 

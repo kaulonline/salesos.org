@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PartnersService } from './partners.service';
 import { DealRegistrationService } from './deal-registration.service';
 import { PartnersAIService } from './partners-ai.service';
-import { CreatePartnerDto, UpdatePartnerDto, AddPartnerUserDto, AssignAccountDto } from './dto/create-partner.dto';
+import { CreatePartnerDto, UpdatePartnerDto, AddPartnerUserDto, InvitePartnerUserDto, AssignAccountDto } from './dto/create-partner.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
 @Controller('partners')
@@ -40,8 +40,9 @@ export class PartnersController {
     @CurrentOrganization() organizationId: string,
   ) {
     const userId = req.user?.userId || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
-    return this.partnersService.findAll({ status, tier, type, search }, userId, isAdmin, organizationId);
+    const userRole = req.user?.role;
+    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    return this.partnersService.findAll({ status, tier, type, search }, userId, isAdmin, organizationId, userRole);
   }
 
   @Get('stats')
@@ -50,8 +51,9 @@ export class PartnersController {
     @CurrentOrganization() organizationId: string,
   ) {
     const userId = req.user?.userId || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
-    return this.partnersService.getStats(userId, isAdmin, organizationId);
+    const userRole = req.user?.role;
+    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    return this.partnersService.getStats(userId, isAdmin, organizationId, userRole);
   }
 
   @Get(':id')
@@ -124,6 +126,18 @@ export class PartnersController {
     const userId = req.user?.userId || req.user?.id;
     const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
     return this.partnersService.addPartnerUser(id, dto, userId, isAdmin, organizationId);
+  }
+
+  @Post(':id/users/invite')
+  async invitePartnerUser(
+    @Param('id') id: string,
+    @Body() dto: InvitePartnerUserDto,
+    @Req() req: any,
+    @CurrentOrganization() organizationId: string,
+  ) {
+    const userId = req.user?.userId || req.user?.id;
+    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
+    return this.partnersService.invitePartnerUser(id, dto, userId, isAdmin, organizationId);
   }
 
   @Patch(':partnerId/users/:partnerUserId')
@@ -256,8 +270,9 @@ export class PartnersController {
     @CurrentOrganization() organizationId: string,
   ) {
     const userId = req.user?.userId || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
-    return this.dealRegistrationService.findAll({ status, partnerId }, userId, isAdmin, organizationId);
+    const userRole = req.user?.role;
+    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    return this.dealRegistrationService.findAll({ status, partnerId }, userId, isAdmin, organizationId, userRole);
   }
 
   @Get('/admin/deal-registrations/stats')
@@ -266,8 +281,9 @@ export class PartnersController {
     @CurrentOrganization() organizationId: string,
   ) {
     const userId = req.user?.userId || req.user?.id;
-    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
-    return this.dealRegistrationService.getStats(userId, isAdmin, organizationId);
+    const userRole = req.user?.role;
+    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    return this.dealRegistrationService.getStats(userId, isAdmin, organizationId, userRole);
   }
 
   // ============================================

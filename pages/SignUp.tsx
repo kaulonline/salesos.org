@@ -22,6 +22,7 @@ export const SignUp: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [organizationCode, setOrganizationCode] = useState('');
   const [localError, setLocalError] = useState('');
 
   // Redirect if already authenticated
@@ -35,7 +36,7 @@ export const SignUp: React.FC = () => {
   useEffect(() => {
     if (error) clearError();
     if (localError) setLocalError('');
-  }, [name, email, password]);
+  }, [name, email, password, organizationCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +62,17 @@ export const SignUp: React.FC = () => {
       return;
     }
 
+    if (!organizationCode.trim()) {
+      setLocalError('Organization code is required. Don\'t have one? Request access below.');
+      return;
+    }
+
     try {
       await register({
         email: email.trim(),
         password,
-        name: name.trim()
+        name: name.trim(),
+        organizationCode: organizationCode.trim()
       });
       // Navigation happens via useEffect when isAuthenticated changes
     } catch {
@@ -157,6 +164,24 @@ export const SignUp: React.FC = () => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[#666] ml-1">Organization Code</label>
+              <input
+                type="text"
+                value={organizationCode}
+                onChange={(e) => setOrganizationCode(e.target.value.toUpperCase())}
+                placeholder="Enter your organization code"
+                className="w-full px-6 py-4 rounded-full bg-white border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none transition-all text-[#1A1A1A] placeholder-gray-400 font-medium"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-[#666] ml-1 mt-1">
+                Don't have a code?{' '}
+                <Link to="/request-access" className="text-[#1A1A1A] underline font-medium hover:text-[#EAD07D] transition-colors">
+                  Request Access
+                </Link>
+              </p>
             </div>
 
             <Button

@@ -25,9 +25,9 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav
-      className="fixed w-full z-50 transition-all duration-300 border-b border-black/5 bg-white/80 backdrop-blur-md"
+      className="fixed w-full z-50 transition-all duration-300 backdrop-blur-md"
     >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white shadow-lg shadow-[#1A1A1A]/20">

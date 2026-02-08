@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { SalesOSEmailService } from '../email/salesos-email.service';
 import { TaskPriority, ActivityType, Prisma } from '@prisma/client';
 import {
   CreateWorkflowDto,
@@ -24,7 +25,10 @@ import {
 export class WorkflowsService {
   private readonly logger = new Logger(WorkflowsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: SalesOSEmailService,
+  ) {}
 
   /**
    * Create a new workflow
@@ -488,9 +492,7 @@ export class WorkflowsService {
         return this.executeCreateActivity(entityType, entityId, config);
 
       case WorkflowActionType.SEND_EMAIL:
-        // Email sending would require integration with email service
-        this.logger.log(`Would send email: ${JSON.stringify(config)}`);
-        return { sent: false, reason: 'Email service not configured' };
+        return this.executeSendEmail(entityData, config);
 
       case WorkflowActionType.WEBHOOK_CALL:
         return this.executeWebhookCall(entityData, config);
@@ -569,6 +571,127 @@ export class WorkflowsService {
     });
 
     return { taskId: task.id, subject: task.subject };
+  }
+
+  /**
+   * Execute SEND_EMAIL action
+   */
+  private async executeSendEmail(
+    entityData: Record<string, unknown>,
+    config: Record<string, unknown>,
+  ): Promise<unknown> {
+    const { emailType, to, subject, customMessage } = config;
+
+    // Determine recipient email
+    let recipientEmail = to as string;
+    if (!recipientEmail || recipientEmail === '{{email}}') {
+      recipientEmail = entityData.email as string;
+    }
+
+    if (!recipientEmail) {
+      this.logger.warn('Cannot send email: no recipient email address');
+      return { sent: false, reason: 'No recipient email address' };
+    }
+
+    // Get recipient name
+    const recipientName = entityData.firstName
+      ? `${entityData.firstName} ${entityData.lastName || ''}`.trim()
+      : (entityData.name as string) || 'there';
+
+    try {
+      // Route to appropriate email template based on emailType
+      switch (emailType) {
+        case 'welcome':
+        case 'WELCOME':
+          await this.emailService.sendWelcomeEmail({
+            to: recipientEmail,
+            userName: recipientName,
+          });
+          break;
+
+        case 'lead_assigned':
+        case 'LEAD_ASSIGNED':
+          await this.emailService.sendLeadAssignedEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            leadName: `${entityData.firstName || ''} ${entityData.lastName || ''}`.trim(),
+            leadEmail: entityData.email as string,
+            leadCompany: entityData.company as string,
+            leadSource: entityData.leadSource as string,
+            leadId: entityData.id as string,
+          });
+          break;
+
+        case 'follow_up_reminder':
+        case 'FOLLOW_UP_REMINDER':
+          await this.emailService.sendFollowUpReminderEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            contactName: `${entityData.firstName || ''} ${entityData.lastName || ''}`.trim(),
+            contactEmail: entityData.email as string,
+            contactCompany: entityData.company as string,
+            daysSinceContact: 3,
+            suggestedAction: customMessage as string || 'Schedule a follow-up call',
+            contactId: entityData.id as string,
+          });
+          break;
+
+        case 'task_reminder':
+        case 'TASK_REMINDER':
+          await this.emailService.sendTaskReminderEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            taskTitle: (entityData.subject || entityData.title || 'Task') as string,
+            taskDescription: entityData.description as string,
+            dueDate: new Date().toLocaleDateString(),
+            relatedTo: entityData.company ? { type: 'Company', name: entityData.company as string } : undefined,
+            taskId: entityData.id as string,
+          });
+          break;
+
+        case 'deal_won':
+        case 'DEAL_WON':
+          await this.emailService.sendDealWonEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            dealName: entityData.name as string || 'Deal',
+            dealValue: `$${entityData.amount || 0}`,
+            contactName: 'Contact',
+            companyName: entityData.accountName as string || 'Account',
+            closedDate: new Date().toLocaleDateString(),
+            dealId: entityData.id as string,
+          });
+          break;
+
+        case 'deal_lost':
+        case 'DEAL_LOST':
+          await this.emailService.sendDealLostEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            dealName: entityData.name as string || 'Deal',
+            dealValue: `$${entityData.amount || 0}`,
+            contactName: 'Contact',
+            companyName: entityData.accountName as string || 'Account',
+            lostReason: entityData.lostReason as string,
+            dealId: entityData.id as string,
+          });
+          break;
+
+        default:
+          // Generic welcome email as fallback
+          this.logger.log(`Sending default welcome email for type: ${emailType}`);
+          await this.emailService.sendWelcomeEmail({
+            to: recipientEmail,
+            userName: recipientName,
+          });
+      }
+
+      this.logger.log(`Email sent successfully to ${recipientEmail} (type: ${emailType})`);
+      return { sent: true, to: recipientEmail, emailType };
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${recipientEmail}:`, error);
+      return { sent: false, reason: error.message, to: recipientEmail };
+    }
   }
 
   /**

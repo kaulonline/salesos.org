@@ -24,7 +24,7 @@ interface OAuthStatus {
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
+  const { login, isAuthenticated, isLoading, error, clearError, user } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -44,11 +44,17 @@ export const Login: React.FC = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
+      // Check if user is a partner user - redirect to portal
+      if (user.isPartnerUser) {
+        navigate('/portal', { replace: true });
+        return;
+      }
+      // Otherwise redirect to dashboard or the original destination
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, user, navigate, location]);
 
   // Fetch OAuth status on mount
   useEffect(() => {

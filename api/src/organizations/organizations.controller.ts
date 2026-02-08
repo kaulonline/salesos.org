@@ -147,8 +147,12 @@ export class OrganizationsController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete organization (Admin)' })
-  async deleteOrganization(@Param('id') id: string) {
-    return this.organizationsService.deleteOrganization(id);
+  @ApiQuery({ name: 'force', required: false, type: Boolean, description: 'Force delete by removing all members first' })
+  async deleteOrganization(
+    @Param('id') id: string,
+    @Query('force') force?: string,
+  ) {
+    return this.organizationsService.deleteOrganization(id, force === 'true');
   }
 
   // ============================================

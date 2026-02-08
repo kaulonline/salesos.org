@@ -1,6 +1,9 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { SalesOSEmailService } from '../email/salesos-email.service';
 import { PartnerStatus, PartnerTier, PartnerType, PartnerUserRole, Prisma } from '@prisma/client';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 export interface CreatePartnerDto {
   companyName: string;
@@ -31,6 +34,13 @@ export interface AddPartnerUserDto {
   isPrimary?: boolean;
 }
 
+export interface InvitePartnerUserDto {
+  email: string;
+  name?: string;
+  role?: PartnerUserRole;
+  isPrimary?: boolean;
+}
+
 export interface AssignAccountDto {
   accountId: string;
   isExclusive?: boolean;
@@ -48,8 +58,12 @@ interface PartnerFilters {
 @Injectable()
 export class PartnersService {
   private readonly logger = new Logger(PartnersService.name);
+  private readonly appUrl = process.env.SALESOS_APP_URL || process.env.APP_URL || 'https://salesos.org';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: SalesOSEmailService,
+  ) {}
 
   // ============================================
   // Partner CRUD
@@ -60,9 +74,12 @@ export class PartnersService {
     userId: string,
     isAdmin: boolean,
     organizationId: string,
+    userRole?: string,
   ) {
-    if (!isAdmin) {
-      throw new ForbiddenException('Only admins can view all partners');
+    // Allow admins and managers to view partners
+    const canView = isAdmin || userRole === 'MANAGER';
+    if (!canView) {
+      throw new ForbiddenException('Only admins and managers can view partners');
     }
 
     const where: Prisma.PartnerWhereInput = { organizationId };
@@ -285,6 +302,145 @@ export class PartnersService {
     });
   }
 
+  /**
+   * Invite a new partner user via email
+   * Creates user if not exists, links to partner, and sends invitation email
+   */
+  async invitePartnerUser(
+    partnerId: string,
+    dto: InvitePartnerUserDto,
+    inviterUserId: string,
+    isAdmin: boolean,
+    organizationId: string,
+  ) {
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can invite partner users');
+    }
+
+    // Get partner details
+    const partner = await this.prisma.partner.findFirst({
+      where: { id: partnerId, organizationId },
+    });
+
+    if (!partner) {
+      throw new NotFoundException('Partner not found');
+    }
+
+    // Get inviter details for the email
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterUserId },
+      select: { name: true, email: true },
+    });
+
+    const inviterName = inviter?.name || inviter?.email || 'Admin';
+
+    // Check if user already exists
+    let user = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase() },
+    });
+
+    // Generate invite token (used for password setup)
+    const inviteToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(inviteToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    if (user) {
+      // User exists - check if already a partner user
+      const existingMembership = await this.prisma.partnerUser.findUnique({
+        where: { partnerId_userId: { partnerId, userId: user.id } },
+      });
+
+      if (existingMembership) {
+        throw new BadRequestException('User is already a member of this partner');
+      }
+    } else {
+      // Create new user with temporary random password (they'll set their own via invite link)
+      const tempPasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          name: dto.name,
+          passwordHash: tempPasswordHash,
+          role: 'USER',
+          status: 'PENDING', // Mark as pending until they accept invite
+          settings: {
+            partnerInvite: {
+              hashedToken,
+              expiresAt: expiresAt.toISOString(),
+              partnerId,
+              partnerRole: dto.role || PartnerUserRole.MEMBER,
+            },
+          },
+        },
+      });
+
+      this.logger.log(`Created new user ${dto.email} for partner invitation`);
+    }
+
+    // If user exists but doesn't have invite token, add it
+    if (user && !user.settings?.['partnerInvite']) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          settings: {
+            ...(user.settings as any || {}),
+            partnerInvite: {
+              hashedToken,
+              expiresAt: expiresAt.toISOString(),
+              partnerId,
+              partnerRole: dto.role || PartnerUserRole.MEMBER,
+            },
+          },
+        },
+      });
+    }
+
+    // If setting as primary, unset others
+    if (dto.isPrimary) {
+      await this.prisma.partnerUser.updateMany({
+        where: { partnerId, isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
+    // Create partner user link (inactive until they accept)
+    const partnerUser = await this.prisma.partnerUser.create({
+      data: {
+        partnerId,
+        userId: user.id,
+        role: dto.role || PartnerUserRole.MEMBER,
+        isPrimary: dto.isPrimary || false,
+        isActive: false, // Will be activated when they accept the invite
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+    });
+
+    // Send invitation email
+    const emailSent = await this.emailService.sendPartnerInvitationEmail({
+      to: dto.email,
+      partnerName: partner.companyName,
+      inviterName,
+      inviteToken,
+      role: dto.role || 'Partner User',
+      expirationDays: 7,
+    });
+
+    if (!emailSent) {
+      this.logger.warn(`Failed to send invitation email to ${dto.email}`);
+    }
+
+    this.logger.log(`Partner user invitation sent to ${dto.email} for partner ${partner.companyName}`);
+
+    return {
+      ...partnerUser,
+      invitationSent: emailSent,
+      inviteExpires: expiresAt,
+    };
+  }
+
   async updatePartnerUser(partnerUserId: string, dto: Partial<AddPartnerUserDto>, userId: string, isAdmin: boolean, organizationId: string) {
     if (!isAdmin) {
       throw new ForbiddenException('Only admins can update partner users');
@@ -427,6 +583,8 @@ export class PartnersService {
   // ============================================
 
   async getPartnerForUser(userId: string, organizationId: string) {
+    this.logger.log(`getPartnerForUser: userId=${userId}, organizationId=${organizationId}`);
+
     const partnerUser = await this.prisma.partnerUser.findFirst({
       where: { userId, isActive: true, partner: { organizationId } },
       include: {
@@ -439,6 +597,19 @@ export class PartnersService {
     });
 
     if (!partnerUser) {
+      // Debug: check what partner user exists for this user
+      const anyPartnerUser = await this.prisma.partnerUser.findFirst({
+        where: { userId },
+        include: { partner: { select: { organizationId: true, companyName: true } } },
+      });
+
+      // Also check all partner users to help debug
+      const allPartnerUsers = await this.prisma.partnerUser.findMany({
+        take: 5,
+        select: { userId: true, partner: { select: { companyName: true } } },
+      });
+      this.logger.warn(`getPartnerForUser: Not found for userId=${userId}. Partner user exists=${!!anyPartnerUser}, partner orgId=${anyPartnerUser?.partner?.organizationId}, requested orgId=${organizationId}`);
+      this.logger.warn(`Sample partner users: ${JSON.stringify(allPartnerUsers.map(p => p.userId))}`);
       throw new NotFoundException('You are not associated with any partner');
     }
 
@@ -450,11 +621,21 @@ export class PartnersService {
   }
 
   async getPortalDashboard(userId: string, organizationId: string) {
+    this.logger.log(`getPortalDashboard: userId=${userId}, organizationId=${organizationId}`);
+
     const partnerUser = await this.prisma.partnerUser.findFirst({
       where: { userId, isActive: true, partner: { organizationId } },
     });
 
+    this.logger.log(`getPortalDashboard: partnerUser found=${!!partnerUser}`);
+
     if (!partnerUser) {
+      // Debug: check what partner user exists for this user
+      const anyPartnerUser = await this.prisma.partnerUser.findFirst({
+        where: { userId },
+        include: { partner: { select: { organizationId: true, companyName: true } } },
+      });
+      this.logger.warn(`Portal access denied for userId=${userId}. Partner user exists=${!!anyPartnerUser}, partner orgId=${anyPartnerUser?.partner?.organizationId}, requested orgId=${organizationId}`);
       throw new ForbiddenException('Portal access denied');
     }
 
@@ -579,9 +760,11 @@ export class PartnersService {
   // Stats
   // ============================================
 
-  async getStats(userId: string, isAdmin: boolean, organizationId: string) {
-    if (!isAdmin) {
-      throw new ForbiddenException('Only admins can view partner stats');
+  async getStats(userId: string, isAdmin: boolean, organizationId: string, userRole?: string) {
+    // Allow admins and managers to view partner stats
+    const canView = isAdmin || userRole === 'MANAGER';
+    if (!canView) {
+      throw new ForbiddenException('Only admins and managers can view partner stats');
     }
 
     const [total, byStatus, byTier, byType, totalRevenue] = await Promise.all([

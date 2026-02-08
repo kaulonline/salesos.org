@@ -39,9 +39,12 @@ export class DealRegistrationService {
     userId: string,
     isAdmin: boolean,
     organizationId: string,
+    userRole?: string,
   ) {
-    if (!isAdmin) {
-      throw new ForbiddenException('Only admins can view all deal registrations');
+    // Allow admins and managers to view deal registrations
+    const canView = isAdmin || userRole === 'MANAGER';
+    if (!canView) {
+      throw new ForbiddenException('Only admins and managers can view deal registrations');
     }
 
     const where: Prisma.DealRegistrationWhereInput = { organizationId };
@@ -322,12 +325,20 @@ export class DealRegistrationService {
   }
 
   async createFromPortal(dto: CreateDealRegistrationDto, userId: string, organizationId: string) {
+    this.logger.log(`createFromPortal: userId=${userId}, organizationId=${organizationId}`);
+
     const partnerUser = await this.prisma.partnerUser.findFirst({
       where: { userId, isActive: true, partner: { organizationId } },
       include: { partner: { select: { id: true, commissionRate: true } } },
     });
 
     if (!partnerUser) {
+      // Debug: check what partner user exists for this user
+      const anyPartnerUser = await this.prisma.partnerUser.findFirst({
+        where: { userId },
+        include: { partner: { select: { organizationId: true, companyName: true } } },
+      });
+      this.logger.warn(`Portal access denied for userId=${userId}. Partner user exists=${!!anyPartnerUser}, partner orgId=${anyPartnerUser?.partner?.organizationId}, requested orgId=${organizationId}`);
       throw new ForbiddenException('Portal access denied');
     }
 
@@ -418,9 +429,11 @@ export class DealRegistrationService {
   // Stats
   // ============================================
 
-  async getStats(userId: string, isAdmin: boolean, organizationId: string) {
-    if (!isAdmin) {
-      throw new ForbiddenException('Only admins can view registration stats');
+  async getStats(userId: string, isAdmin: boolean, organizationId: string, userRole?: string) {
+    // Allow admins and managers to view registration stats
+    const canView = isAdmin || userRole === 'MANAGER';
+    if (!canView) {
+      throw new ForbiddenException('Only admins and managers can view registration stats');
     }
 
     const [total, byStatus, totalValue, avgApprovalTime] = await Promise.all([

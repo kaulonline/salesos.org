@@ -8,6 +8,7 @@ import { AnthropicModule } from '../anthropic/anthropic.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { SalesforceModule } from '../salesforce/salesforce.module';
 import { OutcomeBillingModule } from '../outcome-billing/outcome-billing.module';
+import { WorkflowsModule } from '../workflows/workflows.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { OutcomeBillingModule } from '../outcome-billing/outcome-billing.module'
     NotificationsModule,
     forwardRef(() => SalesforceModule),
     forwardRef(() => OutcomeBillingModule),
+    WorkflowsModule,
   ],
   controllers: [OpportunitiesController, PipelineController],
   providers: [OpportunitiesService, PipelineIntelligenceService],

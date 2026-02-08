@@ -89,6 +89,9 @@ export class OrganizationsService {
 
     if (status) {
       where.status = status;
+    } else {
+      // By default, exclude deleted (INACTIVE) organizations
+      where.status = { not: OrganizationStatus.INACTIVE };
     }
 
     if (search) {
@@ -226,9 +229,10 @@ export class OrganizationsService {
   }
 
   /**
-   * Delete organization (soft delete by setting status to INACTIVE)
+   * Delete organization (hard delete with cascade)
+   * @param force - If true, deletes all members and related data first
    */
-  async deleteOrganization(id: string) {
+  async deleteOrganization(id: string, force = false) {
     const organization = await this.getOrganization(id);
 
     // Check for active members
@@ -236,19 +240,31 @@ export class OrganizationsService {
       where: { organizationId: id, isActive: true },
     });
 
-    if (activeMembers > 0) {
+    if (activeMembers > 0 && !force) {
       throw new BadRequestException(
-        `Cannot delete organization with ${activeMembers} active members. Remove members first.`,
+        `Cannot delete organization with ${activeMembers} active members. Use force delete to remove all members.`,
       );
     }
 
-    // Soft delete
-    await this.prisma.organization.update({
-      where: { id },
-      data: { status: OrganizationStatus.INACTIVE },
+    // Delete all related data in order (cascade manually for safety)
+    await this.prisma.$transaction(async (tx) => {
+      // Delete organization codes
+      await tx.organizationCode.deleteMany({
+        where: { organizationId: id },
+      });
+
+      // Delete organization members
+      await tx.organizationMember.deleteMany({
+        where: { organizationId: id },
+      });
+
+      // Delete the organization
+      await tx.organization.delete({
+        where: { id },
+      });
     });
 
-    this.logger.log(`Soft-deleted organization: ${organization.name}`);
+    this.logger.log(`Permanently deleted organization: ${organization.name} (with ${activeMembers} members)`);
   }
 
   // ============================================

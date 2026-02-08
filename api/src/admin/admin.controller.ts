@@ -253,15 +253,27 @@ export class AdminController {
 
   @Get('users')
   @Roles('ADMIN', 'MANAGER')
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({ summary: 'Get all users (managers see only their org)' })
   async getAllUsers(
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('status') status?: string,
+    @Query('organizationId') organizationId?: string,
+    @Request() req?,
   ) {
-    return this.adminService.getAllUsers(page, pageSize, search, role, status);
+    // Managers can only see users in their organization
+    const userRole = req?.user?.role;
+    const userOrgId = req?.user?.organizationId;
+
+    // If user is MANAGER (not ADMIN), restrict to their organization
+    let effectiveOrgId = organizationId;
+    if (userRole === 'MANAGER' && !['ADMIN'].includes(userRole)) {
+      effectiveOrgId = userOrgId; // Force filter to their org
+    }
+
+    return this.adminService.getAllUsers(page, pageSize, search, role, status, effectiveOrgId);
   }
 
   @Get('users/:id')

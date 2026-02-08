@@ -70,6 +70,21 @@ export const authApi = {
   },
 
   /**
+   * Accept partner portal invitation
+   */
+  acceptPartnerInvite: async (data: {
+    token: string;
+    password: string;
+    name?: string;
+  }): Promise<{ success: boolean; message: string; email: string }> => {
+    const response = await client.post<{ success: boolean; message: string; email: string }>(
+      '/auth/accept-partner-invite',
+      data
+    );
+    return response.data;
+  },
+
+  /**
    * Request magic link
    */
   requestMagicLink: async (email: string): Promise<void> => {

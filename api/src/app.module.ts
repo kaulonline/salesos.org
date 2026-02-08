@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { RlsContextInterceptor } from './common/interceptors/rls-context.interceptor';
+import { OrganizationContextInterceptor } from './common/interceptors/organization-context.interceptor';
 import { OrganizationMiddleware } from './common/middleware/organization.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -93,6 +94,8 @@ import { SplitsModule } from './splits/splits.module';
 import { CompetitorsModule } from './competitors/competitors.module';
 import { AssetsModule } from './assets/assets.module';
 import { PartnersModule } from './partners/partners.module';
+import { AccessRequestsModule } from './access-requests/access-requests.module';
+import { ApprovalWorkflowsModule } from './approval-workflows/approval-workflows.module';
 
 @Module({
   imports: [
@@ -201,6 +204,8 @@ import { PartnersModule } from './partners/partners.module';
     CompetitorsModule, // Competitor intelligence - battlecards and win/loss analysis
     AssetsModule, // Asset/Installed base - customer-owned product tracking
     PartnersModule, // Partner relationship management - deal registration portal
+    AccessRequestsModule, // Access request forms for users without org codes - AI-enriched lead scoring
+    ApprovalWorkflowsModule, // Multi-level approval chains for quotes, discounts, orders, contracts
   ],
   controllers: [AppController],
   providers: [
@@ -224,6 +229,12 @@ import { PartnersModule } from './partners/partners.module';
       provide: APP_GUARD,
       useClass: OrganizationGuard,
     },
+    // Organization context interceptor - ensures organizationId is set from user after auth
+    // This runs after guards (including JwtAuthGuard) so user is already populated
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: OrganizationContextInterceptor,
+    },
     // Global RLS context interceptor - sets PostgreSQL RLS context for tenant isolation
     // This provides database-level isolation as a defense-in-depth measure
     {
@@ -243,6 +254,7 @@ export class AppModule implements NestModule {
         'waitlist/(.*)',
         'support/tickets/public',
         'web-forms/submit/(.*)',
+        'access-requests', // Public access request submission
       )
       .forRoutes('*');
   }

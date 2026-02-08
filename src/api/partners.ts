@@ -112,6 +112,20 @@ export const partnersApi = {
   },
 
   /**
+   * Invite a new user to a partner via email
+   */
+  inviteUser: async (
+    partnerId: string,
+    data: { email: string; name?: string; role?: string; isPrimary?: boolean }
+  ): Promise<PartnerUser & { invitationSent: boolean; inviteExpires: string }> => {
+    const response = await client.post<PartnerUser & { invitationSent: boolean; inviteExpires: string }>(
+      `/partners/${partnerId}/users/invite`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
    * Update a partner user
    */
   updateUser: async (
@@ -437,7 +451,7 @@ export const partnersAIApi = {
     flaggedForReview: number;
     results: { registrationId: string; action: string; reason: string }[];
   }> => {
-    const response = await client.post('/partners/ai/process-auto-approvals');
+    const response = await client.post('/partners/ai/auto-approve');
     return response.data;
   },
 };

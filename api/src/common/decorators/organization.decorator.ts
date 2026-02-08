@@ -29,6 +29,17 @@ export const CurrentOrganization = createParamDecorator(
     // This should never happen if OrganizationGuard is properly applied
     // The guard rejects requests without organizationId before reaching here
     if (!organizationId) {
+      // Provide more helpful error message based on the state
+      const hasUser = !!request.user;
+      const hasUserOrgId = !!request.user?.organizationId;
+
+      if (hasUser && !hasUserOrgId) {
+        // User is authenticated but their token doesn't have organizationId
+        throw new Error(
+          'Your session is missing organization context. Please log out and log back in to refresh your session.'
+        );
+      }
+
       throw new Error(
         'Organization context missing. Ensure OrganizationGuard is applied to this route.'
       );

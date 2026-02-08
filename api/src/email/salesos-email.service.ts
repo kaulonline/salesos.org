@@ -8,6 +8,7 @@ import {
   generateSalesOSLoginNotificationEmail,
   generateSalesOSVerificationEmail,
   generateSalesOSInvitationEmail,
+  generateSalesOSPartnerInvitationEmail,
   generateSalesOSSetupCompleteEmail,
   generateSalesOSTrialEndingEmail,
   generateSalesOSDeactivationWarningEmail,
@@ -34,6 +35,10 @@ import {
   // Reports & Data
   generateSalesOSWeeklySummaryEmail,
   generateSalesOSExportCompleteEmail,
+  // Access Requests
+  generateSalesOSAccessRequestConfirmationEmail,
+  generateSalesOSAccessRequestAdminNotification,
+  generateSalesOSOrganizationCodeEmail,
 } from './templates/salesos-email-templates';
 
 /**
@@ -217,10 +222,16 @@ export class SalesOSEmailService {
     location?: string;
     device?: string;
     browser?: string;
+    isPortalUser?: boolean;
   }): Promise<boolean> {
-    const { to, userName, loginTime, ipAddress, location, device, browser } = params;
+    const { to, userName, loginTime, ipAddress, location, device, browser, isPortalUser } = params;
 
     try {
+      // Use portal security URL for partner portal users, dashboard security for regular users
+      const securitySettingsUrl = isPortalUser
+        ? `${this.appUrl}/portal/security`
+        : `${this.appUrl}/dashboard/settings/security`;
+
       const html = generateSalesOSLoginNotificationEmail({
         userName,
         loginTime,
@@ -228,7 +239,7 @@ export class SalesOSEmailService {
         location,
         device,
         browser,
-        securitySettingsUrl: `${this.appUrl}/dashboard/settings/security`,
+        securitySettingsUrl,
       });
 
       await this.emailService.sendPremiumEmail({
@@ -318,6 +329,45 @@ export class SalesOSEmailService {
       return true;
     } catch (error) {
       this.logger.error(`Failed to send invitation email to ${to}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Send Partner Portal Invitation Email
+   */
+  async sendPartnerInvitationEmail(params: {
+    to: string;
+    partnerName: string;
+    inviterName: string;
+    inviteToken: string;
+    role?: string;
+    expirationDays?: number;
+  }): Promise<boolean> {
+    const { to, partnerName, inviterName, inviteToken, role = 'Partner User', expirationDays = 7 } = params;
+
+    try {
+      const inviteUrl = `${this.appUrl}/partner-invite?token=${inviteToken}`;
+
+      const html = generateSalesOSPartnerInvitationEmail({
+        partnerName,
+        inviterName,
+        inviteUrl,
+        role,
+        expirationDays,
+      });
+
+      await this.emailService.sendPremiumEmail({
+        to,
+        subject: `You've been invited to the ${partnerName} Partner Portal`,
+        html,
+        text: this.htmlToText(html),
+      });
+
+      this.logger.log(`Partner invitation email sent to ${to}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to send partner invitation email to ${to}:`, error);
       return false;
     }
   }
@@ -1213,6 +1263,125 @@ export class SalesOSEmailService {
       return true;
     } catch (error) {
       this.logger.error(`Failed to send export complete email to ${to}:`, error);
+      return false;
+    }
+  }
+
+  // ==================== ACCESS REQUEST EMAILS ====================
+
+  /**
+   * Send Access Request Confirmation Email to User
+   */
+  async sendAccessRequestConfirmationEmail(params: {
+    to: string;
+    userName: string;
+    requestType: string;
+  }): Promise<boolean> {
+    const { to, userName, requestType } = params;
+
+    try {
+      const html = generateSalesOSAccessRequestConfirmationEmail({
+        userName,
+        requestType,
+      });
+
+      await this.emailService.sendPremiumEmail({
+        to,
+        subject: "We've received your access request - SalesOS",
+        html,
+        text: this.htmlToText(html),
+      });
+
+      this.logger.log(`Access request confirmation sent to ${to}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to send access request confirmation to ${to}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Send Access Request Admin Notification
+   */
+  async sendAccessRequestAdminNotification(params: {
+    requestId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyName: string;
+    companySize?: string;
+    requestType: string;
+    interests: string[];
+    aiScore?: number;
+    aiPriority?: string;
+    aiSummary?: string;
+  }): Promise<boolean> {
+    const { requestId, firstName, lastName, email, companyName, companySize, requestType, interests, aiScore, aiPriority, aiSummary } = params;
+
+    // Get admin email from env or use default
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'sales@salesos.org';
+
+    try {
+      const html = generateSalesOSAccessRequestAdminNotification({
+        requestId,
+        firstName,
+        lastName,
+        email,
+        companyName,
+        companySize,
+        requestType,
+        interests,
+        adminDashboardUrl: `${this.appUrl}/dashboard/admin?tab=access-requests&id=${requestId}`,
+        aiScore,
+        aiPriority,
+        aiSummary,
+      });
+
+      await this.emailService.sendPremiumEmail({
+        to: adminEmail,
+        subject: `New Access Request: ${firstName} ${lastName} from ${companyName}${aiScore ? ` (Score: ${aiScore})` : ''}`,
+        html,
+        text: this.htmlToText(html),
+      });
+
+      this.logger.log(`Access request admin notification sent for ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to send access request admin notification:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Send Organization Code Email to User
+   */
+  async sendOrganizationCodeEmail(params: {
+    to: string;
+    userName: string;
+    organizationCode: string;
+    personalMessage?: string;
+  }): Promise<boolean> {
+    const { to, userName, organizationCode, personalMessage } = params;
+
+    try {
+      const html = generateSalesOSOrganizationCodeEmail({
+        userName,
+        organizationCode,
+        personalMessage,
+        signupUrl: `${this.appUrl}/signup`,
+      });
+
+      await this.emailService.sendPremiumEmail({
+        to,
+        subject: `Your SalesOS access is approved! Use code: ${organizationCode}`,
+        html,
+        text: this.htmlToText(html),
+      });
+
+      this.logger.log(`Organization code email sent to ${to}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to send organization code email to ${to}:`, error);
       return false;
     }
   }

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Search, Plus, Handshake, Users, DollarSign, FileText, X, Loader2, Trash2, Edit2, Check, AlertCircle, Building2, Clock, CheckCircle, XCircle, ArrowRight, Sparkles, BarChart3, Lightbulb, TrendingUp, Target, Zap } from 'lucide-react';
+import { Search, Plus, Handshake, Users, DollarSign, FileText, X, Loader2, Trash2, Edit2, Check, AlertCircle, Building2, Clock, CheckCircle, XCircle, ArrowRight, Sparkles, BarChart3, Lightbulb, TrendingUp, Target, Zap, Mail, UserPlus } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { usePartners, useDealRegistrations, usePartner } from '../../src/hooks/usePartners';
-import { partnersAIApi } from '../../src/api/partners';
+import { useAuth } from '../../src/context/AuthContext';
+import { partnersApi, partnersAIApi } from '../../src/api/partners';
 import type {
   Partner,
   CreatePartnerDto,
@@ -44,6 +45,9 @@ function formatDate(date: string | Date | null | undefined): string {
 }
 
 export const Partners: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PartnerStatus | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -57,6 +61,20 @@ export const Partners: React.FC = () => {
   const [partnerInsights, setPartnerInsights] = useState<Record<string, any>>({});
   const [processingAutoApprovals, setProcessingAutoApprovals] = useState(false);
   const [autoApprovalResults, setAutoApprovalResults] = useState<any>(null);
+
+  // Reject registration modal state
+  const [rejectingRegistration, setRejectingRegistration] = useState<{ partnerId: string; registrationId: string; accountName: string } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  // Invite user state
+  const [showInviteModal, setShowInviteModal] = useState<string | null>(null); // partnerId
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<'ADMIN' | 'MANAGER' | 'MEMBER' | 'VIEWER'>('MEMBER');
+  const [inviteIsPrimary, setInviteIsPrimary] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   const handleScoreRegistration = async (partnerId: string, registrationId: string) => {
     setScoringRegistration(registrationId);
@@ -92,6 +110,48 @@ export const Partners: React.FC = () => {
     } finally {
       setProcessingAutoApprovals(false);
     }
+  };
+
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showInviteModal || !inviteEmail) return;
+
+    setIsInviting(true);
+    setInviteError(null);
+
+    try {
+      await partnersApi.inviteUser(showInviteModal, {
+        email: inviteEmail,
+        name: inviteName || undefined,
+        role: inviteRole,
+        isPrimary: inviteIsPrimary,
+      });
+      setInviteSuccess(true);
+      // Reset form after short delay to show success
+      setTimeout(() => {
+        setShowInviteModal(null);
+        setInviteEmail('');
+        setInviteName('');
+        setInviteRole('MEMBER');
+        setInviteIsPrimary(false);
+        setInviteSuccess(false);
+      }, 2000);
+    } catch (error: any) {
+      console.error('Failed to invite user:', error);
+      setInviteError(error.response?.data?.message || 'Failed to send invitation');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const resetInviteForm = () => {
+    setShowInviteModal(null);
+    setInviteEmail('');
+    setInviteName('');
+    setInviteRole('MEMBER');
+    setInviteIsPrimary(false);
+    setInviteError(null);
+    setInviteSuccess(false);
   };
 
   const {
@@ -161,6 +221,8 @@ export const Partners: React.FC = () => {
   const handleRejectRegistration = async (partnerId: string, registrationId: string, reason: string) => {
     try {
       await reject(partnerId, registrationId, reason);
+      setRejectingRegistration(null);
+      setRejectionReason('');
     } catch (error) {
       console.error('Failed to reject registration:', error);
     }
@@ -221,12 +283,14 @@ export const Partners: React.FC = () => {
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all"
-              >
-                <Plus size={16} /> Add Partner
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1A1A1A] text-white rounded-full text-sm font-bold shadow-lg hover:bg-black transition-all"
+                >
+                  <Plus size={16} /> Add Partner
+                </button>
+              )}
             </>
           )}
         </div>
@@ -317,7 +381,7 @@ export const Partners: React.FC = () => {
                   ? 'Try different search criteria'
                   : 'Start building your partner ecosystem.'}
               </p>
-              {!searchQuery && !statusFilter && (
+              {!searchQuery && !statusFilter && isAdmin && (
                 <button
                   onClick={() => setShowCreateModal(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-colors"
@@ -350,18 +414,22 @@ export const Partners: React.FC = () => {
                       >
                         <Users size={14} />
                       </button>
-                      <button
-                        onClick={() => setEditingPartner(partner)}
-                        className="w-8 h-8 rounded-full hover:bg-[#F8F8F6] flex items-center justify-center text-[#999] hover:text-[#1A1A1A]"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(partner.id)}
-                        className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center text-[#999] hover:text-red-500"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => setEditingPartner(partner)}
+                            className="w-8 h-8 rounded-full hover:bg-[#F8F8F6] flex items-center justify-center text-[#999] hover:text-[#1A1A1A]"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(partner.id)}
+                            className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center text-[#999] hover:text-red-500"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -406,8 +474,8 @@ export const Partners: React.FC = () => {
                 </div>
               ))}
 
-              {/* Add New Placeholder */}
-              {!searchQuery && !statusFilter && (
+              {/* Add New Placeholder - Admin only */}
+              {!searchQuery && !statusFilter && isAdmin && (
                 <div
                   onClick={() => setShowCreateModal(true)}
                   className="border-2 border-dashed border-[#1A1A1A]/10 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center hover:border-[#EAD07D] hover:bg-[#EAD07D]/5 transition-all cursor-pointer min-h-[280px] group"
@@ -558,10 +626,7 @@ export const Partners: React.FC = () => {
                               Approve
                             </button>
                             <button
-                              onClick={() => {
-                                const reason = prompt('Rejection reason:');
-                                if (reason) handleRejectRegistration(reg.partnerId, reg.id, reason);
-                              }}
+                              onClick={() => setRejectingRegistration({ partnerId: reg.partnerId, registrationId: reg.id, accountName: reg.accountName })}
                               disabled={isRejecting}
                               className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 disabled:opacity-50 flex items-center gap-1"
                             >
@@ -602,7 +667,133 @@ export const Partners: React.FC = () => {
         <PartnerDetailModal
           partnerId={viewingPartner}
           onClose={() => setViewingPartner(null)}
+          onInviteUser={isAdmin ? (partnerId: string) => setShowInviteModal(partnerId) : undefined}
         />
+      )}
+
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#EAD07D]/20 flex items-center justify-center">
+                  <Mail size={18} className="text-[#1A1A1A]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1A1A1A]">Invite Partner User</h3>
+                  <p className="text-xs text-[#666]">Send an email invitation to join the Partner Portal</p>
+                </div>
+              </div>
+              <button
+                onClick={resetInviteForm}
+                className="w-8 h-8 rounded-full hover:bg-[#F8F8F6] flex items-center justify-center text-[#666]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {inviteSuccess ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-[#93C01F]/20 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={32} className="text-[#93C01F]" />
+                </div>
+                <h4 className="text-lg font-semibold text-[#1A1A1A] mb-2">Invitation Sent!</h4>
+                <p className="text-sm text-[#666]">
+                  An email has been sent to <strong>{inviteEmail}</strong> with instructions to set up their account.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleInviteUser}>
+                {inviteError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+                    <AlertCircle size={16} />
+                    {inviteError}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Email Address *</label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                      placeholder="partner@company.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Name (optional)</label>
+                    <input
+                      type="text"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Portal Role</label>
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm"
+                    >
+                      <option value="VIEWER">Viewer - Can view deals and accounts</option>
+                      <option value="MEMBER">Member - Can register deals</option>
+                      <option value="MANAGER">Manager - Can manage team members</option>
+                      <option value="ADMIN">Admin - Full partner access</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={inviteIsPrimary}
+                        onChange={(e) => setInviteIsPrimary(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#EAD07D] focus:ring-[#EAD07D]"
+                      />
+                      <span className="text-sm font-medium text-[#1A1A1A]">Primary Contact</span>
+                      <span className="text-xs text-[#666]">(receives important notifications)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={resetInviteForm}
+                    className="px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isInviting || !inviteEmail}
+                    className="px-5 py-2 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-black transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isInviting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={16} />
+                        Send Invitation
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </Card>
+        </div>
       )}
 
       {/* Create/Edit Modal */}
@@ -651,6 +842,84 @@ export const Partners: React.FC = () => {
               </button>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Reject Registration Modal */}
+      {rejectingRegistration && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-8 pb-0">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center">
+                  <XCircle size={22} className="text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-[#1A1A1A]">Reject Registration</h2>
+                  <p className="text-sm text-[#666] mt-0.5">{rejectingRegistration.accountName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setRejectingRegistration(null);
+                  setRejectionReason('');
+                }}
+                className="w-10 h-10 rounded-full hover:bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:text-[#1A1A1A] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 pt-6">
+              <p className="text-sm text-[#666] mb-4">
+                Please provide a reason for rejecting this deal registration. This will be shared with the partner.
+              </p>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  Rejection Reason <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="E.g., Account already registered by another partner, incomplete information, does not meet deal registration criteria..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm resize-none"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-black/5">
+                <button
+                  onClick={() => {
+                    setRejectingRegistration(null);
+                    setRejectionReason('');
+                  }}
+                  className="px-5 py-2.5 rounded-full border border-black/10 text-[#666] font-medium text-sm hover:bg-[#F8F8F6] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRejectRegistration(
+                    rejectingRegistration.partnerId,
+                    rejectingRegistration.registrationId,
+                    rejectionReason
+                  )}
+                  disabled={isRejecting || !rejectionReason.trim()}
+                  className="px-5 py-2.5 rounded-full bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isRejecting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Rejecting...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={16} />
+                      Reject Registration
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -836,9 +1105,10 @@ const PartnerModal: React.FC<PartnerModalProps> = ({ partner, onClose, onSave, s
 interface PartnerDetailModalProps {
   partnerId: string;
   onClose: () => void;
+  onInviteUser?: (partnerId: string) => void;
 }
 
-const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onClose }) => {
+const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onClose, onInviteUser }) => {
   const { partner, loading } = usePartner(partnerId);
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
@@ -909,9 +1179,20 @@ const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onCl
 
         {/* Partner Users */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3 flex items-center gap-2">
-            <Users size={14} className="text-[#666]" /> Partner Users
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+              <Users size={14} className="text-[#666]" /> Partner Users
+            </h3>
+            {onInviteUser && (
+              <button
+                onClick={() => onInviteUser(partnerId)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#EAD07D] text-[#1A1A1A] rounded-lg text-xs font-medium hover:bg-[#D4B85C] transition-colors"
+              >
+                <UserPlus size={12} />
+                Invite User
+              </button>
+            )}
+          </div>
           {partner.users && partner.users.length > 0 ? (
             <div className="space-y-2">
               {partner.users.map((pu) => (

@@ -698,7 +698,7 @@ export class AdminService implements OnModuleInit {
   // USER MANAGEMENT
   // ============================================
 
-  async getAllUsers(page = 1, pageSize = 20, search?: string, role?: string, status?: string) {
+  async getAllUsers(page = 1, pageSize = 20, search?: string, role?: string, status?: string, organizationId?: string) {
     const where: any = {};
 
     if (search) {
@@ -714,6 +714,16 @@ export class AdminService implements OnModuleInit {
 
     if (status) {
       where.status = status;
+    }
+
+    // Filter by organization if specified (for managers)
+    if (organizationId) {
+      where.organizationMemberships = {
+        some: {
+          organizationId,
+          isActive: true,
+        },
+      };
     }
 
     const [users, total] = await Promise.all([
@@ -739,18 +749,39 @@ export class AdminService implements OnModuleInit {
               opportunities: true,
             },
           },
+          // Include organization membership info
+          organizationMemberships: {
+            where: { isActive: true },
+            take: 1,
+            select: {
+              role: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.user.count({ where }),
     ]);
 
     return {
-      items: users.map(user => ({
-        ...user,
-        conversationCount: user._count.conversations,
-        leadCount: user._count.leads,
-        opportunityCount: user._count.opportunities,
-      })),
+      items: users.map(user => {
+        const membership = user.organizationMemberships?.[0];
+        return {
+          ...user,
+          conversationCount: user._count.conversations,
+          leadCount: user._count.leads,
+          opportunityCount: user._count.opportunities,
+          organizationId: membership?.organization?.id,
+          organizationName: membership?.organization?.name,
+          organizationRole: membership?.role,
+          organizationMemberships: undefined, // Remove raw data
+        };
+      }),
       total,
       page,
       pageSize,

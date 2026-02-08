@@ -109,36 +109,15 @@ export function FeatureProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, authLoading]);
 
   const checkAccess = async (featureKey: FeatureKey): Promise<FeatureAccess> => {
-    // ENTERPRISE and CUSTOM tiers have access to all features
-    if (userTier === 'ENTERPRISE' || userTier === 'CUSTOM') {
-      return { hasAccess: true };
-    }
-
-    // Return cached if available
-    if (featureCache[featureKey]) {
-      return featureCache[featureKey];
-    }
-
-    try {
-      const result = await licensingApi.checkAccess(featureKey);
-      const access: FeatureAccess = {
-        hasAccess: result.hasAccess,
-        limit: result.limit,
-        currentUsage: result.currentUsage,
-      };
-      setFeatureCache(prev => ({ ...prev, [featureKey]: access }));
-      return access;
-    } catch (err) {
-      return { hasAccess: false, reason: 'Failed to check access' };
-    }
+    // Business model: All authenticated users have access to all features
+    // License tiers are for billing/quota tracking, not feature restrictions
+    return { hasAccess: true };
   };
 
   const hasFeature = (featureKey: FeatureKey): boolean => {
-    // ENTERPRISE and CUSTOM tiers have access to all features
-    if (userTier === 'ENTERPRISE' || userTier === 'CUSTOM') {
-      return true;
-    }
-    return featureCache[featureKey]?.hasAccess ?? false;
+    // Business model: All authenticated users have access to all features
+    // License tiers are for billing/quota tracking, not feature restrictions
+    return true;
   };
 
   return (

@@ -9,11 +9,23 @@ export interface User {
   avatarUrl?: string;
   role: UserRole;
   company?: string;
+  // Organization membership
   organizationId?: string;
+  organizationName?: string;
+  organizationRole?: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
+  membershipActive?: boolean;
+  // License info
+  hasLicense?: boolean;
+  licenseStatus?: string;
+  licenseTier?: string;
   isActive: boolean;
   emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  // Partner portal fields
+  isPartnerUser?: boolean;
+  partnerId?: string;
+  partnerRole?: 'ADMIN' | 'MANAGER' | 'MEMBER' | 'VIEWER';
 }
 
 export interface LoginCredentials {

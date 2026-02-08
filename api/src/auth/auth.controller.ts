@@ -183,6 +183,20 @@ export class AuthController {
     }
 
     /**
+     * Accept partner portal invitation
+     * Sets password and activates partner user account
+     */
+    @Post('accept-partner-invite')
+    async acceptPartnerInvite(
+        @Request() req,
+        @Body() dto: { token: string; password: string; name?: string },
+    ) {
+        const ipAddress = this.getClientIp(req);
+        const userAgent = req.headers['user-agent'] || '';
+        return this.authService.acceptPartnerInvite(dto.token, dto.password, dto.name, ipAddress, userAgent);
+    }
+
+    /**
      * Request magic link login
      * Sends a magic link email for passwordless login
      */
