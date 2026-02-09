@@ -2,9 +2,9 @@
 
 ## IMPORTANT: Current Focus
 
-**DO NOT modify SalesOS CRM code.** Current development focus is on the **Sales Coaching AI** solution located at:
-- **Frontend**: `/opt/IRIS_Sales_GPT/Sales UI/sales-coaching-ai/`
-- **Backend**: `/opt/IRIS_Sales_GPT/api/src/coaching/`
+Current development focus is on the **Sales Coaching AI** solution located at:
+- **Frontend**: `/opt/salesos.org/`
+- **Backend**: `/opt/salesos.org/api/src/coaching/`
 
 All new feature development should target the Sales Coaching platform.
 
@@ -13,9 +13,9 @@ All new feature development should target the Sales Coaching platform.
 ## Sales Coaching AI - Active Development
 
 ### Project Location
-- **Frontend**: `/opt/IRIS_Sales_GPT/Sales UI/sales-coaching-ai/`
-- **Backend API**: `/opt/IRIS_Sales_GPT/api/`
-- **Coaching Module**: `/opt/IRIS_Sales_GPT/api/src/coaching/`
+- **Frontend**: `/opt/salesos.org/`
+- **Backend API**: `/opt/salesos.org/api/`
+- **Coaching Module**: `/opt/salesos.org/api/src/coaching/`
 
 ### Tech Stack (Sales Coaching)
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
@@ -376,7 +376,7 @@ const STATUS_COLORS = {
 
 - **Base URL**: `/api`
 - **Auth**: JWT Bearer tokens
-- **Backend Path**: `/opt/IRIS_Sales_GPT/api/`
+- **Backend Path**: `/opt/salesos.org/api/`
 
 ### Common Endpoints
 
@@ -405,7 +405,7 @@ npm run dev          # Start dev server
 npm run build        # Build for production
 npm run lint         # Lint code
 
-# Backend (in /opt/IRIS_Sales_GPT/api/)
+# Backend (in /opt/salesos.org/api/)
 npm run build        # Build NestJS
 pm2 restart iris-backend  # Restart backend
 
