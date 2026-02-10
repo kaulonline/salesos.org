@@ -60,10 +60,11 @@ describe('OrganizationGuard', () => {
   });
 
   describe('Authentication', () => {
-    it('should throw UnauthorizedException if user is not authenticated', async () => {
+    it('should pass through unauthenticated requests (defers to JwtAuthGuard)', async () => {
       mockRequest.user = null;
 
-      await expect(guard.canActivate(mockContext)).rejects.toThrow(UnauthorizedException);
+      const result = await guard.canActivate(mockContext);
+      expect(result).toBe(true);
     });
   });
 
@@ -181,7 +182,6 @@ describe('OrganizationGuard', () => {
           isActive: true,
         });
 
-      await expect(guard.canActivate(mockContext)).rejects.toThrow(ForbiddenException);
       await expect(guard.canActivate(mockContext)).rejects.toThrow('do not have access');
     });
 

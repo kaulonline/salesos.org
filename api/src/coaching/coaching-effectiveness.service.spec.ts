@@ -23,13 +23,19 @@ describe('CoachingEffectivenessService', () => {
     },
     coachingAgenda: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      count: jest.fn(),
     },
-    actionItem: {
+    coachingActionItem: {
       findMany: jest.fn(),
       count: jest.fn(),
     },
     opportunity: {
       findMany: jest.fn(),
+      count: jest.fn(),
+    },
+    activity: {
+      count: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -53,40 +59,49 @@ describe('CoachingEffectivenessService', () => {
     service = module.get<CoachingEffectivenessService>(CoachingEffectivenessService);
     prismaService = module.get<PrismaService>(PrismaService);
 
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+
+    // Set safe defaults for all mocks
+    mockPrismaService.coachingSession.findMany.mockResolvedValue([]);
+    mockPrismaService.coachingSession.count.mockResolvedValue(0);
+    mockPrismaService.coachingAgenda.findMany.mockResolvedValue([]);
+    mockPrismaService.coachingAgenda.findFirst.mockResolvedValue(null);
+    mockPrismaService.coachingAgenda.count.mockResolvedValue(0);
+    mockPrismaService.coachingActionItem.findMany.mockResolvedValue([]);
+    mockPrismaService.coachingActionItem.count.mockResolvedValue(0);
+    mockPrismaService.opportunity.findMany.mockResolvedValue([]);
+    mockPrismaService.opportunity.count.mockResolvedValue(0);
+    mockPrismaService.activity.count.mockResolvedValue(0);
+    mockPrismaService.user.findUnique.mockResolvedValue(null);
+    mockPrismaService.user.findMany.mockResolvedValue([]);
   });
 
   describe('getEffectivenessSummary', () => {
     it('should calculate overall effectiveness metrics', async () => {
       const mockQuery = { lookbackDays: 90 };
 
-      // Mock coaching sessions
-      mockPrismaService.coachingSession.findMany.mockResolvedValue([
-        { id: '1', userId: mockRepId, createdAt: new Date() },
-        { id: '2', userId: mockRepId, createdAt: new Date() },
-      ]);
-
-      // Mock coaching agendas
+      // Mock coaching agendas (used by getCoachingInterventions)
       mockPrismaService.coachingAgenda.findMany.mockResolvedValue([
-        { id: 'agenda-1', repId: mockRepId, managerId: mockManagerId },
+        { id: 'agenda-1', repId: mockRepId, managerId: mockManagerId, createdAt: new Date(), agenda: {} },
       ]);
 
-      // Mock action items
-      mockPrismaService.actionItem.findMany.mockResolvedValue([
-        { id: 'item-1', status: 'COMPLETED' },
-        { id: 'item-2', status: 'COMPLETED' },
-        { id: 'item-3', status: 'IN_PROGRESS' },
+      // Mock user lookup for agenda participants
+      mockPrismaService.user.findMany.mockResolvedValue([
+        { id: mockRepId, name: 'Rep User', email: 'rep@test.com' },
+        { id: mockManagerId, name: 'Manager User', email: 'mgr@test.com' },
       ]);
 
-      mockPrismaService.actionItem.count
-        .mockResolvedValueOnce(3) // total assigned
-        .mockResolvedValueOnce(2); // total completed
-
-      // Mock opportunities for ROI
-      mockPrismaService.opportunity.findMany.mockResolvedValue([
-        { amount: 50000, stage: 'WON', closeDate: new Date() },
-        { amount: 75000, stage: 'WON', closeDate: new Date() },
+      // Mock coachingActionItem for agenda action items and stats
+      mockPrismaService.coachingActionItem.findMany.mockResolvedValue([
+        { id: 'item-1', status: 'COMPLETED', coachingAgendaId: 'agenda-1', category: 'Skills', priority: 'HIGH', isOverdue: false, completedAt: new Date(), dueDate: new Date(Date.now() + 86400000), createdAt: new Date() },
+        { id: 'item-2', status: 'IN_PROGRESS', coachingAgendaId: 'agenda-1', category: 'Skills', priority: 'MEDIUM', isOverdue: false, createdAt: new Date() },
       ]);
+
+      // Mock coaching sessions (video coaching)
+      mockPrismaService.coachingSession.findMany.mockResolvedValue([]);
+
+      // Mock user.findUnique for calculateRepEffectiveness
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: mockRepId, name: 'Rep User', email: 'rep@test.com' });
 
       const result = await service.getEffectivenessSummary(mockManagerId, mockQuery);
 
@@ -97,10 +112,7 @@ describe('CoachingEffectivenessService', () => {
     });
 
     it('should handle zero coaching sessions gracefully', async () => {
-      mockPrismaService.coachingSession.findMany.mockResolvedValue([]);
-      mockPrismaService.coachingAgenda.findMany.mockResolvedValue([]);
-      mockPrismaService.actionItem.findMany.mockResolvedValue([]);
-      mockPrismaService.actionItem.count.mockResolvedValue(0);
+      // All mocks already default to empty arrays/0 from beforeEach
 
       const result = await service.getEffectivenessSummary(mockManagerId, {
         lookbackDays: 30,
@@ -113,15 +125,19 @@ describe('CoachingEffectivenessService', () => {
 
   describe('getTeamComparison', () => {
     it('should compare performance across team members', async () => {
-      const mockReps = [
-        { id: 'rep-1', name: 'John Doe', email: 'john@example.com' },
-        { id: 'rep-2', name: 'Jane Smith', email: 'jane@example.com' },
-      ];
+      // Mock manager lookup
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockManagerId, name: 'Manager User', email: 'mgr@test.com',
+      });
 
-      mockPrismaService.user.findMany.mockResolvedValue(mockReps);
-      mockPrismaService.coachingSession.findMany.mockResolvedValue([]);
-      mockPrismaService.actionItem.findMany.mockResolvedValue([]);
-      mockPrismaService.opportunity.findMany.mockResolvedValue([]);
+      // Mock coached reps via coachingActionItem
+      mockPrismaService.coachingActionItem.findMany.mockResolvedValue([
+        { repId: 'rep-1' },
+        { repId: 'rep-2' },
+      ]);
+
+      // Mock user lookup for reps (used in calculateRepEffectiveness)
+      mockPrismaService.user.findMany.mockResolvedValue([]);
 
       const result = await service.getTeamComparison(mockManagerId, { lookbackDays: 60 });
 
