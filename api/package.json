@@ -143,7 +143,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!uuid)"
+    ]
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

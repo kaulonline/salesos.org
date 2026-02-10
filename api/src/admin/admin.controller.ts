@@ -1039,6 +1039,22 @@ export class AdminController {
   }
 
   // ============================================
+  // ENTITY FIELD CHANGE HISTORY
+  // ============================================
+
+  @Get('entity-changes/:entityType/:entityId')
+  @Roles('ADMIN', 'MANAGER', 'USER')
+  @ApiOperation({ summary: 'Get field change history for an entity' })
+  @ApiResponse({ status: 200, description: 'Field change history' })
+  async getEntityFieldChanges(
+    @Param('entityType') entityType: string,
+    @Param('entityId') entityId: string,
+    @CurrentOrganization() organizationId?: string,
+  ) {
+    return this.adminService.getEntityFieldChanges(entityType, entityId, organizationId);
+  }
+
+  // ============================================
   // SSO USER DIRECTORY SYNC
   // ============================================
 

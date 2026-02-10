@@ -47,6 +47,8 @@ import { AnthropicIntegrationModule } from './anthropic/anthropic.module';
 import { AIModule } from './ai/ai.module';
 // Events
 import { IntegrationEventsModule } from './events/integration-events.module';
+// Health
+import { IntegrationsHealthService } from './integrations-health.service';
 // Controller
 import { IntegrationsController } from './integrations.controller';
 
@@ -101,6 +103,7 @@ import { IntegrationsController } from './integrations.controller';
     // Events
     IntegrationEventsModule,
   ],
+  providers: [IntegrationsHealthService],
   controllers: [IntegrationsController],
   exports: [
     // Data & Analytics

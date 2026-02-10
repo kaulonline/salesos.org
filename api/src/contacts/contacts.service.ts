@@ -7,6 +7,7 @@ import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 import { IntegrationEventsService } from '../integrations/events/integration-events.service';
 import { CrmEventType } from '../integrations/events/crm-event.types';
+import { EntityAuditService } from '../audit/entity-audit.service';
 
 interface CreateContactDto {
   accountId: string;
@@ -36,6 +37,7 @@ export class ContactsService {
     private readonly prisma: PrismaService,
     private readonly workflowsService: WorkflowsService,
     private readonly integrationEventsService: IntegrationEventsService,
+    private readonly entityAuditService: EntityAuditService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -250,6 +252,13 @@ export class ContactsService {
         },
       },
     });
+
+    // Track field-level changes for audit trail
+    this.entityAuditService.trackChanges({
+      organizationId, entityType: 'contact', entityId: id, userId,
+      before: contact, after: updated,
+      trackedFields: ['firstName', 'lastName', 'email', 'phone', 'title', 'department', 'linkedinUrl'],
+    }).catch(err => this.logger.error(`Audit tracking failed: ${err.message}`));
 
     // Trigger workflows for contact update
     this.workflowsService.processTrigger(

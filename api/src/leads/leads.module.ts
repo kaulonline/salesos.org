@@ -6,6 +6,7 @@ import { AnthropicModule } from '../anthropic/anthropic.module';
 import { EnrichmentModule } from '../integrations/enrichment/enrichment.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
 import { IntegrationEventsModule } from '../integrations/events/integration-events.module';
+import { DuplicatesModule } from '../duplicates/duplicates.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { IntegrationEventsModule } from '../integrations/events/integration-even
     forwardRef(() => EnrichmentModule),
     WorkflowsModule,
     IntegrationEventsModule,
+    DuplicatesModule,
   ],
   controllers: [LeadsController],
   providers: [LeadsService],

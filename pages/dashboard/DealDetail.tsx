@@ -19,6 +19,7 @@ import {
 import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai';
 import { SplitManager } from '../../components/splits';
 import { adminApi, IntegrationEntityMapping, IntegrationAttachment } from '../../src/api/admin';
+import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
 import type { OpportunityStage } from '../../src/types';
 
 export const DealDetail: React.FC = () => {
@@ -408,6 +409,9 @@ export const DealDetail: React.FC = () => {
                 isAdding={isAddingContact}
                 isRemoving={isRemovingContact}
               />
+
+              {/* Field Change History */}
+              <FieldChangeHistory entityType="opportunity" entityId={deal.id} />
 
               {/* AI Deal Analysis Widget */}
               <DealAnalysisWidget

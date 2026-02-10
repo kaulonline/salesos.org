@@ -12,6 +12,8 @@ import {
   DeleteConfirmModal,
   ConvertLeadModal,
 } from '../../src/components/leads';
+import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
+import { DuplicateDetectionPanel } from '../../src/components/duplicates/DuplicateDetectionPanel';
 import type { UpdateLeadDto, ConvertLeadDto } from '../../src/types';
 
 export const LeadDetail: React.FC = () => {
@@ -160,6 +162,9 @@ export const LeadDetail: React.FC = () => {
 
         {/* Main Profile Area */}
         <div className="flex-1 min-w-0">
+          {/* Duplicate Detection Alert */}
+          <DuplicateDetectionPanel entityType="lead" entityId={lead.id} />
+
           {/* Header */}
           <LeadHeader
             lead={lead}
@@ -187,6 +192,9 @@ export const LeadDetail: React.FC = () => {
               scoringLead={scoringLead}
             />
           </div>
+
+          {/* Field Change History */}
+          <FieldChangeHistory entityType="lead" entityId={lead.id} />
         </div>
       </div>
 

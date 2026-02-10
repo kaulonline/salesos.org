@@ -383,6 +383,20 @@ export const queryKeys = {
     executionsList: (filters?: { playbookId?: string; dealId?: string; status?: string }) => [...queryKeys.playbooks.executions(), 'list', filters] as const,
     execution: (id: string) => [...queryKeys.playbooks.executions(), 'detail', id] as const,
   },
+  // Duplicates
+  duplicates: {
+    all: ['duplicates'] as const,
+    lists: () => [...queryKeys.duplicates.all, 'list'] as const,
+    list: (filters?: { entityType?: string; status?: string }) => [...queryKeys.duplicates.lists(), filters] as const,
+    details: () => [...queryKeys.duplicates.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.duplicates.details(), id] as const,
+  },
+
+  // Entity field changes
+  entityFieldChanges: {
+    all: ['entityFieldChanges'] as const,
+    list: (entityType: string, entityId: string) => [...queryKeys.entityFieldChanges.all, entityType, entityId] as const,
+  },
 } as const;
 
 // Type helper for query key arrays

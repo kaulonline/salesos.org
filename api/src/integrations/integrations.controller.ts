@@ -43,6 +43,7 @@ import { MakeService } from './make/make.service';
 import { OktaService } from './okta/okta.service';
 import { Auth0Service } from './auth0/auth0.service';
 import { AnthropicIntegrationService } from './anthropic/anthropic.service';
+import { IntegrationsHealthService } from './integrations-health.service';
 
 interface IntegrationStatus {
   connected: boolean;
@@ -94,6 +95,7 @@ export class IntegrationsController {
     private readonly oktaService: OktaService,
     private readonly auth0Service: Auth0Service,
     private readonly anthropicService: AnthropicIntegrationService,
+    private readonly healthService: IntegrationsHealthService,
   ) {
     // Initialize service map for dynamic lookups
     this.serviceMap = {
@@ -127,6 +129,9 @@ export class IntegrationsController {
       auth0: this.auth0Service,
       anthropic: this.anthropicService,
     };
+
+    // Share service map with health service
+    this.healthService.setServiceMap(this.serviceMap);
   }
 
   @Get('status')
@@ -519,5 +524,32 @@ export class IntegrationsController {
       ...int,
       ...statuses[int.id],
     }));
+  }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Health check all integrations (admin only)' })
+  @ApiResponse({ status: 200, description: 'Integration health results' })
+  async healthCheckAll(
+    @Request() req,
+    @CurrentOrganization() organizationId: string,
+  ) {
+    if (req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.healthService.checkAllIntegrations(organizationId);
+  }
+
+  @Get(':provider/health')
+  @ApiOperation({ summary: 'Health check a single integration' })
+  @ApiResponse({ status: 200, description: 'Single integration health result' })
+  async healthCheckOne(
+    @Request() req,
+    @CurrentOrganization() organizationId: string,
+    @Param('provider') provider: string,
+  ) {
+    if (req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+    return this.healthService.checkIntegration(provider, organizationId);
   }
 }

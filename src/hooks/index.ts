@@ -123,6 +123,9 @@ export {
   useWinRateReport,
   usePipelineReport,
   useForecastData,
+  useRevenueReport,
+  useForecastSummary,
+  useActivityReport,
   useCpqDashboard,
 } from './useReporting';
 

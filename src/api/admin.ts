@@ -538,6 +538,12 @@ export const adminApi = {
     const response = await client.get(`/admin/integration-attachments/${entityType}/${entityId}`);
     return response.data;
   },
+
+  // Entity Field Change History
+  getEntityFieldChanges: async (entityType: string, entityId: string): Promise<EntityFieldChange[]> => {
+    const response = await client.get(`/admin/entity-changes/${entityType}/${entityId}`);
+    return response.data;
+  },
 };
 
 // Integration persistence types
@@ -585,6 +591,17 @@ export interface IntegrationAttachment {
   eventType?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface EntityFieldChange {
+  id: string;
+  entityType: string;
+  entityId: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  user?: { id: string; name: string; email: string };
 }
 
 export default adminApi;

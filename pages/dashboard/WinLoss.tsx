@@ -53,17 +53,32 @@ export const WinLoss: React.FC = () => {
   const wonDeals = filteredDeals.filter(d => d.isWon === true || d.stage === 'CLOSED_WON');
   const lostDeals = filteredDeals.filter(d => d.stage === 'CLOSED_LOST' || (d.isClosed && d.isWon === false));
 
-  // Calculate metrics - always use deal data for consistency
+  // Use server-side win rate report for primary metrics, with client-side fallback
   const metrics = useMemo(() => {
-    const totalClosed = filteredDeals.length;
-    const winCount = wonDeals.length;
-    const lossCount = lostDeals.length;
-    const winRate = totalClosed > 0 ? (winCount / totalClosed) * 100 : 0;
+    // Server-side values from the win rate report
+    const serverWinRate = winRateReport?.winRate;
+    const serverWonCount = winRateReport?.totalWon;
+    const serverLostCount = winRateReport?.totalLost;
+    const serverWonValue = winRateReport?.wonValue;
+    const serverLostValue = winRateReport?.lostValue;
 
-    const totalWonValue = wonDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
-    const totalLostValue = lostDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
+    // Client-side fallback
+    const clientTotalClosed = filteredDeals.length;
+    const clientWinCount = wonDeals.length;
+    const clientLossCount = lostDeals.length;
+    const clientWinRate = clientTotalClosed > 0 ? (clientWinCount / clientTotalClosed) * 100 : 0;
+    const clientWonValue = wonDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const clientLostValue = lostDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+    const winCount = serverWonCount ?? clientWinCount;
+    const lossCount = serverLostCount ?? clientLossCount;
+    const totalClosed = winCount + lossCount;
+    const winRate = serverWinRate ?? clientWinRate;
+    const totalWonValue = serverWonValue ?? clientWonValue;
+    const totalLostValue = serverLostValue ?? clientLostValue;
     const avgDealSize = winCount > 0 ? totalWonValue / winCount : 0;
 
+    // Sales cycle always computed from deal data (requires individual dates)
     const salesCycles = wonDeals
       .filter(d => d.createdAt && d.closedDate)
       .map(d => {
@@ -85,7 +100,7 @@ export const WinLoss: React.FC = () => {
       avgDealSize,
       avgSalesCycle,
     };
-  }, [filteredDeals, wonDeals, lostDeals]);
+  }, [filteredDeals, wonDeals, lostDeals, winRateReport]);
 
   // Get stage-by-stage win rates from API
   const stageWinRates = useMemo(() => {

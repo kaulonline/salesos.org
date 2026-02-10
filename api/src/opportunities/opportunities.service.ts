@@ -7,6 +7,7 @@ import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 import { IntegrationEventsService } from '../integrations/events/integration-events.service';
 import { CrmEventType } from '../integrations/events/crm-event.types';
+import { EntityAuditService } from '../audit/entity-audit.service';
 import { Opportunity, OpportunityStage, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 
@@ -61,6 +62,7 @@ export class OpportunitiesService {
     private readonly outcomeBillingService: OutcomeBillingService,
     private readonly workflowsService: WorkflowsService,
     private readonly integrationEventsService: IntegrationEventsService,
+    private readonly entityAuditService: EntityAuditService,
   ) {}
 
   // Create new opportunity
@@ -351,6 +353,13 @@ export class OpportunitiesService {
         },
       },
     });
+
+    // Track field-level changes for audit trail
+    this.entityAuditService.trackChanges({
+      organizationId, entityType: 'opportunity', entityId: id, userId,
+      before: opportunity, after: updated,
+      trackedFields: ['name', 'stage', 'amount', 'probability', 'closeDate', 'description', 'type', 'opportunitySource', 'isClosed', 'isWon'],
+    }).catch(err => this.logger.error(`Audit tracking failed: ${err.message}`));
 
     // Trigger workflows for opportunity update
     this.workflowsService.processTrigger(

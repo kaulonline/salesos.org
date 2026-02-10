@@ -11,6 +11,8 @@ import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
 import { IntegrationEventsService } from '../integrations/events/integration-events.service';
 import { CrmEventType } from '../integrations/events/crm-event.types';
+import { EntityAuditService } from '../audit/entity-audit.service';
+import { DuplicateDetectionService } from '../duplicates/duplicate-detection.service';
 
 @Injectable()
 export class LeadsService {
@@ -22,6 +24,8 @@ export class LeadsService {
     private applicationLogService: ApplicationLogService,
     private workflowsService: WorkflowsService,
     private integrationEventsService: IntegrationEventsService,
+    private entityAuditService: EntityAuditService,
+    private duplicateDetectionService: DuplicateDetectionService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -95,6 +99,10 @@ export class LeadsService {
       ).catch((error) => {
         this.logger.error(`Failed to process workflows for lead ${lead.id}:`, error);
       });
+
+      // Scan for duplicates asynchronously
+      this.duplicateDetectionService.scanForDuplicates(organizationId, 'lead', lead.id)
+        .catch(err => this.logger.error(`Duplicate scan failed for lead ${lead.id}: ${err.message}`));
 
       // Dispatch integration events
       this.integrationEventsService.dispatchCrmEvent(organizationId, {
@@ -305,6 +313,13 @@ export class LeadsService {
         },
       },
     });
+
+    // Track field-level changes for audit trail
+    this.entityAuditService.trackChanges({
+      organizationId, entityType: 'lead', entityId: id, userId,
+      before: lead, after: updated,
+      trackedFields: ['firstName', 'lastName', 'email', 'phone', 'company', 'title', 'status', 'rating', 'source', 'isQualified', 'description'],
+    }).catch(err => this.logger.error(`Audit tracking failed: ${err.message}`));
 
     return updated;
   }

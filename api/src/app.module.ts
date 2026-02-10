@@ -96,6 +96,8 @@ import { AssetsModule } from './assets/assets.module';
 import { PartnersModule } from './partners/partners.module';
 import { AccessRequestsModule } from './access-requests/access-requests.module';
 import { ApprovalWorkflowsModule } from './approval-workflows/approval-workflows.module';
+import { EntityAuditModule } from './audit/entity-audit.module';
+import { DuplicatesModule } from './duplicates/duplicates.module';
 
 @Module({
   imports: [
@@ -206,6 +208,8 @@ import { ApprovalWorkflowsModule } from './approval-workflows/approval-workflows
     PartnersModule, // Partner relationship management - deal registration portal
     AccessRequestsModule, // Access request forms for users without org codes - AI-enriched lead scoring
     ApprovalWorkflowsModule, // Multi-level approval chains for quotes, discounts, orders, contracts
+    EntityAuditModule, // Entity field-level change audit trail (Global)
+    DuplicatesModule, // Duplicate detection and merge workflows
   ],
   controllers: [AppController],
   providers: [

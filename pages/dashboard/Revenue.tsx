@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ArrowUpRight, CheckCircle2, Clock, FileCheck, TrendingUp, AlertCircle, DollarSign } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { useDeals } from '../../src/hooks';
+import { useDeals, useRevenueReport } from '../../src/hooks';
 import type { Opportunity } from '../../src/types';
 import { AreaChart } from '../../src/components/charts';
 
@@ -48,6 +48,7 @@ const getStatusInfo = (deal: Opportunity) => {
 export const Revenue: React.FC = () => {
   const navigate = useNavigate();
   const { deals, pipelineStats, forecast, loading, error, fetchPipelineStats, fetchForecast } = useDeals();
+  const { data: revenueReport } = useRevenueReport();
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -58,25 +59,33 @@ export const Revenue: React.FC = () => {
     fetchForecast();
   }, [fetchPipelineStats, fetchForecast]);
 
-  // Calculate revenue metrics from deals
+  // Use server-side revenue report for top-level metrics, with client-side fallback
   const metrics = useMemo(() => {
+    // Extract server-side values from the revenue report
+    const serverClosedWon = revenueReport?.data?.[0]?.data?.find(d => d.label === 'Closed Won')?.value;
+    const serverPipeline = revenueReport?.data?.[0]?.data?.find(d => d.label === 'Open Pipeline')?.value;
+    const serverWeighted = revenueReport?.data?.[0]?.data?.find(d => d.label === 'Weighted Pipeline')?.value;
+
+    // Client-side fallback computation
     const closedWonDeals = deals.filter(d => d.isWon);
-    const totalCollected = closedWonDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
-
+    const clientCollected = closedWonDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
     const openDeals = deals.filter(d => !d.isClosed);
-    const outstandingAmount = openDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const clientOutstanding = openDeals.reduce((sum, d) => sum + (d.amount || 0), 0);
 
-    // Calculate growth (comparing to weighted pipeline)
+    const totalCollected = serverClosedWon ?? clientCollected;
+    const outstandingAmount = serverPipeline ?? clientOutstanding;
+    const projectedMRR = serverWeighted ?? pipelineStats?.weightedPipeline ?? 0;
+
     const collectedGrowth = pipelineStats ?
       Math.round(((totalCollected / (pipelineStats.totalValue || 1)) * 100) - 100) : 0;
 
     return {
       totalCollected,
       outstandingAmount,
-      projectedMRR: pipelineStats?.weightedPipeline || 0,
+      projectedMRR,
       collectedGrowth: Math.max(0, collectedGrowth),
     };
-  }, [deals, pipelineStats]);
+  }, [deals, pipelineStats, revenueReport]);
 
   // Filter and sort deals for the "invoice" table view
   const filteredDeals = useMemo(() => {

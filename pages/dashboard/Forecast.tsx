@@ -13,7 +13,7 @@ import {
   Download,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useDeals } from '../../src/hooks';
+import { useDeals, useForecastSummary } from '../../src/hooks';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Card } from '../../components/ui/Card';
 import { format, addMonths, startOfQuarter, getQuarter } from 'date-fns';
@@ -79,6 +79,7 @@ const getCurrentQuarter = () => {
 
 export const Forecast: React.FC = () => {
   const { deals, loading } = useDeals();
+  const { data: forecastReport } = useForecastSummary();
   const [selectedQuarter, setSelectedQuarter] = useState<string>(getCurrentQuarter());
   const [expandedCategory, setExpandedCategory] = useState<ForecastCategory | null>('COMMIT');
   const [viewMode, setViewMode] = useState<'summary' | 'detailed'>('summary');
@@ -137,10 +138,14 @@ export const Forecast: React.FC = () => {
     return result;
   }, [categorizedDeals]);
 
-  const totalForecast = totals.COMMIT.total + totals.BEST_CASE.weighted + totals.PIPELINE.weighted * 0.5;
+  // Use server-side forecast totals when available, fall back to client-side computation
+  const serverSummary = forecastReport?.summary;
+  const totalForecast = serverSummary?.total ?? (totals.COMMIT.total + totals.BEST_CASE.weighted + totals.PIPELINE.weighted * 0.5);
   const commitTotal = totals.COMMIT.total;
   const bestCaseTotal = totals.COMMIT.total + totals.BEST_CASE.total;
-  const pipelineTotal = totals.COMMIT.total + totals.BEST_CASE.total + totals.PIPELINE.total;
+  const pipelineTotal = serverSummary?.count != null
+    ? (serverSummary.total ?? (totals.COMMIT.total + totals.BEST_CASE.total + totals.PIPELINE.total))
+    : (totals.COMMIT.total + totals.BEST_CASE.total + totals.PIPELINE.total);
 
   const formatCurrency = (value: number) => {
     if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;

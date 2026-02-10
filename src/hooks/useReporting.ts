@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { reportingApi, WinRateReport, ForecastData, PipelineReport, DateRange, GroupBy } from '../api/reporting';
+import { reportingApi, WinRateReport, ForecastData, PipelineReport, ReportResult, DateRange, GroupBy } from '../api/reporting';
 
 // Win Rate Report
 export function useWinRateReport(params?: {
@@ -31,6 +31,39 @@ export function useForecastData(periods = 3) {
   return useQuery<ForecastData>({
     queryKey: ['analytics', 'forecast', periods],
     queryFn: () => reportingApi.getForecast(periods),
+  });
+}
+
+// Revenue Report (server-side aggregation)
+export function useRevenueReport(params?: {
+  dateRange?: DateRange;
+  startDate?: string;
+  endDate?: string;
+}) {
+  return useQuery<ReportResult>({
+    queryKey: ['reports', 'revenue', params],
+    queryFn: () => reportingApi.getRevenue(params),
+  });
+}
+
+// Forecast Summary (server-side aggregation)
+export function useForecastSummary() {
+  return useQuery<ReportResult>({
+    queryKey: ['reports', 'forecast'],
+    queryFn: () => reportingApi.getForecastReport(),
+  });
+}
+
+// Activity Report (server-side aggregation)
+export function useActivityReport(params?: {
+  dateRange?: DateRange;
+  startDate?: string;
+  endDate?: string;
+  groupBy?: GroupBy;
+}) {
+  return useQuery<ReportResult>({
+    queryKey: ['reports', 'activities', params],
+    queryFn: () => reportingApi.getActivities(params),
   });
 }
 

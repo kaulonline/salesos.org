@@ -2671,6 +2671,21 @@ export class AdminService implements OnModuleInit {
   }
 
   // ============================================
+  // ENTITY FIELD CHANGE HISTORY
+  // ============================================
+
+  async getEntityFieldChanges(entityType: string, entityId: string, organizationId?: string) {
+    const where: any = { entityType, entityId };
+    if (organizationId) where.organizationId = organizationId;
+    return this.prisma.entityFieldChange.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+  }
+
+  // ============================================
   // SSO USER DIRECTORY SYNC (Okta / Auth0)
   // ============================================
 

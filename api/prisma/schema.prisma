@@ -122,6 +122,9 @@ model User {
   approvalRequestsSubmitted ApprovalRequest[]  @relation("ApprovalRequestor")
   approvalDecisionsMade    ApprovalDecision[]  @relation("ApprovalDecisionApprover")
   approvalDelegationsReceived ApprovalDecision[] @relation("ApprovalDecisionDelegate")
+
+  // Entity audit trail
+  fieldChanges  EntityFieldChange[]  @relation("UserFieldChanges")
 }
 
 // Salesforce OAuth Connection
@@ -3159,6 +3162,11 @@ model Organization {
   integrationSyncLogs        IntegrationSyncLog[]        @relation("OrganizationSyncLogs")
   integrationEntityMappings  IntegrationEntityMapping[]   @relation("OrganizationEntityMappings")
   integrationAttachments     IntegrationAttachment[]      @relation("OrganizationIntegrationAttachments")
+
+  // Entity audit & duplicate detection
+  entityFieldChanges  EntityFieldChange[]  @relation("OrganizationFieldChanges")
+  duplicateSets       DuplicateSet[]       @relation("OrganizationDuplicateSets")
+  mergeHistories      MergeHistory[]       @relation("OrganizationMergeHistories")
 
   @@index([status])
   @@index([domain])
@@ -8444,4 +8452,96 @@ model IntegrationAttachment {
   @@index([entityType, entityId])
   @@index([provider])
   @@map("integration_attachments")
+}
+
+// ============================================
+// ENTITY FIELD CHANGE AUDIT TRAIL
+// ============================================
+
+model EntityFieldChange {
+  id             String   @id @default(cuid())
+  organizationId String
+
+  entityType     String   // lead, contact, account, opportunity
+  entityId       String
+  userId         String?  // Who made the change
+
+  fieldName      String   // e.g. "status", "stage", "amount"
+  oldValue       String?  // JSON-stringified previous value
+  newValue       String?  // JSON-stringified new value
+
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation("OrganizationFieldChanges", fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?        @relation("UserFieldChanges", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("entity_field_changes")
+}
+
+// ============================================
+// DUPLICATE DETECTION & MERGE
+// ============================================
+
+enum DuplicateSetStatus {
+  OPEN
+  MERGED
+  DISMISSED
+}
+
+model DuplicateSet {
+  id             String             @id @default(cuid())
+  organizationId String
+  entityType     String             // lead, contact, account
+  status         DuplicateSetStatus @default(OPEN)
+  confidence     Float              // 0-1 score
+  matchReason    String?            // e.g. "email match + similar name"
+  resolvedAt     DateTime?
+  resolvedBy     String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  members        DuplicateSetMember[]
+  organization   Organization @relation("OrganizationDuplicateSets", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, entityType, status])
+  @@index([status])
+  @@map("duplicate_sets")
+}
+
+model DuplicateSetMember {
+  id             String   @id @default(cuid())
+  duplicateSetId String
+  entityId       String
+  isPrimary      Boolean  @default(false)
+
+  duplicateSet   DuplicateSet @relation(fields: [duplicateSetId], references: [id], onDelete: Cascade)
+
+  @@unique([duplicateSetId, entityId])
+  @@index([entityId])
+  @@map("duplicate_set_members")
+}
+
+model MergeHistory {
+  id                String   @id @default(cuid())
+  organizationId    String
+  entityType        String
+  survivorId        String   // The record that survived
+  mergedIds         Json     // Array of IDs that were merged in
+  mergedBy          String?
+  fieldResolutions  Json?    // Which field values were kept from which record
+  duplicateSetId    String?
+
+  createdAt         DateTime @default(now())
+
+  organization      Organization @relation("OrganizationMergeHistories", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([survivorId])
+  @@map("merge_histories")
 }
