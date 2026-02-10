@@ -7,6 +7,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
+  jobTitle?: string;
   role: UserRole;
   company?: string;
   // Organization membership

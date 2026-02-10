@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { dashboardApi, opportunitiesApi, leadsApi, activitiesApi, tasksApi, meetingsApi } from '../api';
+import { usersApi } from '../api/users';
 import type { PipelineStats, LeadStats, Activity, SalesForecast } from '../types';
 import { logger } from '../lib/logger';
 
@@ -14,6 +15,7 @@ export interface DashboardData {
   totalPipeline: number;
   closedWonThisMonth: number;
   quotaAttainment: number;
+  commissionRate: number;
 }
 
 export function useDashboard() {
@@ -28,6 +30,7 @@ export function useDashboard() {
     totalPipeline: 0,
     closedWonThisMonth: 0,
     quotaAttainment: 0,
+    commissionRate: 0.03,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +48,7 @@ export function useDashboard() {
         forecast,
         tasks,
         meetings,
+        quotaData,
       ] = await Promise.all([
         opportunitiesApi.getPipelineStats().catch(() => null),
         leadsApi.getStats().catch(() => null),
@@ -52,10 +56,11 @@ export function useDashboard() {
         opportunitiesApi.getForecast().catch(() => null),
         tasksApi.getAll({ limit: 100 }).catch(() => []),
         meetingsApi.getAll({ limit: 100 }).catch(() => []),
+        usersApi.getQuotaProgress().catch(() => null),
       ]);
 
       // Calculate tasks due today
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0] ?? '';
       const tasksToday = (tasks || []).filter((task: { dueDate?: string; status?: string }) =>
         task.dueDate?.startsWith(today) && task.status !== 'COMPLETED'
       ).length;
@@ -86,10 +91,12 @@ export function useDashboard() {
         avgScore: rawLeadStats?.averageScore ?? rawLeadStats?.avgScore ?? 0,
       } : null;
 
-      // Calculate quota attainment (assuming quarterly quota of $500K)
-      const quarterlyQuota = 500000;
+      // Calculate quota attainment from real quota data
       const closedWonValue = mappedPipelineStats?.closedWonValue || 0;
-      const quotaAttainment = Math.round((closedWonValue / quarterlyQuota) * 100);
+      const quotaAttainment = quotaData
+        ? Math.round((quotaData.percentage ?? 0) * 100)
+        : Math.round((closedWonValue / 100000) * 100); // fallback to default quota
+      const commissionRate = quotaData?.commissionRate ?? 0.03;
 
       setData({
         pipelineStats: mappedPipelineStats as any,
@@ -102,6 +109,7 @@ export function useDashboard() {
         totalPipeline: mappedPipelineStats?.totalValue || 0,
         closedWonThisMonth: rawPipelineStats?.wonCount ?? mappedPipelineStats?.closedWonThisMonth ?? 0,
         quotaAttainment: Math.min(quotaAttainment, 100),
+        commissionRate,
       });
     } catch (err) {
       logger.error('Failed to fetch dashboard data:', err);

@@ -256,7 +256,7 @@ export const Settings: React.FC = () => {
               <h3 className="text-xl font-medium mb-6">Profile Information</h3>
 
               {/* Avatar Section */}
-              <div className="flex items-center gap-6 mb-8">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-8">
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
                   {profile?.avatarUrl ? (
                     <img

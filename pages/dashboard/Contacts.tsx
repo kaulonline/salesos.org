@@ -222,7 +222,7 @@ export const Contacts: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <Skeleton className="h-10 w-64 mb-2" />
         <Skeleton className="h-6 w-96 mb-8" />
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
         <Card className="p-6">
@@ -420,6 +420,8 @@ export const Contacts: React.FC = () => {
         </div>
       ) : (
         <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+          <div className="min-w-[800px]">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 bg-[#FAFAF8] border-b border-gray-100 px-6 py-4">
             <div className="col-span-3 text-xs font-bold text-[#999] uppercase tracking-wider">Contact</div>
@@ -473,6 +475,8 @@ export const Contacts: React.FC = () => {
               </div>
             )}
           />
+          </div>
+          </div>
         </Card>
       )}
 

@@ -301,7 +301,8 @@ export const Assets: React.FC = () => {
             </Card>
           ) : (
             <Card className="overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[800px]">
                 <thead>
                   <tr className="border-b border-black/5 bg-[#F8F8F6]">
                     <th className="px-4 py-3 text-left font-medium text-[#666]">Asset</th>
@@ -384,6 +385,7 @@ export const Assets: React.FC = () => {
                   })}
                 </tbody>
               </table>
+              </div>
             </Card>
           )}
         </>
@@ -401,7 +403,7 @@ export const Assets: React.FC = () => {
             </div>
           ) : expiringData?.assets && expiringData.assets.length > 0 ? (
             <>
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-red-50 rounded-xl p-4 text-center">
                   <div className="text-2xl font-bold text-red-600">{expiringData.summary.expiring0to30}</div>
                   <div className="text-sm text-red-700">0-30 Days</div>

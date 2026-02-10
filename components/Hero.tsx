@@ -16,7 +16,7 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-[#F2F1EA]">
+    <section className="relative pt-20 md:pt-32 lg:pt-48 pb-16 md:pb-20 lg:pb-32 overflow-hidden bg-[#F2F1EA]">
       {/* Background Ambience with Animated Blobs */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#EAD07D] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob"></div>
@@ -33,8 +33,8 @@ export const Hero: React.FC = () => {
             <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">v2.0 Now Available</span>
           </div>
 
-          <h1 className={`text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
-            The Operating System for <br />
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
+            The Operating System for <span className="hidden sm:inline"><br /></span>
             <GradientText
               colors={['#888888', '#EAD07D', '#666666', '#EAD07D', '#888888']}
               animate

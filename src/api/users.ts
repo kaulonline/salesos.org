@@ -62,6 +62,7 @@ export interface QuotaProgress {
   quota: number;
   achieved: number;
   percentage: number;
+  commissionRate?: number;
   startDate: string;
   endDate: string;
 }

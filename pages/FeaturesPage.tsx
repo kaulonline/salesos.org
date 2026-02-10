@@ -157,7 +157,7 @@ export const FeaturesPage: React.FC = () => {
     <SEOHead {...SEO_CONFIGS.features} />
     <div className="bg-[#F2F1EA]">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
+      <section className="relative pt-20 pb-12 md:pt-32 md:pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
         {/* Background Ambient Blobs */}
         <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#EAD07D] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob"></div>
@@ -173,8 +173,8 @@ export const FeaturesPage: React.FC = () => {
               <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">Platform Features</span>
             </div>
 
-            <h1 className={`text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
-              Everything you need to <br />
+            <h1 className={`text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-[#1A1A1A] ${getTransition(0)}`} style={{ transitionDelay: '100ms' }}>
+              Everything you need to <span className="hidden sm:inline"><br /></span>
               <span className="text-[#666]">close more deals.</span>
             </h1>
 
@@ -203,7 +203,7 @@ export const FeaturesPage: React.FC = () => {
             {MAIN_FEATURES.map((feature, index) => (
               <ScrollReveal key={feature.id} animation="fade-up" delay={index * 100}>
                 <TiltCard
-                  className="group relative bg-white rounded-[2rem] p-8 shadow-sm border border-black/5 hover:shadow-xl hover:border-[#EAD07D]/30 transition-all duration-300 h-full"
+                  className="group relative bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-black/5 hover:shadow-xl hover:border-[#EAD07D]/30 transition-all duration-300 h-full"
                   maxTilt={6}
                   scale={1.02}
                   glare
@@ -273,14 +273,14 @@ export const FeaturesPage: React.FC = () => {
       </section>
 
       {/* Detailed Features by Category */}
-      <section className="py-24 bg-[#F2F1EA]">
+      <section className="py-12 md:py-24 bg-[#F2F1EA]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-sm mb-6">
               <Sparkles size={14} className="text-[#EAD07D]" />
               <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">Feature Deep Dive</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1A1A1A] mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1A1A1A] mb-6">
               Built for every <span className="text-[#666]">workflow.</span>
             </h2>
             <p className="text-lg text-[#666] max-w-2xl mx-auto">
@@ -292,7 +292,7 @@ export const FeaturesPage: React.FC = () => {
             {DETAILED_FEATURES.map((category) => (
               <div
                 key={category.category}
-                className="bg-white rounded-[2rem] p-8 shadow-sm border border-black/5 hover:shadow-lg transition-shadow"
+                className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-black/5 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <div className={`w-12 h-12 rounded-xl ${category.color} flex items-center justify-center text-white shadow-lg`}>
@@ -332,7 +332,7 @@ export const FeaturesPage: React.FC = () => {
               { value: '24/7', label: 'Support' },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-4xl md:text-5xl font-bold text-[#EAD07D] mb-2">{stat.value}</div>
+                <div className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#EAD07D] mb-2">{stat.value}</div>
                 <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.label}</div>
               </div>
             ))}
@@ -341,12 +341,12 @@ export const FeaturesPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-[#F2F1EA] relative overflow-hidden">
+      <section className="py-12 md:py-24 bg-[#F2F1EA] relative overflow-hidden">
         {/* Background Ambient */}
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#1A1A1A] mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1A1A1A] mb-6">
             Ready to transform your <span className="text-[#666]">sales process?</span>
           </h2>
           <p className="text-lg text-[#666] mb-10 max-w-2xl mx-auto">

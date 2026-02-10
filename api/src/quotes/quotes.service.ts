@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationSchedulerService } from '../notifications/notification-scheduler.service';
+import { IntegrationEventsService } from '../integrations/events/integration-events.service';
+import { CrmEventType } from '../integrations/events/crm-event.types';
 import { Quote, QuoteStatus, QuoteLineItem, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 
@@ -40,6 +42,7 @@ export class QuotesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationScheduler: NotificationSchedulerService,
+    private readonly integrationEventsService: IntegrationEventsService,
   ) {}
 
   // Create quote
@@ -373,13 +376,32 @@ export class QuotesService {
       throw new BadRequestException('Only draft quotes can be sent');
     }
 
-    return this.prisma.quote.update({
+    const updated = await this.prisma.quote.update({
       where: { id },
       data: {
         status: QuoteStatus.SENT,
         sentDate: new Date(),
       },
     });
+
+    // Dispatch integration event for quote sent
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.QUOTE_SENT,
+      entityId: id,
+      entityType: 'quote',
+      organizationId,
+      userId,
+      timestamp: new Date().toISOString(),
+      data: {
+        name: quote.name,
+        quoteNumber: quote.quoteNumber,
+        totalPrice: quote.totalPrice,
+      },
+    }).catch((err) => {
+      this.logger.error(`Failed to dispatch integration event for quote ${id}: ${err.message}`);
+    });
+
+    return updated;
   }
 
   // Accept quote (with ownership verification)

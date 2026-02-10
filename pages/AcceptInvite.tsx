@@ -126,7 +126,7 @@ export const AcceptInvite: React.FC = () => {
       {/* Close Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-11 h-11 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
       >
         <X size={20} />
       </button>
@@ -266,7 +266,7 @@ export const AcceptInvite: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#666]"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-[#999] hover:text-[#666]"
                         >
                           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>

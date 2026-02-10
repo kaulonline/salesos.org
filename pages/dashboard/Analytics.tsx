@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Users, Target, Activity, AlertCircle, RefreshCw } from 'lucide-react';
+import { TrendingUp, Users, Target, Activity, AlertCircle, RefreshCw, BarChart3, ExternalLink, Loader2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
@@ -9,6 +9,7 @@ import { reportsApi, type RevenueReport, type ForecastReport, DateRange } from '
 import { useDashboard } from '../../src/hooks';
 import { FeatureGate, Features, useCanAccess } from '../../src/components/FeatureGate';
 import { AreaChart } from '../../src/components/charts';
+import { adminApi } from '../../src/api/admin';
 
 export const Analytics: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,14 @@ export const Analytics: React.FC = () => {
   const [dateRange, setDateRange] = useState<'monthly' | 'quarterly'>('monthly');
 
   const { leadStats, loading: dashboardLoading } = useDashboard();
+
+  // Looker dashboards
+  const [lookerData, setLookerData] = useState<{
+    connected: boolean;
+    dashboards: { id: string; title: string; url: string }[];
+    looks: { id: string; title: string; url: string }[];
+  } | null>(null);
+  const [lookerLoading, setLookerLoading] = useState(false);
 
   const fetchAnalyticsData = async () => {
     try {
@@ -42,6 +51,12 @@ export const Analytics: React.FC = () => {
 
   useEffect(() => {
     fetchAnalyticsData();
+    // Fetch Looker dashboards
+    setLookerLoading(true);
+    adminApi.getLookerDashboards()
+      .then(data => setLookerData(data))
+      .catch(() => setLookerData(null))
+      .finally(() => setLookerLoading(false));
   }, []);
 
   // Format currency with compact notation (K, M, B, T)
@@ -109,7 +124,7 @@ export const Analytics: React.FC = () => {
           <Skeleton className="h-10 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-6">
           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem]" />
           <Skeleton className="md:col-span-4 h-[240px] rounded-[2rem] bg-[#1A1A1A]" />
@@ -157,7 +172,7 @@ export const Analytics: React.FC = () => {
         <p className="text-[#666] mt-2">Team performance and revenue insights.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-6">
 
         {/* Total Revenue KPI Card */}
         <Card className="md:col-span-4 p-8 flex flex-col justify-between min-h-[240px]">
@@ -229,7 +244,7 @@ export const Analytics: React.FC = () => {
 
         {/* Revenue Chart */}
         <Card className="md:col-span-8 p-8 min-h-[400px]">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
             <h3 className="text-xl font-medium">Revenue Growth</h3>
             <div className="flex gap-2">
               <button
@@ -311,6 +326,76 @@ export const Analytics: React.FC = () => {
             View Full Leaderboard
           </Link>
         </Card>
+
+        {/* Looker Dashboards */}
+        {lookerLoading ? (
+          <Card className="md:col-span-12 p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-6 h-6 rounded" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+            </div>
+          </Card>
+        ) : lookerData?.connected && (lookerData.dashboards.length > 0 || lookerData.looks.length > 0) ? (
+          <Card className="md:col-span-12 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                  <BarChart3 size={20} className="text-[#1A1A1A]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-medium text-[#1A1A1A]">Looker Dashboards</h3>
+                  <p className="text-sm text-[#666]">Custom analytics from your connected Looker instance</p>
+                </div>
+              </div>
+              <Badge variant="green" size="sm" dot>Connected</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {lookerData.dashboards.map(dashboard => (
+                <a
+                  key={dashboard.id}
+                  href={dashboard.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-4 bg-[#F8F8F6] rounded-2xl hover:bg-[#EAD07D]/10 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                    <BarChart3 size={18} className="text-[#1A1A1A]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-[#1A1A1A] truncate group-hover:text-[#EAD07D] transition-colors">
+                      {dashboard.title}
+                    </div>
+                    <div className="text-xs text-[#999]">Dashboard</div>
+                  </div>
+                  <ExternalLink size={14} className="text-[#999] group-hover:text-[#1A1A1A] shrink-0" />
+                </a>
+              ))}
+              {lookerData.looks.map(look => (
+                <a
+                  key={look.id}
+                  href={look.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-4 bg-[#F8F8F6] rounded-2xl hover:bg-[#EAD07D]/10 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                    <TrendingUp size={18} className="text-[#666]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-[#1A1A1A] truncate group-hover:text-[#EAD07D] transition-colors">
+                      {look.title}
+                    </div>
+                    <div className="text-xs text-[#999]">Look</div>
+                  </div>
+                  <ExternalLink size={14} className="text-[#999] group-hover:text-[#1A1A1A] shrink-0" />
+                </a>
+              ))}
+            </div>
+          </Card>
+        ) : null}
 
       </div>
     </div>

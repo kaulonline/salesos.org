@@ -477,7 +477,7 @@ export const Deals: React.FC = () => {
 
   if ((loading && deals.length === 0) || pipelinesLoading) {
       return (
-        <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col">
+        <div className="max-w-7xl mx-auto h-[calc(100dvh-140px)] flex flex-col" style={{ minHeight: 'calc(100vh - 140px)' }}>
             <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
                 <div>
                     <Skeleton className="h-10 w-48 mb-2" />
@@ -514,7 +514,7 @@ export const Deals: React.FC = () => {
 
   return (
     <FeatureGate feature={Features.OPPORTUNITIES_MANAGEMENT}>
-    <div className="max-w-7xl mx-auto h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto h-[calc(100dvh-140px)] flex flex-col animate-in fade-in duration-500" style={{ minHeight: 'calc(100vh - 140px)' }}>
       <div className="mb-8 flex flex-col xl:flex-row justify-between items-end gap-6 shrink-0">
          <div>
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-2">Pipeline</h1>
@@ -529,7 +529,7 @@ export const Deals: React.FC = () => {
             </p>
          </div>
 
-         <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+         <div className="flex flex-col md:flex-row flex-wrap gap-3 w-full xl:w-auto">
             {/* Pipeline Selector */}
             <PipelineSelector
               pipelines={pipelines}
@@ -750,6 +750,8 @@ export const Deals: React.FC = () => {
       ) : (
           /* List View */
           <Card padding="none" className="flex-1 overflow-hidden flex flex-col">
+            <div className="overflow-x-auto">
+              <div className="min-w-[800px]">
               <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider bg-[#F9F9F9]">
                   <div className="col-span-4">Opportunity Name</div>
                   <div className="col-span-2">Stage</div>
@@ -799,6 +801,8 @@ export const Deals: React.FC = () => {
                     </div>
                  )}
               </div>
+              </div>
+            </div>
           </Card>
       )}
 

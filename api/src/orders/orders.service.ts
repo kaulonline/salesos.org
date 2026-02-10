@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, Optional } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException, Inject, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { OrderStatus, OrderPaymentStatus, OrderFulfillmentStatus, Prisma } from '@prisma/client';
 import { OrderPdfGenerator } from './pdf-generator.util';
+import { IntegrationEventsService } from '../integrations/events/integration-events.service';
+import { CrmEventType } from '../integrations/events/crm-event.types';
 
 export interface OrderTimelineEvent {
   id: string;
@@ -13,26 +15,30 @@ export interface OrderTimelineEvent {
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly integrationEventsService: IntegrationEventsService,
     @Optional() private readonly pdfGenerator?: OrderPdfGenerator,
   ) {}
 
-  private async generateOrderNumber(): Promise<string> {
+  private async generateOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
     const year = new Date().getFullYear();
-    const lastOrder = await this.prisma.order.findFirst({
-      where: {
-        orderNumber: {
-          startsWith: `ORD-${year}`,
-        },
-      },
-      orderBy: { orderNumber: 'desc' },
-    });
+    const prefix = `ORD-${year}`;
+    // Use FOR UPDATE to lock the row and prevent race conditions
+    const result = await tx.$queryRaw<{ orderNumber: string }[]>`
+      SELECT "orderNumber" FROM "Order"
+      WHERE "orderNumber" LIKE ${prefix + '%'}
+      ORDER BY "orderNumber" DESC
+      LIMIT 1
+      FOR UPDATE
+    `;
 
-    const lastNum = lastOrder
-      ? parseInt(lastOrder.orderNumber.split('-')[2], 10)
+    const lastNum = result.length > 0
+      ? parseInt(result[0].orderNumber.split('-')[2], 10)
       : 0;
-    return `ORD-${year}-${String(lastNum + 1).padStart(5, '0')}`;
+    return `${prefix}-${String(lastNum + 1).padStart(5, '0')}`;
   }
 
   async createOrder(
@@ -60,42 +66,64 @@ export class OrdersService {
     userId: string,
     organizationId: string,
   ) {
-    const orderNumber = await this.generateOrderNumber();
+    const order = await this.prisma.$transaction(async (tx) => {
+      const orderNumber = await this.generateOrderNumber(tx);
 
-    return this.prisma.order.create({
-      data: {
-        orderNumber,
-        ownerId: userId,
-        accountId: data.accountId,
-        quoteId: data.quoteId,
-        name: data.name,
-        orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
-        expectedDeliveryDate: data.expectedDeliveryDate
-          ? new Date(data.expectedDeliveryDate)
-          : undefined,
-        paymentTerms: data.paymentTerms,
-        shippingMethod: data.shippingMethod,
-        notes: data.notes,
-        internalNotes: data.internalNotes,
-        billingStreet: data.billingStreet,
-        billingCity: data.billingCity,
-        billingState: data.billingState,
-        billingPostalCode: data.billingPostalCode,
-        billingCountry: data.billingCountry,
-        shippingStreet: data.shippingStreet,
-        shippingCity: data.shippingCity,
-        shippingState: data.shippingState,
-        shippingPostalCode: data.shippingPostalCode,
-        shippingCountry: data.shippingCountry,
-        organizationId,
-      },
-      include: {
-        lineItems: true,
-        account: {
-          select: { id: true, name: true },
+      return tx.order.create({
+        data: {
+          orderNumber,
+          ownerId: userId,
+          accountId: data.accountId,
+          quoteId: data.quoteId,
+          name: data.name,
+          orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
+          expectedDeliveryDate: data.expectedDeliveryDate
+            ? new Date(data.expectedDeliveryDate)
+            : undefined,
+          paymentTerms: data.paymentTerms,
+          shippingMethod: data.shippingMethod,
+          notes: data.notes,
+          internalNotes: data.internalNotes,
+          billingStreet: data.billingStreet,
+          billingCity: data.billingCity,
+          billingState: data.billingState,
+          billingPostalCode: data.billingPostalCode,
+          billingCountry: data.billingCountry,
+          shippingStreet: data.shippingStreet,
+          shippingCity: data.shippingCity,
+          shippingState: data.shippingState,
+          shippingPostalCode: data.shippingPostalCode,
+          shippingCountry: data.shippingCountry,
+          organizationId,
         },
-      },
+        include: {
+          lineItems: true,
+          account: {
+            select: { id: true, name: true },
+          },
+        },
+      });
     });
+
+    // Dispatch integration events
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.ORDER_CREATED,
+      entityId: order.id,
+      entityType: 'order',
+      organizationId,
+      userId,
+      timestamp: new Date().toISOString(),
+      data: {
+        orderNumber: order.orderNumber,
+        name: order.name,
+        total: order.total,
+        accountName: (order as any).account?.name,
+      },
+    }).catch((err) => {
+      this.logger.error(`Failed to dispatch integration event for order ${order.id}: ${err.message}`);
+    });
+
+    return order;
   }
 
   async convertQuoteToOrder(
@@ -109,81 +137,81 @@ export class OrdersService {
       internalNotes?: string;
     },
   ) {
-    const where: Prisma.QuoteWhereInput = { id: quoteId };
-    where.organizationId = organizationId;
+    return this.prisma.$transaction(async (tx) => {
+      const where: Prisma.QuoteWhereInput = { id: quoteId };
+      where.organizationId = organizationId;
 
-    const quote = await this.prisma.quote.findFirst({
-      where,
-      include: {
-        lineItems: true,
-        account: true,
-      },
-    });
-
-    if (!quote) {
-      throw new NotFoundException('Quote not found');
-    }
-
-    if (quote.status !== 'ACCEPTED' && quote.status !== 'SENT') {
-      throw new BadRequestException(
-        'Only accepted or sent quotes can be converted to orders',
-      );
-    }
-
-    const orderNumber = await this.generateOrderNumber();
-
-    const order = await this.prisma.order.create({
-      data: {
-        orderNumber,
-        ownerId: userId,
-        accountId: quote.accountId,
-        quoteId: quote.id,
-        name: `Order from ${quote.name}`,
-        orderDate: data?.orderDate ? new Date(data.orderDate) : new Date(),
-        expectedDeliveryDate: data?.expectedDeliveryDate
-          ? new Date(data.expectedDeliveryDate)
-          : undefined,
-        subtotal: quote.subtotal,
-        discount: quote.discount,
-        tax: quote.tax,
-        shipping: quote.shippingHandling,
-        total: quote.totalPrice,
-        notes: data?.notes,
-        internalNotes: data?.internalNotes,
-        billingStreet: quote.billingStreet,
-        billingCity: quote.billingCity,
-        billingState: quote.billingState,
-        billingPostalCode: quote.billingPostalCode,
-        billingCountry: quote.billingCountry,
-        shippingStreet: quote.shippingStreet,
-        shippingCity: quote.shippingCity,
-        shippingState: quote.shippingState,
-        shippingPostalCode: quote.shippingPostalCode,
-        shippingCountry: quote.shippingCountry,
-        organizationId,
-        lineItems: {
-          create: quote.lineItems.map((item, index) => ({
-            productId: item.productId,
-            productName: item.productName,
-            productCode: item.productCode,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discount: item.discount,
-            totalPrice: item.totalPrice,
-            sortOrder: index,
-          })),
+      const quote = await tx.quote.findFirst({
+        where,
+        include: {
+          lineItems: true,
+          account: true,
         },
-      },
-      include: {
-        lineItems: true,
-        account: {
-          select: { id: true, name: true },
-        },
-      },
-    });
+      });
 
-    return order;
+      if (!quote) {
+        throw new NotFoundException('Quote not found');
+      }
+
+      if (quote.status !== 'ACCEPTED' && quote.status !== 'SENT') {
+        throw new BadRequestException(
+          'Only accepted or sent quotes can be converted to orders',
+        );
+      }
+
+      const orderNumber = await this.generateOrderNumber(tx);
+
+      return tx.order.create({
+        data: {
+          orderNumber,
+          ownerId: userId,
+          accountId: quote.accountId,
+          quoteId: quote.id,
+          name: `Order from ${quote.name}`,
+          orderDate: data?.orderDate ? new Date(data.orderDate) : new Date(),
+          expectedDeliveryDate: data?.expectedDeliveryDate
+            ? new Date(data.expectedDeliveryDate)
+            : undefined,
+          subtotal: quote.subtotal,
+          discount: quote.discount,
+          tax: quote.tax,
+          shipping: quote.shippingHandling,
+          total: quote.totalPrice,
+          notes: data?.notes,
+          internalNotes: data?.internalNotes,
+          billingStreet: quote.billingStreet,
+          billingCity: quote.billingCity,
+          billingState: quote.billingState,
+          billingPostalCode: quote.billingPostalCode,
+          billingCountry: quote.billingCountry,
+          shippingStreet: quote.shippingStreet,
+          shippingCity: quote.shippingCity,
+          shippingState: quote.shippingState,
+          shippingPostalCode: quote.shippingPostalCode,
+          shippingCountry: quote.shippingCountry,
+          organizationId,
+          lineItems: {
+            create: quote.lineItems.map((item, index) => ({
+              productId: item.productId,
+              productName: item.productName,
+              productCode: item.productCode,
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              discount: item.discount,
+              totalPrice: item.totalPrice,
+              sortOrder: index,
+            })),
+          },
+        },
+        include: {
+          lineItems: true,
+          account: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+    });
   }
 
   async listOrders(
@@ -835,49 +863,51 @@ export class OrdersService {
       throw new ForbiddenException('Access denied');
     }
 
-    const newOrderNumber = await this.generateOrderNumber();
+    return this.prisma.$transaction(async (tx) => {
+      const newOrderNumber = await this.generateOrderNumber(tx);
 
-    return this.prisma.order.create({
-      data: {
-        orderNumber: newOrderNumber,
-        ownerId: userId,
-        accountId: order.accountId,
-        name: `Copy of ${order.name || order.orderNumber}`,
-        subtotal: order.subtotal,
-        discount: order.discount,
-        tax: order.tax,
-        shipping: order.shipping,
-        total: order.total,
-        billingStreet: order.billingStreet,
-        billingCity: order.billingCity,
-        billingState: order.billingState,
-        billingPostalCode: order.billingPostalCode,
-        billingCountry: order.billingCountry,
-        shippingStreet: order.shippingStreet,
-        shippingCity: order.shippingCity,
-        shippingState: order.shippingState,
-        shippingPostalCode: order.shippingPostalCode,
-        shippingCountry: order.shippingCountry,
-        organizationId,
-        lineItems: {
-          create: order.lineItems.map((item, index) => ({
-            productId: item.productId,
-            productName: item.productName,
-            productCode: item.productCode,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discount: item.discount,
-            tax: item.tax,
-            totalPrice: item.totalPrice,
-            sortOrder: index,
-          })),
+      return tx.order.create({
+        data: {
+          orderNumber: newOrderNumber,
+          ownerId: userId,
+          accountId: order.accountId,
+          name: `Copy of ${order.name || order.orderNumber}`,
+          subtotal: order.subtotal,
+          discount: order.discount,
+          tax: order.tax,
+          shipping: order.shipping,
+          total: order.total,
+          billingStreet: order.billingStreet,
+          billingCity: order.billingCity,
+          billingState: order.billingState,
+          billingPostalCode: order.billingPostalCode,
+          billingCountry: order.billingCountry,
+          shippingStreet: order.shippingStreet,
+          shippingCity: order.shippingCity,
+          shippingState: order.shippingState,
+          shippingPostalCode: order.shippingPostalCode,
+          shippingCountry: order.shippingCountry,
+          organizationId,
+          lineItems: {
+            create: order.lineItems.map((item, index) => ({
+              productId: item.productId,
+              productName: item.productName,
+              productCode: item.productCode,
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              discount: item.discount,
+              tax: item.tax,
+              totalPrice: item.totalPrice,
+              sortOrder: index,
+            })),
+          },
         },
-      },
-      include: {
-        lineItems: true,
-        account: { select: { id: true, name: true } },
-      },
+        include: {
+          lineItems: true,
+          account: { select: { id: true, name: true } },
+        },
+      });
     });
   }
 

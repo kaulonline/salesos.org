@@ -115,14 +115,11 @@ export class OracleCXService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly usageTrackingService: UsageTrackingService,
   ) {
-    this.encryptionKey =
-      process.env.CRM_ENCRYPTION_KEY ||
-      process.env.ORACLE_CX_ENCRYPTION_KEY ||
-      crypto
-        .createHash('sha256')
-        .update(process.env.JWT_SECRET || 'default-secret')
-        .digest('hex')
-        .slice(0, 32);
+    const key = process.env.ENCRYPTION_KEY || process.env.CRM_ENCRYPTION_KEY || process.env.ORACLE_CX_ENCRYPTION_KEY;
+    if (!key) {
+      throw new Error('ENCRYPTION_KEY environment variable is required for Oracle CX credential encryption');
+    }
+    this.encryptionKey = key.slice(0, 32);
   }
 
   /**

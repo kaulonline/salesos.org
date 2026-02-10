@@ -21,29 +21,29 @@ export const Footer: React.FC = () => {
 
           <div>
             <h4 className="font-bold text-[#1A1A1A] mb-6">Product</h4>
-            <ul className="space-y-4 text-sm text-[#666]">
-              <li><Link to="/features" className="hover:text-[#1A1A1A] transition-colors">Features</Link></li>
-              <li><Link to="/integrations" className="hover:text-[#1A1A1A] transition-colors">Integrations</Link></li>
-              <li><Link to="/enterprise" className="hover:text-[#1A1A1A] transition-colors">Enterprise</Link></li>
-              <li><Link to="/changelog" className="hover:text-[#1A1A1A] transition-colors">Changelog</Link></li>
+            <ul className="space-y-2 text-sm text-[#666]">
+              <li><Link to="/features" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Features</Link></li>
+              <li><Link to="/integrations" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Integrations</Link></li>
+              <li><Link to="/enterprise" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Enterprise</Link></li>
+              <li><Link to="/changelog" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Changelog</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-[#1A1A1A] mb-6">Company</h4>
-            <ul className="space-y-4 text-sm text-[#666]">
-              <li><Link to="/about" className="hover:text-[#1A1A1A] transition-colors">About</Link></li>
-              <li><Link to="/blog" className="hover:text-[#1A1A1A] transition-colors">Blog</Link></li>
-              <li><Link to="/careers" className="hover:text-[#1A1A1A] transition-colors">Careers</Link></li>
-              <li><Link to="/contact" className="hover:text-[#1A1A1A] transition-colors">Contact</Link></li>
+            <ul className="space-y-2 text-sm text-[#666]">
+              <li><Link to="/about" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">About</Link></li>
+              <li><Link to="/blog" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Blog</Link></li>
+              <li><Link to="/careers" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Careers</Link></li>
+              <li><Link to="/contact" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Contact</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-[#1A1A1A] mb-6">Legal</h4>
-            <ul className="space-y-4 text-sm text-[#666]">
-              <li><Link to="/privacy" className="hover:text-[#1A1A1A] transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-[#1A1A1A] transition-colors">Terms of Service</Link></li>
+            <ul className="space-y-2 text-sm text-[#666]">
+              <li><Link to="/privacy" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-[#1A1A1A] transition-colors py-1 inline-block">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
@@ -51,9 +51,9 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-black/5">
           <p className="text-xs text-[#888] font-medium">© 2024 SalesOS Inc. All rights reserved.</p>
           <div className="flex items-center gap-6 mt-4 md:mt-0">
-            <a href="#" className="text-[#888] hover:text-[#1A1A1A] transition-colors"><Twitter size={20} /></a>
-            <a href="#" className="text-[#888] hover:text-[#1A1A1A] transition-colors"><Linkedin size={20} /></a>
-            <a href="#" className="text-[#888] hover:text-[#1A1A1A] transition-colors"><Github size={20} /></a>
+            <a href="#" className="p-2.5 text-[#888] hover:text-[#1A1A1A] transition-colors"><Twitter size={20} /></a>
+            <a href="#" className="p-2.5 text-[#888] hover:text-[#1A1A1A] transition-colors"><Linkedin size={20} /></a>
+            <a href="#" className="p-2.5 text-[#888] hover:text-[#1A1A1A] transition-colors"><Github size={20} /></a>
           </div>
         </div>
       </div>

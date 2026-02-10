@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake, Menu, X } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -20,6 +20,7 @@ export const DashboardLayout: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAIMenu, setShowAIMenu] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
   const { showOnboarding, completeOnboarding } = useOnboarding();
@@ -159,10 +160,10 @@ export const DashboardLayout: React.FC = () => {
       <GlobalSearch isOpen={searchOpen} onClose={closeSearch} />
 
       {/* Fixed Frosted Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3 lg:py-4 bg-[#F2F1EA]/85 backdrop-blur-xl transition-all duration-300 border-b border-black/5">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group cursor-pointer mr-4 shrink-0" data-tour="logo">
+        <Link to="/" className="flex items-center gap-2 group cursor-pointer shrink-0" data-tour="logo">
           <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-white shadow-lg shadow-[#1A1A1A]/20 transition-transform group-hover:scale-105">
             <Command size={18} />
           </div>
@@ -171,8 +172,8 @@ export const DashboardLayout: React.FC = () => {
           </span>
         </Link>
 
-        {/* Pill Navigation - Scrollable on mobile */}
-        <div className="flex items-center gap-2 mx-auto md:mx-0">
+        {/* Pill Navigation - Hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:flex items-center gap-2 mx-auto">
           <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md" data-tour="main-nav">
             {primaryNavItems.map((item) => {
               const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
@@ -180,7 +181,7 @@ export const DashboardLayout: React.FC = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${isActive
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${isActive
                       ? 'bg-[#1A1A1A] text-white shadow-md'
                       : item.highlight
                         ? 'text-[#1A1A1A] hover:bg-[#EAD07D]/20'
@@ -212,7 +213,7 @@ export const DashboardLayout: React.FC = () => {
             {showMoreMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-                <div className="absolute top-full right-0 mt-2 w-52 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[70vh] overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 sm:w-52 mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[70vh] overflow-y-auto">
                   {secondaryNavItems.map((item, index) => {
                     if ('type' in item && item.type === 'header') {
                       return (
@@ -245,11 +246,11 @@ export const DashboardLayout: React.FC = () => {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 shrink-0">
           {/* Search Button */}
           <button
             onClick={openSearch}
-            className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm group"
+            className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2 bg-white/60 border border-white/50 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm text-[#666] hover:text-[#1A1A1A] backdrop-blur-sm group"
             data-tour="search"
           >
             <Search size={16} />
@@ -258,8 +259,8 @@ export const DashboardLayout: React.FC = () => {
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
-          {/* AI Dropdown */}
-          <div className="relative" data-tour="ai-menu">
+          {/* AI Dropdown - hidden on mobile, in drawer instead */}
+          <div className="relative hidden sm:block" data-tour="ai-menu">
             <button
               onClick={() => setShowAIMenu(!showAIMenu)}
               className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${aiNavItems.some(item => path.startsWith(item.href))
@@ -300,8 +301,8 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
 
-          {/* Settings Dropdown */}
-          <div className="relative" data-tour="settings-menu">
+          {/* Settings Dropdown - hidden on mobile, in drawer instead */}
+          <div className="relative hidden sm:block" data-tour="settings-menu">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
               className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => path.startsWith(item.href))
@@ -351,13 +352,15 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
 
-          <AlertsDropdown />
+          <div className="hidden sm:block">
+            <AlertsDropdown />
+          </div>
           <div data-tour="notifications">
             <NotificationDropdown />
           </div>
 
-          {/* User Menu */}
-          <div className="relative" data-tour="user-menu">
+          {/* User Menu - hidden on mobile, accessible via drawer */}
+          <div className="relative hidden sm:block" data-tour="user-menu">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="w-10 h-10 bg-gradient-to-br from-[#EAD07D] to-[#E5C973] rounded-full flex items-center justify-center font-bold text-[#1A1A1A] shadow-md border-2 border-white cursor-pointer hover:scale-105 transition-transform"
@@ -416,16 +419,156 @@ export const DashboardLayout: React.FC = () => {
               </>
             )}
           </div>
+
+          {/* Mobile Hamburger - last item for conventional placement */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2.5 text-[#666] hover:text-[#1A1A1A] hover:bg-white rounded-full transition-colors"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </header>
 
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+          <div className="fixed top-[57px] left-0 right-0 bottom-0 z-40 lg:hidden overflow-y-auto bg-[#1A1A1A] animate-in slide-in-from-top-2 duration-200">
+            <nav className="px-4 py-4 space-y-1">
+              {/* Primary Nav */}
+              {primaryNavItems.map((item) => {
+                const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {item.icon && <item.icon size={18} className={isActive ? 'text-[#EAD07D]' : ''} />}
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Secondary Nav (More items) */}
+              {secondaryNavItems.map((item, index) => {
+                if ('type' in item && item.type === 'header') {
+                  return (
+                    <div key={`header-${index}`} className={`px-4 pt-4 pb-1 ${index > 0 ? 'border-t border-white/10 mt-2' : ''}`}>
+                      <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</span>
+                    </div>
+                  );
+                }
+                const navItem = item as { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> };
+                const isActive = path.startsWith(navItem.href);
+                return (
+                  <Link
+                    key={navItem.href}
+                    to={navItem.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {navItem.icon && <navItem.icon size={18} className={isActive ? 'text-[#EAD07D]' : 'text-white/40'} />}
+                    {navItem.label}
+                  </Link>
+                );
+              })}
+
+              {/* AI Items */}
+              <div className="px-4 pt-4 pb-1 border-t border-white/10 mt-2">
+                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">AI</span>
+              </div>
+              {aiNavItems.map((item) => {
+                const isActive = path.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {item.icon && <item.icon size={18} className={isActive ? 'text-[#EAD07D]' : 'text-white/40'} />}
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Settings Items */}
+              <div className="px-4 pt-4 pb-1 border-t border-white/10 mt-2">
+                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Settings</span>
+              </div>
+              {settingsNavItems.map((item, index) => {
+                if ('type' in item && item.type === 'divider') {
+                  return (
+                    <div key={`divider-${index}`} className="px-4 pt-3 pb-1">
+                      <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</span>
+                    </div>
+                  );
+                }
+                const navItem = item as { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> };
+                const isActive = path === navItem.href;
+                return (
+                  <Link
+                    key={navItem.href}
+                    to={navItem.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {navItem.icon && <navItem.icon size={18} className={isActive ? 'text-[#EAD07D]' : 'text-white/40'} />}
+                    {navItem.label}
+                  </Link>
+                );
+              })}
+
+              {/* User Info & Sign Out */}
+              <div className="border-t border-white/10 mt-4 pt-4 px-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#EAD07D] to-[#E5C973] rounded-full flex items-center justify-center font-bold text-[#1A1A1A] text-sm border-2 border-white/20 shadow-sm">
+                    {userInitials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-white truncate">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-white/50 truncate">{user?.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-white/10 transition-colors"
+                >
+                  <LogOut size={18} />
+                  Sign out
+                </button>
+              </div>
+            </nav>
+          </div>
+        </>
+      )}
+
       {/* Main Content Area */}
-      <main className="pt-[180px] md:pt-32 pb-24 px-4 md:px-8 max-w-[1920px] mx-auto">
+      <main className="pt-20 pb-24 px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
         <Outlet />
       </main>
 
-      {/* Bottom Fade Gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#F2F1EA] via-[#F2F1EA]/80 to-transparent pointer-events-none z-40" />
+      {/* Bottom Fade Gradient - hidden on mobile */}
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#F2F1EA] via-[#F2F1EA]/80 to-transparent pointer-events-none z-40" />
 
       {/* Offline Status Indicator */}
       <OfflineIndicator />

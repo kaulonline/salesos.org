@@ -540,7 +540,8 @@ export const Partners: React.FC = () => {
               <p className="text-[#666]">Partners will submit deal registrations through the portal.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
               <thead>
                 <tr className="border-b border-black/5 bg-[#F8F8F6]">
                   <th className="px-4 py-3 text-left font-medium text-[#666]">Deal</th>
@@ -657,6 +658,7 @@ export const Partners: React.FC = () => {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
         </div>
@@ -1162,7 +1164,7 @@ const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onCl
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-[#F8F8F6] rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-[#1A1A1A]">{partner.totalDeals}</div>
             <div className="text-sm text-[#666]">Total Deals</div>
@@ -1229,7 +1231,7 @@ const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onCl
             <Building2 size={14} className="text-[#666]" /> Assigned Accounts
           </h3>
           {partner.accounts && partner.accounts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {partner.accounts.map((pa) => (
                 <div key={pa.id} className="flex items-center justify-between p-3 bg-[#F8F8F6] rounded-xl">
                   <div className="flex items-center gap-2">

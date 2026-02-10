@@ -90,7 +90,7 @@ export const SignUp: React.FC = () => {
       {/* Close Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-11 h-11 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
       >
         <X size={20} />
       </button>
@@ -99,7 +99,7 @@ export const SignUp: React.FC = () => {
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 md:px-12 lg:px-20 relative z-10">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 mb-16 w-fit">
+        <Link to="/" className="flex items-center gap-2 mb-8 md:mb-16 w-fit">
           <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white">
             <Command size={18} />
           </div>
@@ -159,7 +159,7 @@ export const SignUp: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#1A1A1A] transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-[#999] hover:text-[#1A1A1A] transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -200,7 +200,7 @@ export const SignUp: React.FC = () => {
             </Button>
           </form>
 
-          <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
             <button
               className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
               disabled={isLoading}
@@ -215,7 +215,7 @@ export const SignUp: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex justify-between items-center mt-12 text-sm">
+          <div className="flex flex-col sm:flex-row gap-2 sm:justify-between items-center mt-12 text-sm">
             <div className="text-[#666]">
               Have an account? <Link to="/login" className="text-[#1A1A1A] underline font-medium hover:text-[#EAD07D] transition-colors">Sign in</Link>
             </div>

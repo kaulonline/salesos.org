@@ -7,7 +7,7 @@ import { TiltCard } from './ui/TiltCard';
 
 export const Features: React.FC = () => {
   return (
-    <section id="solutions" className="py-32 relative bg-[#F2F1EA] overflow-hidden">
+    <section id="solutions" className="py-16 md:py-24 lg:py-32 relative bg-[#F2F1EA] overflow-hidden">
       {/* Background Ambient Glow */}
       <div className="absolute top-1/3 left-0 w-[500px] h-[500px] bg-[#EAD07D]/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#EAD07D]/5 blur-[100px] rounded-full pointer-events-none" />
@@ -24,8 +24,8 @@ export const Features: React.FC = () => {
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={100}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1A1A1A]">
-              Everything you need to <br />
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-[#1A1A1A]">
+              Everything you need to <span className="hidden sm:inline"><br /></span>
               <span className="text-[#888]">close more deals.</span>
             </h2>
           </ScrollReveal>
@@ -86,7 +86,7 @@ export const Features: React.FC = () => {
 
         {/* Additional Features Row */}
         <ScrollReveal animation="fade-up" delay={400}>
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Bot, label: 'AI Assistant' },
               { icon: Calendar, label: 'Meeting Scheduler' },

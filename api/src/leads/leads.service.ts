@@ -9,6 +9,8 @@ import { LeadStatus, BuyingIntent, AccountType, OpportunityStage } from '@prisma
 import { EnrichmentService } from '../integrations/enrichment/enrichment.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
+import { IntegrationEventsService } from '../integrations/events/integration-events.service';
+import { CrmEventType } from '../integrations/events/crm-event.types';
 
 @Injectable()
 export class LeadsService {
@@ -19,6 +21,7 @@ export class LeadsService {
     private anthropic: AnthropicService,
     private applicationLogService: ApplicationLogService,
     private workflowsService: WorkflowsService,
+    private integrationEventsService: IntegrationEventsService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -91,6 +94,26 @@ export class LeadsService {
         { lead, userId, organizationId }
       ).catch((error) => {
         this.logger.error(`Failed to process workflows for lead ${lead.id}:`, error);
+      });
+
+      // Dispatch integration events
+      this.integrationEventsService.dispatchCrmEvent(organizationId, {
+        type: CrmEventType.LEAD_CREATED,
+        entityId: lead.id,
+        entityType: 'lead',
+        organizationId,
+        userId,
+        timestamp: new Date().toISOString(),
+        data: {
+          name: `${lead.firstName} ${lead.lastName}`,
+          email: lead.email,
+          company: lead.company,
+          title: lead.title,
+          leadSource: lead.leadSource,
+          leadScore: lead.leadScore,
+        },
+      }).catch((error) => {
+        this.logger.error(`Failed to dispatch integration event for lead ${lead.id}:`, error);
       });
 
       return lead;
@@ -518,6 +541,27 @@ Score based on: budget fit, timeline urgency, pain point severity, decision-maki
       });
 
       this.logger.log(`Converted lead ${leadId} to Account ${result.accountId}, Contact ${result.contactId}${result.opportunityId ? `, Opportunity ${result.opportunityId}` : ''}`);
+
+      // Dispatch integration event for lead conversion
+      this.integrationEventsService.dispatchCrmEvent(organizationId, {
+        type: CrmEventType.LEAD_CONVERTED,
+        entityId: leadId,
+        entityType: 'lead',
+        organizationId,
+        userId,
+        timestamp: new Date().toISOString(),
+        data: {
+          name: `${lead.firstName} ${lead.lastName}`,
+          company: lead.company,
+          accountId: result.accountId,
+          contactId: result.contactId,
+          opportunityId: result.opportunityId,
+          accountName: convertDto.accountName || lead.company,
+          opportunityName: convertDto.opportunityName,
+        },
+      }).catch((error) => {
+        this.logger.error(`Failed to dispatch lead conversion integration event for lead ${leadId}:`, error);
+      });
 
       // Log successful conversion transaction
       await this.applicationLogService.logTransaction(

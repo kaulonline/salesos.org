@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Phone, Mail, Linkedin, Twitter, MoreVertical, Edit3, Trash2, Star, Shield
+  Phone, Mail, Linkedin, Twitter, MoreVertical, Edit3, Trash2, Star, Shield, ExternalLink
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { EnrichButton } from '../enrichment';
 import { AIEmailDraftButton } from '../ai';
+import { adminApi, IntegrationEntityMapping } from '../../api/admin';
 import {
   getRoleLabel, getRoleVariant, getSeniorityLabel, getBuyingPowerLabel, getInfluenceColor, calculateDaysSinceContact
 } from './types';
@@ -26,6 +27,13 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
   onEnriched,
 }) => {
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [externalMappings, setExternalMappings] = useState<IntegrationEntityMapping[]>([]);
+
+  useEffect(() => {
+    if (contact.id) {
+      adminApi.getIntegrationMappings('contact', contact.id).then(setExternalMappings).catch(() => {});
+    }
+  }, [contact.id]);
 
   const fullName = `${contact.firstName} ${contact.lastName}`;
   const initials = `${contact.firstName?.[0] || ''}${contact.lastName?.[0] || ''}`.toUpperCase();
@@ -117,6 +125,24 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
                 )}
               </div>
 
+              {/* External CRM Links */}
+              {externalMappings.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {externalMappings.map(mapping => (
+                    <a
+                      key={mapping.id}
+                      href={mapping.externalUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#F8F8F6] rounded-md text-xs font-medium text-[#666] hover:bg-[#EAD07D]/20 hover:text-[#1A1A1A] transition-colors"
+                    >
+                      <ExternalLink size={10} />
+                      <span className="capitalize">{mapping.provider}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
               {/* Contact Info Row */}
               <div className="flex flex-wrap gap-4 mt-3 text-sm">
                 {contact.email && (
@@ -162,13 +188,23 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
                   <Phone size={16} />
                 </a>
               )}
-              {contact.linkedinUrl && (
+              {contact.linkedinUrl ? (
                 <a
                   href={contact.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#666] hover:bg-[#0077B5] hover:text-white transition-colors"
-                  title="LinkedIn"
+                  title="LinkedIn Profile"
+                >
+                  <Linkedin size={16} />
+                </a>
+              ) : (
+                <a
+                  href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${contact.firstName} ${contact.lastName}${contact.account?.name ? ' ' + contact.account.name : ''}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-[#F8F8F6] flex items-center justify-center text-[#999] hover:bg-[#0077B5] hover:text-white transition-colors"
+                  title="Search on LinkedIn"
                 >
                   <Linkedin size={16} />
                 </a>

@@ -89,7 +89,7 @@ export const ResetPassword: React.FC = () => {
       {/* Close Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-50 w-11 h-11 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-[#1A1A1A] hover:bg-white transition-colors shadow-sm"
       >
         <X size={20} />
       </button>
@@ -97,7 +97,7 @@ export const ResetPassword: React.FC = () => {
       {/* Left Column - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 md:px-12 lg:px-20 relative z-10">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 mb-16 w-fit">
+        <Link to="/" className="flex items-center gap-2 mb-8 md:mb-16 w-fit">
           <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] flex items-center justify-center text-white">
             <Command size={18} />
           </div>
@@ -161,7 +161,7 @@ export const ResetPassword: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#666]"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-[#999] hover:text-[#666]"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -213,7 +213,7 @@ export const ResetPassword: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#666]"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-[#999] hover:text-[#666]"
                     >
                       {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>

@@ -11,6 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+
+# Test output
+coverage/
+playwright-report/
+test-results/
 
 # Backend API
 api/node_modules

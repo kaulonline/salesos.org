@@ -19,7 +19,7 @@ export const Careers: React.FC = () => {
         subtitle="Help us redefine how the world does business. We're hiring across all roles."
         narrow
       >
-      <div className="bg-[#1A1A1A] text-white rounded-[2rem] p-10 mb-16 text-center">
+      <div className="bg-[#1A1A1A] text-white rounded-[2rem] p-6 md:p-10 mb-16 text-center">
           <h3 className="text-2xl font-bold mb-4">Work with the best</h3>
           <p className="text-gray-400 mb-8 max-w-lg mx-auto">
               We offer competitive equity, comprehensive health benefits, and a remote-first culture that values output over hours.

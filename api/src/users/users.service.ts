@@ -306,6 +306,7 @@ export class UsersService {
     currentValue: number;
     quotaProgress: number;
     quotaPeriod: 'monthly' | 'quarterly' | 'yearly';
+    commissionRate: number;
     periodStart: string;
     periodEnd: string;
   }> {
@@ -318,6 +319,7 @@ export class UsersService {
     const settings = (user?.settings as any) || {};
     const salesQuota = settings.salesQuota ?? 100000; // Default $100k quota
     const quotaPeriod = settings.quotaPeriod ?? 'monthly';
+    const commissionRate = settings.commissionRate ?? 0.03; // Default 3%
 
     // Calculate period start/end based on quota period
     const now = new Date();
@@ -366,6 +368,7 @@ export class UsersService {
       currentValue,
       quotaProgress,
       quotaPeriod,
+      commissionRate,
       periodStart: periodStart.toISOString().split('T')[0],
       periodEnd: periodEnd.toISOString().split('T')[0],
     };

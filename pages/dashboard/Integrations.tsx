@@ -41,6 +41,7 @@ import {
   IntegrationType,
   IntegrationStatus,
 } from '../../src/api/integrations';
+import { adminApi, IntegrationSyncLog } from '../../src/api/admin';
 
 // Logo.dev API for fetching company logos
 const LOGO_DEV_PUBLIC_KEY = 'pk_W2MYKZXiSAS4WfncVJ8b1A';
@@ -187,6 +188,9 @@ export const IntegrationsPage: React.FC = () => {
     configuredAt?: string | null;
   }>({ isOpen: false, integration: null, isEditing: false });
 
+  // Integration sync logs (real data from database)
+  const [syncLogs, setSyncLogs] = useState<IntegrationSyncLog[]>([]);
+  const [syncLogsLoading, setSyncLogsLoading] = useState(false);
 
   // Handle OAuth redirect result
   useEffect(() => {
@@ -264,6 +268,17 @@ export const IntegrationsPage: React.FC = () => {
 
       setAvailableEmailIntegrations(emailIntegrations);
       setAvailableCalendarIntegrations(calendarIntegrations);
+
+      // Load sync logs
+      setSyncLogsLoading(true);
+      try {
+        const logsResult = await adminApi.getIntegrationSyncLogs({ limit: 20 });
+        setSyncLogs(logsResult.data || []);
+      } catch {
+        // Non-critical — sync logs may not be available for non-admin users
+      } finally {
+        setSyncLogsLoading(false);
+      }
     } catch (error) {
       console.error('Failed to load integrations:', error);
     } finally {
@@ -396,14 +411,14 @@ export const IntegrationsPage: React.FC = () => {
   };
 
   const handleSync = async (integration: Integration) => {
-    if (!integration.connectionId) return;
-
     setSyncing(integration.id);
     try {
-      if (integration.category === 'email') {
+      if (integration.connectionId && integration.category === 'email') {
         await emailIntegrationsApi.triggerSync(integration.connectionId);
-      } else if (integration.category === 'calendar') {
+      } else if (integration.connectionId && integration.category === 'calendar') {
         await calendarIntegrationsApi.triggerSync(integration.connectionId);
+      } else if (integration.integrationType) {
+        await thirdPartyIntegrationsApi.triggerSync(integration.integrationType);
       }
       setNotification({ type: 'success', message: 'Sync triggered successfully' });
       loadData();
@@ -418,7 +433,7 @@ export const IntegrationsPage: React.FC = () => {
   };
 
   const handleDisconnect = (integration: Integration) => {
-    if (!integration.connectionId) return;
+    if (!integration.connectionId && !integration.integrationType) return;
     setDisconnectModal({ isOpen: true, integration });
   };
 
@@ -457,16 +472,18 @@ export const IntegrationsPage: React.FC = () => {
 
   const confirmDisconnect = async () => {
     const integration = disconnectModal.integration;
-    if (!integration?.connectionId) return;
+    if (!integration?.connectionId && !integration?.integrationType) return;
 
     setDisconnecting(integration.id);
     setDisconnectModal({ isOpen: false, integration: null });
 
     try {
-      if (integration.category === 'email') {
+      if (integration.connectionId && integration.category === 'email') {
         await emailIntegrationsApi.deleteConnection(integration.connectionId);
-      } else if (integration.category === 'calendar') {
+      } else if (integration.connectionId && integration.category === 'calendar') {
         await calendarIntegrationsApi.deleteConnection(integration.connectionId);
+      } else if (integration.integrationType) {
+        await thirdPartyIntegrationsApi.disconnect(integration.integrationType);
       }
       setNotification({ type: 'success', message: `${integration.name} disconnected successfully` });
       loadData();
@@ -846,6 +863,86 @@ export const IntegrationsPage: React.FC = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Integration Activity Log — Real Sync Logs */}
+      {!isLoading && connectedCount > 0 && (
+        <Card className="mt-8 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
+                <Clock size={18} className="text-[#1A1A1A]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#1A1A1A]">Recent Activity</h3>
+                <p className="text-sm text-[#666]">Latest sync events from connected integrations</p>
+              </div>
+            </div>
+            <button
+              onClick={loadData}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#666] hover:text-[#1A1A1A] hover:bg-[#F8F8F6] rounded-xl transition-colors"
+            >
+              <RefreshCw size={14} />
+              Refresh
+            </button>
+          </div>
+          <div className="space-y-2">
+            {syncLogsLoading && (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                ))}
+              </div>
+            )}
+            {!syncLogsLoading && syncLogs.length > 0 && syncLogs.map(log => {
+              const providerLogo = STATIC_INTEGRATIONS.find(s => s.id === log.provider)?.logo;
+              const providerName = STATIC_INTEGRATIONS.find(s => s.id === log.provider)?.name || log.provider;
+              const eventLabel = log.eventType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              const timeAgo = formatLastSync(log.createdAt);
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-center gap-4 p-3 bg-[#F8F8F6] rounded-xl"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm overflow-hidden">
+                    {providerLogo ? (
+                      <img
+                        src={providerLogo}
+                        alt={providerName}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(providerName)}&background=EAD07D&color=1A1A1A&size=40`; }}
+                      />
+                    ) : (
+                      <Zap size={14} className="text-[#999]" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-[#1A1A1A]">{providerName}</span>
+                    <span className="text-xs text-[#666] ml-2">{eventLabel}</span>
+                    {log.durationMs != null && (
+                      <span className="text-xs text-[#999] ml-2">{log.durationMs}ms</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-[#999]">
+                    <Clock size={12} />
+                    {timeAgo}
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    log.status === 'success' ? 'bg-[#93C01F]' :
+                    log.status === 'failed' ? 'bg-red-400' :
+                    'bg-[#EAD07D]'
+                  }`} title={log.status === 'failed' ? log.errorMessage || 'Failed' : log.status} />
+                </div>
+              );
+            })}
+            {!syncLogsLoading && syncLogs.length === 0 && (
+              <div className="text-center py-6 text-[#666]">
+                <Clock size={32} className="mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No sync activity yet. Trigger a sync to see activity here.</p>
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* API Section */}

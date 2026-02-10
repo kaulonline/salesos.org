@@ -22,7 +22,7 @@ export const Blog: React.FC = () => {
       >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {POSTS.map((post, i) => (
-            <article key={i} className="bg-white rounded-[1.5rem] p-8 border border-black/5 hover:border-[#EAD07D] transition-all group shadow-soft hover:shadow-card cursor-pointer h-full flex flex-col">
+            <article key={i} className="bg-white rounded-[1.5rem] p-6 md:p-8 border border-black/5 hover:border-[#EAD07D] transition-all group shadow-soft hover:shadow-card cursor-pointer h-full flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <span className="text-xs font-bold uppercase tracking-wider text-[#EAD07D] bg-[#1A1A1A] px-2 py-1 rounded">{post.cat}</span>
                     <span className="text-sm text-[#888]">{post.date}</span>

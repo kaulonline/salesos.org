@@ -28,6 +28,9 @@ export class AdminService implements OnModuleInit {
   private agentOrchestrator: any = null;
   private _zoominfoService: any = null;
   private _snowflakeService: any = null;
+  private _lookerService: any = null;
+  private _oktaService: any = null;
+  private _auth0Service: any = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -69,6 +72,54 @@ export class AdminService implements OnModuleInit {
       }
     }
     return this._snowflakeService;
+  }
+
+  /**
+   * Lazily get the LookerService
+   */
+  private getLookerService(): any {
+    if (!this._lookerService) {
+      try {
+        const { LookerService } = require('../integrations/looker/looker.service');
+        this._lookerService = this.moduleRef.get(LookerService, { strict: false });
+      } catch (error) {
+        this.logger.warn(`LookerService not available: ${error}`);
+        return null;
+      }
+    }
+    return this._lookerService;
+  }
+
+  /**
+   * Lazily get the OktaService
+   */
+  private getOktaService(): any {
+    if (!this._oktaService) {
+      try {
+        const { OktaService } = require('../integrations/okta/okta.service');
+        this._oktaService = this.moduleRef.get(OktaService, { strict: false });
+      } catch (error) {
+        this.logger.warn(`OktaService not available: ${error}`);
+        return null;
+      }
+    }
+    return this._oktaService;
+  }
+
+  /**
+   * Lazily get the Auth0Service
+   */
+  private getAuth0Service(): any {
+    if (!this._auth0Service) {
+      try {
+        const { Auth0Service } = require('../integrations/auth0/auth0.service');
+        this._auth0Service = this.moduleRef.get(Auth0Service, { strict: false });
+      } catch (error) {
+        this.logger.warn(`Auth0Service not available: ${error}`);
+        return null;
+      }
+    }
+    return this._auth0Service;
   }
 
   /**
@@ -2595,5 +2646,182 @@ export class AdminService implements OnModuleInit {
     }
 
     this.logger.log('Initialized default agent configurations');
+  }
+
+  // ============================================
+  // LOOKER BI DASHBOARDS
+  // ============================================
+
+  async getLookerDashboards(organizationId: string): Promise<{ connected: boolean; dashboards: any[]; looks: any[] }> {
+    const looker = this.getLookerService();
+    if (!looker) return { connected: false, dashboards: [], looks: [] };
+
+    try {
+      looker.setOrganizationContext(organizationId);
+      const [dashboards, looks] = await Promise.all([
+        looker.getDashboards().catch(() => []),
+        looker.getLooks().catch(() => []),
+      ]);
+      return { connected: true, dashboards: dashboards || [], looks: looks || [] };
+    } catch {
+      return { connected: false, dashboards: [], looks: [] };
+    } finally {
+      looker.clearOrganizationContext();
+    }
+  }
+
+  // ============================================
+  // SSO USER DIRECTORY SYNC (Okta / Auth0)
+  // ============================================
+
+  async syncUsersFromSSO(organizationId: string, provider: 'okta' | 'auth0'): Promise<{ imported: number; updated: number; skipped: number; errors: string[] }> {
+    const result = { imported: 0, updated: 0, skipped: 0, errors: [] as string[] };
+
+    const service = provider === 'okta' ? this.getOktaService() : this.getAuth0Service();
+    if (!service) {
+      result.errors.push(`${provider} service not available`);
+      return result;
+    }
+
+    try {
+      service.setOrganizationContext(organizationId);
+      const users = provider === 'okta'
+        ? await service.getUsers(200)
+        : (await service.getUsers(0, 100))?.users || await service.getUsers(0, 100);
+
+      const userList = Array.isArray(users) ? users : (users?.users || []);
+
+      for (const ssoUser of userList) {
+        try {
+          const email = provider === 'okta'
+            ? ssoUser.profile?.email
+            : ssoUser.email;
+
+          if (!email) { result.skipped++; continue; }
+
+          const name = provider === 'okta'
+            ? `${ssoUser.profile?.firstName || ''} ${ssoUser.profile?.lastName || ''}`.trim()
+            : ssoUser.name || ssoUser.nickname || email;
+
+          // Check if user already exists
+          const existing = await this.prisma.user.findUnique({ where: { email } });
+
+          if (existing) {
+            // Update name if changed
+            if (existing.name !== name && name) {
+              await this.prisma.user.update({ where: { id: existing.id }, data: { name } });
+              result.updated++;
+            } else {
+              result.skipped++;
+            }
+          } else {
+            // Create new user and add to organization
+            const newUser = await this.prisma.user.create({
+              data: {
+                email,
+                name: name || email,
+                passwordHash: '', // SSO users authenticate via identity provider
+              },
+            });
+
+            await this.prisma.organizationMember.create({
+              data: {
+                organizationId,
+                userId: newUser.id,
+                role: 'MEMBER',
+              },
+            });
+
+            result.imported++;
+          }
+        } catch (err: any) {
+          result.errors.push(err.message);
+        }
+      }
+
+      return result;
+    } catch (err: any) {
+      result.errors.push(`Sync failed: ${err.message}`);
+      return result;
+    } finally {
+      service.clearOrganizationContext();
+    }
+  }
+
+  // ============================================
+  // INTEGRATION SYNC LOGS & MAPPINGS
+  // ============================================
+
+  async getIntegrationSyncLogs(params: {
+    organizationId?: string;
+    provider?: string;
+    eventType?: string;
+    status?: string;
+    entityType?: string;
+    entityId?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    const where: any = {};
+    if (params.organizationId) where.organizationId = params.organizationId;
+    if (params.provider) where.provider = params.provider;
+    if (params.eventType) where.eventType = params.eventType;
+    if (params.status) where.status = params.status;
+    if (params.entityType && params.entityId) {
+      where.entityType = params.entityType;
+      where.entityId = params.entityId;
+    }
+
+    const limit = Math.min(params.limit || 50, 200);
+    const offset = params.offset || 0;
+
+    const [logs, total] = await Promise.all([
+      this.prisma.integrationSyncLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.integrationSyncLog.count({ where }),
+    ]);
+
+    return { data: logs, total, limit, offset };
+  }
+
+  async getIntegrationEntityMappings(entityType: string, entityId: string, organizationId?: string) {
+    const where: any = { entityType, entityId };
+    if (organizationId) where.organizationId = organizationId;
+
+    return this.prisma.integrationEntityMapping.findMany({
+      where,
+      orderBy: { lastSyncedAt: 'desc' },
+    });
+  }
+
+  async getIntegrationAttachments(entityType: string, entityId: string, organizationId?: string) {
+    const where: any = { entityType, entityId };
+    if (organizationId) where.organizationId = organizationId;
+
+    return this.prisma.integrationAttachment.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getSSOUsers(organizationId: string, provider: 'okta' | 'auth0'): Promise<{ connected: boolean; users: any[] }> {
+    const service = provider === 'okta' ? this.getOktaService() : this.getAuth0Service();
+    if (!service) return { connected: false, users: [] };
+
+    try {
+      service.setOrganizationContext(organizationId);
+      const users = provider === 'okta'
+        ? await service.getUsers(200)
+        : await service.getUsers(0, 100);
+      return { connected: true, users: Array.isArray(users) ? users : (users?.users || []) };
+    } catch {
+      return { connected: false, users: [] };
+    } finally {
+      service.clearOrganizationContext();
+    }
   }
 }

@@ -315,7 +315,7 @@ export const Leads: React.FC = () => {
         <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
            <div>
               <Skeleton className="h-10 w-32 mb-8" />
-              <Skeleton className="h-12 w-96 rounded-full" />
+              <Skeleton className="h-12 w-full max-w-96 rounded-full" />
            </div>
            <div className="flex gap-2">
               <Skeleton className="h-10 w-28 rounded-full" />
@@ -353,7 +353,7 @@ export const Leads: React.FC = () => {
             <h1 className="text-4xl font-medium text-[#1A1A1A] mb-8">Leads</h1>
 
             {/* Stats Strip */}
-            <div className="flex items-center gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white/40 p-2 pr-6 rounded-full backdrop-blur-xl border border-white/40 shadow-sm w-fit">
                <Badge variant="dark" className="px-6 py-2 shadow-lg">
                  {stats?.totalLeads || leads.length} Total
                </Badge>
@@ -417,7 +417,7 @@ export const Leads: React.FC = () => {
                ))}
             </div>
 
-            <div className="flex gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap gap-3 w-full md:w-auto">
                <div className="w-full md:w-64">
                   <SearchInput
                     variant="filled"
@@ -491,6 +491,8 @@ export const Leads: React.FC = () => {
          </div>
 
          {/* Table Header */}
+         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+         <div className="min-w-[800px]">
          <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 text-xs font-bold text-[#999] uppercase tracking-wider mb-2">
              <div className="col-span-1 flex items-center justify-center">
                <button
@@ -610,6 +612,8 @@ export const Leads: React.FC = () => {
                </div>
             )}
          />
+         </div>
+         </div>
       </Card>
 
       <CreateLeadModal

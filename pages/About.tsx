@@ -49,7 +49,7 @@ export const About: React.FC = () => {
       subtitle="We're on a mission to fix the broken sales model. Less admin, more closing."
     >
       {/* Hero Image Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden mb-20 h-[450px]">
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-12 md:mb-20 h-[350px] md:h-[450px]">
         <img
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2000"
           alt="Team collaboration"
@@ -215,7 +215,7 @@ export const About: React.FC = () => {
       </div>
 
       {/* Join Our Team Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden bg-[#1A1A1A] p-12 md:p-16">
+      <div className="relative rounded-[2.5rem] overflow-hidden bg-[#1A1A1A] p-6 md:p-12 lg:p-16">
         {/* Ambient Background Blobs */}
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#EAD07D]/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#EAD07D]/10 rounded-full blur-[100px] pointer-events-none" />
@@ -245,8 +245,8 @@ export const About: React.FC = () => {
             We're hiring
           </div>
 
-          <h3 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Join our team and help <br />
+          <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            Join our team and help <span className="hidden sm:inline"><br /></span>
             <span className="text-[#EAD07D]">shape the future of sales.</span>
           </h3>
 

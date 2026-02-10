@@ -22,6 +22,8 @@ import {
   Download,
   X,
   Loader2,
+  RefreshCw,
+  LogIn,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -29,6 +31,7 @@ import { Avatar } from '../../components/ui/Avatar';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useAdminUsers } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
+import { adminApi } from '../../src/api/admin';
 import type { AdminUser } from '../../src/api/admin';
 
 const getRoleStyle = (role: string) => {
@@ -61,6 +64,11 @@ export const Team: React.FC = () => {
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'USER', message: '' });
   const [isInviting, setIsInviting] = useState(false);
 
+  // SSO sync state
+  const [ssoSyncing, setSSOSyncing] = useState<string | null>(null);
+  const [ssoResult, setSSOResult] = useState<{ provider: string; imported: number; updated: number; skipped: number; errors: string[] } | null>(null);
+  const [ssoConnected, setSSOConnected] = useState<{ okta: boolean; auth0: boolean }>({ okta: false, auth0: false });
+
   const {
     users,
     total,
@@ -72,6 +80,30 @@ export const Team: React.FC = () => {
   } = useAdminUsers({ search: searchQuery, role: roleFilter === 'all' ? undefined : roleFilter });
 
   const isAdmin = currentUser?.role === 'ADMIN';
+
+  // Check SSO provider connectivity on mount
+  useEffect(() => {
+    if (!isAdmin) return;
+    Promise.all([
+      adminApi.getSSOUsers('okta').then(r => r.connected).catch(() => false),
+      adminApi.getSSOUsers('auth0').then(r => r.connected).catch(() => false),
+    ]).then(([okta, auth0]) => setSSOConnected({ okta, auth0 }));
+  }, [isAdmin]);
+
+  const handleSSOSync = async (provider: 'okta' | 'auth0') => {
+    setSSOSyncing(provider);
+    setSSOResult(null);
+    try {
+      const result = await adminApi.syncUsersFromSSO(provider);
+      setSSOResult({ provider, ...result });
+      refetch();
+    } catch (err) {
+      console.error('SSO sync failed:', err);
+      setSSOResult({ provider, imported: 0, updated: 0, skipped: 0, errors: ['Sync failed. Check integration settings.'] });
+    } finally {
+      setSSOSyncing(null);
+    }
+  };
 
   // Filter users based on search and role
   const filteredMembers = users.filter(member => {
@@ -155,10 +187,10 @@ export const Team: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <Skeleton className="h-10 w-64 mb-2" />
         <Skeleton className="h-6 w-96 mb-8" />
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-3xl" />)}
         </div>
       </div>
@@ -421,7 +453,8 @@ export const Team: React.FC = () => {
         </div>
       ) : (
         <Card className="overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-[#FAFAF8] border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 text-xs font-bold text-[#999] uppercase tracking-wider">Member</th>
@@ -480,6 +513,72 @@ export const Team: React.FC = () => {
               })}
             </tbody>
           </table>
+          </div>
+        </Card>
+      )}
+
+      {/* SSO Sync Section */}
+      {isAdmin && (ssoConnected.okta || ssoConnected.auth0) && (
+        <Card className="mt-8 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
+              <LogIn size={18} className="text-[#EAD07D]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-[#1A1A1A]">SSO User Provisioning</h3>
+              <p className="text-sm text-[#666]">Sync team members from your identity provider</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {ssoConnected.okta && (
+              <button
+                onClick={() => handleSSOSync('okta')}
+                disabled={ssoSyncing !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#F8F8F6] rounded-xl text-sm font-medium text-[#1A1A1A] hover:bg-[#EAD07D]/20 transition-colors disabled:opacity-50"
+              >
+                {ssoSyncing === 'okta' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                Sync from Okta
+              </button>
+            )}
+            {ssoConnected.auth0 && (
+              <button
+                onClick={() => handleSSOSync('auth0')}
+                disabled={ssoSyncing !== null}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#F8F8F6] rounded-xl text-sm font-medium text-[#1A1A1A] hover:bg-[#EAD07D]/20 transition-colors disabled:opacity-50"
+              >
+                {ssoSyncing === 'auth0' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                Sync from Auth0
+              </button>
+            )}
+          </div>
+          {ssoResult && (
+            <div className="mt-4 p-4 bg-[#F8F8F6] rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle size={16} className="text-[#93C01F]" />
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  {ssoResult.provider === 'okta' ? 'Okta' : 'Auth0'} Sync Complete
+                </span>
+              </div>
+              <div className="flex gap-4 text-sm text-[#666]">
+                <span><strong className="text-[#1A1A1A]">{ssoResult.imported}</strong> imported</span>
+                <span><strong className="text-[#1A1A1A]">{ssoResult.updated}</strong> updated</span>
+                <span><strong className="text-[#1A1A1A]">{ssoResult.skipped}</strong> skipped</span>
+              </div>
+              {ssoResult.errors.length > 0 && (
+                <div className="mt-2 text-xs text-red-600">
+                  {ssoResult.errors.map((err, i) => <div key={i}>{err}</div>)}
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
 

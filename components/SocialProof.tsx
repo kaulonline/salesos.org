@@ -17,7 +17,7 @@ const COMPANY_LOGOS = [
 
 export const SocialProof: React.FC = () => {
   return (
-    <section className="py-24 bg-white border-y border-black/5 overflow-hidden">
+    <section className="py-12 md:py-24 bg-white border-y border-black/5 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header */}
@@ -80,7 +80,7 @@ export const SocialProof: React.FC = () => {
             {TESTIMONIALS.map((t, idx) => (
               <ScrollReveal key={idx} animation="fade-up" delay={idx * 150}>
                 <TiltCard
-                  className="bg-[#F2F1EA] p-10 rounded-[2rem] relative overflow-hidden hover:shadow-xl transition-all duration-500 h-full"
+                  className="bg-[#F2F1EA] p-6 md:p-10 rounded-[2rem] relative overflow-hidden hover:shadow-xl transition-all duration-500 h-full"
                   maxTilt={5}
                   scale={1.01}
                   glare

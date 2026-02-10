@@ -13,7 +13,7 @@ export const Enterprise: React.FC = () => {
       subtitle="Security, scale, and support for global organizations. Run your revenue engine with confidence."
     >
       {/* Hero Image Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden mb-20 h-[450px]">
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-12 md:mb-20 h-[350px] md:h-[450px]">
         <img
           src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000"
           alt="Enterprise Building"
@@ -21,13 +21,13 @@ export const Enterprise: React.FC = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A]/90 via-[#1A1A1A]/60 to-transparent" />
 
-        <div className="absolute inset-0 flex items-center p-10">
+        <div className="absolute inset-0 flex items-center p-6 md:p-10">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-wider mb-6">
               <Building2 size={14} />
               Built for Scale
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Trusted by Fortune 500</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Trusted by Fortune 500</h2>
             <p className="text-white/70 text-lg mb-8">
               Enterprise-grade infrastructure that scales with your business. 99.99% uptime guaranteed.
             </p>
@@ -51,7 +51,7 @@ export const Enterprise: React.FC = () => {
         </div>
 
         {/* Floating stats */}
-        <div className="absolute bottom-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5">
+        <div className="hidden md:block absolute bottom-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5">
           <div className="grid grid-cols-2 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-[#EAD07D]">99.99%</div>
@@ -67,7 +67,7 @@ export const Enterprise: React.FC = () => {
 
       {/* Security Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-         <div className="bg-[#1A1A1A] text-white rounded-[2rem] p-10 flex flex-col justify-center relative overflow-hidden">
+         <div className="bg-[#1A1A1A] text-white rounded-[2rem] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden">
             {/* Background image with overlay */}
             <img
               src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=1000"
@@ -110,11 +110,11 @@ export const Enterprise: React.FC = () => {
         <img
           src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=2000"
           alt="Support Team"
-          className="w-full h-[350px] object-cover"
+          className="w-full h-[300px] md:h-[350px] object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A]/90 to-[#1A1A1A]/70" />
 
-        <div className="absolute inset-0 flex items-center justify-between p-10">
+        <div className="absolute inset-0 flex items-center justify-between p-6 md:p-10">
           <div className="max-w-lg">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-wider mb-4">
               <Headphones size={14} />
@@ -161,7 +161,7 @@ export const Enterprise: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="text-center bg-white rounded-[2rem] p-12 border border-black/5 shadow-lg relative overflow-hidden">
+      <div className="text-center bg-white rounded-[2rem] p-6 md:p-12 border border-black/5 shadow-lg relative overflow-hidden">
          {/* Background pattern */}
          <div className="absolute inset-0 opacity-5">
            <div className="absolute top-0 right-0 w-64 h-64 bg-[#EAD07D] rounded-full blur-3xl" />

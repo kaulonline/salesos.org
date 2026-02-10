@@ -9,6 +9,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { SalesforceModule } from '../salesforce/salesforce.module';
 import { OutcomeBillingModule } from '../outcome-billing/outcome-billing.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { IntegrationEventsModule } from '../integrations/events/integration-events.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WorkflowsModule } from '../workflows/workflows.module';
     forwardRef(() => SalesforceModule),
     forwardRef(() => OutcomeBillingModule),
     WorkflowsModule,
+    IntegrationEventsModule,
   ],
   controllers: [OpportunitiesController, PipelineController],
   providers: [OpportunitiesService, PipelineIntelligenceService],

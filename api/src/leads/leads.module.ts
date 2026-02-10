@@ -5,6 +5,7 @@ import { PrismaModule } from '../database/prisma.module';
 import { AnthropicModule } from '../anthropic/anthropic.module';
 import { EnrichmentModule } from '../integrations/enrichment/enrichment.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { IntegrationEventsModule } from '../integrations/events/integration-events.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { WorkflowsModule } from '../workflows/workflows.module';
     AnthropicModule,
     forwardRef(() => EnrichmentModule),
     WorkflowsModule,
+    IntegrationEventsModule,
   ],
   controllers: [LeadsController],
   providers: [LeadsService],

@@ -5,6 +5,8 @@ import { validateForeignKeyId } from '../common/validators/foreign-key.validator
 import { EnrichmentService } from '../integrations/enrichment/enrichment.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
+import { IntegrationEventsService } from '../integrations/events/integration-events.service';
+import { CrmEventType } from '../integrations/events/crm-event.types';
 
 interface CreateAccountDto {
   name: string;
@@ -37,6 +39,7 @@ export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workflowsService: WorkflowsService,
+    private readonly integrationEventsService: IntegrationEventsService,
     @Optional() @Inject(forwardRef(() => EnrichmentService))
     private enrichmentService?: EnrichmentService,
   ) {}
@@ -90,6 +93,24 @@ export class AccountsService {
       { account, ownerId, organizationId }
     ).catch((error) => {
       this.logger.error(`Failed to process workflows for account ${account.id}:`, error);
+    });
+
+    // Dispatch integration events
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.ACCOUNT_CREATED,
+      entityId: account.id,
+      entityType: 'account',
+      organizationId,
+      userId: ownerId,
+      timestamp: new Date().toISOString(),
+      data: {
+        name: account.name,
+        type: account.type,
+        industry: account.industry,
+        website: account.website,
+      },
+    }).catch((error) => {
+      this.logger.error(`Failed to dispatch integration event for account ${account.id}:`, error);
     });
 
     return account;

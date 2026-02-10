@@ -16,7 +16,7 @@ export const Product: React.FC = () => {
       subtitle="Built for speed, designed for revenue. See how SalesOS powers the world's fastest growing sales teams."
     >
       {/* Hero Image Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden mb-24 h-[500px]">
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-12 md:mb-24 h-[350px] md:h-[500px]">
         <img
           src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=2000"
           alt="Sales Dashboard"
@@ -47,7 +47,7 @@ export const Product: React.FC = () => {
         </div>
 
         {/* Frosted CTA */}
-        <div className="absolute top-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-xs">
+        <div className="hidden md:block absolute top-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-xs">
           <h3 className="text-white font-bold text-lg mb-2">See it in action</h3>
           <p className="text-white/70 text-sm mb-4">Watch how top teams use SalesOS to crush their quotas.</p>
           <Button variant="secondary" size="sm">Watch Demo</Button>
@@ -55,7 +55,7 @@ export const Product: React.FC = () => {
       </div>
 
       {/* Pipeline Intelligence Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-32">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16 md:mb-32">
         <ScrollReveal animation="fade-right" className="order-2 md:order-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAD07D]/20 text-[#1A1A1A] text-xs font-bold uppercase tracking-wider mb-6">
             <BarChart3 size={14} />
@@ -106,7 +106,7 @@ export const Product: React.FC = () => {
       </div>
 
       {/* Automated Outreach Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-32">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16 md:mb-32">
         <div className="relative">
           <div className="rounded-[2rem] overflow-hidden shadow-2xl">
             <img
@@ -157,11 +157,11 @@ export const Product: React.FC = () => {
         <img
           src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=2000"
           alt="Team Collaboration"
-          className="w-full h-[400px] object-cover"
+          className="w-full h-[300px] md:h-[400px] object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-[#1A1A1A]/50 to-transparent" />
 
-        <div className="absolute bottom-0 left-0 right-0 p-10">
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-wider mb-4">
               <Users size={14} />
@@ -176,7 +176,7 @@ export const Product: React.FC = () => {
         </div>
 
         {/* Floating team avatars */}
-        <div className="absolute top-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
+        <div className="hidden md:block absolute top-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
           <div className="flex -space-x-3">
             {[1, 2, 3, 4, 5].map(i => (
               <img

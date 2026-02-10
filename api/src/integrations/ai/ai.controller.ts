@@ -337,19 +337,9 @@ export class AIController {
   @ApiResponse({ status: 503, description: 'No AI provider available' })
   async generateEmailDraft(@Body() body: EmailDraftDto) {
     try {
-      // Debug logging
-      console.log('[AI Email Draft] Received body:', JSON.stringify(body, null, 2));
-
       const { provider: preferredProvider, ...context } = body;
 
-      console.log('[AI Email Draft] Context after destructure:', JSON.stringify(context, null, 2));
-
       if (!context.recipientName || !context.recipientCompany || !context.purpose) {
-        console.log('[AI Email Draft] Validation failed:', {
-          recipientName: context.recipientName,
-          recipientCompany: context.recipientCompany,
-          purpose: context.purpose
-        });
         throw new HttpException(
           { success: false, message: 'recipientName, recipientCompany, and purpose are required' },
           HttpStatus.BAD_REQUEST,

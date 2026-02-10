@@ -49,20 +49,17 @@ export class AppController {
   }
 
   /**
-   * AI service health check - monitor circuit breaker and Azure OpenAI status
-   * Useful for debugging retry loops and rate limiting issues
+   * AI service health check - returns only operational status
+   * Internal details (failure counts, circuit state) are omitted to avoid
+   * exposing operational internals to unauthenticated callers.
    */
   @Get('health/ai')
   @SkipThrottle()
-  aiServiceHealth(): {
-    circuitBreaker: { state: string; consecutiveFailures: number; consecutiveSuccesses: number };
-    status: string;
-  } {
+  aiServiceHealth(): { status: string } {
     const circuitState = this.retryService.getCircuitState();
     const isHealthy = circuitState.state === 'CLOSED' || circuitState.state === 'HALF_OPEN';
-    
+
     return {
-      circuitBreaker: circuitState,
       status: isHealthy ? 'operational' : 'degraded',
     };
   }

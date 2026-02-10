@@ -50,16 +50,16 @@ export const WhySalesOS: React.FC = () => {
             return (
               <ScrollReveal key={item.id} animation="fade-up" delay={idx * 150}>
                 <TiltCard
-                  className="group p-10 rounded-[2.5rem] bg-[#F8F7F4] hover:bg-[#1A1A1A] hover:text-white transition-all duration-500 relative overflow-hidden h-full"
+                  className="group p-6 md:p-8 lg:p-10 rounded-[2.5rem] bg-[#F8F7F4] hover:bg-[#1A1A1A] hover:text-white transition-all duration-500 relative overflow-hidden h-full"
                   maxTilt={8}
                   scale={1.02}
                   glare
                   glareMaxOpacity={0.1}
                 >
-                  <div className="relative z-10 flex flex-col h-full justify-between min-h-[300px]">
+                  <div className="relative z-10 flex flex-col h-full justify-between min-h-0 md:min-h-[300px]">
                     <div>
                       {/* Animated Metric */}
-                      <div className="text-6xl font-light mb-8 tracking-tighter text-[#EAD07D] font-sans">
+                      <div className="text-4xl sm:text-5xl lg:text-6xl font-light mb-8 tracking-tighter text-[#EAD07D] font-sans">
                         {parsedMetric ? (
                           <AnimatedCounter
                             end={parsedMetric.value}

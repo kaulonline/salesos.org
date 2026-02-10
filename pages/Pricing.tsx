@@ -153,7 +153,7 @@ export const PricingPage: React.FC = () => {
                 <span className="text-sm font-semibold text-[#1A1A1A]">Outcome-Based Pricing</span>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight">
                 Pay When You{' '}
                 <span className="text-[#EAD07D]">Win</span>
               </h1>
@@ -196,7 +196,7 @@ export const PricingPage: React.FC = () => {
             </div>
 
             {/* Value Proposition Card */}
-            <div className="bg-[#1A1A1A] rounded-[2.5rem] p-8 md:p-12 text-center max-w-4xl mx-auto relative overflow-hidden">
+            <div className="bg-[#1A1A1A] rounded-[2.5rem] p-6 md:p-12 text-center max-w-4xl mx-auto relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#EAD07D]/10 blur-[80px] rounded-full" />
 
               <div className="relative">
@@ -210,9 +210,9 @@ export const PricingPage: React.FC = () => {
                 </h2>
 
                 <div className="flex items-center justify-center gap-2 mb-6">
-                  <span className="text-6xl md:text-8xl font-bold text-[#EAD07D]">2.5%</span>
+                  <span className="text-4xl sm:text-6xl md:text-8xl font-bold text-[#EAD07D]">2.5%</span>
                   <span className="text-xl text-white/60 text-left">
-                    of each<br />closed deal
+                    of each<span className="hidden sm:inline"><br /></span> closed deal
                   </span>
                 </div>
 
@@ -254,7 +254,7 @@ export const PricingPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white rounded-[2rem] p-8 md:p-10 shadow-lg border border-black/5 max-w-2xl mx-auto">
+            <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-lg border border-black/5 max-w-2xl mx-auto">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center">
                   <Calculator size={24} className="text-[#1A1A1A]" />

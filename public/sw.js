@@ -1,9 +1,9 @@
 // SalesOS Service Worker
 // Provides offline support and caching
 
-const CACHE_NAME = 'salesos-v14';
-const STATIC_CACHE = 'salesos-static-v14';
-const API_CACHE = 'salesos-api-v14';
+const CACHE_NAME = 'salesos-v15';
+const STATIC_CACHE = 'salesos-static-v15';
+const API_CACHE = 'salesos-api-v15';
 
 // Assets to cache on install
 const STATIC_ASSETS = [

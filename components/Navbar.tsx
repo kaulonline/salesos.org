@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-[#1A1A1A] p-2 rounded-full hover:bg-black/5 transition-colors"
+          className="md:hidden text-[#1A1A1A] p-2.5 rounded-full hover:bg-black/5 transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X /> : <Menu />}
@@ -89,7 +89,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Menu - Frosted Glass Overlay */}
       {mobileMenuOpen && (
-        <div className="absolute top-0 left-0 right-0 h-screen bg-[#F2F1EA]/95 backdrop-blur-xl z-[-1] pt-32 px-6 md:hidden flex flex-col gap-6 animate-in slide-in-from-top-5">
+        <div className="fixed top-0 left-0 right-0 h-screen bg-[#F2F1EA]/95 backdrop-blur-xl z-[-1] pt-32 px-6 md:hidden flex flex-col gap-6 animate-in slide-in-from-top-5 overflow-y-auto">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.label}
@@ -128,7 +128,7 @@ export const Navbar: React.FC = () => {
                 >
                   Log In
                 </Link>
-                <Button variant="primary" className="w-full text-lg py-4">Get Demo</Button>
+                <Button variant="primary" className="w-full text-lg py-4" onClick={() => setMobileMenuOpen(false)}>Get Demo</Button>
               </>
             )}
           </div>

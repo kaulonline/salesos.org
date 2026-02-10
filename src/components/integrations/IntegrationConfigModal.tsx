@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Key, Link, Settings, Loader2, ExternalLink, Eye, EyeOff, CheckCircle2, Wifi, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { aiApi } from '../../api/ai';
 import { enrichmentApi, EnrichmentProvider } from '../../api/enrichment';
+import { thirdPartyIntegrationsApi, IntegrationType } from '../../api/integrations';
 
 export type ConfigType = 'api_key' | 'webhook' | 'oauth' | 'multi_field';
 
@@ -352,15 +353,15 @@ export const IntegrationConfigModal: React.FC<IntegrationConfigModalProps> = ({
     }
   }, [isOpen, existingConfig, isEditing]);
 
-  // Check if this integration supports testing
-  const canTest = ['openai', 'anthropic', 'zoominfo', 'apollo', 'clearbit'].includes(integration.id);
+  // All integrations support testing via the generic test endpoint
+  const canTest = true;
 
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
 
     try {
-      // AI providers
+      // AI providers - use specialized endpoint for richer results
       if (integration.id === 'openai' || integration.id === 'anthropic') {
         const response = await aiApi.testProvider(integration.id as 'openai' | 'anthropic');
         setTestResult({
@@ -369,7 +370,7 @@ export const IntegrationConfigModal: React.FC<IntegrationConfigModalProps> = ({
           latencyMs: response.latencyMs,
         });
       }
-      // Enrichment providers
+      // Enrichment providers - use specialized endpoint for richer results
       else if (['zoominfo', 'apollo', 'clearbit'].includes(integration.id)) {
         const provider = integration.id as EnrichmentProvider;
         const response = await enrichmentApi.testProvider(provider);
@@ -377,6 +378,14 @@ export const IntegrationConfigModal: React.FC<IntegrationConfigModalProps> = ({
           success: response.success,
           message: response.message,
           latencyMs: response.latencyMs,
+        });
+      }
+      // All other integrations - use generic test endpoint
+      else {
+        const response = await thirdPartyIntegrationsApi.testConnection(integration.id as IntegrationType);
+        setTestResult({
+          success: response.success,
+          message: response.message,
         });
       }
     } catch (error: any) {

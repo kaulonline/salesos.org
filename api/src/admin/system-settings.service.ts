@@ -34,6 +34,15 @@ const DEFAULT_SETTINGS: Record<string, { value: any; description: string; catego
     description: 'Which CRM data sources are enabled and visible in the mode toggle',
     category: 'crm',
   },
+  'system.maintenanceMode': {
+    value: {
+      enabled: false,
+      message: "We're performing scheduled maintenance. We'll be back shortly.",
+      estimatedEnd: null,
+    },
+    description: 'Show maintenance page to public visitors',
+    category: 'system',
+  },
 };
 
 @Injectable()
@@ -225,6 +234,33 @@ export class SystemSettingsService {
       oracle: true,
       oracle_portal: true,
     });
+  }
+
+  /**
+   * Get maintenance mode configuration
+   */
+  async getMaintenanceMode(): Promise<{
+    enabled: boolean;
+    message: string;
+    estimatedEnd: string | null;
+  }> {
+    return this.get('system.maintenanceMode', {
+      enabled: false,
+      message: "We're performing scheduled maintenance. We'll be back shortly.",
+      estimatedEnd: null,
+    });
+  }
+
+  /**
+   * Set maintenance mode configuration
+   */
+  async setMaintenanceMode(
+    config: { enabled?: boolean; message?: string; estimatedEnd?: string | null },
+    updatedBy?: string,
+  ): Promise<void> {
+    const current = await this.getMaintenanceMode();
+    const updated = { ...current, ...config };
+    await this.set('system.maintenanceMode', updated, updatedBy);
   }
 
   /**

@@ -5,6 +5,8 @@ import { NotificationSchedulerService } from '../notifications/notification-sche
 import { OutcomeBillingService } from '../outcome-billing/outcome-billing.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { WorkflowTriggerType, WorkflowEntityType } from '../workflows/dto/workflow.dto';
+import { IntegrationEventsService } from '../integrations/events/integration-events.service';
+import { CrmEventType } from '../integrations/events/crm-event.types';
 import { Opportunity, OpportunityStage, Prisma } from '@prisma/client';
 import { validateForeignKeyId } from '../common/validators/foreign-key.validator';
 
@@ -58,6 +60,7 @@ export class OpportunitiesService {
     @Inject(forwardRef(() => OutcomeBillingService))
     private readonly outcomeBillingService: OutcomeBillingService,
     private readonly workflowsService: WorkflowsService,
+    private readonly integrationEventsService: IntegrationEventsService,
   ) {}
 
   // Create new opportunity
@@ -109,6 +112,25 @@ export class OpportunitiesService {
       { opportunity, ownerId, organizationId }
     ).catch((err) => {
       this.logger.error(`Failed to process workflows for opportunity ${opportunity.id}: ${err.message}`);
+    });
+
+    // Dispatch integration events
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.DEAL_CREATED,
+      entityId: opportunity.id,
+      entityType: 'opportunity',
+      organizationId,
+      userId: ownerId,
+      timestamp: new Date().toISOString(),
+      data: {
+        name: opportunity.name,
+        amount: opportunity.amount,
+        stage: opportunity.stage,
+        accountName: (opportunity as any).account?.name,
+        ownerName: (opportunity as any).owner?.name,
+      },
+    }).catch((err) => {
+      this.logger.error(`Failed to dispatch integration event for opportunity ${opportunity.id}: ${err.message}`);
     });
 
     return opportunity;
@@ -350,6 +372,25 @@ export class OpportunitiesService {
       ).catch((err) => {
         this.logger.error(`Failed to process stage change workflows for opportunity ${id}: ${err.message}`);
       });
+
+      // Dispatch integration event for stage change
+      this.integrationEventsService.dispatchCrmEvent(organizationId, {
+        type: CrmEventType.DEAL_STAGE_CHANGED,
+        entityId: id,
+        entityType: 'opportunity',
+        organizationId,
+        userId,
+        timestamp: new Date().toISOString(),
+        data: {
+          name: updated.name,
+          amount: updated.amount,
+          previousStage,
+          newStage: data.stage,
+          accountName: (updated as any).account?.name,
+        },
+      }).catch((err) => {
+        this.logger.error(`Failed to dispatch stage change integration event for opportunity ${id}: ${err.message}`);
+      });
     }
 
     return updated;
@@ -455,6 +496,24 @@ export class OpportunitiesService {
       },
     ).catch((err) => this.logger.error(`Failed to send Deal Won notification: ${err.message}`));
 
+    // Dispatch integration event for deal won
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.DEAL_WON,
+      entityId: id,
+      entityType: 'opportunity',
+      organizationId,
+      userId,
+      timestamp: new Date().toISOString(),
+      data: {
+        name: opportunity.name,
+        amount: opportunity.amount,
+        accountName: opportunity.account.name,
+        ownerName: (opportunity as any).owner?.name,
+      },
+    }).catch((err) => {
+      this.logger.error(`Failed to dispatch deal won integration event for opportunity ${id}: ${err.message}`);
+    });
+
     return updated;
   }
 
@@ -511,6 +570,24 @@ export class OpportunitiesService {
         },
       },
     ).catch((err) => this.logger.error(`Failed to send Deal Lost notification: ${err.message}`));
+
+    // Dispatch integration event for deal lost
+    this.integrationEventsService.dispatchCrmEvent(organizationId, {
+      type: CrmEventType.DEAL_LOST,
+      entityId: id,
+      entityType: 'opportunity',
+      organizationId,
+      userId,
+      timestamp: new Date().toISOString(),
+      data: {
+        name: opportunity.name,
+        amount: opportunity.amount,
+        lostReason: reason,
+        accountName: opportunity.account.name,
+      },
+    }).catch((err) => {
+      this.logger.error(`Failed to dispatch deal lost integration event for opportunity ${id}: ${err.message}`);
+    });
 
     return updated;
   }

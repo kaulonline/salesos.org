@@ -90,18 +90,14 @@ export default defineConfig(({ mode }) => {
         plugins: [tailwindcss, autoprefixer],
       },
     },
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
     },
     build: {
-      // Generate source maps for error tracking (Sentry)
-      sourcemap: true,
+      // Generate source maps for error tracking (Sentry) but don't expose them in the bundle
+      sourcemap: 'hidden',
       rollupOptions: {
         output: {
           // Chunk splitting for better caching

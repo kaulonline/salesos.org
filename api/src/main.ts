@@ -9,6 +9,25 @@ import * as bodyParser from 'body-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import helmet from 'helmet';
+import * as Sentry from '@sentry/node';
+
+// Initialize Sentry before anything else
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    beforeSend(event) {
+      // Scrub sensitive data from error reports
+      if (event.request?.headers) {
+        delete event.request.headers['authorization'];
+        delete event.request.headers['cookie'];
+        delete event.request.headers['x-csrf-token'];
+      }
+      return event;
+    },
+  });
+}
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -22,8 +41,13 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // Serve static files from uploads directory (for avatars, etc.)
+  // SECURITY: Only public assets (avatars, logos) should go here.
+  // Sensitive documents should be served through an authenticated controller.
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
+    extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'pdf'],
+    index: false,
+    dotfiles: 'deny',
   });
 
   // Get the ApplicationLogService for global filters/interceptors
@@ -51,17 +75,18 @@ async function bootstrap() {
     },
   }));
 
-  // Body size limits - reduced from 150mb for security (DoS prevention)
-  // Use verify callback to preserve raw body for webhook signature verification (Zoom, Stripe, etc.)
+  // Webhook routes need raw body for signature verification (Stripe, Zoom)
+  const webhookPaths = ['/api/webhooks', '/api/meetings/zoom/webhook'];
   app.use(bodyParser.json({
-    limit: '50mb', // Reduced from 150mb - still allows large file uploads
+    limit: '10mb',
     verify: (req: any, res, buf) => {
-      // Preserve raw body for webhook signature verification
-      // This is required for Zoom, Stripe, and other services that sign payloads
-      req.rawBody = buf;
+      // Only preserve raw body on webhook paths that need signature verification
+      if (webhookPaths.some(p => req.originalUrl?.startsWith(p))) {
+        req.rawBody = buf;
+      }
     },
   }));
-  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
   app.setGlobalPrefix('api');
 
@@ -95,6 +120,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
@@ -106,9 +132,11 @@ async function bootstrap() {
   // Global interceptor for request/response logging
   app.useGlobalInterceptors(new RequestLoggingInterceptor(applicationLogService));
 
+  app.enableShutdownHooks();
+
   const port = config.get<number>('PORT', 4000);
   await app.listen(port);
-  
+
   logger.log(`Application is running on: http://localhost:${port}/api`);
   logger.log('Global exception filter and request logging interceptor enabled');
 }

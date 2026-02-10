@@ -25,7 +25,7 @@ export const CTA: React.FC = () => {
       <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-[#EAD07D]/10 blur-[100px] rounded-full animate-blob pointer-events-none" style={{ animationDelay: '2s' }} />
 
       {/* Content */}
-      <div className="relative z-10 py-32">
+      <div className="relative z-10 py-16 md:py-24 lg:py-32">
         <div className="max-w-4xl mx-auto px-6 text-center">
           {/* Frosted Badge */}
           <ScrollReveal animation="fade-up">
@@ -36,8 +36,8 @@ export const CTA: React.FC = () => {
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={100}>
-            <h2 className="text-4xl md:text-7xl font-bold mb-8 tracking-tight text-white">
-              Ready to scale your <br />
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-8 tracking-tight text-white">
+              Ready to scale your <span className="hidden sm:inline"><br /></span>
               <span className="text-[#EAD07D]">Revenue Engine?</span>
             </h2>
           </ScrollReveal>

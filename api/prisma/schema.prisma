@@ -3155,6 +3155,11 @@ model Organization {
   approvalWorkflows  ApprovalWorkflow[]  @relation("OrganizationApprovalWorkflows")
   approvalRequests   ApprovalRequest[]   @relation("OrganizationApprovalRequests")
 
+  // Integration persistence
+  integrationSyncLogs        IntegrationSyncLog[]        @relation("OrganizationSyncLogs")
+  integrationEntityMappings  IntegrationEntityMapping[]   @relation("OrganizationEntityMappings")
+  integrationAttachments     IntegrationAttachment[]      @relation("OrganizationIntegrationAttachments")
+
   @@index([status])
   @@index([domain])
   @@index([slug])
@@ -8345,4 +8350,98 @@ model ApprovalDecision {
   @@index([stepId])
   @@index([approverId])
   @@map("approval_decisions")
+}
+
+// ──────────────────────────────────────
+// Integration Data Persistence Models
+// ──────────────────────────────────────
+
+model IntegrationSyncLog {
+  id             String   @id @default(cuid())
+  organizationId String
+
+  // What happened
+  provider       String   // slack, hubspot, zapier, etc.
+  eventType      String   // LEAD_CREATED, DEAL_WON, etc.
+  entityType     String   // lead, contact, opportunity, etc.
+  entityId       String   // CRM record ID
+
+  // Result
+  status         String   @default("pending") // pending, success, failed
+  externalId     String?  // ID returned by external API (if applicable)
+  responseData   Json?    // Truncated response for debugging
+  errorMessage   String?
+  durationMs     Int?     // How long the dispatch took
+
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation("OrganizationSyncLogs", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, provider])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("integration_sync_logs")
+}
+
+model IntegrationEntityMapping {
+  id             String   @id @default(cuid())
+  organizationId String
+
+  // SalesOS side
+  entityType     String   // lead, contact, account, opportunity, order, quote
+  entityId       String   // CRM record ID
+
+  // External side
+  provider       String   // hubspot, marketo, intercom, quickbooks, xero, etc.
+  externalId     String   // ID in the external system
+  externalUrl    String?  // Deep link to the record in the external system
+
+  // Sync metadata
+  lastSyncedAt   DateTime @default(now())
+  syncDirection  String   @default("outbound") // outbound, inbound, bidirectional
+  metadata       Json?    // Provider-specific metadata
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation("OrganizationEntityMappings", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // One mapping per entity per provider
+  @@unique([organizationId, entityType, entityId, provider])
+  @@index([organizationId, provider])
+  @@index([provider, externalId])
+  @@index([entityType, entityId])
+  @@map("integration_entity_mappings")
+}
+
+model IntegrationAttachment {
+  id             String   @id @default(cuid())
+  organizationId String
+
+  // What entity this file belongs to
+  entityType     String   // opportunity, quote, order, account, lead
+  entityId       String   // CRM record ID
+
+  // File info
+  provider       String   // dropbox, gdrive, microsoft365
+  externalId     String?  // File/folder ID in the provider
+  fileName       String
+  fileUrl        String?  // Share/access URL
+  fileType       String?  // folder, document, spreadsheet, etc.
+  fileSizeBytes  BigInt?
+
+  // Context
+  eventType      String?  // What CRM event triggered this (DEAL_WON, QUOTE_SENT, etc.)
+
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation("OrganizationIntegrationAttachments", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([provider])
+  @@map("integration_attachments")
 }

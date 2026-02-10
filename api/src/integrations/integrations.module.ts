@@ -45,6 +45,8 @@ import { Auth0Module } from './auth0/auth0.module';
 import { OpenAIIntegrationModule } from './openai/openai.module';
 import { AnthropicIntegrationModule } from './anthropic/anthropic.module';
 import { AIModule } from './ai/ai.module';
+// Events
+import { IntegrationEventsModule } from './events/integration-events.module';
 // Controller
 import { IntegrationsController } from './integrations.controller';
 
@@ -96,6 +98,8 @@ import { IntegrationsController } from './integrations.controller';
     OpenAIIntegrationModule,
     AnthropicIntegrationModule,
     AIModule,
+    // Events
+    IntegrationEventsModule,
   ],
   controllers: [IntegrationsController],
   exports: [
@@ -144,6 +148,8 @@ import { IntegrationsController } from './integrations.controller';
     OpenAIIntegrationModule,
     AnthropicIntegrationModule,
     AIModule,
+    // Events
+    IntegrationEventsModule,
   ],
 })
 export class IntegrationsModule {}

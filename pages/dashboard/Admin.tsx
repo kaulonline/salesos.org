@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Edit, Eye, Copy, AlertTriangle, Crown, Star, Sparkles,
   ToggleLeft, ToggleRight, ChevronDown, X, Loader2, Check, Filter,
   Download, Upload, Calendar, Mail, UserPlus, ArrowUpRight, ArrowDownRight,
-  BarChart3, PieChart, FileText, Lock, Bell, Target, Receipt
+  BarChart3, PieChart, FileText, Lock, Bell, Target, Receipt, Wrench
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -41,6 +41,8 @@ import organizationsApi, { Organization, OrganizationMember, OrganizationCode } 
 import accessRequestsApi from '../../src/api/access-requests';
 import type { AccessRequest, AccessRequestStatus, AccessRequestStats } from '../../src/types/access-request';
 import { DatabaseBackups } from '../../src/components/admin/DatabaseBackups';
+import { adminApi } from '../../src/api/admin';
+import type { MaintenanceStatus } from '../../src/api/admin';
 
 type TabType = 'overview' | 'users' | 'access-requests' | 'organizations' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
 type BillingSubTab = 'dashboard' | 'pricing-plans' | 'events' | 'invoices';
@@ -203,6 +205,15 @@ export const Admin: React.FC = () => {
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
+
+  // Maintenance mode state
+  const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceStatus>({
+    enabled: false,
+    message: "We're performing scheduled maintenance. We'll be back shortly.",
+    estimatedEnd: null,
+  });
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintenanceSaving, setMaintenanceSaving] = useState(false);
 
   // Confirmation modal states
   const [confirmModal, setConfirmModal] = useState<{
@@ -635,10 +646,16 @@ export const Admin: React.FC = () => {
     }
   }, [searchQuery, selectedRole, selectedStatus, usersPage]);
 
-  // Fetch OAuth config when Settings tab is active
+  // Fetch OAuth config and maintenance status when Settings tab is active
   useEffect(() => {
     if (activeTab === 'settings') {
       fetchOAuthConfig();
+      // Load maintenance mode config
+      setMaintenanceLoading(true);
+      adminApi.getMaintenanceStatus()
+        .then(status => setMaintenanceConfig(status))
+        .catch(() => {})
+        .finally(() => setMaintenanceLoading(false));
     }
   }, [activeTab]);
 
@@ -1536,7 +1553,8 @@ export const Admin: React.FC = () => {
                 <p className="text-sm text-[#999] mt-1">Requests will appear here when users submit the form</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[800px]">
                 <thead>
                   <tr className="border-b border-[#F2F1EA]">
                     <th className="px-6 py-4 text-left font-medium text-[#666]">Contact</th>
@@ -1667,6 +1685,7 @@ export const Admin: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </Card>
         </div>
@@ -2839,6 +2858,95 @@ export const Admin: React.FC = () => {
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
+          {/* Maintenance Mode Card */}
+          <Card className="p-4 sm:p-6 border-2 border-[#EAD07D]/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 sm:mb-4">
+              <h3 className="font-bold text-[#1A1A1A] flex items-center gap-2 text-sm sm:text-base">
+                <Wrench size={18} className="text-[#EAD07D] shrink-0" />
+                Maintenance Mode
+              </h3>
+              {maintenanceConfig.enabled ? (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold w-fit">
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  Active
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-[#93C01F]/20 text-[#93C01F] rounded-full text-xs font-semibold w-fit">
+                  <span className="w-2 h-2 rounded-full bg-[#93C01F] shrink-0" />
+                  Inactive
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#999] mb-3 sm:mb-4">
+              When enabled, public pages show a maintenance notice. Dashboard, admin, and auth routes are not affected.
+            </p>
+
+            {maintenanceLoading ? (
+              <Skeleton className="h-32 rounded-xl" />
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between gap-3 p-3 bg-[#F8F8F6] rounded-xl">
+                  <div className="min-w-0">
+                    <p className="font-medium text-[#1A1A1A] text-sm">Enable Maintenance Mode</p>
+                    <p className="text-xs text-[#666] hidden sm:block">Block public access to the site</p>
+                  </div>
+                  <button
+                    onClick={() => setMaintenanceConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    className="text-[#1A1A1A] shrink-0"
+                  >
+                    {maintenanceConfig.enabled ? <ToggleRight size={32} className="text-[#EAD07D]" /> : <ToggleLeft size={32} className="text-[#999]" />}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">Message</label>
+                  <textarea
+                    value={maintenanceConfig.message}
+                    onChange={e => setMaintenanceConfig(prev => ({ ...prev, message: e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 sm:px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm resize-none"
+                    placeholder="Maintenance message shown to visitors..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">Estimated End Time</label>
+                  <input
+                    type="datetime-local"
+                    value={maintenanceConfig.estimatedEnd ? maintenanceConfig.estimatedEnd.slice(0, 16) : ''}
+                    onChange={e => setMaintenanceConfig(prev => ({
+                      ...prev,
+                      estimatedEnd: e.target.value ? new Date(e.target.value).toISOString() : null,
+                    }))}
+                    className="w-full px-3 sm:px-4 py-2.5 rounded-xl bg-[#F8F8F6] border-transparent focus:bg-white focus:ring-1 focus:ring-[#EAD07D] outline-none text-sm appearance-none"
+                  />
+                </div>
+
+                <button
+                  onClick={async () => {
+                    setMaintenanceSaving(true);
+                    try {
+                      await adminApi.updateMaintenanceMode(maintenanceConfig);
+                      showToast(
+                        maintenanceConfig.enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled',
+                        'success'
+                      );
+                    } catch {
+                      showToast('Failed to update maintenance mode', 'error');
+                    } finally {
+                      setMaintenanceSaving(false);
+                    }
+                  }}
+                  disabled={maintenanceSaving}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {maintenanceSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  Save Changes
+                </button>
+              </div>
+            )}
+          </Card>
+
           {configsLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -3814,7 +3922,7 @@ export const Admin: React.FC = () => {
               </div>
 
               {/* Pricing */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Monthly (cents)</label>
                   <input
@@ -4590,7 +4698,7 @@ export const Admin: React.FC = () => {
               {/* Generate New Code */}
               <div className="bg-[#F8F8F6] rounded-xl p-4 mb-6">
                 <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">Generate New Code</h3>
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-xs font-medium text-[#666] mb-1">Max Uses</label>
                     <input

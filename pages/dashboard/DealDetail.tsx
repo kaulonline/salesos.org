@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Brain, AlertTriangle, Lightbulb, Shield, Sparkles, ExternalLink, FileText, Link2 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useDeal, useDeals, useOpportunityContacts, useContacts } from '../../src/hooks';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../../src/components/deals';
 import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai';
 import { SplitManager } from '../../components/splits';
+import { adminApi, IntegrationEntityMapping, IntegrationAttachment } from '../../src/api/admin';
 import type { OpportunityStage } from '../../src/types';
 
 export const DealDetail: React.FC = () => {
@@ -56,6 +57,16 @@ export const DealDetail: React.FC = () => {
   const [showCloseWonModal, setShowCloseWonModal] = useState(false);
   const [showCloseLostModal, setShowCloseLostModal] = useState(false);
   const [lostReason, setLostReason] = useState('');
+
+  // Integration external links & attachments
+  const [externalMappings, setExternalMappings] = useState<IntegrationEntityMapping[]>([]);
+  const [externalAttachments, setExternalAttachments] = useState<IntegrationAttachment[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    adminApi.getIntegrationMappings('opportunity', id).then(setExternalMappings).catch(() => {});
+    adminApi.getIntegrationAttachments('opportunity', id).then(setExternalAttachments).catch(() => {});
+  }, [id]);
 
   // Edit modal state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -246,6 +257,129 @@ export const DealDetail: React.FC = () => {
             analyzingDeal={analyzingDeal}
             stageUpdating={stageUpdating}
           />
+
+          {/* AI Auto-Analysis Insights (shown when backend auto-analyzed) */}
+          {(() => {
+            const aiAnalysis = (deal as any).metadata?.aiAnalysis;
+            const riskFactors = (deal as any).riskFactors || [];
+            const recActions = (deal as any).recommendedActions || [];
+            const aiWinProb = (deal as any).winProbability;
+            if (!aiAnalysis && riskFactors.length === 0 && recActions.length === 0) return null;
+            return (
+              <div className="bg-white rounded-2xl p-5 mb-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Brain size={18} className="text-[#EAD07D]" />
+                  <h3 className="text-sm font-semibold text-[#1A1A1A]">AI Deal Intelligence</h3>
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-[#EAD07D]/20 rounded-full text-[10px] font-medium text-[#1A1A1A]">
+                    <Sparkles size={10} />
+                    Auto-Analyzed
+                  </span>
+                  {aiAnalysis?.provider && (
+                    <span className="text-[10px] text-[#999] ml-auto">
+                      {aiAnalysis.provider === 'anthropic' ? 'Claude' : 'OpenAI'} &middot; {aiAnalysis.analyzedAt ? new Date(aiAnalysis.analyzedAt).toLocaleDateString() : ''}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Win Probability */}
+                  {aiWinProb != null && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Shield size={14} className={aiWinProb >= 0.6 ? 'text-[#93C01F]' : aiWinProb >= 0.3 ? 'text-[#EAD07D]' : 'text-red-400'} />
+                        <span className="text-xs font-medium text-[#1A1A1A]">Win Probability</span>
+                      </div>
+                      <div className="text-3xl font-light text-[#1A1A1A]">{Math.round(aiWinProb * 100)}%</div>
+                      <div className="h-1.5 bg-[#F0EBD8] rounded-full mt-2 overflow-hidden">
+                        <div className={`h-full rounded-full ${aiWinProb >= 0.6 ? 'bg-[#93C01F]' : aiWinProb >= 0.3 ? 'bg-[#EAD07D]' : 'bg-red-400'}`} style={{ width: `${aiWinProb * 100}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  {/* Risk Factors */}
+                  {riskFactors.length > 0 && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <AlertTriangle size={14} className="text-orange-400" />
+                        <span className="text-xs font-medium text-[#1A1A1A]">Risk Factors</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {riskFactors.slice(0, 4).map((r: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-[#666]">
+                            <span className="w-1 h-1 rounded-full bg-orange-400 mt-1.5 shrink-0" />
+                            {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* Recommended Actions */}
+                  {recActions.length > 0 && (
+                    <div className="bg-[#F8F8F6] rounded-xl p-4">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Lightbulb size={14} className="text-[#EAD07D]" />
+                        <span className="text-xs font-medium text-[#1A1A1A]">Recommended Actions</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {recActions.slice(0, 4).map((a: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-[#666]">
+                            <span className="w-4 h-4 rounded-full bg-[#EAD07D] flex items-center justify-center text-[10px] font-bold text-[#1A1A1A] shrink-0">{i + 1}</span>
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* External Integration Links & Attachments */}
+          {(externalMappings.length > 0 || externalAttachments.length > 0) && (
+            <div className="bg-white rounded-2xl p-5 mb-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Link2 size={18} className="text-[#EAD07D]" />
+                <h3 className="text-sm font-semibold text-[#1A1A1A]">External Integrations</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {externalMappings.map(mapping => (
+                  <a
+                    key={mapping.id}
+                    href={mapping.externalUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl hover:bg-[#F0EBD8] transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                      <ExternalLink size={14} className="text-[#666] group-hover:text-[#1A1A1A]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-[#1A1A1A] capitalize">{mapping.provider}</div>
+                      <div className="text-xs text-[#999] truncate">ID: {mapping.externalId}</div>
+                    </div>
+                    <span className="text-xs text-[#999]">{new Date(mapping.lastSyncedAt).toLocaleDateString()}</span>
+                  </a>
+                ))}
+                {externalAttachments.map(att => (
+                  <a
+                    key={att.id}
+                    href={att.fileUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-[#F8F8F6] rounded-xl hover:bg-[#F0EBD8] transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                      <FileText size={14} className="text-[#666] group-hover:text-[#1A1A1A]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-[#1A1A1A]">{att.fileName}</div>
+                      <div className="text-xs text-[#999] capitalize">{att.provider} &middot; {att.fileType || 'file'}</div>
+                    </div>
+                    <span className="text-xs text-[#999]">{new Date(att.createdAt).toLocaleDateString()}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Section: Accordions + Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

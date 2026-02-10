@@ -9,6 +9,7 @@ import { SalesOSEmailService } from '../email/salesos-email.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { CsrfService } from './csrf.service';
+import { CacheService } from '../cache/cache.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -31,6 +32,7 @@ export class AuthService {
         private organizationsService: OrganizationsService,
         private tokenBlacklistService: TokenBlacklistService,
         private csrfService: CsrfService,
+        private cacheService: CacheService,
     ) {
         this.appUrl = this.configService.get<string>('APP_URL') || 'https://engage.iriseller.com';
         // SECURITY: No hardcoded API key fallback - require env variable
@@ -164,11 +166,26 @@ export class AuthService {
         }
     }
 
+    private static readonly MAX_LOGIN_ATTEMPTS = 10;
+    private static readonly LOCKOUT_DURATION_SECONDS = 900; // 15 minutes
+
     async validateUser(email: string, pass: string): Promise<any> {
+        // Check account lockout
+        const lockoutKey = `auth:lockout:${email.toLowerCase()}`;
+        const attemptsKey = `auth:attempts:${email.toLowerCase()}`;
+        const lockedUntil = await this.cacheService.get<number>(lockoutKey);
+        if (lockedUntil && Date.now() < lockedUntil) {
+            this.logger.warn(`Login attempt for locked account: ${this.hashEmailForLogging(email)}`);
+            throw new UnauthorizedException('Account temporarily locked due to too many failed attempts. Try again later.');
+        }
+
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (user && user.passwordHash) {
             const isMatch = await bcrypt.compare(pass, user.passwordHash);
             if (isMatch) {
+                // Clear failed attempts on successful login
+                await this.cacheService.set(attemptsKey, 0, AuthService.LOCKOUT_DURATION_SECONDS);
+
                 // Log successful authentication
                 await this.applicationLogService.info('AuthService.validateUser', `User authenticated: ${email}`, {
                     category: LogCategory.AUTH,
@@ -177,26 +194,35 @@ export class AuthService {
                     entityId: user.id,
                     tags: ['login', 'auth-success'],
                 });
-                
+
                 // Update last login time
                 await this.prisma.user.update({
                     where: { id: user.id },
                     data: { lastLoginAt: new Date() },
                 });
-                
+
                 const { passwordHash, ...result } = user;
                 return result;
             }
         }
-        
+
+        // Track failed attempts and lock if threshold exceeded
+        const attempts = ((await this.cacheService.get<number>(attemptsKey)) || 0) + 1;
+        await this.cacheService.set(attemptsKey, attempts, AuthService.LOCKOUT_DURATION_SECONDS);
+        if (attempts >= AuthService.MAX_LOGIN_ATTEMPTS) {
+            const lockUntil = Date.now() + AuthService.LOCKOUT_DURATION_SECONDS * 1000;
+            await this.cacheService.set(lockoutKey, lockUntil, AuthService.LOCKOUT_DURATION_SECONDS);
+            this.logger.warn(`Account locked after ${attempts} failed attempts: ${this.hashEmailForLogging(email)}`);
+        }
+
         // Log failed authentication attempt (without PII for security)
         await this.applicationLogService.warn('AuthService.validateUser', 'Failed login attempt', {
             category: LogCategory.AUTH,
             // SECURITY: Don't log email addresses to prevent enumeration via logs
-            metadata: { emailHash: this.hashEmailForLogging(email) },
+            metadata: { emailHash: this.hashEmailForLogging(email), attempts },
             tags: ['login', 'auth-failed'],
         });
-        
+
         return null;
     }
 

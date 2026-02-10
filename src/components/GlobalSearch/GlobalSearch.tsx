@@ -14,6 +14,13 @@ import {
   Package,
   Megaphone,
   CheckSquare,
+  Calendar,
+  FileText,
+  ShoppingCart,
+  Handshake,
+  Swords,
+  HardDrive,
+  Map,
 } from 'lucide-react';
 import { leadsApi } from '../../api/leads';
 import { contactsApi } from '../../api/contacts';
@@ -22,12 +29,32 @@ import { opportunitiesApi } from '../../api/opportunities';
 import { productsApi } from '../../api/products';
 import { campaignsApi } from '../../api/campaigns';
 import { tasksApi } from '../../api/tasks';
-import type { Lead, Contact, Account, Opportunity, Product, Campaign, Task } from '../../types';
+import { meetingsApi } from '../../api/meetings';
+import { quotesApi } from '../../api/quotes';
+import { ordersApi } from '../../api/orders';
+import { partnersApi } from '../../api/partners';
+import { competitorsApi } from '../../api/competitors';
+import { assetsApi } from '../../api/assets';
+import { territoriesApi } from '../../api/territories';
+import type { Lead, Contact, Account, Opportunity, Task } from '../../types';
+import type { Product } from '../../api/products';
+import type { Campaign } from '../../types/campaign';
+import type { Meeting } from '../../types/meeting';
+import type { Quote } from '../../types/quote';
+import type { Order } from '../../types/order';
+import type { Partner } from '../../types/partner';
+import type { Competitor } from '../../types/competitor';
+import type { Asset } from '../../types/asset';
+import type { Territory } from '../../types/territory';
 import { logger } from '../../lib/logger';
+
+type SearchResultType =
+  | 'lead' | 'contact' | 'account' | 'opportunity' | 'product' | 'campaign' | 'task'
+  | 'meeting' | 'quote' | 'order' | 'partner' | 'competitor' | 'asset' | 'territory';
 
 interface SearchResult {
   id: string;
-  type: 'lead' | 'contact' | 'account' | 'opportunity' | 'product' | 'campaign' | 'task';
+  type: SearchResultType;
   title: string;
   subtitle: string;
   meta?: string;
@@ -39,7 +66,7 @@ interface GlobalSearchProps {
   onClose: () => void;
 }
 
-const RESULT_ICONS = {
+const RESULT_ICONS: Record<SearchResultType, React.ElementType> = {
   lead: User,
   contact: Users,
   account: Building2,
@@ -47,9 +74,16 @@ const RESULT_ICONS = {
   product: Package,
   campaign: Megaphone,
   task: CheckSquare,
+  meeting: Calendar,
+  quote: FileText,
+  order: ShoppingCart,
+  partner: Handshake,
+  competitor: Swords,
+  asset: HardDrive,
+  territory: Map,
 };
 
-const RESULT_COLORS = {
+const RESULT_COLORS: Record<SearchResultType, string> = {
   lead: 'text-blue-600 bg-blue-50',
   contact: 'text-purple-600 bg-purple-50',
   account: 'text-green-600 bg-green-50',
@@ -57,7 +91,36 @@ const RESULT_COLORS = {
   product: 'text-indigo-600 bg-indigo-50',
   campaign: 'text-pink-600 bg-pink-50',
   task: 'text-teal-600 bg-teal-50',
+  meeting: 'text-orange-600 bg-orange-50',
+  quote: 'text-cyan-600 bg-cyan-50',
+  order: 'text-rose-600 bg-rose-50',
+  partner: 'text-emerald-600 bg-emerald-50',
+  competitor: 'text-red-600 bg-red-50',
+  asset: 'text-slate-600 bg-slate-50',
+  territory: 'text-violet-600 bg-violet-50',
 };
+
+const RESULT_LABELS: Record<SearchResultType, string> = {
+  lead: 'Leads',
+  contact: 'Contacts',
+  account: 'Companies',
+  opportunity: 'Deals',
+  product: 'Products',
+  campaign: 'Campaigns',
+  task: 'Tasks',
+  meeting: 'Meetings',
+  quote: 'Quotes',
+  order: 'Orders',
+  partner: 'Partners',
+  competitor: 'Competitors',
+  asset: 'Assets',
+  territory: 'Territories',
+};
+
+const ALL_SEARCH_TYPES: SearchResultType[] = [
+  'lead', 'contact', 'account', 'opportunity', 'product', 'campaign', 'task',
+  'meeting', 'quote', 'order', 'partner', 'competitor', 'asset', 'territory',
+];
 
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
@@ -92,16 +155,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
   // Handle escape key
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   // Search function
@@ -116,7 +179,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
     try {
       // Fetch data from all entities in parallel
-      const [leadsData, contactsData, accountsData, oppsData, productsData, campaignsData, tasksData] = await Promise.all([
+      const [
+        leadsData, contactsData, accountsData, oppsData, productsData, campaignsData, tasksData,
+        meetingsData, quotesData, ordersData, partnersData, competitorsData, assetsData, territoriesData,
+      ] = await Promise.all([
         leadsApi.getAll().catch(() => []),
         contactsApi.getAll().catch(() => []),
         accountsApi.getAll().catch(() => []),
@@ -124,11 +190,18 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
         productsApi.getAll().catch(() => []),
         campaignsApi.getAll().catch(() => []),
         tasksApi.getAll().catch(() => []),
+        meetingsApi.getAll().catch(() => []),
+        quotesApi.getAll().catch(() => []),
+        ordersApi.getAll().catch(() => []),
+        partnersApi.getAll().catch(() => []),
+        competitorsApi.getAll().catch(() => []),
+        assetsApi.getAll().catch(() => []),
+        territoriesApi.getAll().catch(() => []),
       ]);
 
       const allResults: SearchResult[] = [];
 
-      // Search leads - expanded fields
+      // Search leads
       const leads = (leadsData || []) as Lead[];
       leads
         .filter(lead =>
@@ -147,14 +220,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           allResults.push({
             id: lead.id,
             type: 'lead',
-            title: `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || lead.email,
+            title: `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || lead.email || 'Unknown Lead',
             subtitle: lead.company || lead.title || 'No company',
             meta: lead.status,
             url: `/dashboard/leads/${lead.id}`,
           });
         });
 
-      // Search contacts - expanded fields
+      // Search contacts
       const contacts = (contactsData || []) as Contact[];
       contacts
         .filter(contact =>
@@ -172,14 +245,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           allResults.push({
             id: contact.id,
             type: 'contact',
-            title: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
+            title: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email || 'Unknown Contact',
             subtitle: contact.title || contact.account?.name || 'No title',
             meta: contact.account?.name ? 'Has Account' : undefined,
             url: `/dashboard/contacts/${contact.id}`,
           });
         });
 
-      // Search accounts - expanded fields
+      // Search accounts
       const accounts = (accountsData || []) as Account[];
       accounts
         .filter(account =>
@@ -202,13 +275,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           });
         });
 
-      // Search opportunities - expanded fields
+      // Search opportunities
       const opportunities = (oppsData || []) as Opportunity[];
       opportunities
         .filter(opp =>
           opp.name?.toLowerCase().includes(q) ||
           opp.stage?.toLowerCase().includes(q) ||
-          opp.description?.toLowerCase().includes(q) ||
+          opp.nextStep?.toLowerCase().includes(q) ||
           opp.type?.toLowerCase().includes(q) ||
           (opp.account?.name)?.toLowerCase().includes(q)
         )
@@ -288,7 +361,156 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
           });
         });
 
-      setResults(allResults.slice(0, 15));
+      // Search meetings
+      const meetings = (meetingsData || []) as Meeting[];
+      meetings
+        .filter(meeting =>
+          meeting.title?.toLowerCase().includes(q) ||
+          meeting.description?.toLowerCase().includes(q) ||
+          meeting.location?.toLowerCase().includes(q) ||
+          meeting.type?.toLowerCase().includes(q) ||
+          meeting.status?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(meeting => {
+          allResults.push({
+            id: meeting.id,
+            type: 'meeting',
+            title: meeting.title,
+            subtitle: meeting.startTime ? new Date(meeting.startTime).toLocaleString() : 'No date',
+            meta: meeting.status,
+            url: `/dashboard/calendar?meetingId=${meeting.id}`,
+          });
+        });
+
+      // Search quotes
+      const quotes = (quotesData || []) as Quote[];
+      quotes
+        .filter(quote =>
+          quote.name?.toLowerCase().includes(q) ||
+          quote.quoteNumber?.toLowerCase().includes(q) ||
+          quote.status?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(quote => {
+          allResults.push({
+            id: quote.id,
+            type: 'quote',
+            title: quote.name || quote.quoteNumber,
+            subtitle: `$${(quote.subtotal || 0).toLocaleString()} • ${quote.quoteNumber}`,
+            meta: quote.status,
+            url: `/dashboard/quotes/${quote.id}`,
+          });
+        });
+
+      // Search orders
+      const orders = (ordersData || []) as Order[];
+      orders
+        .filter(order =>
+          order.orderNumber?.toLowerCase().includes(q) ||
+          order.name?.toLowerCase().includes(q) ||
+          order.status?.toLowerCase().includes(q) ||
+          order.account?.name?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(order => {
+          allResults.push({
+            id: order.id,
+            type: 'order',
+            title: order.name || order.orderNumber,
+            subtitle: order.account?.name || `$${(order.subtotal || 0).toLocaleString()}`,
+            meta: order.status,
+            url: `/dashboard/orders/${order.id}`,
+          });
+        });
+
+      // Search partners
+      const partners = (partnersData || []) as Partner[];
+      partners
+        .filter(partner =>
+          partner.companyName?.toLowerCase().includes(q) ||
+          partner.type?.toLowerCase().includes(q) ||
+          partner.tier?.toLowerCase().includes(q) ||
+          partner.status?.toLowerCase().includes(q) ||
+          partner.website?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(partner => {
+          allResults.push({
+            id: partner.id,
+            type: 'partner',
+            title: partner.companyName,
+            subtitle: `${partner.tier} • ${partner.type}`,
+            meta: partner.status,
+            url: `/dashboard/partners/${partner.id}`,
+          });
+        });
+
+      // Search competitors
+      const competitors = (competitorsData || []) as Competitor[];
+      competitors
+        .filter(competitor =>
+          competitor.name?.toLowerCase().includes(q) ||
+          competitor.description?.toLowerCase().includes(q) ||
+          competitor.targetMarket?.toLowerCase().includes(q) ||
+          competitor.website?.toLowerCase().includes(q) ||
+          competitor.tier?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(competitor => {
+          allResults.push({
+            id: competitor.id,
+            type: 'competitor',
+            title: competitor.name,
+            subtitle: competitor.targetMarket || competitor.tier || 'Competitor',
+            meta: competitor.status,
+            url: `/dashboard/competitors/${competitor.id}`,
+          });
+        });
+
+      // Search assets
+      const assets = (assetsData || []) as Asset[];
+      assets
+        .filter(asset =>
+          asset.name?.toLowerCase().includes(q) ||
+          asset.serialNumber?.toLowerCase().includes(q) ||
+          asset.status?.toLowerCase().includes(q) ||
+          asset.licenseKey?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(asset => {
+          allResults.push({
+            id: asset.id,
+            type: 'asset',
+            title: asset.name,
+            subtitle: asset.serialNumber || `Qty: ${asset.quantity}`,
+            meta: asset.status,
+            url: `/dashboard/assets/${asset.id}`,
+          });
+        });
+
+      // Search territories
+      const territories = (territoriesData || []) as Territory[];
+      territories
+        .filter(territory =>
+          territory.name?.toLowerCase().includes(q) ||
+          territory.description?.toLowerCase().includes(q) ||
+          territory.type?.toLowerCase().includes(q) ||
+          territory.owner?.name?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .forEach(territory => {
+          allResults.push({
+            id: territory.id,
+            type: 'territory',
+            title: territory.name,
+            subtitle: territory.owner?.name || territory.type || 'Territory',
+            meta: territory.isActive ? 'Active' : 'Inactive',
+            url: `/dashboard/territories/${territory.id}`,
+          });
+        });
+
+      setResults(allResults.slice(0, 20));
       setSelectedIndex(0);
     } catch (error) {
       logger.error('Search failed:', error);
@@ -354,7 +576,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search leads, contacts, companies, deals..."
+              placeholder="Search everything — leads, deals, quotes, orders..."
               className="flex-1 text-lg outline-none placeholder:text-gray-400"
             />
             {loading && <Loader2 size={20} className="text-gray-400 animate-spin" />}
@@ -396,23 +618,17 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) =
 
             {results.length > 0 && (
               <div className="p-2">
-                {['lead', 'contact', 'account', 'opportunity', 'product', 'campaign', 'task'].map(type => {
+                {ALL_SEARCH_TYPES.map(type => {
                   const typeResults = results.filter(r => r.type === type);
                   if (typeResults.length === 0) return null;
 
-                  const Icon = RESULT_ICONS[type as keyof typeof RESULT_ICONS];
-                  const colorClass = RESULT_COLORS[type as keyof typeof RESULT_COLORS];
+                  const Icon = RESULT_ICONS[type];
+                  const colorClass = RESULT_COLORS[type];
 
                   return (
                     <div key={type} className="mb-3 last:mb-0">
                       <div className="px-3 py-1.5 text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        {type === 'lead' && 'Leads'}
-                        {type === 'contact' && 'Contacts'}
-                        {type === 'account' && 'Companies'}
-                        {type === 'opportunity' && 'Deals'}
-                        {type === 'product' && 'Products'}
-                        {type === 'campaign' && 'Campaigns'}
-                        {type === 'task' && 'Tasks'}
+                        {RESULT_LABELS[type]}
                       </div>
                       {typeResults.map((result, idx) => {
                         const globalIdx = results.indexOf(result);

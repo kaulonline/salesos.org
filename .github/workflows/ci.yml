@@ -28,7 +28,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true  # TODO: Fix lint errors and remove this
 
   type-check:
     name: Type Check
@@ -48,7 +47,6 @@ jobs:
 
       - name: Run TypeScript type check
         run: npm run type-check
-        continue-on-error: true  # TODO: Fix type errors and remove this
 
   test:
     name: Unit Tests
@@ -68,7 +66,6 @@ jobs:
 
       - name: Run tests with coverage
         run: npm run test:coverage
-        continue-on-error: true  # TODO: Ensure all tests pass and remove this
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -126,7 +123,6 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
-        continue-on-error: true  # TODO: Configure E2E tests properly and remove this
         env:
           CI: true
 
@@ -163,3 +159,72 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  backend-build:
+    name: Backend Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: cd api && npm ci
+
+      - name: Generate Prisma client
+        run: cd api && npx prisma generate
+
+      - name: Build
+        run: cd api && npm run build
+
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: cd api && npm ci
+
+      - name: Generate Prisma client
+        run: cd api && npx prisma generate
+
+      - name: Run ESLint
+        run: cd api && npm run lint
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: cd api && npm ci
+
+      - name: Generate Prisma client
+        run: cd api && npx prisma generate
+
+      - name: Run tests
+        run: cd api && npm run test

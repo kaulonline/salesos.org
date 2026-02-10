@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { Users, Target, DollarSign } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Users, Target, DollarSign, Link2 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { TaskDetailModal } from '../../components/TaskDetailModal';
 import { useDashboard, useDeals, useMeetings, useActivities, useTasks } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/components/ui/Toast';
+import { thirdPartyIntegrationsApi, IntegrationType } from '../../src/api/integrations';
 import type { Task } from '../../src/types/task';
 import {
   SalesRepProfileCard,
@@ -29,6 +30,7 @@ export const DashboardHome: React.FC = () => {
     totalDeals,
     closedWonThisMonth,
     totalPipeline,
+    commissionRate,
   } = useDashboard();
 
   const { deals, loading: dealsLoading } = useDeals();
@@ -40,14 +42,25 @@ export const DashboardHome: React.FC = () => {
   // State for task detail modal
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // Connected integrations
+  const [connectedIntegrations, setConnectedIntegrations] = useState<IntegrationType[]>([]);
+  useEffect(() => {
+    thirdPartyIntegrationsApi.getAllStatuses().then((statuses) => {
+      const connected = (Object.entries(statuses) as [IntegrationType, any][])
+        .filter(([, s]) => s.connected)
+        .map(([key]) => key);
+      setConnectedIntegrations(connected);
+    }).catch(() => {});
+  }, []);
+
   // Extract name - backend returns 'name' field, may also have firstName/lastName
   const userName = user?.firstName || user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
   const userFullName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : userName);
-  const userTitle = user?.role === 'ADMIN' ? 'Sales Manager' : 'Sales Representative';
+  const userTitle = user?.jobTitle || (user?.role === 'ADMIN' ? 'Sales Manager' : 'Sales Representative');
 
   // Calculate metrics
   const winRate = pipelineStats?.winRate || 0;
-  const estimatedCommission = (pipelineStats?.closedWonValue || 0) * 0.03;
+  const estimatedCommission = (pipelineStats?.closedWonValue || 0) * commissionRate;
 
   // Top deals by value
   const topDeals = useMemo(() => {
@@ -74,7 +87,7 @@ export const DashboardHome: React.FC = () => {
 
       days.push({
         date,
-        label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()],
+        label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()] ?? '',
         calls: dayActivities.filter(a => a.type === 'CALL').length,
         emails: dayActivities.filter(a => a.type === 'EMAIL').length,
         meetings: dayActivities.filter(a => a.type === 'MEETING').length,
@@ -132,11 +145,11 @@ export const DashboardHome: React.FC = () => {
           <div className="flex gap-3">
             {[1,2,3,4].map(i => <Skeleton key={i} className="h-10 w-24 rounded-full" />)}
           </div>
-          <div className="grid grid-cols-12 gap-6">
-            <Skeleton className="col-span-3 h-[500px] rounded-3xl" />
-            <Skeleton className="col-span-3 h-80 rounded-3xl" />
-            <Skeleton className="col-span-3 h-80 rounded-3xl" />
-            <Skeleton className="col-span-3 h-80 rounded-3xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
+            <Skeleton className="lg:col-span-3 h-[500px] rounded-3xl" />
+            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
+            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
+            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
           </div>
         </div>
       </div>
@@ -154,25 +167,25 @@ export const DashboardHome: React.FC = () => {
           </h1>
 
           {/* Large Stats - Right Side */}
-          <div className="flex items-center gap-8 lg:gap-12">
-            <div className="text-center min-w-[80px]">
+          <div className="flex flex-wrap items-center gap-4 lg:gap-8">
+            <div className="text-center">
               <div className="flex items-center gap-2 justify-center">
                 <Users size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{(leadStats?.total || 0).toLocaleString()}</span>
+                <span className="text-3xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{(leadStats?.total || 0).toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Leads</p>
             </div>
-            <div className="text-center min-w-[100px]">
+            <div className="text-center">
               <div className="flex items-center gap-2 justify-center">
                 <Target size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{totalDeals.toLocaleString()}</span>
+                <span className="text-3xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">{totalDeals.toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Open Deals</p>
             </div>
-            <div className="text-center min-w-[160px]">
+            <div className="text-center">
               <div className="flex items-center gap-2 justify-center">
                 <DollarSign size={20} className="text-[#999]" />
-                <span className="text-4xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">${totalPipeline.toLocaleString()}</span>
+                <span className="text-3xl lg:text-5xl font-light text-[#1A1A1A] tabular-nums">${totalPipeline.toLocaleString()}</span>
               </div>
               <p className="text-xs font-medium text-[#999]">Pipeline</p>
             </div>
@@ -204,6 +217,16 @@ export const DashboardHome: React.FC = () => {
           <div className="px-4 py-2 bg-white rounded-full text-sm font-medium text-[#1A1A1A] border border-black/5 shadow-sm">
             {conversionRate}%
           </div>
+
+          {connectedIntegrations.length > 0 && (
+            <a
+              href="/dashboard/integrations"
+              className="ml-4 flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-[#666] border border-black/5 shadow-sm hover:bg-[#F8F8F6] transition-colors"
+            >
+              <Link2 size={14} className="text-[#93C01F]" />
+              <span>{connectedIntegrations.length} Connected</span>
+            </a>
+          )}
         </div>
 
         {/* Main Grid */}
@@ -230,7 +253,7 @@ export const DashboardHome: React.FC = () => {
           {/* Middle Section */}
           <div className="lg:col-span-6 space-y-6">
             {/* Activity & Deal Velocity Row */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SalesActivityCard
                 totalMonthlyActivities={totalMonthlyActivities}
                 dailyActivities={dailyActivities}

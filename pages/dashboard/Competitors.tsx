@@ -790,7 +790,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
         {activeTab === 'overview' && (
           <>
             {/* Win/Loss Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="bg-green-50 rounded-xl p-4 text-center">
                 <div className="text-2xl font-bold text-green-600">{competitor.winsAgainst}</div>
                 <div className="text-sm text-green-700">Wins</div>
@@ -806,7 +806,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
             </div>
 
             {/* Strengths & Weaknesses */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2 flex items-center gap-2">
                   <TrendingUp size={14} className="text-green-600" /> Strengths
@@ -868,7 +868,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
                 <h4 className="font-bold text-[#1A1A1A] text-lg mb-2">{generatedBattlecard.title}</h4>
                 <p className="text-sm text-[#666] mb-4">{generatedBattlecard.overview}</p>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <div className="text-xs font-semibold text-[#999] mb-2">KEY TALKING POINTS</div>
                     <ul className="space-y-1">

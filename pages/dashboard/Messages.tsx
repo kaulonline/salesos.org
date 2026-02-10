@@ -300,6 +300,7 @@ export const Messages: React.FC = () => {
   const [selected, setSelected] = useState<SelectedItem | null>(null);
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [showNewDM, setShowNewDM] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { myChannels, discoverable, loading: channelsLoading, createChannel, joinChannel } = useTeamChannels();
@@ -350,7 +351,7 @@ export const Messages: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100vh-200px)]">
+      <div className="h-[calc(100dvh-200px)]" style={{ minHeight: 'calc(100vh - 200px)' }}>
         <Skeleton className="h-10 w-48 mb-4" />
         <Skeleton className="h-full rounded-[2rem]" />
       </div>
@@ -358,15 +359,15 @@ export const Messages: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-200px)] animate-in fade-in duration-500">
+    <div className="h-[calc(100dvh-200px)] animate-in fade-in duration-500" style={{ minHeight: 'calc(100vh - 200px)' }}>
       <div className="mb-6">
         <h1 className="text-4xl font-medium text-[#1A1A1A]">Messages</h1>
         <p className="text-[#666] mt-1">Team communication and collaboration</p>
       </div>
 
       <Card className="h-[calc(100%-80px)] flex overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-64 border-r border-gray-100 flex flex-col">
+        {/* Sidebar - hidden on mobile when conversation is selected */}
+        <div className={`${selected && !showMobileSidebar ? 'hidden md:flex' : 'flex'} w-full md:w-64 border-r border-gray-100 flex-col shrink-0`}>
           {/* View Toggle */}
           <div className="p-3 border-b border-gray-100">
             <div className="flex bg-gray-100 rounded-xl p-1">
@@ -412,7 +413,7 @@ export const Messages: React.FC = () => {
                   myChannels.map((ch) => (
                     <button
                       key={ch.id}
-                      onClick={() => setSelected({ type: 'channel', id: ch.id })}
+                      onClick={() => { setSelected({ type: 'channel', id: ch.id }); setShowMobileSidebar(false); }}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${
                         selected?.type === 'channel' && selected.id === ch.id ? 'bg-[#EAD07D]/10' : ''
                       }`}
@@ -452,7 +453,7 @@ export const Messages: React.FC = () => {
                   conversations.map((conv) => (
                     <button
                       key={conv.id}
-                      onClick={() => setSelected({ type: 'direct', id: conv.id, userId: conv.otherUser.id })}
+                      onClick={() => { setSelected({ type: 'direct', id: conv.id, userId: conv.otherUser.id }); setShowMobileSidebar(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${
                         selected?.type === 'direct' && selected.id === conv.id ? 'bg-[#EAD07D]/10' : ''
                       }`}
@@ -474,13 +475,19 @@ export const Messages: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        {/* Main Content - hidden on mobile when sidebar is shown */}
+        <div className={`${!selected || showMobileSidebar ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
           {selected ? (
             <>
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowMobileSidebar(true)}
+                    className="md:hidden p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg mr-1"
+                  >
+                    <ChevronDown size={18} className="rotate-90" />
+                  </button>
                   {selected.type === 'channel' ? (
                     <>
                       {channel?.type === 'PRIVATE' ? <Lock size={18} /> : <Hash size={18} />}

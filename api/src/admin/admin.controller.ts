@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
+import { JwtAuthGuard, Public } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 import { AdminService } from './admin.service';
 import {
@@ -63,6 +63,15 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    // Skip roles check for public endpoints
+    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
     const roles = this.reflector.get<string[]>('roles', context.getHandler());
     if (!roles) {
       return true;
@@ -84,6 +93,31 @@ export class AdminController {
     private readonly systemSettingsService: SystemSettingsService,
     private readonly databaseBackupService: DatabaseBackupService,
   ) {}
+
+  // ============================================
+  // MAINTENANCE MODE (Public + Admin endpoints)
+  // ============================================
+
+  @Public()
+  @Get('maintenance-status')
+  @ApiOperation({ summary: 'Get maintenance mode status (public, no auth required)' })
+  @ApiResponse({ status: 200, description: 'Maintenance mode status' })
+  async getMaintenanceStatus() {
+    return this.systemSettingsService.getMaintenanceMode();
+  }
+
+  @Put('maintenance')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Update maintenance mode configuration' })
+  @ApiResponse({ status: 200, description: 'Maintenance mode updated' })
+  async updateMaintenanceMode(
+    @Body() body: { enabled?: boolean; message?: string; estimatedEnd?: string | null },
+    @Request() req,
+  ) {
+    await this.systemSettingsService.setMaintenanceMode(body, req.user.userId);
+    const updated = await this.systemSettingsService.getMaintenanceMode();
+    return { success: true, ...updated };
+  }
 
   // ============================================
   // DASHBOARD
@@ -936,5 +970,103 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Cleanup result' })
   async cleanupExpiredBackups() {
     return this.databaseBackupService.cleanupExpiredBackups();
+  }
+
+  // ============================================
+  // LOOKER BI DASHBOARDS
+  // ============================================
+
+  @Get('looker/dashboards')
+  @Roles('ADMIN', 'MANAGER')
+  @ApiOperation({ summary: 'Get Looker BI dashboards and looks' })
+  @ApiResponse({ status: 200, description: 'Looker dashboards' })
+  async getLookerDashboards(@CurrentOrganization() orgId: string) {
+    return this.adminService.getLookerDashboards(orgId);
+  }
+
+  // ============================================
+  // INTEGRATION SYNC LOGS & MAPPINGS
+  // ============================================
+
+  @Get('integration-sync-logs')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Get integration sync logs with filters' })
+  @ApiResponse({ status: 200, description: 'Integration sync logs retrieved' })
+  async getIntegrationSyncLogs(
+    @Query('provider') provider?: string,
+    @Query('eventType') eventType?: string,
+    @Query('status') status?: string,
+    @Query('entityType') entityType?: string,
+    @Query('entityId') entityId?: string,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+    @CurrentOrganization() organizationId?: string,
+  ) {
+    return this.adminService.getIntegrationSyncLogs({
+      organizationId,
+      provider,
+      eventType,
+      status,
+      entityType,
+      entityId,
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
+  @Get('integration-mappings/:entityType/:entityId')
+  @Roles('ADMIN', 'MANAGER', 'USER')
+  @ApiOperation({ summary: 'Get external ID mappings for a CRM entity' })
+  @ApiResponse({ status: 200, description: 'Entity mappings retrieved' })
+  async getIntegrationMappings(
+    @Param('entityType') entityType: string,
+    @Param('entityId') entityId: string,
+    @CurrentOrganization() organizationId?: string,
+  ) {
+    return this.adminService.getIntegrationEntityMappings(entityType, entityId, organizationId);
+  }
+
+  @Get('integration-attachments/:entityType/:entityId')
+  @Roles('ADMIN', 'MANAGER', 'USER')
+  @ApiOperation({ summary: 'Get integration file attachments for a CRM entity' })
+  @ApiResponse({ status: 200, description: 'Integration attachments retrieved' })
+  async getIntegrationAttachments(
+    @Param('entityType') entityType: string,
+    @Param('entityId') entityId: string,
+    @CurrentOrganization() organizationId?: string,
+  ) {
+    return this.adminService.getIntegrationAttachments(entityType, entityId, organizationId);
+  }
+
+  // ============================================
+  // SSO USER DIRECTORY SYNC
+  // ============================================
+
+  @Get('sso/users/:provider')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Get users from SSO provider (okta or auth0)' })
+  @ApiResponse({ status: 200, description: 'SSO users list' })
+  async getSSOUsers(
+    @Param('provider') provider: string,
+    @CurrentOrganization() orgId: string,
+  ) {
+    if (provider !== 'okta' && provider !== 'auth0') {
+      return { error: 'Invalid provider. Use okta or auth0.' };
+    }
+    return this.adminService.getSSOUsers(orgId, provider);
+  }
+
+  @Post('sso/sync/:provider')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Sync users from SSO provider into team' })
+  @ApiResponse({ status: 200, description: 'Sync result' })
+  async syncUsersFromSSO(
+    @Param('provider') provider: string,
+    @CurrentOrganization() orgId: string,
+  ) {
+    if (provider !== 'okta' && provider !== 'auth0') {
+      return { error: 'Invalid provider. Use okta or auth0.' };
+    }
+    return this.adminService.syncUsersFromSSO(orgId, provider);
   }
 }

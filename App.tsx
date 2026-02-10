@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -15,12 +15,15 @@ import { NoiseOverlay } from './components/ui/NoiseOverlay';
 import { ToastProvider } from './src/components/ui/Toast';
 import { CookieConsent } from './src/components/CookieConsent';
 import DesignSystem from './src/pages/DesignSystem';
+import { MaintenancePage } from './pages/MaintenancePage';
+import type { MaintenanceStatus } from './src/api/admin';
 
 // Initialize error tracking
 initErrorTracking();
 
 // Public Pages (loaded eagerly for fast initial load)
 import { Home } from './pages/Home';
+import { NotFound } from './pages/NotFound';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
 import { ResetPassword } from './pages/ResetPassword';
@@ -176,10 +179,73 @@ function AppContent() {
   const isBilling = pathname.startsWith('/billing');
   const isPublicForm = pathname.startsWith('/forms/');
 
+  // Maintenance mode — use sessionStorage for instant sync init, fetch for fresh data
+  const [maintenance, setMaintenance] = useState<MaintenanceStatus | null>(() => {
+    try {
+      const cached = sessionStorage.getItem('salesos_maintenance');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [maintenanceChecked, setMaintenanceChecked] = useState(() => {
+    return sessionStorage.getItem('salesos_maintenance') !== null;
+  });
+
+  const fetchMaintenanceStatus = useCallback(async () => {
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || '/api';
+      // Cache-bust to bypass service worker / HTTP caches
+      const res = await fetch(`${baseUrl}/admin/maintenance-status?_t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const data: MaintenanceStatus = await res.json();
+        setMaintenance(data);
+        sessionStorage.setItem('salesos_maintenance', JSON.stringify(data));
+      }
+    } catch {
+      // Silently fail — don't block the app if endpoint is unreachable
+    } finally {
+      setMaintenanceChecked(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMaintenanceStatus();
+    const interval = setInterval(fetchMaintenanceStatus, 60000);
+    return () => clearInterval(interval);
+  }, [fetchMaintenanceStatus]);
+
   // Scroll to top on route change
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Show maintenance page on public routes when maintenance is enabled
+  const isBypassRoute = isDashboard || isAdmin || isAuthPage || isPortal || isBilling;
+
+  // Wait for the initial maintenance check before rendering public routes
+  if (!maintenanceChecked && !isBypassRoute) {
+    return <PageLoadingFallback />;
+  }
+
+  if (maintenance?.enabled && !isBypassRoute) {
+    return (
+      <MaintenancePage
+        message={maintenance.message}
+        estimatedEnd={maintenance.estimatedEnd}
+      />
+    );
+  }
+
+  // Remove the pre-React maintenance overlay if maintenance is off
+  useEffect(() => {
+    if (maintenanceChecked && !maintenance?.enabled) {
+      const overlay = document.getElementById('maintenance-overlay');
+      if (overlay) overlay.remove();
+    }
+  }, [maintenanceChecked, maintenance?.enabled]);
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
@@ -865,7 +931,7 @@ function AppContent() {
           </Route>
 
           {/* Catch-all route */}
-          <Route path="*" element={<Home />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       {!isAuthPage && !isDashboard && !isAdmin && !isPortal && !isBilling && !isPublicForm && <Footer />}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" style="overflow-y:scroll">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -191,6 +191,85 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Pre-React maintenance mode check — runs before any JS bundles load -->
+    <script>
+      (function() {
+        var p = window.location.pathname;
+        // Bypass routes — never block these
+        if (p.startsWith('/dashboard') || p.startsWith('/admin') || p.startsWith('/portal') || p.startsWith('/billing') ||
+            p === '/login' || p === '/signup' || p === '/reset-password' || p === '/verify-email' || p === '/invite' || p === '/request-access') {
+          return;
+        }
+        // Check sessionStorage first (instant, from a previous fetch)
+        var cached = null;
+        try { cached = JSON.parse(sessionStorage.getItem('salesos_maintenance')); } catch(e) {}
+        if (cached && cached.enabled) {
+          showMaintenance(cached.message, cached.estimatedEnd);
+        }
+        // Always fetch fresh status (updates sessionStorage for React to pick up)
+        fetch('/api/admin/maintenance-status?_t=' + Date.now(), { cache: 'no-store' })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(data) {
+            if (!data) return;
+            sessionStorage.setItem('salesos_maintenance', JSON.stringify(data));
+            if (data.enabled) {
+              showMaintenance(data.message, data.estimatedEnd);
+            } else {
+              // Maintenance was turned off — remove the overlay if it exists
+              var el = document.getElementById('maintenance-overlay');
+              if (el) el.remove();
+            }
+          })
+          .catch(function() {});
+
+        function showMaintenance(message, estimatedEnd) {
+          if (document.getElementById('maintenance-overlay')) return;
+          var end = '';
+          if (estimatedEnd) {
+            try { end = '<div class="mo-end"><p class="mo-end-label">Estimated return</p><p class="mo-end-value">' + new Date(estimatedEnd).toLocaleString() + '</p></div>'; } catch(e) {}
+          }
+          var overlay = document.createElement('div');
+          overlay.id = 'maintenance-overlay';
+          overlay.innerHTML = '<div class="mo-card">'
+            + '<div class="mo-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>'
+            + '<h1 class="mo-title">SalesOS</h1>'
+            + '<div class="mo-badge"><span class="mo-dot"></span><span class="mo-badge-text">Under Maintenance</span></div>'
+            + '<p class="mo-msg">' + (message || "We\u2019re performing scheduled maintenance. We\u2019ll be back shortly.") + '</p>'
+            + end
+            + '</div>'
+            + '<style>'
+            + '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}'
+            + '#maintenance-overlay{position:fixed;inset:0;z-index:99999;background:#F2F1EA;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,system-ui,sans-serif;box-sizing:border-box}'
+            + '.mo-card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.05);max-width:480px;width:100%;text-align:center;box-sizing:border-box}'
+            + '.mo-icon{width:48px;height:48px;border-radius:12px;background:rgba(234,208,125,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}'
+            + '.mo-title{font-size:24px;font-weight:300;color:#1A1A1A;margin:0 0 8px}'
+            + '.mo-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(234,208,125,.2);border-radius:9999px;margin-bottom:16px}'
+            + '.mo-dot{width:8px;height:8px;border-radius:50%;background:#EAD07D;display:inline-block;animation:pulse 2s infinite}'
+            + '.mo-badge-text{font-size:12px;font-weight:600;color:#1A1A1A}'
+            + '.mo-msg{color:#666;margin:0 0 16px;line-height:1.6;font-size:14px}'
+            + '.mo-end{background:#F8F8F6;border-radius:10px;padding:12px;margin-top:8px}'
+            + '.mo-end-label{font-size:11px;color:#999;margin:0 0 2px}'
+            + '.mo-end-value{font-size:13px;font-weight:500;color:#1A1A1A;margin:0}'
+            + '@media(min-width:640px){'
+            + '#maintenance-overlay{padding:24px}'
+            + '.mo-card{border-radius:32px;padding:48px}'
+            + '.mo-icon{width:64px;height:64px;border-radius:16px;margin-bottom:24px}'
+            + '.mo-icon svg{width:28px;height:28px}'
+            + '.mo-title{font-size:28px}'
+            + '.mo-badge{padding:8px 16px;margin-bottom:24px}'
+            + '.mo-badge-text{font-size:14px}'
+            + '.mo-msg{font-size:16px;margin-bottom:24px}'
+            + '.mo-end{border-radius:12px;padding:16px}'
+            + '.mo-end-label{font-size:12px;margin-bottom:4px}'
+            + '.mo-end-value{font-size:14px}'
+            + '}'
+            + '</style>';
+          document.body.appendChild(overlay);
+        }
+      })();
+    </script>
+
     <script type="module" src="/index.tsx"></script>
 
     <!-- Service Worker Registration -->

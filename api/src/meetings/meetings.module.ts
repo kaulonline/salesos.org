@@ -43,7 +43,11 @@ import { MeetingResponseSyncService } from './services/meeting-response-sync.ser
 import { MeetingPrepService } from './services/meeting-prep.service';
 // Post-meeting auto-summary
 import { MeetingAutoSummaryService } from './services/meeting-auto-summary.service';
+// External meeting integration sync (Gong, Calendly)
+import { MeetingIntegrationSyncService } from './services/meeting-integration-sync.service';
 import { AnthropicModule } from '../anthropic/anthropic.module';
+import { GongModule } from '../integrations/gong/gong.module';
+import { CalendlyModule } from '../integrations/calendly/calendly.module';
 import { SearchModule } from '../search/search.module';
 import { ActivitiesModule } from '../activities/activities.module';
 import { TasksModule } from '../tasks/tasks.module';
@@ -68,6 +72,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ContactsModule,
     SalesforceModule,
     NotificationsModule, // Required for MeetingAutoSummaryService
+    GongModule, // External call recording sync
+    CalendlyModule, // External scheduling sync
     // Note: EmailModule is @Global() so no import needed here
   ],
   controllers: [PendingActionsController, MeetingsController],
@@ -110,6 +116,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MeetingPrepService, // AI-powered meeting preparation briefings
     // Post-meeting auto-summary
     MeetingAutoSummaryService, // AI-powered post-meeting summary with action items
+    // External meeting integration sync
+    MeetingIntegrationSyncService, // Gong call import + Calendly event sync
   ],
   exports: [
     MeetingsService,
@@ -134,6 +142,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MeetingRealtimeService, // Export for WebRTC real-time transcription
     MeetingPrepService, // Export for meeting intelligence
     MeetingAutoSummaryService, // Export for post-meeting summary
+    MeetingIntegrationSyncService, // Export for on-demand sync
   ],
 })
 export class MeetingsModule {}

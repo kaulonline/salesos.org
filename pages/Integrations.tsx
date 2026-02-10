@@ -79,7 +79,7 @@ export const Integrations: React.FC = () => {
       subtitle="Connects with the tools you already use. SalesOS fits perfectly into your existing stack."
     >
       {/* Hero Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden mb-16 h-[350px]">
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-12 md:mb-16 h-[300px] md:h-[350px]">
         <img
           src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=2000"
           alt="Connected workspace"
@@ -87,7 +87,7 @@ export const Integrations: React.FC = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A]/90 via-[#1A1A1A]/70 to-transparent" />
 
-        <div className="absolute inset-0 flex items-center p-10">
+        <div className="absolute inset-0 flex items-center p-6 md:p-10">
           <div className="max-w-lg">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-wider mb-6">
               <Plug size={14} />
@@ -166,7 +166,7 @@ export const Integrations: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="relative rounded-[2.5rem] overflow-hidden bg-[#1A1A1A] py-16 px-8">
+      <div className="relative rounded-[2.5rem] overflow-hidden bg-[#1A1A1A] py-12 md:py-16 px-6 md:px-8">
         {/* Ambient glow */}
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#EAD07D]/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#EAD07D]/10 rounded-full blur-[100px] pointer-events-none" />

@@ -209,7 +209,33 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface MaintenanceStatus {
+  enabled: boolean;
+  message: string;
+  estimatedEnd: string | null;
+}
+
 export const adminApi = {
+  // Maintenance Mode
+  getMaintenanceStatus: async (): Promise<MaintenanceStatus> => {
+    // Use fetch directly — this endpoint is public (no auth token needed)
+    const baseUrl = import.meta.env.VITE_API_URL || '/api';
+    const response = await fetch(`${baseUrl}/admin/maintenance-status`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch maintenance status');
+    }
+    return response.json();
+  },
+
+  updateMaintenanceMode: async (config: {
+    enabled?: boolean;
+    message?: string;
+    estimatedEnd?: string | null;
+  }): Promise<{ success: boolean } & MaintenanceStatus> => {
+    const response = await client.put('/admin/maintenance', config);
+    return response.data;
+  },
+
   // Dashboard
   getDashboardStats: async (): Promise<AdminDashboardStats> => {
     const response = await client.get<AdminDashboardStats>('/admin/dashboard');
@@ -457,6 +483,108 @@ export const adminApi = {
   deleteBackupSchedule: async (id: string): Promise<void> => {
     await client.delete(`/admin/backups/schedules/${id}`);
   },
+
+  // Looker Dashboards
+  getLookerDashboards: async (): Promise<{
+    connected: boolean;
+    dashboards: { id: string; title: string; url: string }[];
+    looks: { id: string; title: string; url: string }[];
+  }> => {
+    const response = await client.get('/admin/looker/dashboards');
+    return response.data;
+  },
+
+  // SSO User Sync (Okta / Auth0)
+  getSSOUsers: async (provider: 'okta' | 'auth0'): Promise<{
+    connected: boolean;
+    users: { id: string; email: string; name: string; status: string; lastLogin?: string }[];
+  }> => {
+    const response = await client.get(`/admin/sso/users/${provider}`);
+    return response.data;
+  },
+
+  syncUsersFromSSO: async (provider: 'okta' | 'auth0'): Promise<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+  }> => {
+    const response = await client.post(`/admin/sso/sync/${provider}`);
+    return response.data;
+  },
+
+  // Integration Sync Logs
+  getIntegrationSyncLogs: async (params?: {
+    provider?: string;
+    eventType?: string;
+    status?: string;
+    entityType?: string;
+    entityId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: IntegrationSyncLog[]; total: number; limit: number; offset: number }> => {
+    const response = await client.get('/admin/integration-sync-logs', { params });
+    return response.data;
+  },
+
+  // Integration Entity Mappings
+  getIntegrationMappings: async (entityType: string, entityId: string): Promise<IntegrationEntityMapping[]> => {
+    const response = await client.get(`/admin/integration-mappings/${entityType}/${entityId}`);
+    return response.data;
+  },
+
+  // Integration Attachments
+  getIntegrationAttachments: async (entityType: string, entityId: string): Promise<IntegrationAttachment[]> => {
+    const response = await client.get(`/admin/integration-attachments/${entityType}/${entityId}`);
+    return response.data;
+  },
 };
+
+// Integration persistence types
+export interface IntegrationSyncLog {
+  id: string;
+  organizationId: string;
+  provider: string;
+  eventType: string;
+  entityType: string;
+  entityId: string;
+  status: 'pending' | 'success' | 'failed';
+  externalId?: string;
+  responseData?: Record<string, unknown>;
+  errorMessage?: string;
+  durationMs?: number;
+  createdAt: string;
+}
+
+export interface IntegrationEntityMapping {
+  id: string;
+  organizationId: string;
+  entityType: string;
+  entityId: string;
+  provider: string;
+  externalId: string;
+  externalUrl?: string;
+  lastSyncedAt: string;
+  syncDirection: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntegrationAttachment {
+  id: string;
+  organizationId: string;
+  entityType: string;
+  entityId: string;
+  provider: string;
+  externalId?: string;
+  fileName: string;
+  fileUrl?: string;
+  fileType?: string;
+  fileSizeBytes?: string;
+  eventType?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
 
 export default adminApi;

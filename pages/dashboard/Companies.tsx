@@ -427,10 +427,10 @@ export const Companies: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <Skeleton className="h-10 w-64 mb-2" />
         <Skeleton className="h-6 w-96 mb-8" />
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-64 rounded-3xl" />)}
         </div>
       </div>
@@ -655,8 +655,9 @@ export const Companies: React.FC = () => {
         </div>
       ) : (
         <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 bg-[#FAFAF8] border-b border-gray-100 px-6 py-4">
+          <div className="grid grid-cols-12 gap-4 bg-[#FAFAF8] border-b border-gray-100 px-6 py-4 min-w-[800px]">
             <div className="col-span-3 text-xs font-bold text-[#999] uppercase tracking-wider">Account</div>
             <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Type</div>
             <div className="col-span-2 text-xs font-bold text-[#999] uppercase tracking-wider">Health</div>
@@ -675,7 +676,7 @@ export const Companies: React.FC = () => {
               const healthColors = getHealthColor(company.healthScore);
               return (
                 <Link to={`/dashboard/companies/${company.id}`} className="block">
-                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors items-center">
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors items-center min-w-[800px]">
                   <div className="col-span-3 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
                       <Building2 size={18} className="text-[#666]" />
@@ -717,6 +718,7 @@ export const Companies: React.FC = () => {
               );
             }}
           />
+          </div>
         </Card>
       )}
 

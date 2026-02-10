@@ -33,9 +33,10 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useFeatureFlags, useAgentAlerts, useAgentQueue } from '../../src/hooks';
+import { useAgents, useUpdateAgentStatus } from '../../src/hooks/useAgents';
 import { useAuth } from '../../src/context/AuthContext';
 import { FeatureGate, Features } from '../../src/components/FeatureGate';
-import { AgentType } from '../../src/api/agentAlerts';
+import { AgentType, AgentAlert } from '../../src/api/agentAlerts';
 import { formatDistanceToNow } from 'date-fns';
 
 interface AIAgentConfig {
@@ -97,20 +98,34 @@ const AI_AGENT_CONFIGS: AIAgentConfig[] = [
 ];
 
 export const AIAgents: React.FC = () => {
-  const { featureFlags, loading: flagsLoading } = useFeatureFlags();
+  const { flags: featureFlags, loading: flagsLoading } = useFeatureFlags();
   const { user } = useAuth();
   const [selectedAgent, setSelectedAgent] = useState<AIAgentConfig | null>(null);
   const [filter, setFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configAgent, setConfigAgent] = useState<AIAgentConfig | null>(null);
-  const [agentStatuses, setAgentStatuses] = useState<Record<AgentType, 'enabled' | 'disabled'>>({
-    DEAL_HEALTH: 'enabled',
-    PIPELINE_ACCELERATION: 'enabled',
-    ACCOUNT_INTELLIGENCE: 'enabled',
-    OUTREACH_OPTIMIZATION: 'enabled',
-    COACHING: 'enabled',
-  });
+
+  // Fetch real agent statuses from API
+  const { agents: agentList, loading: agentsLoading } = useAgents();
+  const updateAgentStatus = useUpdateAgentStatus();
+
+  const agentStatuses = useMemo(() => {
+    const statuses: Record<AgentType, 'enabled' | 'disabled'> = {
+      DEAL_HEALTH: 'enabled',
+      PIPELINE_ACCELERATION: 'enabled',
+      ACCOUNT_INTELLIGENCE: 'enabled',
+      OUTREACH_OPTIMIZATION: 'enabled',
+      COACHING: 'enabled',
+    };
+    agentList.forEach(agent => {
+      const agentType = agent.type as AgentType;
+      if (agentType in statuses) {
+        statuses[agentType] = agent.enabled ? 'enabled' : 'disabled';
+      }
+    });
+    return statuses;
+  }, [agentList]);
 
   const handleOpenConfig = (agent: AIAgentConfig, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -120,16 +135,15 @@ export const AIAgents: React.FC = () => {
 
   const handleToggleAgent = (agentId: AgentType, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setAgentStatuses(prev => ({
-      ...prev,
-      [agentId]: prev[agentId] === 'enabled' ? 'disabled' : 'enabled',
-    }));
+    const newStatus = agentStatuses[agentId] === 'enabled' ? 'PAUSED' : 'ACTIVE';
+    updateAgentStatus.mutate({ type: agentId, status: newStatus as any });
   };
 
   // Get real agent data
-  const { data: alerts = [], isLoading: alertsLoading } = useAgentAlerts({
+  const { alerts, loading: alertsLoading } = useAgentAlerts({
     limit: 100,
   });
+  const typedAlerts: AgentAlert[] = alerts ?? [];
 
   // Calculate stats from real data
   const stats = useMemo(() => {
@@ -137,14 +151,14 @@ export const AIAgents: React.FC = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const todayAlerts = alerts.filter(a => new Date(a.createdAt) >= today);
-    const weekAlerts = alerts.filter(a => new Date(a.createdAt) >= thisWeek);
-    const actionedAlerts = alerts.filter(a => a.status === 'ACTIONED');
-    const pendingAlerts = alerts.filter(a => a.status === 'PENDING');
+    const todayAlerts = typedAlerts.filter(a => new Date(a.createdAt) >= today);
+    const weekAlerts = typedAlerts.filter(a => new Date(a.createdAt) >= thisWeek);
+    const actionedAlerts = typedAlerts.filter(a => a.status === 'ACTIONED');
+    const pendingAlerts = typedAlerts.filter(a => a.status === 'PENDING');
 
     // Calculate efficiency (actioned / total)
-    const efficiency = alerts.length > 0
-      ? Math.round((actionedAlerts.length / alerts.length) * 100)
+    const efficiency = typedAlerts.length > 0
+      ? Math.round((actionedAlerts.length / typedAlerts.length) * 100)
       : 0;
 
     // Estimate time saved (5 min per alert actioned)
@@ -159,7 +173,7 @@ export const AIAgents: React.FC = () => {
       COACHING: 0,
     };
 
-    alerts.forEach(a => {
+    typedAlerts.forEach(a => {
       if (alertsByAgent[a.agentType] !== undefined) {
         alertsByAgent[a.agentType]++;
       }
@@ -174,11 +188,11 @@ export const AIAgents: React.FC = () => {
       timeSaved,
       alertsByAgent,
     };
-  }, [alerts]);
+  }, [typedAlerts]);
 
   // Recent activity for each agent
   const recentAlertsByAgent = useMemo(() => {
-    const byAgent: Record<AgentType, typeof alerts> = {
+    const byAgent: Record<AgentType, AgentAlert[]> = {
       DEAL_HEALTH: [],
       PIPELINE_ACCELERATION: [],
       ACCOUNT_INTELLIGENCE: [],
@@ -186,7 +200,7 @@ export const AIAgents: React.FC = () => {
       COACHING: [],
     };
 
-    alerts.forEach(alert => {
+    typedAlerts.forEach(alert => {
       if (byAgent[alert.agentType]) {
         byAgent[alert.agentType].push(alert);
       }
@@ -200,7 +214,7 @@ export const AIAgents: React.FC = () => {
     });
 
     return byAgent;
-  }, [alerts]);
+  }, [typedAlerts]);
 
   const aiEnabled = useMemo(() => {
     if (!featureFlags) return true;
@@ -215,7 +229,7 @@ export const AIAgents: React.FC = () => {
     });
   }, [filter, agentStatuses]);
 
-  const loading = flagsLoading || alertsLoading;
+  const loading = flagsLoading || alertsLoading || agentsLoading;
   const enabledCount = Object.values(agentStatuses).filter(s => s === 'enabled').length;
 
   if (loading) {
@@ -549,7 +563,7 @@ export const AIAgents: React.FC = () => {
               View All <ChevronRight size={14} />
             </Link>
           </div>
-          {alerts.length === 0 ? (
+          {typedAlerts.length === 0 ? (
             <div className="py-12 text-center">
               <Activity size={40} className="mx-auto text-[#999] opacity-40 mb-3" />
               <p className="text-[#666]">No agent activity yet</p>
@@ -557,7 +571,7 @@ export const AIAgents: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {alerts.slice(0, 5).map(alert => {
+              {typedAlerts.slice(0, 5).map(alert => {
                 const agentConfig = AI_AGENT_CONFIGS.find(a => a.id === alert.agentType);
                 const Icon = agentConfig?.icon || Brain;
 
@@ -619,7 +633,7 @@ export const AIAgents: React.FC = () => {
               <div>
                 <h3 className="text-xl font-bold text-white mb-1">AI-Powered Sales Intelligence</h3>
                 <p className="text-white/60 text-sm">
-                  Your agents have analyzed {alerts.length} opportunities and generated {stats.actionedCount} actionable insights this week.
+                  Your agents have analyzed {typedAlerts.length} opportunities and generated {stats.actionedCount} actionable insights this week.
                 </p>
               </div>
             </div>

@@ -160,10 +160,12 @@ export class SalesforceService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly usageTrackingService: UsageTrackingService,
   ) {
-    // Get encryption key from environment (should be 32 bytes for AES-256)
-    this.encryptionKey = process.env.CRM_ENCRYPTION_KEY || 
-      process.env.SALESFORCE_ENCRYPTION_KEY ||
-      crypto.createHash('sha256').update(process.env.JWT_SECRET || 'default-secret').digest('hex').slice(0, 32);
+    // Get encryption key from environment (must be 32 hex chars for AES-256)
+    const key = process.env.ENCRYPTION_KEY || process.env.CRM_ENCRYPTION_KEY || process.env.SALESFORCE_ENCRYPTION_KEY;
+    if (!key) {
+      throw new Error('ENCRYPTION_KEY environment variable is required for Salesforce credential encryption');
+    }
+    this.encryptionKey = key.slice(0, 32);
   }
 
   /**

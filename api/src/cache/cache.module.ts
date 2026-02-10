@@ -32,8 +32,9 @@ import { CacheService } from './cache.service';
         const redisPassword = configService.get<string>('REDIS_PASSWORD', '');
         const ttl = configService.get<number>('REDIS_TTL', 300);
 
-        // Check if Redis is configured
-        const useRedis = configService.get<string>('USE_REDIS', 'false') === 'true';
+        // Use Redis by default in production; override with USE_REDIS=false for local dev
+        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        const useRedis = configService.get<string>('USE_REDIS', isProduction ? 'true' : 'false') === 'true';
 
         if (useRedis) {
           logger.log(`Connecting to Redis at ${redisHost}:${redisPort}`);
@@ -46,7 +47,9 @@ import { CacheService } from './cache.service';
             max: 1000, // Maximum number of items in cache
           };
         } else {
-          // Fallback to in-memory cache for development
+          if (isProduction) {
+            logger.warn('WARNING: Running in production without Redis. Token blacklist and cache will not persist across restarts.');
+          }
           logger.log('Using in-memory cache (set USE_REDIS=true for Redis)');
           return {
             ttl,
