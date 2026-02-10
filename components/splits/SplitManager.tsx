@@ -33,8 +33,9 @@ interface Split {
 interface SplitManagerProps {
   opportunityId: string;
   opportunityAmount?: number;
-  splits: Split[];
-  onRefresh: () => void;
+  dealAmount?: number; // alias for opportunityAmount
+  splits?: Split[];
+  onRefresh?: () => void;
   canEdit?: boolean;
 }
 
@@ -64,10 +65,12 @@ const STATUS_COLORS: Record<string, string> = {
 export const SplitManager: React.FC<SplitManagerProps> = ({
   opportunityId,
   opportunityAmount,
-  splits,
+  dealAmount,
+  splits = [],
   onRefresh,
   canEdit = true,
 }) => {
+  const resolvedAmount = opportunityAmount ?? dealAmount;
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [aiSuggestions, setAISuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -331,7 +334,7 @@ export const SplitManager: React.FC<SplitManagerProps> = ({
                     {split.splitPercent.toFixed(1)}%
                   </td>
                   <td className="px-4 py-3 text-[#666]">
-                    {formatCurrency(split.splitAmount || (opportunityAmount ? opportunityAmount * split.splitPercent / 100 : undefined))}
+                    {formatCurrency(split.splitAmount || (resolvedAmount ? resolvedAmount * split.splitPercent / 100 : undefined))}
                   </td>
                   <td className="px-4 py-3">
                     <Badge className={STATUS_COLORS[split.status] || 'bg-gray-100 text-gray-700'}>
@@ -358,7 +361,7 @@ export const SplitManager: React.FC<SplitManagerProps> = ({
                   {totalPercent.toFixed(1)}%
                 </td>
                 <td className="px-4 py-3 font-semibold text-[#1A1A1A]">
-                  {formatCurrency(opportunityAmount)}
+                  {formatCurrency(resolvedAmount)}
                 </td>
                 <td colSpan={2}></td>
               </tr>
