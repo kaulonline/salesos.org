@@ -572,7 +572,9 @@ export class MeetingBotOrchestrator implements OnModuleInit {
         try {
           const transcript = await this.attendeeService.getTranscript(attendeeBotId);
           transcriptLength = transcript.length;
-        } catch {}
+        } catch (err) {
+          this.logger.warn(`Failed to get transcript length for bot ${attendeeBotId}: ${err.message}`);
+        }
         
         return {
           connected: isConnected,
@@ -612,7 +614,9 @@ export class MeetingBotOrchestrator implements OnModuleInit {
           status: bot.state,
           botId: bot.id,
         };
-      } catch {}
+      } catch (err) {
+        this.logger.warn(`Failed to get stored Attendee bot ${storedBotId}: ${err.message}`);
+      }
     }
     
     return { connected: false };
