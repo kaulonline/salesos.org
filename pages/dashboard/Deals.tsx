@@ -483,7 +483,7 @@ export const Deals: React.FC = () => {
                     <Skeleton className="h-10 w-48 mb-2" />
                     <Skeleton className="h-4 w-64" />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                     <Skeleton className="h-10 w-32 rounded-full" />
                     <Skeleton className="h-10 w-32 rounded-full" />
                     <Skeleton className="h-10 w-32 rounded-full" />

@@ -20,7 +20,7 @@ export const LeadSidebar: React.FC<LeadSidebarProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="lg:w-80 shrink-0 space-y-4 hidden xl:block">
+    <div className="xl:w-72 shrink-0 space-y-4 hidden xl:block">
       <button
         onClick={() => navigate('/dashboard/leads')}
         className="flex items-center gap-2 text-[#666] hover:text-[#1A1A1A] mb-8 transition-colors font-medium group"
@@ -36,7 +36,7 @@ export const LeadSidebar: React.FC<LeadSidebarProps> = ({
           <Link to={`/dashboard/leads/${l.id}`} key={l.id} className="block group">
             <Card
               padding="sm"
-              className={`rounded-3xl transition-all ${l.id === currentLeadId ? 'bg-[#EAD07D]' : 'hover:bg-gray-50'}`}
+              className={`rounded-3xl transition-all ${l.id === currentLeadId ? 'bg-[#EAD07D]' : 'hover:bg-[#F8F8F6]'}`}
             >
               <div className="flex items-center gap-3">
                 <Avatar

@@ -11,6 +11,7 @@ import {
   EditAccountModal,
   DeleteConfirmModal,
 } from '../../src/components/accounts';
+import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
 import type { UpdateAccountDto, CreateOpportunityDto, CreateContactDto, OpportunityStage } from '../../src/types';
 
 export const AccountDetail: React.FC = () => {
@@ -21,7 +22,7 @@ export const AccountDetail: React.FC = () => {
   const { create: createDeal, isCreating: isCreatingDeal } = useDeals();
   const { create: createContact, isCreating: isCreatingContact } = useContacts();
 
-  const [openSection, setOpenSection] = useState<string | null>('basic');
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']));
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showNewDealModal, setShowNewDealModal] = useState(false);
@@ -63,7 +64,12 @@ export const AccountDetail: React.FC = () => {
   }, [company]);
 
   const toggleSection = (section: string) => {
-    setOpenSection(openSection === section ? null : section);
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
   };
 
   const handleEdit = async () => {
@@ -126,8 +132,8 @@ export const AccountDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-[1600px] mx-auto p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-80 shrink-0 hidden xl:block space-y-4">
+        <div className="flex flex-col xl:flex-row gap-6">
+          <div className="xl:w-72 shrink-0 hidden xl:block space-y-4">
             <Skeleton className="h-6 w-32 mb-6" />
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-20 w-full rounded-3xl" />
@@ -135,8 +141,8 @@ export const AccountDetail: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-              <Skeleton className="lg:col-span-8 h-[340px] rounded-[2rem]" />
-              <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="lg:col-span-5 h-[340px] rounded-[2rem]" />
+              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-[160px] rounded-[2rem]" />
                 ))}
@@ -170,12 +176,15 @@ export const AccountDetail: React.FC = () => {
 
   return (
     <div className="max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
-      <div className="flex flex-col lg:flex-row gap-6">
+      <DetailBreadcrumb items={[
+        { label: 'Accounts', path: '/dashboard/companies' },
+        { label: company.name },
+      ]} />
+      <div className="flex flex-col xl:flex-row gap-6">
         {/* Left Sidebar */}
         <AccountSidebar
           currentAccountId={company.id}
-          accounts={recentCompanies}
-          loading={companiesLoading}
+          company={company}
         />
 
         {/* Main Profile Area */}
@@ -193,7 +202,7 @@ export const AccountDetail: React.FC = () => {
             <AccountAccordions
               account={company}
               hierarchy={hierarchy}
-              openSection={openSection}
+              openSections={openSections}
               onToggleSection={toggleSection}
             />
 
@@ -236,11 +245,11 @@ export const AccountDetail: React.FC = () => {
       {showNewDealModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between p-6 border-b border-black/5 shrink-0">
               <h2 className="text-xl font-medium text-[#1A1A1A]">New Deal for {company.name}</h2>
               <button
                 onClick={() => setShowNewDealModal(false)}
-                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-[#F0EBD8] transition-colors"
               >
                 <X size={16} />
               </button>
@@ -253,7 +262,7 @@ export const AccountDetail: React.FC = () => {
                   value={newDealForm.name || ''}
                   onChange={(e) => setNewDealForm({ ...newDealForm, name: e.target.value })}
                   placeholder="e.g., Enterprise License Q1"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 />
               </div>
               <div>
@@ -263,7 +272,7 @@ export const AccountDetail: React.FC = () => {
                   value={newDealForm.amount || ''}
                   onChange={(e) => setNewDealForm({ ...newDealForm, amount: e.target.value ? Number(e.target.value) : undefined })}
                   placeholder="e.g., 50000"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 />
               </div>
               <div>
@@ -271,7 +280,7 @@ export const AccountDetail: React.FC = () => {
                 <select
                   value={newDealForm.stage || 'PROSPECTING'}
                   onChange={(e) => setNewDealForm({ ...newDealForm, stage: e.target.value as OpportunityStage })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 >
                   <option value="PROSPECTING">Prospecting</option>
                   <option value="QUALIFICATION">Qualification</option>
@@ -282,7 +291,7 @@ export const AccountDetail: React.FC = () => {
                 </select>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex gap-3 shrink-0">
+            <div className="p-6 border-t border-black/5 flex gap-3 shrink-0">
               <button
                 onClick={() => setShowNewDealModal(false)}
                 className="flex-1 px-4 py-2.5 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors rounded-xl hover:bg-[#F8F8F6]"
@@ -306,11 +315,11 @@ export const AccountDetail: React.FC = () => {
       {showAddContactModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between p-6 border-b border-black/5 shrink-0">
               <h2 className="text-xl font-medium text-[#1A1A1A]">Add Contact to {company.name}</h2>
               <button
                 onClick={() => setShowAddContactModal(false)}
-                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-8 h-8 rounded-full bg-[#F8F8F6] flex items-center justify-center hover:bg-[#F0EBD8] transition-colors"
               >
                 <X size={16} />
               </button>
@@ -323,7 +332,7 @@ export const AccountDetail: React.FC = () => {
                     type="text"
                     value={newContactForm.firstName || ''}
                     onChange={(e) => setNewContactForm({ ...newContactForm, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                    className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                   />
                 </div>
                 <div>
@@ -332,7 +341,7 @@ export const AccountDetail: React.FC = () => {
                     type="text"
                     value={newContactForm.lastName || ''}
                     onChange={(e) => setNewContactForm({ ...newContactForm, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                    className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                   />
                 </div>
               </div>
@@ -342,7 +351,7 @@ export const AccountDetail: React.FC = () => {
                   type="email"
                   value={newContactForm.email || ''}
                   onChange={(e) => setNewContactForm({ ...newContactForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 />
               </div>
               <div>
@@ -351,7 +360,7 @@ export const AccountDetail: React.FC = () => {
                   type="tel"
                   value={newContactForm.phone || ''}
                   onChange={(e) => setNewContactForm({ ...newContactForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 />
               </div>
               <div>
@@ -361,11 +370,11 @@ export const AccountDetail: React.FC = () => {
                   value={newContactForm.title || ''}
                   onChange={(e) => setNewContactForm({ ...newContactForm, title: e.target.value })}
                   placeholder="e.g., VP of Sales"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
+                  className="w-full px-3 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EAD07D]"
                 />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex gap-3 shrink-0">
+            <div className="p-6 border-t border-black/5 flex gap-3 shrink-0">
               <button
                 onClick={() => setShowAddContactModal(false)}
                 className="flex-1 px-4 py-2.5 text-[#666] hover:text-[#1A1A1A] font-medium transition-colors rounded-xl hover:bg-[#F8F8F6]"

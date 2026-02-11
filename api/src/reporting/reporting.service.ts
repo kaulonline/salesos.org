@@ -130,9 +130,11 @@ export class ReportingService {
       where.ownerId = userId;
     }
 
-    const [closedWon, closedLost, byOwner] = await Promise.all([
-      this.prisma.opportunity.count({ where: { ...where, isWon: true } }),
-      this.prisma.opportunity.count({ where: { ...where, isWon: false } }),
+    const [closedOpps, byOwner] = await Promise.all([
+      this.prisma.opportunity.findMany({
+        where,
+        select: { closedDate: true, isWon: true, createdAt: true },
+      }),
       this.prisma.opportunity.groupBy({
         by: ['ownerId'],
         where,
@@ -140,8 +142,39 @@ export class ReportingService {
       }),
     ]);
 
+    const closedWon = closedOpps.filter((o) => o.isWon).length;
+    const closedLost = closedOpps.filter((o) => !o.isWon).length;
     const total = closedWon + closedLost;
     const winRate = total > 0 ? Math.round((closedWon / total) * 100) : 0;
+
+    // Group by month for byPeriod time series
+    const monthlyMap = new Map<string, { won: number; lost: number }>();
+    for (const opp of closedOpps) {
+      if (!opp.closedDate) continue;
+      const month = opp.closedDate.toISOString().substring(0, 7);
+      const entry = monthlyMap.get(month) || { won: 0, lost: 0 };
+      if (opp.isWon) entry.won++;
+      else entry.lost++;
+      monthlyMap.set(month, entry);
+    }
+
+    const byPeriodData = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, { won, lost }]) => ({
+        label: month,
+        value: won + lost > 0 ? Math.round((won / (won + lost)) * 100) : 0,
+        metadata: { won, lost },
+      }));
+
+    // Calculate average sales cycle time for won deals
+    const wonOpps = closedOpps.filter((o) => o.isWon && o.closedDate);
+    let avgCycleTime = 0;
+    if (wonOpps.length > 0) {
+      const totalDays = wonOpps.reduce((sum, opp) => {
+        return sum + (opp.closedDate!.getTime() - opp.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      }, 0);
+      avgCycleTime = Math.round(totalDays / wonOpps.length);
+    }
 
     // Get owner details
     const ownerIds = byOwner.map((o) => o.ownerId);
@@ -193,11 +226,16 @@ export class ReportingService {
           name: 'By Owner',
           data: ownerData,
         },
+        {
+          name: 'By Period',
+          data: byPeriodData,
+        },
       ],
       summary: {
         total,
         average: winRate,
         topItems: ownerData.slice(0, 5).map((o) => ({ label: o.label, value: o.value })),
+        metadata: { avgCycleTime },
       },
       generatedAt: new Date(),
       filters: dateFilters as any,
@@ -222,7 +260,7 @@ export class ReportingService {
       where.userId = userId;
     }
 
-    const [byType, byUser, total] = await Promise.all([
+    const [byType, byUser, total, activities] = await Promise.all([
       this.prisma.activity.groupBy({
         by: ['type'],
         where,
@@ -234,6 +272,10 @@ export class ReportingService {
         _count: { id: true },
       }),
       this.prisma.activity.count({ where }),
+      this.prisma.activity.findMany({
+        where,
+        select: { activityDate: true },
+      }),
     ]);
 
     // Get user details
@@ -248,13 +290,24 @@ export class ReportingService {
     const typeData = byType.map((t) => ({
       label: this.formatActivityType(t.type),
       value: t._count.id,
-      metadata: { percentage: Math.round((t._count.id / total) * 100) },
+      metadata: { percentage: total > 0 ? Math.round((t._count.id / total) * 100) : 0 },
     }));
 
     const userData = byUser.map((u) => ({
       label: userMap.get(u.userId) || 'Unknown',
       value: u._count.id,
     }));
+
+    // Group by day for time series
+    const dailyMap = new Map<string, number>();
+    for (const activity of activities) {
+      const day = activity.activityDate.toISOString().substring(0, 10);
+      dailyMap.set(day, (dailyMap.get(day) || 0) + 1);
+    }
+
+    const byDayData = Array.from(dailyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({ label: date, value: count }));
 
     return {
       id: uuidv4(),
@@ -265,6 +318,7 @@ export class ReportingService {
       data: [
         { name: 'By Type', data: typeData },
         { name: 'By Owner', data: userData },
+        { name: 'By Day', data: byDayData },
       ],
       summary: {
         total,
@@ -301,7 +355,7 @@ export class ReportingService {
       pipelineWhere.ownerId = userId;
     }
 
-    const [closedWon, pipeline, byOwner] = await Promise.all([
+    const [closedWon, pipeline, byOwnerClosed, closedOpps, pipelineOpps, byOwnerPipeline] = await Promise.all([
       this.prisma.opportunity.aggregate({
         where,
         _sum: { amount: true },
@@ -317,28 +371,101 @@ export class ReportingService {
         _sum: { amount: true },
         _count: { id: true },
       }),
+      this.prisma.opportunity.findMany({
+        where,
+        select: { closedDate: true, amount: true },
+      }),
+      this.prisma.opportunity.findMany({
+        where: pipelineWhere,
+        select: { closeDate: true, expectedRevenue: true, amount: true },
+      }),
+      this.prisma.opportunity.groupBy({
+        by: ['ownerId'],
+        where: pipelineWhere,
+        _sum: { amount: true },
+      }),
     ]);
 
     // Get owner details
-    const ownerIds = byOwner.map((o) => o.ownerId);
+    const ownerIds = byOwnerClosed.map((o) => o.ownerId);
     const owners = await this.prisma.user.findMany({
       where: { id: { in: ownerIds } },
       select: { id: true, name: true },
     });
 
     const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
+    const pipelineOwnerMap = new Map(byOwnerPipeline.map((o) => [o.ownerId, o._sum.amount || 0]));
 
-    const ownerData = byOwner
+    const ownerData = byOwnerClosed
       .sort((a, b) => (b._sum.amount || 0) - (a._sum.amount || 0))
       .map((o) => ({
         label: ownerMap.get(o.ownerId) || 'Unknown',
         value: o._sum.amount || 0,
-        metadata: { count: o._count.id },
+        metadata: { count: o._count.id, pipeline: pipelineOwnerMap.get(o.ownerId) || 0 },
       }));
 
     const totalClosed = closedWon._sum.amount || 0;
     const totalPipeline = pipeline._sum.amount || 0;
     const expectedRevenue = pipeline._sum.expectedRevenue || 0;
+
+    // Group closed won by month
+    const monthlyActual = new Map<string, number>();
+    for (const opp of closedOpps) {
+      if (!opp.closedDate) continue;
+      const key = `${opp.closedDate.getFullYear()}-${String(opp.closedDate.getMonth() + 1).padStart(2, '0')}`;
+      monthlyActual.set(key, (monthlyActual.get(key) || 0) + (opp.amount || 0));
+    }
+
+    // Group pipeline expected revenue by closeDate month for forecast
+    const monthlyForecast = new Map<string, number>();
+    for (const opp of pipelineOpps) {
+      if (!opp.closeDate) continue;
+      const key = `${opp.closeDate.getFullYear()}-${String(opp.closeDate.getMonth() + 1).padStart(2, '0')}`;
+      monthlyForecast.set(key, (monthlyForecast.get(key) || 0) + (opp.expectedRevenue || opp.amount || 0));
+    }
+
+    const allMonths = new Set([...monthlyActual.keys(), ...monthlyForecast.keys()]);
+    const byMonthData = Array.from(allMonths)
+      .sort()
+      .map((month) => {
+        const [year, m] = month.split('-');
+        const date = new Date(parseInt(year), parseInt(m) - 1);
+        const label = date.toLocaleString('en-US', { month: 'short' });
+        return {
+          label,
+          value: monthlyActual.get(month) || 0,
+          metadata: { forecast: monthlyForecast.get(month) || 0 },
+        };
+      });
+
+    // Calculate growth rate vs previous period
+    let growthRate = 0;
+    if (dateFilters.gte) {
+      const currentStart = dateFilters.gte;
+      const currentEnd = dateFilters.lte || new Date();
+      const duration = currentEnd.getTime() - currentStart.getTime();
+      const prevStart = new Date(currentStart.getTime() - duration);
+      const prevEnd = new Date(currentStart.getTime() - 1);
+
+      const prevWhere: any = {
+        isWon: true,
+        organizationId,
+        closedDate: { gte: prevStart, lte: prevEnd },
+      };
+      if (!isAdmin) {
+        prevWhere.ownerId = userId;
+      }
+
+      const prevRevenue = await this.prisma.opportunity.aggregate({
+        where: prevWhere,
+        _sum: { amount: true },
+      });
+
+      const prevTotal = prevRevenue._sum.amount || 0;
+      if (prevTotal > 0) {
+        growthRate = Math.round(((totalClosed - prevTotal) / prevTotal) * 100 * 10) / 10;
+      }
+    }
 
     return {
       id: uuidv4(),
@@ -356,11 +483,13 @@ export class ReportingService {
           ],
         },
         { name: 'By Owner', data: ownerData },
+        { name: 'By Month', data: byMonthData },
       ],
       summary: {
         total: totalClosed,
         count: closedWon._count.id,
         average: closedWon._count.id > 0 ? Math.round(totalClosed / closedWon._count.id) : 0,
+        percentChange: growthRate,
         topItems: ownerData.slice(0, 5).map((o) => ({ label: o.label, value: o.value })),
       },
       generatedAt: new Date(),
@@ -385,7 +514,7 @@ export class ReportingService {
       where.ownerId = userId;
     }
 
-    const [total, converted, bySource] = await Promise.all([
+    const [total, converted, bySource, convertedBySource, byOwnerTotal, convertedByOwner, convertedLeads] = await Promise.all([
       this.prisma.lead.count({ where }),
       this.prisma.lead.count({ where: { ...where, status: 'CONVERTED' } }),
       this.prisma.lead.groupBy({
@@ -393,21 +522,33 @@ export class ReportingService {
         where,
         _count: { id: true },
       }),
+      this.prisma.lead.groupBy({
+        by: ['leadSource'],
+        where: { ...where, status: 'CONVERTED' },
+        _count: { id: true },
+      }),
+      this.prisma.lead.groupBy({
+        by: ['ownerId'],
+        where,
+        _count: { id: true },
+      }),
+      this.prisma.lead.groupBy({
+        by: ['ownerId'],
+        where: { ...where, status: 'CONVERTED' },
+        _count: { id: true },
+      }),
+      this.prisma.lead.findMany({
+        where: { ...where, status: 'CONVERTED', convertedDate: { not: null } },
+        select: { createdAt: true, convertedDate: true },
+      }),
     ]);
 
-    // Get converted count by source
-    const convertedBySource = await this.prisma.lead.groupBy({
-      by: ['leadSource'],
-      where: { ...where, status: 'CONVERTED' },
-      _count: { id: true },
-    });
-
-    const convertedMap = new Map(convertedBySource.map((c) => [c.leadSource, c._count.id]));
+    const convertedSourceMap = new Map(convertedBySource.map((c) => [c.leadSource, c._count.id]));
 
     const sourceData = bySource
       .sort((a, b) => b._count.id - a._count.id)
       .map((s) => {
-        const sourceConverted = convertedMap.get(s.leadSource) || 0;
+        const sourceConverted = convertedSourceMap.get(s.leadSource) || 0;
         return {
           label: s.leadSource || 'Unknown',
           value: s._count.id > 0 ? Math.round((sourceConverted / s._count.id) * 100) : 0,
@@ -417,6 +558,39 @@ export class ReportingService {
           },
         };
       });
+
+    // By owner conversion
+    const convertedOwnerMap = new Map(convertedByOwner.map((c) => [c.ownerId, c._count.id]));
+    const ownerLeadIds = byOwnerTotal.map((o) => o.ownerId);
+    const ownerUsers = await this.prisma.user.findMany({
+      where: { id: { in: ownerLeadIds } },
+      select: { id: true, name: true },
+    });
+    const ownerUserMap = new Map(ownerUsers.map((u) => [u.id, u.name]));
+
+    const ownerData = byOwnerTotal
+      .sort((a, b) => b._count.id - a._count.id)
+      .map((o) => {
+        const ownerConverted = convertedOwnerMap.get(o.ownerId) || 0;
+        return {
+          label: ownerUserMap.get(o.ownerId) || 'Unknown',
+          value: o._count.id > 0 ? Math.round((ownerConverted / o._count.id) * 100) : 0,
+          metadata: {
+            total: o._count.id,
+            converted: ownerConverted,
+          },
+        };
+      });
+
+    // Calculate average time to convert
+    let avgTimeToConvert = 0;
+    if (convertedLeads.length > 0) {
+      const totalDays = convertedLeads.reduce((sum, lead) => {
+        if (!lead.convertedDate) return sum;
+        return sum + (lead.convertedDate.getTime() - lead.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      }, 0);
+      avgTimeToConvert = Math.round(totalDays / convertedLeads.length);
+    }
 
     const conversionRate = total > 0 ? Math.round((converted / total) * 100) : 0;
 
@@ -435,12 +609,14 @@ export class ReportingService {
           ],
         },
         { name: 'By Source', data: sourceData },
+        { name: 'By Owner', data: ownerData },
       ],
       summary: {
         total,
         count: converted,
         average: conversionRate,
         topItems: sourceData.slice(0, 5).map((s) => ({ label: s.label, value: s.value })),
+        metadata: { avgTimeToConvert },
       },
       generatedAt: new Date(),
       filters: dateFilters as any,
@@ -479,7 +655,14 @@ export class ReportingService {
       closedThisQuarterWhere.ownerId = userId;
     }
 
-    const [byStage, closedThisQuarter] = await Promise.all([
+    const stageWeights: Record<string, number> = {
+      PROSPECTING: 0.1,
+      QUALIFICATION: 0.25,
+      PROPOSAL: 0.5,
+      NEGOTIATION: 0.75,
+    };
+
+    const [byStage, closedThisQuarter, pipelineOpps, closedOpps] = await Promise.all([
       this.prisma.opportunity.groupBy({
         by: ['stage'],
         where,
@@ -490,14 +673,15 @@ export class ReportingService {
         where: closedThisQuarterWhere,
         _sum: { amount: true },
       }),
+      this.prisma.opportunity.findMany({
+        where,
+        select: { closeDate: true, amount: true, stage: true, ownerId: true },
+      }),
+      this.prisma.opportunity.findMany({
+        where: closedThisQuarterWhere,
+        select: { closedDate: true, amount: true, ownerId: true },
+      }),
     ]);
-
-    const stageWeights: Record<string, number> = {
-      PROSPECTING: 0.1,
-      QUALIFICATION: 0.25,
-      PROPOSAL: 0.5,
-      NEGOTIATION: 0.75,
-    };
 
     let weightedForecast = 0;
     const stageData = byStage.map((s) => {
@@ -519,6 +703,76 @@ export class ReportingService {
     const closedAmount = closedThisQuarter._sum.amount || 0;
     const totalForecast = closedAmount + weightedForecast;
 
+    // byMonth: Group pipeline by closeDate month + closed by closedDate month
+    const monthlyCommitted = new Map<string, number>();
+    const monthlyBestCase = new Map<string, number>();
+    const monthlyClosed = new Map<string, number>();
+
+    for (const opp of pipelineOpps) {
+      if (!opp.closeDate) continue;
+      const key = `${opp.closeDate.getFullYear()}-${String(opp.closeDate.getMonth() + 1).padStart(2, '0')}`;
+      const weight = stageWeights[opp.stage] || 0.5;
+      monthlyCommitted.set(key, (monthlyCommitted.get(key) || 0) + (opp.amount || 0) * weight);
+      monthlyBestCase.set(key, (monthlyBestCase.get(key) || 0) + (opp.amount || 0));
+    }
+
+    for (const opp of closedOpps) {
+      if (!opp.closedDate) continue;
+      const key = `${opp.closedDate.getFullYear()}-${String(opp.closedDate.getMonth() + 1).padStart(2, '0')}`;
+      monthlyClosed.set(key, (monthlyClosed.get(key) || 0) + (opp.amount || 0));
+    }
+
+    const allForecastMonths = new Set([...monthlyCommitted.keys(), ...monthlyClosed.keys()]);
+    const byMonthData = Array.from(allForecastMonths)
+      .sort()
+      .map((month) => {
+        const [year, m] = month.split('-');
+        const date = new Date(parseInt(year), parseInt(m) - 1);
+        const label = date.toLocaleString('en-US', { month: 'short' });
+        return {
+          label,
+          value: monthlyClosed.get(month) || 0,
+          metadata: {
+            committed: monthlyCommitted.get(month) || 0,
+            bestCase: monthlyBestCase.get(month) || 0,
+          },
+        };
+      });
+
+    // byOwner: Group pipeline + closed by owner
+    const ownerCommitted = new Map<string, number>();
+    const ownerBestCase = new Map<string, number>();
+    const ownerClosed = new Map<string, number>();
+
+    for (const opp of pipelineOpps) {
+      const weight = stageWeights[opp.stage] || 0.5;
+      ownerCommitted.set(opp.ownerId, (ownerCommitted.get(opp.ownerId) || 0) + (opp.amount || 0) * weight);
+      ownerBestCase.set(opp.ownerId, (ownerBestCase.get(opp.ownerId) || 0) + (opp.amount || 0));
+    }
+
+    for (const opp of closedOpps) {
+      ownerClosed.set(opp.ownerId, (ownerClosed.get(opp.ownerId) || 0) + (opp.amount || 0));
+    }
+
+    const allOwnerIds = new Set([...ownerCommitted.keys(), ...ownerClosed.keys()]);
+    const ownerUsers = await this.prisma.user.findMany({
+      where: { id: { in: Array.from(allOwnerIds) } },
+      select: { id: true, name: true },
+    });
+    const ownerMap = new Map(ownerUsers.map((u) => [u.id, u.name]));
+
+    const byOwnerData = Array.from(allOwnerIds).map((ownerId) => ({
+      label: ownerMap.get(ownerId) || 'Unknown',
+      value: ownerClosed.get(ownerId) || 0,
+      metadata: {
+        committed: ownerCommitted.get(ownerId) || 0,
+        bestCase: ownerBestCase.get(ownerId) || 0,
+        quota: 0,
+      },
+    }));
+
+    const attainment = totalForecast > 0 ? Math.round((closedAmount / totalForecast) * 100) : 0;
+
     return {
       id: uuidv4(),
       type: ReportType.FORECAST,
@@ -535,6 +789,8 @@ export class ReportingService {
           ],
         },
         { name: 'By Stage', data: stageData },
+        { name: 'By Month', data: byMonthData },
+        { name: 'By Owner', data: byOwnerData },
       ],
       summary: {
         total: totalForecast,
@@ -542,6 +798,7 @@ export class ReportingService {
           { label: 'Closed', value: closedAmount },
           { label: 'Forecast', value: weightedForecast },
         ],
+        metadata: { attainment },
       },
       generatedAt: new Date(),
       filters: dateFilters as any,

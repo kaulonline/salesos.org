@@ -2,6 +2,8 @@ import React from 'react';
 import { Briefcase, Users, Edit3, Calendar, AlertTriangle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { QuickLogActivity } from '../shared/QuickLogActivity';
+import { FieldChangeHistory } from '../audit/FieldChangeHistory';
 import { formatCurrency } from './types';
 import type { Account } from '../../types';
 
@@ -31,7 +33,10 @@ export const AccountMainContent: React.FC<AccountMainContentProps> = ({
   onSchedule,
 }) => {
   return (
-    <div className="lg:col-span-8 space-y-6">
+    <div className="lg:col-span-7 space-y-6">
+      {/* Quick Log Activity */}
+      <QuickLogActivity entityType="account" entityId={account.id} />
+
       {/* Revenue Overview */}
       {revenue && (
         <Card className="p-8">
@@ -39,7 +44,7 @@ export const AccountMainContent: React.FC<AccountMainContentProps> = ({
             <h3 className="text-xl font-medium text-[#1A1A1A]">Revenue Overview</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-[#F8F8F6] rounded-xl p-4 text-center">
               <div className="text-2xl font-light text-[#1A1A1A] mb-1">
                 {formatCurrency(revenue.totalRevenue)}
@@ -129,6 +134,9 @@ export const AccountMainContent: React.FC<AccountMainContentProps> = ({
           </button>
         </div>
       </Card>
+
+      {/* Field Change History */}
+      <FieldChangeHistory entityType="account" entityId={account.id} />
 
       {/* Pain Points & Competitors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

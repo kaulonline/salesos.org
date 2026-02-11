@@ -14,47 +14,47 @@ interface AccountHierarchy {
 interface AccountAccordionsProps {
   account: Account;
   hierarchy?: AccountHierarchy | null;
-  openSection: string | null;
+  openSections: Set<string>;
   onToggleSection: (section: string) => void;
 }
 
 export const AccountAccordions: React.FC<AccountAccordionsProps> = ({
   account,
   hierarchy,
-  openSection,
+  openSections,
   onToggleSection,
 }) => {
   return (
-    <div className="lg:col-span-4 space-y-4">
+    <div className="lg:col-span-5 space-y-4">
       <Card padding="sm" className="px-6 py-4 border border-black/5">
         <button
           onClick={() => onToggleSection('basic')}
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Basic Information
-          {openSection === 'basic' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('basic') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'basic' && (
+        {openSections.has('basic') && (
           <div className="mt-4 space-y-4 animate-in slide-in-from-top-2">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Account ID</span>
               <span className="text-sm font-bold text-[#1A1A1A] font-mono text-xs">
                 {account.id.slice(0, 8)}...
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Type</span>
               <span className="text-sm font-bold text-[#1A1A1A]">
                 {getTypeLabel(account.type)}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Status</span>
               <span className="text-sm font-bold text-[#1A1A1A]">
                 {getStatusLabel(account.accountStatus)}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Industry</span>
               <span className="text-sm font-bold text-[#1A1A1A]">{account.industry || 'Not set'}</span>
             </div>
@@ -72,9 +72,9 @@ export const AccountAccordions: React.FC<AccountAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Billing Address
-          {openSection === 'billing' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('billing') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'billing' && (
+        {openSections.has('billing') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             {account.billingStreet || account.billingCity || account.billingState || account.billingCountry ? (
               <div className="flex items-start gap-3">
@@ -102,9 +102,9 @@ export const AccountAccordions: React.FC<AccountAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Shipping Address
-          {openSection === 'shipping' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('shipping') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'shipping' && (
+        {openSections.has('shipping') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             {account.shippingStreet || account.shippingCity || account.shippingState || account.shippingCountry ? (
               <div className="flex items-start gap-3">
@@ -132,9 +132,9 @@ export const AccountAccordions: React.FC<AccountAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Tech Stack
-          {openSection === 'techstack' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('techstack') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'techstack' && (
+        {openSections.has('techstack') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             {account.techStack && account.techStack.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -159,9 +159,9 @@ export const AccountAccordions: React.FC<AccountAccordionsProps> = ({
             className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
           >
             Account Hierarchy
-            {openSection === 'hierarchy' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {openSections.has('hierarchy') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
-          {openSection === 'hierarchy' && (
+          {openSections.has('hierarchy') && (
             <div className="mt-4 animate-in slide-in-from-top-2 space-y-3">
               {hierarchy.parent && (
                 <div>

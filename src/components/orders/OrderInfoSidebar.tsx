@@ -11,7 +11,7 @@ interface OrderInfoSidebarProps {
 
 export const OrderInfoSidebar: React.FC<OrderInfoSidebarProps> = ({ order }) => {
   const navigate = useNavigate();
-  const paymentCfg = paymentStatusConfig[order.paymentStatus] || { label: order.paymentStatus || 'Unknown', color: 'bg-gray-100 text-gray-700' };
+  const paymentCfg = paymentStatusConfig[order.paymentStatus] || { label: order.paymentStatus || 'Unknown', color: 'bg-[#F8F8F6] text-[#666]' };
 
   return (
     <div className="space-y-6">

@@ -5,6 +5,7 @@ import {
   DollarSign, Target, Clock, TrendingUp, Briefcase
 } from 'lucide-react';
 import { Badge } from '../../../components/ui/Badge';
+import { Card } from '../../../components/ui/Card';
 import { EnrichButton } from '../enrichment';
 import { AIEmailDraftButton } from '../ai';
 import {
@@ -53,9 +54,9 @@ export const DealHeader: React.FC<DealHeaderProps> = ({
   const winProbability = analysis?.winProbability || deal.winProbability || deal.probability || 50;
 
   return (
-    <div className="mb-5">
+    <div className="mb-6">
       {/* Main Header Card */}
-      <div className="bg-white rounded-2xl p-6">
+      <Card variant="ghost" padding="lg" className="p-6 relative">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left: Icon + Basic Info */}
           <div className="flex gap-5 flex-1 min-w-0">
@@ -191,27 +192,39 @@ export const DealHeader: React.FC<DealHeaderProps> = ({
             </div>
 
             {/* Stats Row */}
-            <div className="flex gap-3">
-              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center min-w-[90px]">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center sm:min-w-[90px]">
                 <div className="text-xl font-bold text-[#1A1A1A]">{formatCompactCurrency(deal.amount)}</div>
                 <div className="text-[10px] text-[#1A1A1A]/60 uppercase font-semibold">Value</div>
               </div>
-              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center min-w-[70px]">
+              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center sm:min-w-[70px]">
                 <div className="text-xl font-bold text-white">{deal.probability || 50}%</div>
                 <div className="text-[10px] text-white/50 uppercase font-semibold">Prob</div>
               </div>
-              <div className="bg-[#F8F8F6] rounded-xl px-4 py-2 text-center min-w-[70px]">
-                <div className="text-xl font-bold text-[#1A1A1A]">{daysInStage}d</div>
-                <div className="text-[10px] text-[#999] uppercase font-semibold">In Stage</div>
+              <div className={`rounded-xl px-4 py-2 text-center sm:min-w-[70px] ${
+                daysInStage <= 14 ? 'bg-[#93C01F]/20' :
+                daysInStage <= 30 ? 'bg-[#EAD07D]' :
+                'bg-red-100'
+              }`}>
+                <div className={`text-xl font-bold ${
+                  daysInStage <= 14 ? 'text-[#93C01F]' :
+                  daysInStage <= 30 ? 'text-[#1A1A1A]' :
+                  'text-red-600'
+                }`}>{daysInStage}d</div>
+                <div className={`text-[10px] uppercase font-semibold ${
+                  daysInStage <= 14 ? 'text-[#93C01F]' :
+                  daysInStage <= 30 ? 'text-[#1A1A1A]/60' :
+                  'text-red-600/60'
+                }`}>In Stage</div>
               </div>
-              <div className="bg-[#666] rounded-xl px-4 py-2 text-center min-w-[70px]">
+              <div className="bg-[#666] rounded-xl px-4 py-2 text-center sm:min-w-[70px]">
                 <div className="text-xl font-bold text-white">{stageIndex + 1}/10</div>
                 <div className="text-[10px] text-white/60 uppercase font-semibold">Stage</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

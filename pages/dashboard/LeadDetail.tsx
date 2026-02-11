@@ -14,6 +14,7 @@ import {
 } from '../../src/components/leads';
 import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
 import { DuplicateDetectionPanel } from '../../src/components/duplicates/DuplicateDetectionPanel';
+import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
 import type { UpdateLeadDto, ConvertLeadDto } from '../../src/types';
 
 export const LeadDetail: React.FC = () => {
@@ -22,7 +23,7 @@ export const LeadDetail: React.FC = () => {
   const { lead, loading, error, refetch } = useLead(id);
   const { leads: recentLeads, loading: leadsLoading, update, remove, score, convert, isUpdating, isDeleting, isConverting } = useLeads();
 
-  const [openSection, setOpenSection] = useState<string | null>('basic');
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']));
   const [scoringLead, setScoringLead] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -56,7 +57,12 @@ export const LeadDetail: React.FC = () => {
   }, [lead]);
 
   const toggleSection = (section: string) => {
-    setOpenSection(openSection === section ? null : section);
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
   };
 
   const handleScore = async () => {
@@ -106,8 +112,8 @@ export const LeadDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-[1600px] mx-auto p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-80 shrink-0 hidden xl:block space-y-4">
+        <div className="flex flex-col xl:flex-row gap-6">
+          <div className="xl:w-72 shrink-0 hidden xl:block space-y-4">
             <Skeleton className="h-6 w-32 mb-6" />
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-20 w-full rounded-3xl" />
@@ -115,8 +121,8 @@ export const LeadDetail: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-              <Skeleton className="lg:col-span-8 h-[340px] rounded-[2rem]" />
-              <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="lg:col-span-5 h-[340px] rounded-[2rem]" />
+              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-[160px] rounded-[2rem]" />
                 ))}
@@ -152,7 +158,11 @@ export const LeadDetail: React.FC = () => {
 
   return (
     <div className="max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
-      <div className="flex flex-col lg:flex-row gap-6">
+      <DetailBreadcrumb items={[
+        { label: 'Leads', path: '/dashboard/leads' },
+        { label: fullName },
+      ]} />
+      <div className="flex flex-col xl:flex-row gap-6">
         {/* Left Sidebar */}
         <LeadSidebar
           currentLeadId={lead.id}
@@ -171,6 +181,7 @@ export const LeadDetail: React.FC = () => {
             onScore={handleScore}
             onEdit={() => setShowEditModal(true)}
             onDelete={() => setShowDeleteConfirm(true)}
+            onConvert={() => setShowConvertModal(true)}
             scoringLead={scoringLead}
           />
 
@@ -179,22 +190,24 @@ export const LeadDetail: React.FC = () => {
             {/* Accordions Column */}
             <LeadAccordions
               lead={lead}
-              openSection={openSection}
+              openSections={openSections}
               onToggleSection={toggleSection}
             />
 
-            {/* Score Section */}
-            <LeadScoreSection
-              lead={lead}
-              onScore={handleScore}
-              onEdit={() => setShowEditModal(true)}
-              onConvert={() => setShowConvertModal(true)}
-              scoringLead={scoringLead}
-            />
-          </div>
+            {/* Score Section + Field Change History */}
+            <div className="lg:col-span-7 space-y-6">
+              <LeadScoreSection
+                lead={lead}
+                onScore={handleScore}
+                onEdit={() => setShowEditModal(true)}
+                onConvert={() => setShowConvertModal(true)}
+                scoringLead={scoringLead}
+              />
 
-          {/* Field Change History */}
-          <FieldChangeHistory entityType="lead" entityId={lead.id} />
+              {/* Field Change History */}
+              <FieldChangeHistory entityType="lead" entityId={lead.id} />
+            </div>
+          </div>
         </div>
       </div>
 

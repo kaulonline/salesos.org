@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, Mail, Phone, Edit3, Video } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { QuickLogActivity } from '../shared/QuickLogActivity';
+import { FieldChangeHistory } from '../audit/FieldChangeHistory';
 import type { Contact, Opportunity } from '../../types';
 
 interface ContactMainContentProps {
@@ -16,7 +18,10 @@ export const ContactMainContent: React.FC<ContactMainContentProps> = ({
   onEdit,
 }) => {
   return (
-    <div className="lg:col-span-8 space-y-6">
+    <div className="lg:col-span-7 space-y-6">
+      {/* Quick Log Activity */}
+      <QuickLogActivity entityType="contact" entityId={contact.id} />
+
       {/* Related Opportunities */}
       <Card className="p-8">
         <div className="flex justify-between items-start mb-6">
@@ -71,56 +76,8 @@ export const ContactMainContent: React.FC<ContactMainContentProps> = ({
         )}
       </Card>
 
-      {/* Quick Actions */}
-      <Card className="p-6">
-        <h3 className="text-lg font-medium text-[#1A1A1A] mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {contact.email && !contact.doNotEmail ? (
-            <a
-              href={`mailto:${contact.email}`}
-              className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
-            >
-              <Mail size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
-              <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">
-                Send Email
-              </span>
-            </a>
-          ) : (
-            <button className="flex flex-col items-center gap-2 p-4 bg-gray-100 rounded-xl cursor-not-allowed" disabled>
-              <Mail size={20} className="text-gray-300" />
-              <span className="text-xs font-medium text-gray-300">Send Email</span>
-            </button>
-          )}
-          {contact.phone && !contact.doNotCall ? (
-            <a
-              href={`tel:${contact.phone}`}
-              className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
-            >
-              <Phone size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
-              <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">Call</span>
-            </a>
-          ) : (
-            <button className="flex flex-col items-center gap-2 p-4 bg-gray-100 rounded-xl cursor-not-allowed" disabled>
-              <Phone size={20} className="text-gray-300" />
-              <span className="text-xs font-medium text-gray-300">Call</span>
-            </button>
-          )}
-          <button
-            onClick={onEdit}
-            className="flex flex-col items-center gap-2 p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#EAD07D] transition-colors group"
-          >
-            <Edit3 size={20} className="text-[#666] group-hover:text-[#1A1A1A]" />
-            <span className="text-xs font-medium text-[#666] group-hover:text-[#1A1A1A]">Edit</span>
-          </button>
-          <Link
-            to="/dashboard/calendar"
-            className="flex flex-col items-center gap-2 p-4 bg-[#1A1A1A] rounded-xl hover:bg-[#333] transition-colors group"
-          >
-            <Video size={20} className="text-white" />
-            <span className="text-xs font-medium text-white">Schedule</span>
-          </Link>
-        </div>
-      </Card>
+      {/* Field Change History */}
+      <FieldChangeHistory entityType="contact" entityId={contact.id} />
 
       {/* Engagement Chart */}
       <Card className="p-8">
@@ -131,7 +88,7 @@ export const ContactMainContent: React.FC<ContactMainContentProps> = ({
               {contact.engagementScore || 0}
             </div>
             <div className="text-sm text-[#666]">Engagement Score</div>
-            <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="mt-3 h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#EAD07D] rounded-full"
                 style={{ width: `${contact.engagementScore || 0}%` }}
@@ -143,7 +100,7 @@ export const ContactMainContent: React.FC<ContactMainContentProps> = ({
               {contact.responseRate ? `${Math.round(contact.responseRate * 100)}%` : '0%'}
             </div>
             <div className="text-sm text-[#666]">Response Rate</div>
-            <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="mt-3 h-2 bg-[#F0EBD8] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#1A1A1A] rounded-full"
                 style={{ width: `${(contact.responseRate || 0) * 100}%` }}

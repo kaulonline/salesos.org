@@ -194,7 +194,7 @@ export const AccountHeader: React.FC<AccountHeaderProps> = ({
                   <MoreVertical size={16} />
                 </button>
                 {actionMenuOpen && (
-                  <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-gray-100 py-2 min-w-[150px] z-50">
+                  <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-black/5 py-2 min-w-[150px] z-50">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -221,24 +221,39 @@ export const AccountHeader: React.FC<AccountHeaderProps> = ({
             </div>
 
             {/* Stats Row */}
-            <div className="flex gap-3">
-              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center min-w-[80px]">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center sm:min-w-[80px]">
                 <div className="text-xl font-bold text-[#1A1A1A]">{account.healthScore || 0}</div>
                 <div className="text-[10px] text-[#1A1A1A]/60 uppercase font-semibold">Health</div>
               </div>
-              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center min-w-[90px]">
+              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center sm:min-w-[90px]">
                 <div className="text-lg font-bold text-white">
                   {formatCurrency(account.lifetimeValue)}
                 </div>
                 <div className="text-[10px] text-white/50 uppercase font-semibold">LTV</div>
               </div>
-              <div className="bg-[#F8F8F6] rounded-xl px-4 py-2 text-center min-w-[80px]">
-                <div className="text-xl font-bold text-[#1A1A1A]">
+              <div className={`rounded-xl px-4 py-2 text-center sm:min-w-[80px] ${
+                daysSinceActivity === null ? 'bg-[#F8F8F6]' :
+                daysSinceActivity <= 7 ? 'bg-[#93C01F]/20' :
+                daysSinceActivity <= 30 ? 'bg-[#EAD07D]' :
+                'bg-red-100'
+              }`}>
+                <div className={`text-xl font-bold ${
+                  daysSinceActivity === null ? 'text-[#999]' :
+                  daysSinceActivity <= 7 ? 'text-[#93C01F]' :
+                  daysSinceActivity <= 30 ? 'text-[#1A1A1A]' :
+                  'text-red-600'
+                }`}>
                   {daysSinceActivity !== null ? `${daysSinceActivity}d` : '-'}
                 </div>
-                <div className="text-[10px] text-[#999] uppercase font-semibold">Activity</div>
+                <div className={`text-[10px] uppercase font-semibold ${
+                  daysSinceActivity === null ? 'text-[#999]' :
+                  daysSinceActivity <= 7 ? 'text-[#93C01F]' :
+                  daysSinceActivity <= 30 ? 'text-[#1A1A1A]/60' :
+                  'text-red-600/60'
+                }`}>Activity</div>
               </div>
-              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center min-w-[70px]">
+              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center sm:min-w-[70px]">
                 <div className="text-xl font-bold text-white">
                   {(account._count?.opportunities || account.opportunityCount) || 0}
                 </div>

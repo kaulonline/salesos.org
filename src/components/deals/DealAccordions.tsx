@@ -8,7 +8,7 @@ import type { Opportunity, OpportunityStage, OpportunityAnalysis } from '../../t
 interface DealAccordionsProps {
   deal: Opportunity;
   analysis: OpportunityAnalysis | null;
-  openSection: string | null;
+  openSections: Set<string>;
   onToggleSection: (section: string) => void;
   onEdit: () => void;
   onAnalyze: () => void;
@@ -20,7 +20,7 @@ interface DealAccordionsProps {
 export const DealAccordions: React.FC<DealAccordionsProps> = ({
   deal,
   analysis,
-  openSection,
+  openSections,
   onToggleSection,
   onEdit,
   onAnalyze,
@@ -47,9 +47,9 @@ export const DealAccordions: React.FC<DealAccordionsProps> = ({
             <Calendar size={16} className="text-[#999]" />
             Basic Information
           </span>
-          {openSection === 'basic' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {openSections.has('basic') ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
-        {openSection === 'basic' && (
+        {openSections.has('basic') && (
           <div className="px-5 pb-5 space-y-3 animate-in slide-in-from-top-2 duration-200">
             <div className="flex justify-between items-center py-2 border-b border-[#F2F1EA]">
               <span className="text-xs text-[#888]">Opportunity ID</span>
@@ -122,9 +122,9 @@ export const DealAccordions: React.FC<DealAccordionsProps> = ({
             <Sparkles size={16} className="text-[#EAD07D]" />
             AI Analysis
           </span>
-          {openSection === 'analysis' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {openSections.has('analysis') ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
-        {openSection === 'analysis' && (
+        {openSections.has('analysis') && (
           <div className="px-5 pb-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
             {analysis ? (
               <>
@@ -150,7 +150,7 @@ export const DealAccordions: React.FC<DealAccordionsProps> = ({
                         <div key={i} className="flex items-start gap-2 text-xs text-[#666]">
                           <span className={`shrink-0 w-1.5 h-1.5 rounded-full mt-1.5 ${
                             risk.severity === 'HIGH' ? 'bg-red-400' :
-                            risk.severity === 'MEDIUM' ? 'bg-amber-400' : 'bg-gray-300'
+                            risk.severity === 'MEDIUM' ? 'bg-amber-400' : 'bg-[#D1D1D1]'
                           }`} />
                           <span>{typeof risk === 'string' ? risk : risk.factor}</span>
                         </div>
@@ -203,9 +203,9 @@ export const DealAccordions: React.FC<DealAccordionsProps> = ({
             <Clock size={16} className="text-[#888]" />
             Activity Timeline
           </span>
-          {openSection === 'timeline' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {openSections.has('timeline') ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
-        {openSection === 'timeline' && (
+        {openSections.has('timeline') && (
           <div className="px-5 pb-5 animate-in slide-in-from-top-2 duration-200">
             <ContactTimeline opportunityId={deal.id} limit={4} />
           </div>

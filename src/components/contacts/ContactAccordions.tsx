@@ -8,44 +8,44 @@ import type { Contact } from '../../types';
 
 interface ContactAccordionsProps {
   contact: Contact;
-  openSection: string | null;
+  openSections: Set<string>;
   onToggleSection: (section: string) => void;
 }
 
 export const ContactAccordions: React.FC<ContactAccordionsProps> = ({
   contact,
-  openSection,
+  openSections,
   onToggleSection,
 }) => {
   return (
-    <div className="lg:col-span-4 space-y-4">
+    <div className="lg:col-span-5 space-y-4">
       <Card padding="sm" className="px-6 py-4 border border-black/5">
         <button
           onClick={() => onToggleSection('basic')}
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Basic Information
-          {openSection === 'basic' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('basic') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'basic' && (
+        {openSections.has('basic') && (
           <div className="mt-4 space-y-4 animate-in slide-in-from-top-2">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Contact ID</span>
               <span className="text-sm font-bold text-[#1A1A1A] font-mono text-xs">
                 {contact.id.slice(0, 8)}...
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Status</span>
               <span className="text-sm font-bold text-[#1A1A1A]">
                 {getStatusLabel(contact.contactStatus)}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Mobile</span>
               <span className="text-sm font-bold text-[#1A1A1A]">{contact.mobilePhone || 'Not set'}</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+            <div className="flex justify-between items-center py-2 border-b border-black/5">
               <span className="text-sm text-[#666]">Last Email</span>
               <span className="text-sm font-bold text-[#1A1A1A]">{formatDate(contact.lastEmailDate)}</span>
             </div>
@@ -63,9 +63,9 @@ export const ContactAccordions: React.FC<ContactAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Address
-          {openSection === 'address' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('address') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'address' && (
+        {openSections.has('address') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             {contact.mailingStreet || contact.mailingCity || contact.mailingState || contact.mailingCountry ? (
               <div className="flex items-start gap-3">
@@ -93,9 +93,9 @@ export const ContactAccordions: React.FC<ContactAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Interests
-          {openSection === 'interests' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('interests') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'interests' && (
+        {openSections.has('interests') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             {contact.interests && contact.interests.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -118,9 +118,9 @@ export const ContactAccordions: React.FC<ContactAccordionsProps> = ({
           className="w-full flex justify-between items-center text-[#1A1A1A] font-medium"
         >
           Activity Timeline
-          {openSection === 'timeline' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {openSections.has('timeline') ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
-        {openSection === 'timeline' && (
+        {openSections.has('timeline') && (
           <div className="mt-4 animate-in slide-in-from-top-2">
             <ContactTimeline contactId={contact.id} limit={5} />
           </div>

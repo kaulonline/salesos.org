@@ -130,6 +130,7 @@ export interface ReportSummary {
   count?: number;
   percentChange?: number;
   topItems?: { label: string; value: number }[];
+  metadata?: Record<string, any>;
 }
 
 export interface PipelineReport {

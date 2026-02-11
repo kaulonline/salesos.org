@@ -417,7 +417,7 @@ export const Leads: React.FC = () => {
                ))}
             </div>
 
-            <div className="flex flex-wrap gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap gap-2 sm:gap-3 w-full md:w-auto">
                <div className="w-full md:w-64">
                   <SearchInput
                     variant="filled"

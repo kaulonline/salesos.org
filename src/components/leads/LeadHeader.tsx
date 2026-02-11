@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Phone, Mail, Sparkles, ExternalLink, Flame, MoreVertical, Edit3, Trash2, Database
+  Phone, Mail, Sparkles, ExternalLink, Flame, MoreVertical, Edit3, Trash2, Database, TrendingUp
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -17,6 +17,7 @@ interface LeadHeaderProps {
   onScore: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onConvert?: () => void;
   onEnriched?: () => void;
   scoringLead: boolean;
 }
@@ -26,6 +27,7 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
   onScore,
   onEdit,
   onDelete,
+  onConvert,
   onEnriched,
   scoringLead,
 }) => {
@@ -184,6 +186,16 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
                 entityName={fullName}
                 onEnriched={onEnriched}
               />
+              {onConvert && lead.status !== 'CONVERTED' && (
+                <button
+                  onClick={onConvert}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A1A1A] text-white rounded-full text-sm font-medium hover:bg-[#333] transition-colors"
+                  title="Convert Lead"
+                >
+                  <TrendingUp size={14} />
+                  Convert
+                </button>
+              )}
               {/* Action Menu */}
               <div className="relative">
                 <button
@@ -197,7 +209,7 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
                   <MoreVertical size={16} />
                 </button>
                 {actionMenuOpen && (
-                  <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-gray-100 py-2 min-w-[150px] z-50">
+                  <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-black/5 py-2 min-w-[150px] z-50">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -224,24 +236,39 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
             </div>
 
             {/* Stats Row */}
-            <div className="flex gap-3">
-              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center min-w-[80px]">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+              <div className="bg-[#EAD07D] rounded-xl px-4 py-2 text-center sm:min-w-[80px]">
                 <div className="text-xl font-bold text-[#1A1A1A]">{lead.leadScore || 0}</div>
                 <div className="text-[10px] text-[#1A1A1A]/60 uppercase font-semibold">Score</div>
               </div>
-              <div className="bg-[#1A1A1A] rounded-xl px-4 py-2 text-center min-w-[80px]">
-                <div className="text-xl font-bold text-white">
+              <div className={`rounded-xl px-4 py-2 text-center sm:min-w-[80px] ${
+                daysSinceContact === null ? 'bg-[#F8F8F6]' :
+                daysSinceContact <= 7 ? 'bg-[#93C01F]/20' :
+                daysSinceContact <= 30 ? 'bg-[#EAD07D]' :
+                'bg-red-100'
+              }`}>
+                <div className={`text-xl font-bold ${
+                  daysSinceContact === null ? 'text-[#999]' :
+                  daysSinceContact <= 7 ? 'text-[#93C01F]' :
+                  daysSinceContact <= 30 ? 'text-[#1A1A1A]' :
+                  'text-red-600'
+                }`}>
                   {daysSinceContact !== null ? `${daysSinceContact}d` : '-'}
                 </div>
-                <div className="text-[10px] text-white/50 uppercase font-semibold">Last Contact</div>
+                <div className={`text-[10px] uppercase font-semibold ${
+                  daysSinceContact === null ? 'text-[#999]' :
+                  daysSinceContact <= 7 ? 'text-[#93C01F]' :
+                  daysSinceContact <= 30 ? 'text-[#1A1A1A]/60' :
+                  'text-red-600/60'
+                }`}>Last Contact</div>
               </div>
-              <div className="bg-[#F8F8F6] rounded-xl px-4 py-2 text-center min-w-[90px]">
+              <div className="bg-[#F8F8F6] rounded-xl px-4 py-2 text-center sm:min-w-[90px]">
                 <div className="text-lg font-bold text-[#1A1A1A]">
                   {formatCurrency(lead.budget)}
                 </div>
                 <div className="text-[10px] text-[#999] uppercase font-semibold">Budget</div>
               </div>
-              <div className="bg-[#666] rounded-xl px-4 py-2 text-center min-w-[80px]">
+              <div className="bg-[#666] rounded-xl px-4 py-2 text-center sm:min-w-[80px]">
                 <div className="text-sm font-bold text-white capitalize leading-tight">
                   {lead.buyingIntent?.toLowerCase() || 'Unknown'}
                 </div>

@@ -160,7 +160,7 @@ export default function OrderDetail() {
           <Skeleton className="h-10 w-64 rounded-2xl mb-8" />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-24 rounded-[24px]" />
                 ))}
@@ -195,13 +195,13 @@ export default function OrderDetail() {
     );
   }
 
-  const statusCfg = statusConfig[order.status] || { label: order.status || 'Unknown', color: 'bg-gray-100 text-gray-700', icon: null };
+  const statusCfg = statusConfig[order.status] || { label: order.status || 'Unknown', color: 'bg-[#F8F8F6] text-[#666]', icon: null };
 
   return (
     <div className="min-h-screen p-6 lg:p-8">
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/dashboard/orders')}
@@ -226,7 +226,7 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {order.status === 'DRAFT' && (
               <button
                 onClick={handleConfirm}

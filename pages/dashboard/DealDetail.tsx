@@ -20,6 +20,8 @@ import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai'
 import { SplitManager } from '../../components/splits';
 import { adminApi, IntegrationEntityMapping, IntegrationAttachment } from '../../src/api/admin';
 import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
+import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
+import { QuickLogActivity } from '../../src/components/shared/QuickLogActivity';
 import type { OpportunityStage } from '../../src/types';
 
 export const DealDetail: React.FC = () => {
@@ -52,7 +54,7 @@ export const DealDetail: React.FC = () => {
   );
 
   // UI state
-  const [openSection, setOpenSection] = useState<string | null>('basic');
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']));
   const [analyzingDeal, setAnalyzingDeal] = useState(false);
   const [stageUpdating, setStageUpdating] = useState(false);
   const [showCloseWonModal, setShowCloseWonModal] = useState(false);
@@ -199,8 +201,8 @@ export const DealDetail: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
-              <Skeleton className="lg:col-span-8 h-[320px] rounded-[2rem]" />
-              <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+              <Skeleton className="lg:col-span-5 h-[320px] rounded-[2rem]" />
+              <div className="lg:col-span-7 grid grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[150px] rounded-2xl" />)}
               </div>
             </div>
@@ -235,12 +237,15 @@ export const DealDetail: React.FC = () => {
 
   return (
     <div className="max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
+      <DetailBreadcrumb items={[
+        { label: 'Deals', path: '/dashboard/deals' },
+        { label: deal.name },
+      ]} />
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Sidebar */}
         <DealSidebar
           currentDealId={deal.id}
-          deals={recentDeals}
-          loading={dealsLoading}
+          deal={deal}
         />
 
         {/* Main Content */}
@@ -384,13 +389,20 @@ export const DealDetail: React.FC = () => {
 
           {/* Bottom Section: Accordions + Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            {/* Left: Accordions + Buyer Committee */}
-            <div className="lg:col-span-4 space-y-4">
+            {/* Left: Accordions + Buyer Committee + AI Analysis */}
+            <div className="lg:col-span-5 space-y-4">
               <DealAccordions
                 deal={deal}
                 analysis={analysis}
-                openSection={openSection}
-                onToggleSection={(section) => setOpenSection(openSection === section ? null : section)}
+                openSections={openSections}
+                onToggleSection={(section) => {
+                  setOpenSections((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(section)) next.delete(section);
+                    else next.add(section);
+                    return next;
+                  });
+                }}
                 onEdit={() => setShowEditModal(true)}
                 onAnalyze={handleAnalyze}
                 onStageChange={handleStageChange}
@@ -409,9 +421,6 @@ export const DealDetail: React.FC = () => {
                 isAdding={isAddingContact}
                 isRemoving={isRemovingContact}
               />
-
-              {/* Field Change History */}
-              <FieldChangeHistory entityType="opportunity" entityId={deal.id} />
 
               {/* AI Deal Analysis Widget */}
               <DealAnalysisWidget
@@ -433,6 +442,17 @@ export const DealDetail: React.FC = () => {
                   competitors: deal.competitors,
                 }}
               />
+            </div>
+
+            {/* Right: Charts + Activity + History + Splits */}
+            <div className="lg:col-span-7 space-y-4">
+              <DealCharts deal={deal} analysis={analysis} />
+
+              {/* Quick Log Activity */}
+              <QuickLogActivity entityType="opportunity" entityId={deal.id} />
+
+              {/* Field Change History */}
+              <FieldChangeHistory entityType="opportunity" entityId={deal.id} />
 
               {/* Revenue Splits */}
               <SplitManager
@@ -440,9 +460,6 @@ export const DealDetail: React.FC = () => {
                 dealAmount={deal.amount || 0}
               />
             </div>
-
-            {/* Right: Charts */}
-            <DealCharts deal={deal} analysis={analysis} />
           </div>
         </div>
       </div>

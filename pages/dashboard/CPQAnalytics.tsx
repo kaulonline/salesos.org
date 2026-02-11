@@ -166,7 +166,7 @@ export default function CPQAnalytics() {
             <h1 className="text-3xl lg:text-4xl font-light text-[#1A1A1A]">CPQ Analytics</h1>
             <p className="text-[#666] mt-1">Configure, Price, Quote performance insights</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as DateRange)}

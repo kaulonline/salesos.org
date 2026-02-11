@@ -275,7 +275,7 @@ export function QuoteDetail() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {isEditable && (
                   <button
                     onClick={() => setShowEditModal(true)}
@@ -339,7 +339,7 @@ export function QuoteDetail() {
                   {showActionsMenu && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
-                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-black/5 py-1 z-50">
                         {(quote.status === 'ACCEPTED' || quote.status === 'SENT') && (
                           <button
                             onClick={() => {
@@ -429,7 +429,7 @@ export function QuoteDetail() {
 
           {/* Tabs */}
           <div className="bg-white rounded-2xl border border-[#F2F1EA] overflow-hidden">
-            <div className="flex border-b border-[#F2F1EA]">
+            <div className="flex overflow-x-auto border-b border-[#F2F1EA] no-scrollbar">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
