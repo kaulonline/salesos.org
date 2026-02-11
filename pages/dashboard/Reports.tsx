@@ -31,6 +31,7 @@ import {
   type LeadConversionReport,
   type ForecastReport,
 } from '../../src/api/reports';
+import { useToast } from '../../src/components/ui/Toast';
 
 const REPORT_TABS = [
   { type: ReportType.PIPELINE, label: 'Pipeline', icon: BarChart3 },
@@ -221,6 +222,7 @@ const formatPercent = (value: number | undefined | null): string => {
 };
 
 export const Reports: React.FC = () => {
+  const { showToast } = useToast();
   const [activeReport, setActiveReport] = useState<ReportType>(ReportType.PIPELINE);
   const [dateRange, setDateRange] = useState<DateRange>(DateRange.THIS_MONTH);
   const [groupBy, setGroupBy] = useState<GroupBy>(GroupBy.MONTH);
@@ -264,6 +266,7 @@ export const Reports: React.FC = () => {
       setReportData(result);
     } catch (err) {
       console.error('Failed to fetch report:', err);
+      showToast({ type: 'error', title: 'Failed to Load Report', message: (err as Error).message || 'Please try again' });
       setError('Failed to load report. Please try again.');
     } finally {
       setIsLoading(false);

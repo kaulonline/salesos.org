@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Database, Loader2, Check, X, AlertCircle } from 'lucide-react';
 import { useBulkEnrich } from '../../hooks/useEnrichment';
 import { BulkEnrichmentResult, EnrichmentProvider, EntityType } from '../../api/enrichment';
+import { useToast } from '../ui/Toast';
 
 interface BulkEnrichButtonProps {
   entityType: EntityType;
@@ -18,6 +19,7 @@ export const BulkEnrichButton: React.FC<BulkEnrichButtonProps> = ({
   provider,
   className = '',
 }) => {
+  const { showToast } = useToast();
   const [showResultModal, setShowResultModal] = useState(false);
   const [result, setResult] = useState<BulkEnrichmentResult | null>(null);
 
@@ -38,6 +40,7 @@ export const BulkEnrichButton: React.FC<BulkEnrichButtonProps> = ({
         },
         onError: (error) => {
           console.error('Failed to bulk enrich:', error);
+          showToast({ type: 'error', title: 'Bulk Enrichment Failed', message: (error as Error).message || 'Please try again' });
         },
       }
     );

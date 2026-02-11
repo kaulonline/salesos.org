@@ -15,11 +15,13 @@ import {
 import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
 import { DuplicateDetectionPanel } from '../../src/components/duplicates/DuplicateDetectionPanel';
 import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
+import { useToast } from '../../src/components/ui/Toast';
 import type { UpdateLeadDto, ConvertLeadDto } from '../../src/types';
 
 export const LeadDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { lead, loading, error, refetch } = useLead(id);
   const { leads: recentLeads, loading: leadsLoading, update, remove, score, convert, isUpdating, isDeleting, isConverting } = useLeads();
 
@@ -71,8 +73,10 @@ export const LeadDetail: React.FC = () => {
     try {
       await score(id);
       await refetch();
+      showToast({ type: 'success', title: 'Lead Scored' });
     } catch (err) {
       console.error('Failed to score lead:', err);
+      showToast({ type: 'error', title: 'Failed to Score Lead', message: (err as Error).message || 'Please try again' });
     } finally {
       setScoringLead(false);
     }
@@ -84,8 +88,10 @@ export const LeadDetail: React.FC = () => {
       await update(id, editForm);
       await refetch();
       setShowEditModal(false);
+      showToast({ type: 'success', title: 'Lead Updated' });
     } catch (err) {
       console.error('Failed to update lead:', err);
+      showToast({ type: 'error', title: 'Failed to Update Lead', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -93,9 +99,11 @@ export const LeadDetail: React.FC = () => {
     if (!id) return;
     try {
       await remove(id);
+      showToast({ type: 'success', title: 'Lead Deleted' });
       navigate('/dashboard/leads');
     } catch (err) {
       console.error('Failed to delete lead:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Lead', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -103,9 +111,11 @@ export const LeadDetail: React.FC = () => {
     if (!id) return;
     try {
       await convert(id, convertForm);
+      showToast({ type: 'success', title: 'Lead Converted' });
       navigate('/dashboard/contacts');
     } catch (err) {
       console.error('Failed to convert lead:', err);
+      showToast({ type: 'error', title: 'Failed to Convert Lead', message: (err as Error).message || 'Please try again' });
     }
   };
 

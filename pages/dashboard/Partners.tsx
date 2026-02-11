@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { usePartners, useDealRegistrations, usePartner } from '../../src/hooks/usePartners';
 import { useAuth } from '../../src/context/AuthContext';
+import { useToast } from '../../src/components/ui/Toast';
 import { partnersApi, partnersAIApi } from '../../src/api/partners';
 import type {
   Partner,
@@ -46,6 +47,7 @@ function formatDate(date: string | Date | null | undefined): string {
 
 export const Partners: React.FC = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,6 +85,7 @@ export const Partners: React.FC = () => {
       setRegistrationScores(prev => ({ ...prev, [registrationId]: score }));
     } catch (error) {
       console.error('Failed to score registration:', error);
+      showToast({ type: 'error', title: 'Failed to Score Registration', message: (error as Error).message || 'Please try again' });
     } finally {
       setScoringRegistration(null);
     }
@@ -95,6 +98,7 @@ export const Partners: React.FC = () => {
       setPartnerInsights(prev => ({ ...prev, [partnerId]: insights }));
     } catch (error) {
       console.error('Failed to get insights:', error);
+      showToast({ type: 'error', title: 'Failed to Load Insights', message: (error as Error).message || 'Please try again' });
     } finally {
       setLoadingInsights(null);
     }
@@ -107,6 +111,7 @@ export const Partners: React.FC = () => {
       setAutoApprovalResults(results);
     } catch (error) {
       console.error('Failed to process auto-approvals:', error);
+      showToast({ type: 'error', title: 'Failed to Process Auto-Approvals', message: (error as Error).message || 'Please try again' });
     } finally {
       setProcessingAutoApprovals(false);
     }
@@ -138,6 +143,7 @@ export const Partners: React.FC = () => {
       }, 2000);
     } catch (error: any) {
       console.error('Failed to invite user:', error);
+      showToast({ type: 'error', title: 'Failed to Invite User', message: (error as Error).message || 'Please try again' });
       setInviteError(error.response?.data?.message || 'Failed to send invitation');
     } finally {
       setIsInviting(false);
@@ -187,8 +193,10 @@ export const Partners: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Partner Created' });
     } catch (error) {
       console.error('Failed to create partner:', error);
+      showToast({ type: 'error', title: 'Failed to Create Partner', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -196,8 +204,10 @@ export const Partners: React.FC = () => {
     try {
       await update(id, data);
       setEditingPartner(null);
+      showToast({ type: 'success', title: 'Partner Updated' });
     } catch (error) {
       console.error('Failed to update partner:', error);
+      showToast({ type: 'error', title: 'Failed to Update Partner', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -205,16 +215,20 @@ export const Partners: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Partner Deleted' });
     } catch (error) {
       console.error('Failed to delete partner:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Partner', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleApproveRegistration = async (partnerId: string, registrationId: string) => {
     try {
       await approve(partnerId, registrationId);
+      showToast({ type: 'success', title: 'Registration Approved' });
     } catch (error) {
       console.error('Failed to approve registration:', error);
+      showToast({ type: 'error', title: 'Failed to Approve Registration', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -223,8 +237,10 @@ export const Partners: React.FC = () => {
       await reject(partnerId, registrationId, reason);
       setRejectingRegistration(null);
       setRejectionReason('');
+      showToast({ type: 'success', title: 'Registration Rejected' });
     } catch (error) {
       console.error('Failed to reject registration:', error);
+      showToast({ type: 'error', title: 'Failed to Reject Registration', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -1112,6 +1128,7 @@ interface PartnerDetailModalProps {
 
 const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onClose, onInviteUser }) => {
   const { partner, loading } = usePartner(partnerId);
+  const { showToast } = useToast();
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
@@ -1122,6 +1139,7 @@ const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({ partnerId, onCl
       setInsights(result);
     } catch (error) {
       console.error('Failed to load insights:', error);
+      showToast({ type: 'error', title: 'Failed to Load Insights', message: (error as Error).message || 'Please try again' });
     } finally {
       setLoadingInsights(false);
     }

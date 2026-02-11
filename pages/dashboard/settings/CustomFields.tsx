@@ -33,6 +33,7 @@ import type {
 } from '../../../src/types';
 import { AIBuilderModal, AIBuilderTrigger } from '../../../src/components/AIBuilder';
 import { AIBuilderEntityType, CustomFieldsConfig } from '../../../src/types/aiBuilder';
+import { useToast } from '../../../src/components/ui/Toast';
 
 const ENTITY_OPTIONS: { value: CustomFieldEntity; label: string }[] = [
   { value: 'LEAD', label: 'Leads' },
@@ -288,6 +289,7 @@ const CreateFieldModal: React.FC<CreateFieldModalProps> = ({ isOpen, onClose, on
 
 export default function CustomFieldsPage() {
   const { fields, stats, loading, error, create, update, remove } = useCustomFields();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState<CustomFieldEntity | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -344,7 +346,7 @@ export default function CustomFieldsPage() {
       }
     } catch (err) {
       console.error('Failed to create custom fields:', err);
-      alert((err as Error).message || 'Failed to create custom fields');
+      showToast({ type: 'error', title: 'Failed to Create Custom Fields', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -376,8 +378,10 @@ export default function CustomFieldsPage() {
   const handleToggleActive = async (field: CustomField) => {
     try {
       await update(field.id, { isActive: !field.isActive });
+      showToast({ type: 'success', title: field.isActive ? 'Field Deactivated' : 'Field Activated' });
     } catch (err) {
       console.error('Failed to toggle field:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Field', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -390,8 +394,10 @@ export default function CustomFieldsPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.field.id);
+      showToast({ type: 'success', title: 'Custom Field Deleted' });
     } catch (err) {
       console.error('Failed to delete field:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Field', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, field: null });

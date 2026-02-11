@@ -23,6 +23,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useTasks } from '../../src/hooks';
+import { useToast } from '../../src/components/ui/Toast';
 import type { Task, TaskStatus, TaskPriority, TaskType } from '../../src/types';
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; icon: React.ElementType }> = {
@@ -67,6 +68,7 @@ function isOverdue(dateString?: string): boolean {
 
 export const Tasks: React.FC = () => {
   const { tasks, loading, complete, isCompleting, refetch } = useTasks();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'ALL'>('ALL');
@@ -118,8 +120,10 @@ export const Tasks: React.FC = () => {
   const handleComplete = async (taskId: string) => {
     try {
       await complete(taskId);
+      showToast({ type: 'success', title: 'Task Completed' });
     } catch (error) {
       console.error('Failed to complete task:', error);
+      showToast({ type: 'error', title: 'Failed to Complete Task', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -138,8 +142,10 @@ export const Tasks: React.FC = () => {
         dueDate: '',
       });
       refetch();
+      showToast({ type: 'success', title: 'Task Created' });
     } catch (error) {
       console.error('Failed to create task:', error);
+      showToast({ type: 'error', title: 'Failed to Create Task', message: (error as Error).message || 'Please try again' });
     } finally {
       setIsCreating(false);
     }

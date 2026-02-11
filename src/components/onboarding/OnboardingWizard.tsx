@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { generateSampleData, storeSampleData, isSampleDataLoaded } from '../../utils/sampleDataGenerator';
+import { useToast } from '../ui/Toast';
 
 interface OnboardingStep {
   id: string;
@@ -228,6 +229,7 @@ interface QuickActionsStepProps {
 }
 
 const QuickActionsStep: React.FC<QuickActionsStepProps> = ({ onAction }) => {
+  const { showToast } = useToast();
   const [loadingDemo, setLoadingDemo] = React.useState(false);
   const [demoLoaded, setDemoLoaded] = React.useState(isSampleDataLoaded());
 
@@ -244,8 +246,9 @@ const QuickActionsStep: React.FC<QuickActionsStepProps> = ({ onAction }) => {
       });
       storeSampleData(data);
       setDemoLoaded(true);
-    } catch {
+    } catch (err) {
       console.error('Failed to load demo data');
+      showToast({ type: 'error', title: 'Failed to Load Demo Data', message: (err as Error).message || 'Please try again' });
     } finally {
       setLoadingDemo(false);
     }

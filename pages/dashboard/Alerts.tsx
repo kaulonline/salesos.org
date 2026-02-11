@@ -21,6 +21,7 @@ import { useAgentAlerts } from '../../src/hooks/useAgentAlerts';
 import type { AgentAlert, AgentType, AlertPriority, AlertStatus } from '../../src/api/agentAlerts';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { useToast } from '../../src/components/ui/Toast';
 
 // Agent type icons and labels
 const agentConfig: Record<AgentType, { icon: React.ReactNode; label: string; color: string }> = {
@@ -48,6 +49,7 @@ const statusStyles: Record<AlertStatus, { badge: string; icon: React.ReactNode }
 };
 
 export const Alerts: React.FC = () => {
+  const { showToast } = useToast();
   const [filterPriority, setFilterPriority] = useState<AlertPriority | 'ALL'>('ALL');
   const [filterStatus, setFilterStatus] = useState<AlertStatus | 'ALL'>('ALL');
   const [filterAgent, setFilterAgent] = useState<AgentType | 'ALL'>('ALL');
@@ -73,24 +75,30 @@ export const Alerts: React.FC = () => {
   const handleAcknowledge = async (id: string) => {
     try {
       await acknowledge(id);
+      showToast({ type: 'success', title: 'Alert Acknowledged' });
     } catch (error) {
       console.error('Failed to acknowledge:', error);
+      showToast({ type: 'error', title: 'Failed to Acknowledge Alert', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleDismiss = async (id: string) => {
     try {
       await dismiss(id);
+      showToast({ type: 'success', title: 'Alert Dismissed' });
     } catch (error) {
       console.error('Failed to dismiss:', error);
+      showToast({ type: 'error', title: 'Failed to Dismiss Alert', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleAction = async (id: string) => {
     try {
       await markActioned(id);
+      showToast({ type: 'success', title: 'Alert Marked as Actioned' });
     } catch (error) {
       console.error('Failed to mark as actioned:', error);
+      showToast({ type: 'error', title: 'Failed to Update Alert', message: (error as Error).message || 'Please try again' });
     }
   };
 

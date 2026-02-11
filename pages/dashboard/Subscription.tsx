@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../src/context/AuthContext';
 import { paymentsApi } from '../../src/api/payments';
 import { UpgradeModal } from '../../src/components/billing/UpgradeModal';
+import { useToast } from '../../src/components/ui/Toast';
 import type { LicenseType } from '../../src/api/licensing';
 
 const formatCurrency = (cents?: number) => {
@@ -69,6 +70,7 @@ export const Subscription: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment'>('overview');
   const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -139,6 +141,7 @@ export const Subscription: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Failed to open billing portal:', error);
+      showToast({ type: 'error', title: 'Failed to Open Billing Portal', message: (error as Error).message || 'Please try again' });
       // Check if it's a "no customer" error
       const errorMessage = error?.response?.data?.message || error?.message || '';
       if (errorMessage.toLowerCase().includes('customer not found') || errorMessage.toLowerCase().includes('checkout first')) {
@@ -155,6 +158,7 @@ export const Subscription: React.FC = () => {
       await paymentsApi.downloadInvoicePdf(invoiceId, invoiceNumber);
     } catch (error) {
       console.error('Failed to download invoice:', error);
+      showToast({ type: 'error', title: 'Failed to Download Invoice', message: (error as Error).message || 'Please try again' });
     } finally {
       setDownloadingInvoice(null);
     }
@@ -171,8 +175,10 @@ export const Subscription: React.FC = () => {
       setCancelling(true);
       await cancelSubscription(currentSubscription.id);
       setShowCancelModal(false);
+      showToast({ type: 'success', title: 'Subscription Cancelled' });
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
+      showToast({ type: 'error', title: 'Failed to Cancel Subscription', message: (error as Error).message || 'Please try again' });
     } finally {
       setCancelling(false);
     }
@@ -182,8 +188,10 @@ export const Subscription: React.FC = () => {
     if (!currentSubscription) return;
     try {
       await resumeSubscription(currentSubscription.id);
+      showToast({ type: 'success', title: 'Subscription Resumed' });
     } catch (error) {
       console.error('Failed to resume subscription:', error);
+      showToast({ type: 'error', title: 'Failed to Resume Subscription', message: (error as Error).message || 'Please try again' });
     }
   };
 

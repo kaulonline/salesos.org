@@ -5,6 +5,7 @@ import { Avatar } from '../../../components/ui/Avatar';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { getRoleLabel, OPPORTUNITY_CONTACT_ROLES } from './types';
+import { useToast } from '../ui/Toast';
 import type { OpportunityContactRole, Contact } from '../../types';
 
 interface BuyerCommitteeMember {
@@ -45,6 +46,7 @@ export const BuyerCommittee: React.FC<BuyerCommitteeProps> = ({
   isAdding,
   isRemoving,
 }) => {
+  const { showToast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState('');
   const [selectedRole, setSelectedRole] = useState<OpportunityContactRole>('INFLUENCER');
@@ -62,11 +64,13 @@ export const BuyerCommittee: React.FC<BuyerCommitteeProps> = ({
         role: selectedRole,
         isPrimary: members.length === 0,
       });
+      showToast({ type: 'success', title: 'Contact Added to Committee' });
       setShowAddModal(false);
       setSelectedContactId('');
       setSelectedRole('INFLUENCER');
     } catch (err) {
       console.error('Failed to add contact to buyer committee:', err);
+      showToast({ type: 'error', title: 'Failed to Add Contact', message: (err as Error).message || 'Please try again' });
     }
   };
 

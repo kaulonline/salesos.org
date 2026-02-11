@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Target, Loader2, Info, X } from 'lucide-react';
 import { useScoreLead } from '../../hooks/useAI';
 import { LeadScoreRequest, LeadScoreResponse } from '../../api/ai';
+import { useToast } from '../ui/Toast';
 
 interface LeadScoringBadgeProps {
   lead: {
@@ -27,6 +28,7 @@ export const LeadScoringBadge: React.FC<LeadScoringBadgeProps> = ({
   onScoreUpdated,
   className = '',
 }) => {
+  const { showToast } = useToast();
   const [showDetails, setShowDetails] = useState(false);
   const [scoreData, setScoreData] = useState<LeadScoreResponse | null>(null);
 
@@ -56,6 +58,7 @@ export const LeadScoringBadge: React.FC<LeadScoringBadgeProps> = ({
         },
         onError: (error) => {
           console.error('Failed to score lead:', error);
+          showToast({ type: 'error', title: 'Lead Scoring Failed', message: (error as Error).message || 'Please try again' });
         },
       }
     );

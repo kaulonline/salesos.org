@@ -8,6 +8,7 @@ import type { Product, CreateProductDto, ProductType, ProductCategory, BillingFr
 import { AIBuilderTrigger } from '../../src/components/AIBuilder/AIBuilderTrigger';
 import { AIBuilderModal } from '../../src/components/AIBuilder/AIBuilderModal';
 import { AIBuilderEntityType, ProductConfig } from '../../src/types/aiBuilder';
+import { useToast } from '../../src/components/ui/Toast';
 
 const TYPE_COLORS: Record<ProductType, string> = {
   PRODUCT: 'bg-[#EAD07D]',
@@ -52,6 +53,7 @@ function formatCurrency(amount: number, currency = 'USD'): string {
 }
 
 export const Products: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -79,8 +81,10 @@ export const Products: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Product Created' });
     } catch (error) {
       console.error('Failed to create product:', error);
+      showToast({ type: 'error', title: 'Failed to Create Product', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -88,8 +92,10 @@ export const Products: React.FC = () => {
     try {
       await update(id, data);
       setEditingProduct(null);
+      showToast({ type: 'success', title: 'Product Updated' });
     } catch (error) {
       console.error('Failed to update product:', error);
+      showToast({ type: 'error', title: 'Failed to Update Product', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -97,8 +103,10 @@ export const Products: React.FC = () => {
     try {
       await deleteProduct(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Product Deleted' });
     } catch (error) {
       console.error('Failed to delete product:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Product', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -139,8 +147,10 @@ export const Products: React.FC = () => {
 
       await create(productData);
       setShowAIBuilder(false);
+      showToast({ type: 'success', title: 'Product Created with AI' });
     } catch (error) {
       console.error('Failed to create product from AI:', error);
+      showToast({ type: 'error', title: 'Failed to Create Product', message: (error as Error).message || 'Please try again' });
     }
   };
 

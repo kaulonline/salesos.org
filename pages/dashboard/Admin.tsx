@@ -448,6 +448,7 @@ export const Admin: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch OAuth config:', err);
+      showToast({ type: 'error', title: 'Failed to Load OAuth Config', message: (err as Error).message || 'Please try again' });
     } finally {
       setOauthLoading(false);
     }
@@ -484,8 +485,10 @@ export const Admin: React.FC = () => {
       // Refresh config
       await fetchOAuthConfig();
       setShowOAuthModal(null);
+      showToast({ type: 'success', title: 'OAuth Config Saved' });
     } catch (err) {
       console.error('Failed to save OAuth config:', err);
+      showToast({ type: 'error', title: 'Failed to Save OAuth Config', message: (err as Error).message || 'Please try again' });
     } finally {
       setOauthSaving(false);
     }
@@ -866,6 +869,7 @@ export const Admin: React.FC = () => {
       setOrgCodes(codes || []);
     } catch (err) {
       console.error('Failed to fetch codes:', err);
+      showToast({ type: 'error', title: 'Failed to Load Organization Codes', message: (err as Error).message || 'Please try again' });
     } finally {
       setOrgCodesLoading(false);
     }
@@ -4959,6 +4963,7 @@ export const Admin: React.FC = () => {
             }
           } catch (err) {
             console.error('Failed to complete action:', err);
+            showToast({ type: 'error', title: 'Action Failed', message: (err as Error).message || 'Please try again' });
           } finally {
             setConfirmLoading(false);
             setConfirmModal({ isOpen: false, type: null, itemId: null, itemName: '' });

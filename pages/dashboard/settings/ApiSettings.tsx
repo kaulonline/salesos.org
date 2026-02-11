@@ -27,6 +27,7 @@ import { useApiKeys } from '../../../src/hooks/useApiKeys';
 import { useWebhooks } from '../../../src/hooks/useWebhooks';
 import type { ApiKey, Webhook as WebhookType, CreateApiKeyDto, CreateWebhookDto, ApiKeyScope, WebhookEvent } from '../../../src/types';
 import { API_SCOPE_DEFINITIONS, WEBHOOK_EVENT_LABELS } from '../../../src/types/apiKey';
+import { useToast } from '../../../src/components/ui/Toast';
 
 type TabType = 'api-keys' | 'webhooks';
 
@@ -235,6 +236,7 @@ const CreateApiKeyModal: React.FC<CreateApiKeyModalProps> = ({ isOpen, onClose, 
 };
 
 export default function ApiSettingsPage() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('api-keys');
   const { keys, usage, loading: keysLoading, create, remove, revoke } = useApiKeys();
   const { webhooks, stats: webhookStats, loading: webhooksLoading, remove: removeWebhook, activate, deactivate } = useWebhooks();
@@ -297,8 +299,10 @@ export default function ApiSettingsPage() {
       onConfirm: async () => {
         try {
           await remove(key.id);
+          showToast({ type: 'success', title: 'API Key Deleted' });
         } catch (err) {
           console.error('Failed to delete key:', err);
+          showToast({ type: 'error', title: 'Failed to Delete API Key', message: (err as Error).message || 'Please try again' });
         }
       },
     });
@@ -314,8 +318,10 @@ export default function ApiSettingsPage() {
       onConfirm: async () => {
         try {
           await revoke(key.id);
+          showToast({ type: 'success', title: 'API Key Revoked' });
         } catch (err) {
           console.error('Failed to revoke key:', err);
+          showToast({ type: 'error', title: 'Failed to Revoke API Key', message: (err as Error).message || 'Please try again' });
         }
       },
     });
@@ -328,8 +334,10 @@ export default function ApiSettingsPage() {
       } else {
         await activate(webhook.id);
       }
+      showToast({ type: 'success', title: webhook.status === 'ACTIVE' ? 'Webhook Deactivated' : 'Webhook Activated' });
     } catch (err) {
       console.error('Failed to toggle webhook:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Webhook', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -343,8 +351,10 @@ export default function ApiSettingsPage() {
       onConfirm: async () => {
         try {
           await removeWebhook(webhook.id);
+          showToast({ type: 'success', title: 'Webhook Deleted' });
         } catch (err) {
           console.error('Failed to delete webhook:', err);
+          showToast({ type: 'error', title: 'Failed to Delete Webhook', message: (err as Error).message || 'Please try again' });
         }
       },
     });

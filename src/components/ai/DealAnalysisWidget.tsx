@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Brain, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ChevronDown, ChevronUp, Loader2, RefreshCw } from 'lucide-react';
 import { useAnalyzeDeal } from '../../hooks/useAI';
 import { DealAnalysisRequest, DealAnalysisResponse } from '../../api/ai';
+import { useToast } from '../ui/Toast';
 
 interface DealAnalysisWidgetProps {
   deal: {
@@ -23,6 +24,7 @@ export const DealAnalysisWidget: React.FC<DealAnalysisWidgetProps> = ({
   deal,
   className = '',
 }) => {
+  const { showToast } = useToast();
   const [analysis, setAnalysis] = useState<DealAnalysisResponse | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -50,6 +52,7 @@ export const DealAnalysisWidget: React.FC<DealAnalysisWidgetProps> = ({
         },
         onError: (error) => {
           console.error('Failed to analyze deal:', error);
+          showToast({ type: 'error', title: 'Deal Analysis Failed', message: (error as Error).message || 'Please try again' });
         },
       }
     );

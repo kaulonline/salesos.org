@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Sparkles, Loader2, Copy, Check, X } from 'lucide-react';
 import { useGenerateEmailDraft } from '../../hooks/useAI';
 import { EmailDraftRequest } from '../../api/ai';
+import { useToast } from '../ui/Toast';
 
 interface AIEmailDraftButtonProps {
   recipientName: string;
@@ -34,6 +35,7 @@ export const AIEmailDraftButton: React.FC<AIEmailDraftButtonProps> = ({
   onDraftGenerated,
   className = '',
 }) => {
+  const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
@@ -44,6 +46,7 @@ export const AIEmailDraftButton: React.FC<AIEmailDraftButtonProps> = ({
     // Validate required fields before calling API
     if (!recipientName) {
       console.error('Cannot generate email draft: recipient name is required');
+      showToast({ type: 'error', title: 'Missing Recipient', message: 'Recipient name is required to generate an email draft' });
       return;
     }
 
@@ -74,6 +77,7 @@ export const AIEmailDraftButton: React.FC<AIEmailDraftButtonProps> = ({
         },
         onError: (error) => {
           console.error('Failed to generate email draft:', error);
+          showToast({ type: 'error', title: 'Email Draft Failed', message: (error as Error).message || 'Please try again' });
         },
       }
     );

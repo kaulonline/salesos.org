@@ -8,6 +8,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { useCalendarMeetings, useMeetings } from '../../src/hooks';
 import { calendarIntegrationsApi, type CalendarConnection } from '../../src/api/integrations';
 import type { Meeting, MeetingType, CreateMeetingDto } from '../../src/types';
+import { useToast } from '../../src/components/ui/Toast';
 
 const formatTime = (dateString: string) => {
   return new Date(dateString).toLocaleTimeString('en-US', {
@@ -46,6 +47,7 @@ const getMonthName = (year: number, month: number) => {
 };
 
 export const Calendar: React.FC = () => {
+  const { showToast } = useToast();
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -73,6 +75,7 @@ export const Calendar: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to fetch calendar connections:', err);
+        showToast({ type: 'error', title: 'Failed to Load Calendar Connections', message: (err as Error).message || 'Please try again' });
       }
     };
     fetchConnections();
@@ -102,6 +105,7 @@ export const Calendar: React.FC = () => {
       setSyncMessage({ type: 'success', text: `Synced ${calendarConnections.length} calendar${calendarConnections.length > 1 ? 's' : ''} successfully!` });
     } catch (err: any) {
       console.error('Calendar sync failed:', err);
+      showToast({ type: 'error', title: 'Calendar Sync Failed', message: (err as Error).message || 'Please try again' });
       setSyncMessage({ type: 'error', text: err.response?.data?.message || 'Failed to sync calendar. Please try again.' });
     } finally {
       setIsSyncing(false);
@@ -157,8 +161,10 @@ export const Calendar: React.FC = () => {
       });
       await refetch();
       setShowNewEventModal(false);
+      showToast({ type: 'success', title: 'Event Created' });
     } catch (err) {
       console.error('Failed to create event:', err);
+      showToast({ type: 'error', title: 'Failed to Create Event', message: (err as Error).message || 'Please try again' });
     }
   };
 

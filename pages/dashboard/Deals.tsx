@@ -13,6 +13,7 @@ import { useDeals } from '../../src/hooks/useDeals';
 import { useCompanies } from '../../src/hooks/useCompanies';
 import { usePipelines } from '../../src/hooks/usePipelines';
 import { FeatureGate, Features } from '../../src/components/FeatureGate';
+import { useToast } from '../../src/components/ui/Toast';
 import type { OpportunityStage, CreateOpportunityDto, Pipeline, PipelineStage } from '../../src/types';
 
 // Fallback stages for backwards compatibility when no pipeline is selected
@@ -333,6 +334,7 @@ const formatCurrency = (amount?: number, compact = true) => {
 
 export const Deals: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { deals, pipelineStats, loading, error, refetch, fetchPipelineStats, create, update, remove, closeWon, closeLost, analyze, isDeleting, isAnalyzing } = useDeals();
@@ -431,8 +433,10 @@ export const Deals: React.FC = () => {
       await closeWon(dealId);
       await Promise.all([fetchPipelineStats(), refetch()]);
       setActionMenuOpen(null);
+      showToast({ type: 'success', title: 'Deal Marked as Won' });
     } catch (err) {
       console.error('Failed to close deal as won:', err);
+      showToast({ type: 'error', title: 'Failed to Close Deal as Won', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -443,8 +447,10 @@ export const Deals: React.FC = () => {
       await Promise.all([fetchPipelineStats(), refetch()]);
       setShowCloseLostModal(null);
       setCloseLostReason('');
+      showToast({ type: 'success', title: 'Deal Marked as Lost' });
     } catch (err) {
       console.error('Failed to close deal as lost:', err);
+      showToast({ type: 'error', title: 'Failed to Close Deal as Lost', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -458,8 +464,10 @@ export const Deals: React.FC = () => {
     try {
       await remove(deleteModal.dealId);
       await fetchPipelineStats();
+      showToast({ type: 'success', title: 'Deal Deleted' });
     } catch (err) {
       console.error('Failed to delete deal:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Deal', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteModal({ isOpen: false, dealId: null });
     }
@@ -472,6 +480,7 @@ export const Deals: React.FC = () => {
       navigate(`/dashboard/deals/${dealId}`);
     } catch (err) {
       console.error('Failed to analyze deal:', err);
+      showToast({ type: 'error', title: 'Failed to Analyze Deal', message: (err as Error).message || 'Please try again' });
     }
   };
 

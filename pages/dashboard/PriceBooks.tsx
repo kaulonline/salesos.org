@@ -22,6 +22,7 @@ import {
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../src/components/ui/Toast';
 import { usePriceBooks, usePriceBookEntries } from '../../src/hooks/usePriceBooks';
 import { useProducts } from '../../src/hooks/useProducts';
 import type {
@@ -52,6 +53,7 @@ function formatDate(dateString?: string): string {
 }
 
 export const PriceBooks: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPriceBook, setEditingPriceBook] = useState<PriceBook | null>(null);
@@ -83,8 +85,10 @@ export const PriceBooks: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Price Book Created' });
     } catch (error) {
       console.error('Failed to create price book:', error);
+      showToast({ type: 'error', title: 'Failed to Create Price Book', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -92,8 +96,10 @@ export const PriceBooks: React.FC = () => {
     try {
       await update(id, data);
       setEditingPriceBook(null);
+      showToast({ type: 'success', title: 'Price Book Updated' });
     } catch (error) {
       console.error('Failed to update price book:', error);
+      showToast({ type: 'error', title: 'Failed to Update Price Book', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -101,8 +107,10 @@ export const PriceBooks: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Price Book Deleted' });
     } catch (error) {
       console.error('Failed to delete price book:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Price Book', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -112,8 +120,10 @@ export const PriceBooks: React.FC = () => {
       await clone(cloneModal.id, cloneName.trim());
       setCloneModal(null);
       setCloneName('');
+      showToast({ type: 'success', title: 'Price Book Cloned' });
     } catch (error) {
       console.error('Failed to clone price book:', error);
+      showToast({ type: 'error', title: 'Failed to Clone Price Book', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -620,6 +630,7 @@ interface PriceBookEntriesModalProps {
 }
 
 const PriceBookEntriesModal: React.FC<PriceBookEntriesModalProps> = ({ priceBook, onClose }) => {
+  const { showToast } = useToast();
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [newPrice, setNewPrice] = useState('');
@@ -643,8 +654,10 @@ const PriceBookEntriesModal: React.FC<PriceBookEntriesModalProps> = ({ priceBook
       setShowAddEntry(false);
       setSelectedProductId('');
       setNewPrice('');
+      showToast({ type: 'success', title: 'Entry Added' });
     } catch (error) {
       console.error('Failed to add entry:', error);
+      showToast({ type: 'error', title: 'Failed to Add Entry', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -654,16 +667,20 @@ const PriceBookEntriesModal: React.FC<PriceBookEntriesModalProps> = ({ priceBook
       await updateEntry(entryId, { unitPrice: parseFloat(editPrice) });
       setEditingEntry(null);
       setEditPrice('');
+      showToast({ type: 'success', title: 'Entry Updated' });
     } catch (error) {
       console.error('Failed to update entry:', error);
+      showToast({ type: 'error', title: 'Failed to Update Entry', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleDeleteEntry = async (entryId: string) => {
     try {
       await deleteEntry(entryId);
+      showToast({ type: 'success', title: 'Entry Deleted' });
     } catch (error) {
       console.error('Failed to delete entry:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Entry', message: (error as Error).message || 'Please try again' });
     }
   };
 

@@ -42,6 +42,7 @@ import {
   IntegrationStatus,
 } from '../../src/api/integrations';
 import { adminApi, IntegrationSyncLog } from '../../src/api/admin';
+import { useToast } from '../../src/components/ui/Toast';
 
 // Logo.dev API for fetching company logos
 const LOGO_DEV_PUBLIC_KEY = 'pk_W2MYKZXiSAS4WfncVJ8b1A';
@@ -153,6 +154,7 @@ function mapConnectionStatus(status: ConnectionStatus): 'connected' | 'disconnec
 }
 
 export const IntegrationsPage: React.FC = () => {
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -281,6 +283,7 @@ export const IntegrationsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load integrations:', error);
+      showToast({ type: 'error', title: 'Failed to Load Integrations', message: (error as Error).message || 'Please try again' });
     } finally {
       setIsLoading(false);
     }
@@ -461,6 +464,7 @@ export const IntegrationsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch integration config:', error);
+      showToast({ type: 'error', title: 'Failed to Load Integration Config', message: (error as Error).message || 'Please try again' });
       // Fall back to opening the modal without existing values
       setConfigModal({
         isOpen: true,

@@ -38,6 +38,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { useToast } from '../../src/components/ui/Toast';
 import { useFeatureFlags } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import {
@@ -187,6 +188,7 @@ const getEntityIcon = (entityType: WorkflowEntityType): React.ElementType => {
 export const Automations: React.FC = () => {
   const { flags: featureFlags, loading: flagsLoading } = useFeatureFlags();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [workflows, setWorkflows] = useState<WorkflowType[]>([]);
@@ -213,6 +215,7 @@ export const Automations: React.FC = () => {
       setWorkflows(workflowsData.workflows);
     } catch (error) {
       console.error('Failed to fetch workflows:', error);
+      showToast({ type: 'error', title: 'Failed to Load Workflows', message: (error as Error).message || 'Please try again' });
     } finally {
       setWorkflowsLoading(false);
     }
@@ -225,6 +228,7 @@ export const Automations: React.FC = () => {
       setStats(statsData);
     } catch (error) {
       console.error('Failed to fetch workflow stats:', error);
+      showToast({ type: 'error', title: 'Failed to Load Workflow Stats', message: (error as Error).message || 'Please try again' });
     } finally {
       setStatsLoading(false);
     }
@@ -281,8 +285,10 @@ export const Automations: React.FC = () => {
       await workflowsApi.create(workflowData);
       await fetchWorkflows();
       setActiveTab('active');
+      showToast({ type: 'success', title: 'Workflow Created' });
     } catch (error) {
       console.error('Failed to create workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Create Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -296,6 +302,7 @@ export const Automations: React.FC = () => {
       await fetchWorkflows();
     } catch (error) {
       console.error('Failed to toggle workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Toggle Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -309,8 +316,10 @@ export const Automations: React.FC = () => {
     try {
       await workflowsApi.delete(deleteModal.workflowId);
       await fetchWorkflows();
+      showToast({ type: 'success', title: 'Workflow Deleted' });
     } catch (error) {
       console.error('Failed to delete workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Workflow', message: (error as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, workflowId: null });
@@ -372,8 +381,10 @@ export const Automations: React.FC = () => {
       await fetchWorkflows();
       setActiveTab('active');
       setShowAIBuilder(false);
+      showToast({ type: 'success', title: 'Workflow Created from AI' });
     } catch (error) {
       console.error('Failed to create workflow from AI:', error);
+      showToast({ type: 'error', title: 'Failed to Create Workflow from AI', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -744,8 +755,10 @@ export const Automations: React.FC = () => {
               await fetchWorkflows();
               setShowCreateModal(false);
               setActiveTab('active');
+              showToast({ type: 'success', title: 'Workflow Created' });
             } catch (error) {
               console.error('Failed to create workflow:', error);
+              showToast({ type: 'error', title: 'Failed to Create Workflow', message: (error as Error).message || 'Please try again' });
             }
           }}
         />

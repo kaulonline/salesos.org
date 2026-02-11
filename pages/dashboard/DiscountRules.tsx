@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../src/components/ui/Toast';
 import { useDiscountRules } from '../../src/hooks/useDiscountRules';
 import type {
   DiscountRule,
@@ -86,6 +87,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
 };
 
 export const DiscountRules: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<DiscountRuleType | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -116,8 +118,10 @@ export const DiscountRules: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Discount Rule Created' });
     } catch (error) {
       console.error('Failed to create rule:', error);
+      showToast({ type: 'error', title: 'Failed to Create Rule', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -125,8 +129,10 @@ export const DiscountRules: React.FC = () => {
     try {
       await update(id, data);
       setEditingRule(null);
+      showToast({ type: 'success', title: 'Discount Rule Updated' });
     } catch (error) {
       console.error('Failed to update rule:', error);
+      showToast({ type: 'error', title: 'Failed to Update Rule', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -134,8 +140,10 @@ export const DiscountRules: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Discount Rule Deleted' });
     } catch (error) {
       console.error('Failed to delete rule:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Rule', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -144,14 +152,17 @@ export const DiscountRules: React.FC = () => {
       await toggleActive(id);
     } catch (error) {
       console.error('Failed to toggle rule:', error);
+      showToast({ type: 'error', title: 'Failed to Toggle Rule', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleCloneRule = async (rule: DiscountRule) => {
     try {
       await clone(rule.id, `${rule.name} (Copy)`);
+      showToast({ type: 'success', title: 'Discount Rule Cloned' });
     } catch (error) {
       console.error('Failed to clone rule:', error);
+      showToast({ type: 'error', title: 'Failed to Clone Rule', message: (error as Error).message || 'Please try again' });
     }
   };
 

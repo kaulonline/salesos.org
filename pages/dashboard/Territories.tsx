@@ -24,9 +24,11 @@ import {
 import { AIBuilderTrigger } from '../../src/components/AIBuilder/AIBuilderTrigger';
 import { AIBuilderModal } from '../../src/components/AIBuilder/AIBuilderModal';
 import { AIBuilderEntityType, TerritoryConfig } from '../../src/types/aiBuilder';
+import { useToast } from '../../src/components/ui/Toast';
 import type { Territory, TerritoryType, CreateTerritoryDto, UpdateTerritoryDto } from '../../src/types/territory';
 
 export const Territories: React.FC = () => {
+  const { showToast } = useToast();
   const { territories, stats, loading, create, update, remove, isCreating, isUpdating, isDeleting } = useTerritories();
   const { companies } = useCompanies();
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,8 +83,10 @@ export const Territories: React.FC = () => {
       setShowCreateModal(false);
       setFormData({ name: '', description: '', type: 'GEOGRAPHIC', criteria: {}, color: '#3B82F6' });
       setCriteriaForm(emptyCriteria);
+      showToast({ type: 'success', title: 'Territory Created' });
     } catch (error) {
       console.error('Failed to create territory:', error);
+      showToast({ type: 'error', title: 'Failed to Create Territory', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -95,8 +99,10 @@ export const Territories: React.FC = () => {
       setShowEditModal(null);
       setEditFormData({});
       setEditCriteriaForm(emptyCriteria);
+      showToast({ type: 'success', title: 'Territory Updated' });
     } catch (error) {
       console.error('Failed to update territory:', error);
+      showToast({ type: 'error', title: 'Failed to Update Territory', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -115,8 +121,10 @@ export const Territories: React.FC = () => {
     try {
       await remove(id);
       setShowDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Territory Deleted' });
     } catch (error) {
       console.error('Failed to delete territory:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Territory', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -130,8 +138,10 @@ export const Territories: React.FC = () => {
         color: territoryConfig.color,
         criteria: territoryConfig.criteria || {},
       });
+      showToast({ type: 'success', title: 'Territory Created with AI' });
     } catch (error) {
       console.error('Failed to create territory from AI:', error);
+      showToast({ type: 'error', title: 'Failed to Create Territory', message: (error as Error).message || 'Please try again' });
     }
   };
 

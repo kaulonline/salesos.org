@@ -3,6 +3,7 @@ import { Search, Plus, HardDrive, Calendar, AlertTriangle, RefreshCw, X, Loader2
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../src/components/ui/Toast';
 import { useAssets, useExpiringAssets, useRenewalPipeline } from '../../src/hooks/useAssets';
 import { assetsApi } from '../../src/api/assets';
 import type {
@@ -41,6 +42,7 @@ function getDaysUntil(date: string | Date | null | undefined): number | null {
 }
 
 export const Assets: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AssetStatus | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -59,6 +61,7 @@ export const Assets: React.FC = () => {
       setRenewalRisks(risks);
     } catch (error) {
       console.error('Failed to load renewal risks:', error);
+      showToast({ type: 'error', title: 'Failed to Load Renewal Risks', message: (error as Error).message || 'Please try again' });
     } finally {
       setLoadingRisks(false);
     }
@@ -71,6 +74,7 @@ export const Assets: React.FC = () => {
       setGeneratedMessage({ assetId, ...message });
     } catch (error) {
       console.error('Failed to generate message:', error);
+      showToast({ type: 'error', title: 'Failed to Generate Renewal Message', message: (error as Error).message || 'Please try again' });
     } finally {
       setGeneratingMessage(null);
     }
@@ -98,8 +102,10 @@ export const Assets: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Asset Created' });
     } catch (error) {
       console.error('Failed to create asset:', error);
+      showToast({ type: 'error', title: 'Failed to Create Asset', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -107,8 +113,10 @@ export const Assets: React.FC = () => {
     try {
       await update(id, data);
       setEditingAsset(null);
+      showToast({ type: 'success', title: 'Asset Updated' });
     } catch (error) {
       console.error('Failed to update asset:', error);
+      showToast({ type: 'error', title: 'Failed to Update Asset', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -116,8 +124,10 @@ export const Assets: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Asset Deleted' });
     } catch (error) {
       console.error('Failed to delete asset:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Asset', message: (error as Error).message || 'Please try again' });
     }
   };
 

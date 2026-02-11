@@ -33,6 +33,7 @@ import { useAdminUsers } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import { adminApi } from '../../src/api/admin';
 import type { AdminUser } from '../../src/api/admin';
+import { useToast } from '../../src/components/ui/Toast';
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -56,6 +57,7 @@ const getStatusStyle = (status: string) => {
 
 export const Team: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const { showToast } = useToast();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -99,6 +101,7 @@ export const Team: React.FC = () => {
       refetch();
     } catch (err) {
       console.error('SSO sync failed:', err);
+      showToast({ type: 'error', title: 'SSO Sync Failed', message: (err as Error).message || 'Please try again' });
       setSSOResult({ provider, imported: 0, updated: 0, skipped: 0, errors: ['Sync failed. Check integration settings.'] });
     } finally {
       setSSOSyncing(null);
@@ -136,8 +139,10 @@ export const Team: React.FC = () => {
           await resetPassword(userId);
           break;
       }
+      showToast({ type: 'success', title: 'Action Completed', message: `Successfully performed ${action} on user` });
     } catch (err) {
       console.error('Action failed:', err);
+      showToast({ type: 'error', title: 'Action Failed', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -150,8 +155,10 @@ export const Team: React.FC = () => {
       setShowInviteModal(false);
       setInviteForm({ email: '', role: 'USER', message: '' });
       refetch();
+      showToast({ type: 'success', title: 'Invitation Sent' });
     } catch (err) {
       console.error('Invite failed:', err);
+      showToast({ type: 'error', title: 'Failed to Send Invitation', message: (err as Error).message || 'Please try again' });
     } finally {
       setIsInviting(false);
     }

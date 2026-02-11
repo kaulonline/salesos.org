@@ -20,6 +20,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { useTaxRates } from '../../src/hooks/useTaxRates';
+import { useToast } from '../../src/components/ui/Toast';
 import type {
   TaxRate,
   CreateTaxRateDto,
@@ -134,6 +135,7 @@ function formatRate(rate: number): string {
 }
 
 export const TaxRates: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -165,8 +167,10 @@ export const TaxRates: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Tax Rate Created' });
     } catch (error) {
       console.error('Failed to create rate:', error);
+      showToast({ type: 'error', title: 'Failed to Create Tax Rate', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -174,8 +178,10 @@ export const TaxRates: React.FC = () => {
     try {
       await update(id, data);
       setEditingRate(null);
+      showToast({ type: 'success', title: 'Tax Rate Updated' });
     } catch (error) {
       console.error('Failed to update rate:', error);
+      showToast({ type: 'error', title: 'Failed to Update Tax Rate', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -183,24 +189,30 @@ export const TaxRates: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Tax Rate Deleted' });
     } catch (error) {
       console.error('Failed to delete rate:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Tax Rate', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleSetDefault = async (id: string) => {
     try {
       await setAsDefault(id);
+      showToast({ type: 'success', title: 'Default Tax Rate Updated' });
     } catch (error) {
       console.error('Failed to set default:', error);
+      showToast({ type: 'error', title: 'Failed to Set Default Tax Rate', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleToggleActive = async (id: string) => {
     try {
       await toggleActive(id);
+      showToast({ type: 'success', title: 'Tax Rate Status Updated' });
     } catch (error) {
       console.error('Failed to toggle rate:', error);
+      showToast({ type: 'error', title: 'Failed to Toggle Tax Rate', message: (error as Error).message || 'Please try again' });
     }
   };
 

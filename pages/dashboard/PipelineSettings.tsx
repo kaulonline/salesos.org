@@ -4,11 +4,13 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { SortableStageList } from '../../components/pipeline';
+import { useToast } from '../../src/components/ui/Toast';
 import { usePipelines, usePipeline } from '../../src/hooks';
 import { STAGE_COLOR_PRESETS, DEFAULT_PIPELINE_STAGES } from '../../src/types/pipeline';
 import type { Pipeline } from '../../src/types';
 
 export const PipelineSettings: React.FC = () => {
+  const { showToast } = useToast();
   const {
     pipelines,
     loading,
@@ -62,8 +64,10 @@ export const PipelineSettings: React.FC = () => {
       });
       setSelectedPipelineId(newPipeline.id);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Pipeline Created' });
     } catch (err) {
       console.error('Failed to create pipeline:', err);
+      showToast({ type: 'error', title: 'Failed to Create Pipeline', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -75,8 +79,10 @@ export const PipelineSettings: React.FC = () => {
         setSelectedPipelineId(remaining[0]?.id || null);
       }
       setShowDeleteModal(null);
+      showToast({ type: 'success', title: 'Pipeline Deleted' });
     } catch (err) {
       console.error('Failed to delete pipeline:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Pipeline', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -87,16 +93,20 @@ export const PipelineSettings: React.FC = () => {
       setSelectedPipelineId(newPipeline.id);
       setShowDuplicateModal(null);
       setDuplicateName('');
+      showToast({ type: 'success', title: 'Pipeline Duplicated' });
     } catch (err) {
       console.error('Failed to duplicate pipeline:', err);
+      showToast({ type: 'error', title: 'Failed to Duplicate Pipeline', message: (err as Error).message || 'Please try again' });
     }
   };
 
   const handleSetDefault = async (pipeline: Pipeline) => {
     try {
       await setDefault(pipeline.id);
+      showToast({ type: 'success', title: 'Default Pipeline Updated' });
     } catch (err) {
       console.error('Failed to set default pipeline:', err);
+      showToast({ type: 'error', title: 'Failed to Set Default Pipeline', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -106,6 +116,7 @@ export const PipelineSettings: React.FC = () => {
       await update(selectedPipelineId, { name });
     } catch (err) {
       console.error('Failed to update pipeline name:', err);
+      showToast({ type: 'error', title: 'Failed to Update Pipeline Name', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -115,6 +126,7 @@ export const PipelineSettings: React.FC = () => {
       await update(selectedPipelineId, { description });
     } catch (err) {
       console.error('Failed to update pipeline description:', err);
+      showToast({ type: 'error', title: 'Failed to Update Pipeline Description', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -123,6 +135,7 @@ export const PipelineSettings: React.FC = () => {
       await update(pipeline.id, { isActive: !pipeline.isActive });
     } catch (err) {
       console.error('Failed to toggle pipeline active state:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Pipeline State', message: (err as Error).message || 'Please try again' });
     }
   };
 

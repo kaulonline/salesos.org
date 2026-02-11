@@ -13,10 +13,12 @@ import {
 } from '../../src/components/contacts';
 import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
 import type { UpdateContactDto } from '../../src/types';
+import { useToast } from '../../src/components/ui/Toast';
 
 export const ContactDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { contact, opportunities, loading, error, refetch } = useContact(id);
   const { contacts: recentContacts, loading: contactsLoading, update, remove, isUpdating, isDeleting } = useContacts();
 
@@ -61,8 +63,10 @@ export const ContactDetail: React.FC = () => {
       await update(id, editForm);
       await refetch();
       setShowEditModal(false);
+      showToast({ type: 'success', title: 'Contact Updated' });
     } catch (err) {
       console.error('Failed to update contact:', err);
+      showToast({ type: 'error', title: 'Failed to Update Contact', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -70,9 +74,11 @@ export const ContactDetail: React.FC = () => {
     if (!id) return;
     try {
       await remove(id);
+      showToast({ type: 'success', title: 'Contact Deleted' });
       navigate('/dashboard/contacts');
     } catch (err) {
       console.error('Failed to delete contact:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Contact', message: (err as Error).message || 'Please try again' });
     }
   };
 

@@ -10,8 +10,10 @@ import { useDashboard } from '../../src/hooks';
 import { FeatureGate, Features, useCanAccess } from '../../src/components/FeatureGate';
 import { AreaChart } from '../../src/components/charts';
 import { adminApi } from '../../src/api/admin';
+import { useToast } from '../../src/components/ui/Toast';
 
 export const Analytics: React.FC = () => {
+  const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -43,6 +45,7 @@ export const Analytics: React.FC = () => {
       setForecastReport(forecastRes.data);
     } catch (err) {
       console.error('Failed to fetch analytics data:', err);
+      showToast({ type: 'error', title: 'Failed to Load Analytics', message: (err as Error).message || 'Please try again' });
       setError('Failed to load analytics data. Please try again.');
     } finally {
       setIsLoading(false);

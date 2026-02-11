@@ -3,6 +3,7 @@ import { Search, Plus, FileText, CheckCircle2, Clock, FileCheck, ArrowUpRight, A
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useDeals } from '../../src/hooks';
 import { FeatureGate, Features } from '../../src/components/FeatureGate';
+import { useToast } from '../../src/components/ui/Toast';
 import type { Opportunity } from '../../src/types';
 
 // Map deal stages to document types/statuses
@@ -58,6 +59,7 @@ const formatCurrency = (amount: number) => {
 
 export const Documents: React.FC = () => {
   const { deals, pipelineStats, loading, error, fetchPipelineStats } = useDeals();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [showNewDocModal, setShowNewDocModal] = useState(false);
@@ -80,8 +82,10 @@ export const Documents: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowNewDocModal(false);
       setNewDoc({ name: '', type: 'Proposal', client: '' });
+      showToast({ type: 'success', title: 'Document Created' });
     } catch (err) {
       console.error('Failed to create document:', err);
+      showToast({ type: 'error', title: 'Failed to Create Document', message: (err as Error).message || 'Please try again' });
     } finally {
       setIsCreating(false);
     }

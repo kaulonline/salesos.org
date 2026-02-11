@@ -12,11 +12,13 @@ import {
   DeleteConfirmModal,
 } from '../../src/components/accounts';
 import { DetailBreadcrumb } from '../../src/components/shared/DetailBreadcrumb';
+import { useToast } from '../../src/components/ui/Toast';
 import type { UpdateAccountDto, CreateOpportunityDto, CreateContactDto, OpportunityStage } from '../../src/types';
 
 export const AccountDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { company, hierarchy, revenue, loading, error, refetch } = useCompany(id);
   const { companies: recentCompanies, loading: companiesLoading, update, remove, isUpdating, isDeleting } = useCompanies();
   const { create: createDeal, isCreating: isCreatingDeal } = useDeals();
@@ -78,8 +80,10 @@ export const AccountDetail: React.FC = () => {
       await update(id, editForm);
       await refetch();
       setShowEditModal(false);
+      showToast({ type: 'success', title: 'Account Updated' });
     } catch (err) {
       console.error('Failed to update account:', err);
+      showToast({ type: 'error', title: 'Failed to Update Account', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -87,9 +91,11 @@ export const AccountDetail: React.FC = () => {
     if (!id) return;
     try {
       await remove(id);
+      showToast({ type: 'success', title: 'Account Deleted' });
       navigate('/dashboard/companies');
     } catch (err) {
       console.error('Failed to delete account:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Account', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -105,8 +111,10 @@ export const AccountDetail: React.FC = () => {
       setShowNewDealModal(false);
       setNewDealForm({ name: '', amount: undefined, stage: 'PROSPECTING' });
       await refetch();
+      showToast({ type: 'success', title: 'Deal Created' });
     } catch (err) {
       console.error('Failed to create deal:', err);
+      showToast({ type: 'error', title: 'Failed to Create Deal', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -124,8 +132,10 @@ export const AccountDetail: React.FC = () => {
       setShowAddContactModal(false);
       setNewContactForm({ firstName: '', lastName: '', email: '', phone: '', title: '' });
       await refetch();
+      showToast({ type: 'success', title: 'Contact Added' });
     } catch (err) {
       console.error('Failed to create contact:', err);
+      showToast({ type: 'error', title: 'Failed to Create Contact', message: (err as Error).message || 'Please try again' });
     }
   };
 

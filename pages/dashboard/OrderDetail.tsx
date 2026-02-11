@@ -25,6 +25,7 @@ import {
   statusConfig,
   formatCurrency,
 } from '../../src/components/orders';
+import { useToast } from '../../src/components/ui/Toast';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ export default function OrderDetail() {
     isDelivering,
   } = useOrder(isNewOrder ? undefined : id);
   const { timeline, loading: timelineLoading } = useOrderTimeline(isNewOrder ? undefined : id);
+  const { showToast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -60,6 +62,7 @@ export default function OrderDetail() {
       printOrder(order);
     } catch (err) {
       console.error('Failed to generate PDF:', err);
+      showToast({ type: 'error', title: 'Failed to Generate PDF', message: (err as Error).message || 'Please try again' });
     } finally {
       setIsDownloading(false);
     }

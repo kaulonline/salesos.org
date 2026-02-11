@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useToast } from './ui/Toast';
 
 export interface TourStep {
   id: string;
@@ -29,6 +30,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
   onComplete,
   onStepChange,
 }) => {
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
@@ -45,6 +47,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
     const targetElement = document.querySelector(step.target);
     if (!targetElement) {
       console.warn(`Tour target not found: ${step.target}`);
+      showToast({ type: 'error', title: 'Tour Step Not Found', message: `Could not find target element for step: ${step.title}` });
       return;
     }
 

@@ -29,6 +29,7 @@ import { useWebForms, useWebFormSubmissions } from '../../../src/hooks/useWebFor
 import type { WebForm, CreateWebFormDto, UpdateWebFormDto } from '../../../src/types';
 import { AIBuilderModal, AIBuilderTrigger } from '../../../src/components/AIBuilder';
 import { AIBuilderEntityType, WebFormConfig } from '../../../src/types/aiBuilder';
+import { useToast } from '../../../src/components/ui/Toast';
 
 interface CreateFormModalProps {
   isOpen: boolean;
@@ -843,6 +844,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ isOpen, onClose, form, on
 
 export default function WebFormsPage() {
   const { forms, stats, loading, error, create, update, activate, deactivate, clone, remove } = useWebForms();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [embedForm, setEmbedForm] = useState<WebForm | null>(null);
@@ -894,9 +896,10 @@ export default function WebFormsPage() {
 
       await create(formData);
       // Form created successfully, list will refresh automatically
+      showToast({ type: 'success', title: 'Web Form Created from AI' });
     } catch (err) {
       console.error('Failed to create form:', err);
-      alert((err as Error).message || 'Failed to create form');
+      showToast({ type: 'error', title: 'Failed to Create Form', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -914,16 +917,20 @@ export default function WebFormsPage() {
       } else {
         await activate(form.id);
       }
+      showToast({ type: 'success', title: form.isActive ? 'Form Deactivated' : 'Form Activated' });
     } catch (err) {
       console.error('Failed to toggle form:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Form', message: (err as Error).message || 'Please try again' });
     }
   };
 
   const handleClone = async (form: WebForm) => {
     try {
       await clone(form.id, `${form.name} (Copy)`);
+      showToast({ type: 'success', title: 'Form Cloned' });
     } catch (err) {
       console.error('Failed to clone form:', err);
+      showToast({ type: 'error', title: 'Failed to Clone Form', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -936,8 +943,10 @@ export default function WebFormsPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.form.id);
+      showToast({ type: 'success', title: 'Form Deleted' });
     } catch (err) {
       console.error('Failed to delete form:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Form', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, form: null });

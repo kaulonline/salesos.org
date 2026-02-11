@@ -25,6 +25,10 @@ export const SignUp: React.FC = () => {
   const [organizationCode, setOrganizationCode] = useState('');
   const [localError, setLocalError] = useState('');
 
+  // OAuth status state
+  const [oauthStatus, setOauthStatus] = useState<{ google: { enabled: boolean; configured: boolean }; apple: { enabled: boolean; configured: boolean } } | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(true);
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -32,11 +36,47 @@ export const SignUp: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Fetch OAuth status on mount
+  useEffect(() => {
+    const fetchOAuthStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/auth/oauth-status`);
+        if (response.ok) {
+          const data = await response.json();
+          setOauthStatus(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch OAuth status:', err);
+      } finally {
+        setOauthLoading(false);
+      }
+    };
+    fetchOAuthStatus();
+  }, []);
+
   // Clear errors when inputs change
   useEffect(() => {
     if (error) clearError();
     if (localError) setLocalError('');
   }, [name, email, password, organizationCode]);
+
+  const handleOAuthLogin = (provider: 'google' | 'apple') => {
+    const providerStatus = oauthStatus?.[provider];
+    if (!providerStatus?.enabled) {
+      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      if (!providerStatus?.configured) {
+        alert(`${providerName} login is being configured. Please use email signup for now.`);
+      } else {
+        alert(`${providerName} login is currently disabled. Please use email signup.`);
+      }
+      return;
+    }
+    const oauthUrls: Record<string, string> = {
+      google: `${import.meta.env.VITE_API_URL || ''}/auth/google`,
+      apple: `${import.meta.env.VITE_API_URL || ''}/auth/apple`,
+    };
+    window.location.href = oauthUrls[provider];
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,20 +240,33 @@ export const SignUp: React.FC = () => {
             </Button>
           </form>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-            <button
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
-              disabled={isLoading}
-            >
-              <Apple size={18} /> Apple
-            </button>
-            <button
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50"
-              disabled={isLoading}
-            >
-              <GoogleIcon /> Google
-            </button>
-          </div>
+          {/* OAuth Buttons - Only show if at least one provider is configured */}
+          {!oauthLoading && (oauthStatus?.google.configured || oauthStatus?.apple.configured) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+              {oauthStatus?.apple.configured && (
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('apple')}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50 ${!oauthStatus.apple.enabled ? 'opacity-60' : ''}`}
+                  disabled={isLoading}
+                  title={!oauthStatus.apple.enabled ? 'Apple login is currently disabled' : 'Sign up with Apple'}
+                >
+                  <Apple size={18} /> Apple
+                </button>
+              )}
+              {oauthStatus?.google.configured && (
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-black/5 bg-transparent hover:bg-white hover:border-transparent transition-all text-sm font-medium text-[#1A1A1A] disabled:opacity-50 ${!oauthStatus.google.enabled ? 'opacity-60' : ''}`}
+                  disabled={isLoading}
+                  title={!oauthStatus.google.enabled ? 'Google login is currently disabled' : 'Sign up with Google'}
+                >
+                  <GoogleIcon /> Google
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-between items-center mt-12 text-sm">
             <div className="text-[#666]">

@@ -30,6 +30,7 @@ import type { AssignmentRuleEntity, AssignmentMethod, ConditionOperator } from '
 import { LEAD_ASSIGNABLE_FIELDS, OPPORTUNITY_ASSIGNABLE_FIELDS, CONDITION_OPERATOR_LABELS } from '../../../src/types/assignmentRule';
 import { AIBuilderModal, AIBuilderTrigger } from '../../../src/components/AIBuilder';
 import { AIBuilderEntityType, AssignmentRuleConfig, SingleAssignmentRule } from '../../../src/types/aiBuilder';
+import { useToast } from '../../../src/components/ui/Toast';
 
 const ENTITY_TYPE_LABELS: Record<AssignmentRuleEntity, string> = {
   LEAD: 'Leads',
@@ -353,6 +354,7 @@ const CreateRuleModal: React.FC<CreateRuleModalProps> = ({ isOpen, onClose, onCr
 
 export default function AssignmentRulesPage() {
   const { rules, stats, loading, error, create, update, remove, reorder } = useAssignmentRules();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState<AssignmentRuleEntity | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -419,7 +421,7 @@ export default function AssignmentRulesPage() {
       }
     } catch (err) {
       console.error('Failed to create assignment rule:', err);
-      alert((err as Error).message || 'Failed to create assignment rule');
+      showToast({ type: 'error', title: 'Failed to Create Assignment Rule', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -460,8 +462,10 @@ export default function AssignmentRulesPage() {
   const handleToggleActive = async (rule: AssignmentRule) => {
     try {
       await update(rule.id, { isActive: !rule.isActive });
+      showToast({ type: 'success', title: rule.isActive ? 'Rule Deactivated' : 'Rule Activated' });
     } catch (err) {
       console.error('Failed to toggle rule:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Rule', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -474,8 +478,10 @@ export default function AssignmentRulesPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.ruleId);
+      showToast({ type: 'success', title: 'Rule Deleted' });
     } catch (err) {
       console.error('Failed to delete rule:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Rule', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, ruleId: null });

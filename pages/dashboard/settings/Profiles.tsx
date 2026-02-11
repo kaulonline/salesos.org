@@ -25,6 +25,7 @@ import { PERMISSION_MODULES } from '../../../src/types/profile';
 import { AIBuilderTrigger } from '../../../src/components/AIBuilder/AIBuilderTrigger';
 import { AIBuilderModal } from '../../../src/components/AIBuilder/AIBuilderModal';
 import { AIBuilderEntityType, ProfileConfig } from '../../../src/types/aiBuilder';
+import { useToast } from '../../../src/components/ui/Toast';
 
 const DATA_ACCESS_LABELS: Record<DataAccessLevel, string> = {
   NONE: 'No Access',
@@ -168,6 +169,7 @@ interface PermissionMatrixProps {
 }
 
 const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ profile, onUpdate, onClose }) => {
+  const { showToast } = useToast();
   const [permissions, setPermissions] = useState<Permission[]>(profile.permissions);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -198,8 +200,10 @@ const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ profile, onUpdate, 
     try {
       await onUpdate(permissions);
       onClose();
+      showToast({ type: 'success', title: 'Permissions Updated' });
     } catch (err) {
       console.error('Failed to update permissions:', err);
+      showToast({ type: 'error', title: 'Failed to Update Permissions', message: (err as Error).message || 'Please try again' });
     } finally {
       setSaving(false);
     }
@@ -299,6 +303,7 @@ const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ profile, onUpdate, 
 
 export default function ProfilesPage() {
   const { profiles, stats, loading, error, create, update, remove } = useProfiles();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
@@ -332,8 +337,10 @@ export default function ProfilesPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.profileId);
+      showToast({ type: 'success', title: 'Profile Deleted' });
     } catch (err) {
       console.error('Failed to delete profile:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Profile', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, profileId: null });
@@ -347,8 +354,10 @@ export default function ProfilesPage() {
         description: profile.description,
         permissions: profile.permissions,
       });
+      showToast({ type: 'success', title: 'Profile Cloned' });
     } catch (err) {
       console.error('Failed to clone profile:', err);
+      showToast({ type: 'error', title: 'Failed to Clone Profile', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -381,8 +390,10 @@ export default function ProfilesPage() {
         permissions,
       });
       setShowAIBuilder(false);
+      showToast({ type: 'success', title: 'Profile Created from AI' });
     } catch (error) {
       console.error('Failed to create profile from AI:', error);
+      showToast({ type: 'error', title: 'Failed to Create Profile', message: (error as Error).message || 'Please try again' });
     }
   };
 

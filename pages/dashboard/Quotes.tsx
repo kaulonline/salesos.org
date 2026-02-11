@@ -24,6 +24,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
+import { useToast } from '../../src/components/ui/Toast';
 import { useQuotes, useCreateQuoteFromOpportunity } from '../../src/hooks/useQuotes';
 import type { Quote, QuoteStatus, CreateQuoteDto } from '../../src/types';
 
@@ -165,6 +166,7 @@ const CreateQuoteModal: React.FC<CreateQuoteModalProps> = ({ isOpen, onClose, on
 export default function QuotesPage() {
   const navigate = useNavigate();
   const { quotes, stats, loading, error, create, remove } = useQuotes();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -203,8 +205,10 @@ export default function QuotesPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.quoteId);
+      showToast({ type: 'success', title: 'Quote Deleted' });
     } catch (err) {
       console.error('Failed to delete quote:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Quote', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, quoteId: null });

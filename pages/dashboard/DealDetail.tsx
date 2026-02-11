@@ -17,6 +17,7 @@ import {
   CloseLostModal,
 } from '../../src/components/deals';
 import { DealAnalysisWidget, AIEmailDraftButton } from '../../src/components/ai';
+import { useToast } from '../../src/components/ui/Toast';
 import { SplitManager } from '../../components/splits';
 import { adminApi, IntegrationEntityMapping, IntegrationAttachment } from '../../src/api/admin';
 import { FieldChangeHistory } from '../../src/components/audit/FieldChangeHistory';
@@ -27,6 +28,7 @@ import type { OpportunityStage } from '../../src/types';
 export const DealDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { deal, analysis, loading, error, fetchAnalysis, refetch } = useDeal(id);
   const {
     deals: recentDeals,
@@ -116,8 +118,10 @@ export const DealDetail: React.FC = () => {
     try {
       await update(deal.id, { stage: newStage });
       await refetch();
+      showToast({ type: 'success', title: 'Stage Updated' });
     } catch (err) {
       console.error('Failed to update stage:', err);
+      showToast({ type: 'error', title: 'Failed to Update Stage', message: (err as Error).message || 'Please try again' });
     } finally {
       setStageUpdating(false);
     }
@@ -131,8 +135,10 @@ export const DealDetail: React.FC = () => {
     try {
       await advanceStage(deal.id);
       await refetch();
+      showToast({ type: 'success', title: 'Stage Advanced' });
     } catch (err) {
       console.error('Failed to advance stage:', err);
+      showToast({ type: 'error', title: 'Failed to Advance Stage', message: (err as Error).message || 'Please try again' });
     } finally {
       setStageUpdating(false);
     }
@@ -145,8 +151,10 @@ export const DealDetail: React.FC = () => {
       await closeWon(deal.id, { finalAmount: deal.amount });
       setShowCloseWonModal(false);
       await refetch();
+      showToast({ type: 'success', title: 'Deal Closed Won' });
     } catch (err) {
       console.error('Failed to close won:', err);
+      showToast({ type: 'error', title: 'Failed to Close Deal as Won', message: (err as Error).message || 'Please try again' });
     } finally {
       setStageUpdating(false);
     }
@@ -160,8 +168,10 @@ export const DealDetail: React.FC = () => {
       setShowCloseLostModal(false);
       setLostReason('');
       await refetch();
+      showToast({ type: 'success', title: 'Deal Closed Lost' });
     } catch (err) {
       console.error('Failed to close lost:', err);
+      showToast({ type: 'error', title: 'Failed to Close Deal as Lost', message: (err as Error).message || 'Please try again' });
     } finally {
       setStageUpdating(false);
     }
@@ -183,8 +193,10 @@ export const DealDetail: React.FC = () => {
       });
       setShowEditModal(false);
       await refetch();
+      showToast({ type: 'success', title: 'Deal Updated' });
     } catch (err) {
       console.error('Failed to update opportunity:', err);
+      showToast({ type: 'error', title: 'Failed to Update Deal', message: (err as Error).message || 'Please try again' });
     } finally {
       setIsSaving(false);
     }

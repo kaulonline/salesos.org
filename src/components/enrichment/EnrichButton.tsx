@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Database, Loader2, Check, X, RefreshCw, Eye } from 'lucide-react';
 import { useEnrichLead, useEnrichContact, useEnrichAccount, usePreviewEnrichment } from '../../hooks/useEnrichment';
 import { EnrichmentResult, EnrichmentPreview, EnrichmentProvider, EntityType } from '../../api/enrichment';
+import { useToast } from '../ui/Toast';
 
 interface EnrichButtonProps {
   entityType: 'lead' | 'contact' | 'account';
@@ -23,6 +24,7 @@ export const EnrichButton: React.FC<EnrichButtonProps> = ({
   showPreview = true,
   className = '',
 }) => {
+  const { showToast } = useToast();
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewData, setPreviewData] = useState<EnrichmentPreview | null>(null);
   const [enrichResult, setEnrichResult] = useState<EnrichmentResult | null>(null);
@@ -44,6 +46,7 @@ export const EnrichButton: React.FC<EnrichButtonProps> = ({
         },
         onError: (error) => {
           console.error('Failed to preview enrichment:', error);
+          showToast({ type: 'error', title: 'Enrichment Preview Failed', message: (error as Error).message || 'Please try again' });
         },
       }
     );
@@ -54,12 +57,14 @@ export const EnrichButton: React.FC<EnrichButtonProps> = ({
       onSuccess: (result: EnrichmentResult) => {
         setEnrichResult(result);
         setShowPreviewModal(false);
+        showToast({ type: 'success', title: 'Enrichment Complete' });
         if (onEnriched) {
           onEnriched(result);
         }
       },
       onError: (error: Error) => {
         console.error('Failed to enrich:', error);
+        showToast({ type: 'error', title: 'Enrichment Failed', message: (error as Error).message || 'Please try again' });
       },
     };
 

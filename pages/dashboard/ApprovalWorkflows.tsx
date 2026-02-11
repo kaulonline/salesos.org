@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../src/components/ui/Toast';
 import { useApprovalWorkflows, useApprovalWorkflow } from '../../src/hooks/useApprovalWorkflows';
 import type {
   ApprovalWorkflow,
@@ -64,6 +65,7 @@ const APPROVER_TYPE_CONFIG: Record<ApproverType, { icon: React.ElementType; labe
 };
 
 export const ApprovalWorkflows: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState<ApprovalEntity | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -95,8 +97,10 @@ export const ApprovalWorkflows: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Workflow Created' });
     } catch (error) {
       console.error('Failed to create workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Create Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -104,8 +108,10 @@ export const ApprovalWorkflows: React.FC = () => {
     try {
       await update(id, data);
       setEditingWorkflow(null);
+      showToast({ type: 'success', title: 'Workflow Updated' });
     } catch (error) {
       console.error('Failed to update workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Update Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -113,8 +119,10 @@ export const ApprovalWorkflows: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Workflow Deleted' });
     } catch (error) {
       console.error('Failed to delete workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -123,14 +131,17 @@ export const ApprovalWorkflows: React.FC = () => {
       await toggleActive(id);
     } catch (error) {
       console.error('Failed to toggle workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Toggle Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleCloneWorkflow = async (workflow: ApprovalWorkflow) => {
     try {
       await clone(workflow.id, `${workflow.name} (Copy)`);
+      showToast({ type: 'success', title: 'Workflow Cloned' });
     } catch (error) {
       console.error('Failed to clone workflow:', error);
+      showToast({ type: 'error', title: 'Failed to Clone Workflow', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -488,6 +499,7 @@ interface ApprovalWorkflowModalProps {
 }
 
 const ApprovalWorkflowModal: React.FC<ApprovalWorkflowModalProps> = ({ workflow, onClose, onSave, saving }) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<CreateApprovalWorkflowDto>({
     name: workflow?.name || '',
     description: workflow?.description || '',
@@ -525,8 +537,10 @@ const ApprovalWorkflowModal: React.FC<ApprovalWorkflowModalProps> = ({ workflow,
     try {
       await addStep(newStep);
       setNewStep(null);
+      showToast({ type: 'success', title: 'Step Added' });
     } catch (err) {
       console.error('Failed to add step:', err);
+      showToast({ type: 'error', title: 'Failed to Add Step', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -540,8 +554,10 @@ const ApprovalWorkflowModal: React.FC<ApprovalWorkflowModalProps> = ({ workflow,
         allowDelegation: editingStep.allowDelegation,
       });
       setEditingStep(null);
+      showToast({ type: 'success', title: 'Step Updated' });
     } catch (err) {
       console.error('Failed to update step:', err);
+      showToast({ type: 'error', title: 'Failed to Update Step', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -549,8 +565,10 @@ const ApprovalWorkflowModal: React.FC<ApprovalWorkflowModalProps> = ({ workflow,
     if (!workflow) return;
     try {
       await deleteStep(stepId);
+      showToast({ type: 'success', title: 'Step Deleted' });
     } catch (err) {
       console.error('Failed to delete step:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Step', message: (err as Error).message || 'Please try again' });
     }
   };
 

@@ -11,11 +11,13 @@ import {
 } from '../../src/hooks';
 import { useAuth } from '../../src/context/AuthContext';
 import { MenuCustomization } from '../../src/components/settings/MenuCustomization';
+import { useToast } from '../../src/components/ui/Toast';
 
 type TabType = 'profile' | 'notifications' | 'security' | 'menu';
 
 export const Settings: React.FC = () => {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,8 +96,10 @@ export const Settings: React.FC = () => {
         timezone: formData.timezone,
       });
       setFormDirty(false);
+      showToast({ type: 'success', title: 'Profile Saved' });
     } catch (err) {
       console.error('Failed to save profile:', err);
+      showToast({ type: 'error', title: 'Failed to Save Profile', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -108,8 +112,10 @@ export const Settings: React.FC = () => {
     if (file) {
       try {
         await uploadAvatar(file);
+        showToast({ type: 'success', title: 'Avatar Updated' });
       } catch (err) {
         console.error('Failed to upload avatar:', err);
+        showToast({ type: 'error', title: 'Failed to Upload Avatar', message: (err as Error).message || 'Please try again' });
       }
     }
   };
@@ -118,8 +124,10 @@ export const Settings: React.FC = () => {
     if (!emailPrefs) return;
     try {
       await updateEmailPrefs({ [key]: !emailPrefs[key as keyof typeof emailPrefs] });
+      showToast({ type: 'success', title: 'Notification Preference Updated' });
     } catch (err) {
       console.error('Failed to update email preference:', err);
+      showToast({ type: 'error', title: 'Failed to Update Preference', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -130,8 +138,10 @@ export const Settings: React.FC = () => {
     try {
       await changePassword(passwordData.currentPassword, passwordData.newPassword);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      showToast({ type: 'success', title: 'Password Changed' });
     } catch (err) {
       console.error('Failed to change password:', err);
+      showToast({ type: 'error', title: 'Failed to Change Password', message: (err as Error).message || 'Please try again' });
     }
   };
 

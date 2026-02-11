@@ -25,6 +25,7 @@ import { TEMPLATE_CATEGORY_LABELS } from '../../src/types/emailTemplate';
 import { AIBuilderModal, AIBuilderTrigger } from '../../src/components/AIBuilder';
 import { AIBuilderEntityType, EmailTemplateConfig } from '../../src/types/aiBuilder';
 import { sanitizeHtml } from '../../src/lib/security';
+import { useToast } from '../../src/components/ui/Toast';
 
 const CATEGORY_COLORS: Record<TemplateCategory, string> = {
   SALES: 'blue',
@@ -548,6 +549,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ isOpen, onClo
 };
 
 export default function EmailTemplatesPage() {
+  const { showToast } = useToast();
   const { templates, stats, loading, error, create, update, remove, clone } = useEmailTemplates();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'all'>('all');
@@ -582,10 +584,10 @@ export default function EmailTemplatesPage() {
       };
 
       await create(templateData);
-      // Template created successfully
+      showToast({ type: 'success', title: 'Template Created with AI' });
     } catch (err) {
       console.error('Failed to create template:', err);
-      alert((err as Error).message || 'Failed to create template');
+      showToast({ type: 'error', title: 'Failed to Create Template', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -602,16 +604,20 @@ export default function EmailTemplatesPage() {
   const handleToggleActive = async (template: EmailTemplate) => {
     try {
       await update(template.id, { isActive: !template.isActive });
+      showToast({ type: 'success', title: template.isActive ? 'Template Deactivated' : 'Template Activated' });
     } catch (err) {
       console.error('Failed to toggle template:', err);
+      showToast({ type: 'error', title: 'Failed to Toggle Template', message: (err as Error).message || 'Please try again' });
     }
   };
 
   const handleClone = async (template: EmailTemplate) => {
     try {
       await clone(template.id, `${template.name} (Copy)`);
+      showToast({ type: 'success', title: 'Template Cloned' });
     } catch (err) {
       console.error('Failed to clone template:', err);
+      showToast({ type: 'error', title: 'Failed to Clone Template', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -624,8 +630,10 @@ export default function EmailTemplatesPage() {
     setDeleteLoading(true);
     try {
       await remove(deleteModal.template.id);
+      showToast({ type: 'success', title: 'Template Deleted' });
     } catch (err) {
       console.error('Failed to delete template:', err);
+      showToast({ type: 'error', title: 'Failed to Delete Template', message: (err as Error).message || 'Please try again' });
     } finally {
       setDeleteLoading(false);
       setDeleteModal({ isOpen: false, template: null });

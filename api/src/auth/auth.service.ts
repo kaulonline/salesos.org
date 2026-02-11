@@ -1487,6 +1487,86 @@ export class AuthService {
     }
 
     /**
+     * Refresh an access token
+     * Takes the current user's JWT claims and issues a new token
+     */
+    async refreshToken(user: { userId: string; email: string; role: string; organizationId?: string; jti: string }): Promise<{ access_token: string; expires_in: number }> {
+        // Blacklist the old token
+        const oldJti = user.jti;
+        const oldExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // Conservative: assume 1hr from now
+        await this.tokenBlacklistService.revokeToken(oldJti, oldExpiresAt, user.userId);
+        await this.tokenBlacklistService.untrackSession(user.userId, oldJti);
+
+        // Generate new JWT ID
+        const jti = crypto.randomUUID();
+        const expiresIn = 60 * 60; // 1 hour
+        const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+        const payload = {
+            email: user.email,
+            sub: user.userId,
+            role: user.role,
+            organizationId: user.organizationId,
+            jti,
+        };
+
+        // Track the new session
+        this.tokenBlacklistService.trackSession(user.userId, jti, expiresAt).catch(err => {
+            this.logger.warn(`Failed to track refreshed session: ${err.message}`);
+        });
+
+        this.logger.log(`Token refreshed for user ${user.userId}`);
+
+        return {
+            access_token: this.jwtService.sign(payload),
+            expires_in: expiresIn,
+        };
+    }
+
+    /**
+     * Verify email using a JWT-based verification token
+     * The token contains { sub: userId, purpose: 'email-verify' }
+     */
+    async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const payload = this.jwtService.verify(token);
+
+            if (payload.purpose !== 'email-verify') {
+                throw new BadRequestException('Invalid verification token');
+            }
+
+            const userId = payload.sub;
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+            if (!user) {
+                throw new BadRequestException('User not found');
+            }
+
+            // Update user status to ACTIVE
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { status: 'ACTIVE' },
+            });
+
+            await this.applicationLogService.info('AuthService.verifyEmail', `Email verified for user: ${user.email}`, {
+                category: LogCategory.AUTH,
+                userId: user.id,
+                entityType: 'User',
+                entityId: user.id,
+                tags: ['email-verify', 'success'],
+            });
+
+            return { success: true, message: 'Email verified successfully' };
+        } catch (error) {
+            if (error instanceof BadRequestException) throw error;
+            if (error.name === 'TokenExpiredError') {
+                throw new BadRequestException('Verification link has expired. Please request a new one.');
+            }
+            throw new BadRequestException('Invalid or expired verification token');
+        }
+    }
+
+    /**
      * Logout - revoke the current token
      * @param jti - The JWT ID from the current token
      * @param userId - The user ID

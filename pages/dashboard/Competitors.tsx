@@ -3,6 +3,7 @@ import { Search, Plus, Swords, Shield, Target, MoreHorizontal, X, Loader2, Trash
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
+import { useToast } from '../../src/components/ui/Toast';
 import { useCompetitors, useCompetitor } from '../../src/hooks/useCompetitors';
 import { competitorsApi } from '../../src/api/competitors';
 import type {
@@ -20,6 +21,7 @@ function formatPercent(value: number | null | undefined): string {
 }
 
 export const Competitors: React.FC = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCompetitor, setEditingCompetitor] = useState<Competitor | null>(null);
@@ -46,8 +48,10 @@ export const Competitors: React.FC = () => {
     try {
       await create(data);
       setShowCreateModal(false);
+      showToast({ type: 'success', title: 'Competitor Created' });
     } catch (error) {
       console.error('Failed to create competitor:', error);
+      showToast({ type: 'error', title: 'Failed to Create Competitor', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -55,8 +59,10 @@ export const Competitors: React.FC = () => {
     try {
       await update(id, data);
       setEditingCompetitor(null);
+      showToast({ type: 'success', title: 'Competitor Updated' });
     } catch (error) {
       console.error('Failed to update competitor:', error);
+      showToast({ type: 'error', title: 'Failed to Update Competitor', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -64,8 +70,10 @@ export const Competitors: React.FC = () => {
     try {
       await remove(id);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Competitor Deleted' });
     } catch (error) {
       console.error('Failed to delete competitor:', error);
+      showToast({ type: 'error', title: 'Failed to Delete Competitor', message: (error as Error).message || 'Please try again' });
     }
   };
 
@@ -596,6 +604,7 @@ interface CompetitorDetailModalProps {
 }
 
 const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competitorId, onClose }) => {
+  const { showToast } = useToast();
   const { competitor, loading, refetch } = useCompetitor(competitorId);
   const [activeTab, setActiveTab] = useState<'overview' | 'battlecards' | 'analysis' | 'objections'>('overview');
   const [generatingBattlecard, setGeneratingBattlecard] = useState(false);
@@ -639,6 +648,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
       setActiveTab('battlecards');
     } catch (error) {
       console.error('Failed to generate battlecard:', error);
+      showToast({ type: 'error', title: 'Failed to Generate Battlecard', message: (error as Error).message || 'Please try again' });
     } finally {
       setGeneratingBattlecard(false);
     }
@@ -654,6 +664,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
       setActiveTab('analysis');
     } catch (error) {
       console.error('Failed to analyze patterns:', error);
+      showToast({ type: 'error', title: 'Failed to Analyze Patterns', message: (error as Error).message || 'Please try again' });
     } finally {
       setAnalyzingPatterns(false);
     }
@@ -667,6 +678,7 @@ const CompetitorDetailModal: React.FC<CompetitorDetailModalProps> = ({ competito
       setObjectionResponse(result);
     } catch (error) {
       console.error('Failed to generate response:', error);
+      showToast({ type: 'error', title: 'Failed to Generate Response', message: (error as Error).message || 'Please try again' });
     } finally {
       setGeneratingResponse(false);
     }

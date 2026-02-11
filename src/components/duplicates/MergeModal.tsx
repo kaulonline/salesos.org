@@ -3,6 +3,7 @@ import { X, GitMerge } from 'lucide-react';
 import { useDuplicateSet, useDuplicateSets } from '../../hooks/useDuplicates';
 import { leadsApi } from '../../api/leads';
 import type { Lead } from '../../types';
+import { useToast } from '../ui/Toast';
 
 interface MergeModalProps {
   duplicateSetId: string;
@@ -22,6 +23,7 @@ const LEAD_FIELDS = [
 ];
 
 export const MergeModal: React.FC<MergeModalProps> = ({ duplicateSetId, entityType, onClose }) => {
+  const { showToast } = useToast();
   const { duplicateSet, loading } = useDuplicateSet(duplicateSetId);
   const { merge, isMerging } = useDuplicateSets(entityType, 'OPEN');
   const [records, setRecords] = useState<Record<string, any>[]>([]);
@@ -85,9 +87,11 @@ export const MergeModal: React.FC<MergeModalProps> = ({ duplicateSetId, entityTy
           fieldResolutions,
         },
       });
+      showToast({ type: 'success', title: 'Records Merged Successfully' });
       onClose();
     } catch (err) {
       console.error('Merge failed:', err);
+      showToast({ type: 'error', title: 'Merge Failed', message: (err as Error).message || 'Please try again' });
     }
   };
 

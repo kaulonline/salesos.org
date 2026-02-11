@@ -89,6 +89,37 @@ export class AuthController {
     }
 
     /**
+     * Refresh access token
+     * POST /auth/refresh
+     * Requires: Bearer token in Authorization header
+     * Returns a new JWT token with fresh expiry
+     */
+    @UseGuards(JwtAuthGuard)
+    @Post('refresh')
+    async refresh(@Request() req) {
+        return this.authService.refreshToken({
+            userId: req.user.userId,
+            email: req.user.email,
+            role: req.user.role,
+            organizationId: req.user.organizationId,
+            jti: req.user.jti,
+        });
+    }
+
+    /**
+     * Verify email address
+     * GET /auth/verify-email?token=<token>
+     * Public endpoint - no auth required
+     */
+    @Get('verify-email')
+    async verifyEmail(@Query('token') token: string) {
+        if (!token) {
+            return { success: false, error: 'Verification token is required' };
+        }
+        return this.authService.verifyEmail(token);
+    }
+
+    /**
      * Get current user - alias for /profile (mobile app uses this endpoint)
      */
     @UseGuards(JwtAuthGuard)

@@ -15,6 +15,7 @@ import {
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { useTerritory } from '../../hooks';
 import { typeLabels, formatCurrency } from './types';
+import { useToast } from '../ui/Toast';
 import type { Account } from '../../types';
 
 interface TerritoryDetailDrawerProps {
@@ -42,6 +43,7 @@ export const TerritoryDetailDrawer: React.FC<TerritoryDetailDrawerProps> = ({
     isRemovingAccount,
   } = useTerritory(territoryId);
 
+  const { showToast } = useToast();
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [accountSearch, setAccountSearch] = useState('');
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
@@ -64,19 +66,23 @@ export const TerritoryDetailDrawer: React.FC<TerritoryDetailDrawerProps> = ({
     if (selectedAccountIds.length === 0) return;
     try {
       await assignAccounts({ accountIds: selectedAccountIds });
+      showToast({ type: 'success', title: 'Accounts Assigned Successfully' });
       setSelectedAccountIds([]);
       setShowAccountPicker(false);
       setAccountSearch('');
     } catch (error) {
       console.error('Failed to assign accounts:', error);
+      showToast({ type: 'error', title: 'Failed to Assign Accounts', message: (error as Error).message || 'Please try again' });
     }
   };
 
   const handleRemoveAccount = async (accountId: string) => {
     try {
       await removeAccount(accountId);
+      showToast({ type: 'success', title: 'Account Removed' });
     } catch (error) {
       console.error('Failed to remove account:', error);
+      showToast({ type: 'error', title: 'Failed to Remove Account', message: (error as Error).message || 'Please try again' });
     }
   };
 

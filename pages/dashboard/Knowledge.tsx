@@ -24,6 +24,7 @@ import {
   useDeleteDocument,
   useSearchAllMutation,
 } from '../../src/hooks';
+import { useToast } from '../../src/components/ui/Toast';
 
 const formatFileSize = (bytes?: number): string => {
   if (!bytes) return 'Unknown';
@@ -54,6 +55,7 @@ const statusConfig: Record<string, { variant: 'green' | 'yellow' | 'red' | 'gray
 };
 
 export const Knowledge: React.FC = () => {
+  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{
@@ -87,7 +89,7 @@ export const Knowledge: React.FC = () => {
         });
       } catch (error) {
         console.error('Upload failed:', error);
-        alert(`Failed to upload ${file.name}`);
+        showToast({ type: 'error', title: 'Upload Failed', message: (error as Error).message || 'Please try again' });
       }
     }
 
@@ -101,9 +103,10 @@ export const Knowledge: React.FC = () => {
     try {
       await deleteMutation.mutateAsync(documentId);
       setDeleteConfirm(null);
+      showToast({ type: 'success', title: 'Document Deleted' });
     } catch (error) {
       console.error('Delete failed:', error);
-      alert('Failed to delete document');
+      showToast({ type: 'error', title: 'Failed to Delete Document', message: (error as Error).message || 'Please try again' });
     }
   }, [deleteMutation]);
 
@@ -119,6 +122,7 @@ export const Knowledge: React.FC = () => {
       setShowSearchResults(true);
     } catch (error) {
       console.error('Search failed:', error);
+      showToast({ type: 'error', title: 'Search Failed', message: (error as Error).message || 'Please try again' });
     }
   }, [searchQuery, searchMutation]);
 
