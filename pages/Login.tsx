@@ -4,6 +4,7 @@ import { Command, Eye, EyeOff, X, Apple, AlertCircle, CheckCircle2, Loader2, Mai
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../src/context/AuthContext';
 import { authApi } from '../src/api/auth';
+import { useToast } from '../src/components/ui/Toast';
 
 // Custom Google Icon component since Lucide doesn't have the colored G
 const GoogleIcon = () => (
@@ -25,6 +26,7 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, isLoading, error, clearError, user } = useAuth();
+  const { showToast } = useToast();
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -128,9 +130,9 @@ export const Login: React.FC = () => {
     if (!providerStatus?.enabled) {
       const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
       if (!providerStatus?.configured) {
-        alert(`${providerName} login is being configured. Please use email login for now.`);
+        showToast({ type: 'warning', title: `${providerName} Login Unavailable`, message: `${providerName} login is being configured. Please use email login for now.` });
       } else {
-        alert(`${providerName} login is currently disabled. Please use email login.`);
+        showToast({ type: 'warning', title: `${providerName} Login Disabled`, message: `${providerName} login is currently disabled. Please use email login.` });
       }
       return;
     }

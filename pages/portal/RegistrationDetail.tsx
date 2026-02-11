@@ -22,6 +22,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { usePortalRegistration, useSubmitRegistration } from '../../src/hooks/usePortal';
+import { useToast } from '../../src/components/ui/Toast';
 import type { DealRegistrationStatus } from '../../src/types/portal';
 
 const STATUS_CONFIG: Record<DealRegistrationStatus, { bg: string; text: string; icon: React.ElementType; label: string; description: string }> = {
@@ -41,13 +42,16 @@ export function RegistrationDetail() {
   const navigate = useNavigate();
   const { data: registration, isLoading, error } = usePortalRegistration(id || '');
   const submitMutation = useSubmitRegistration();
+  const { showToast } = useToast();
 
   const handleSubmit = async () => {
     if (!id) return;
     try {
       await submitMutation.mutateAsync(id);
+      showToast({ type: 'success', title: 'Registration Submitted' });
     } catch (error) {
       console.error('Failed to submit registration:', error);
+      showToast({ type: 'error', title: 'Failed to Submit Registration', message: (error as Error).message || 'Please try again' });
     }
   };
 

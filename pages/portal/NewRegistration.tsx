@@ -17,6 +17,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useCreateRegistration, useSubmitRegistration } from '../../src/hooks/usePortal';
+import { useToast } from '../../src/components/ui/Toast';
 import type { CreateDealRegistrationDto } from '../../src/types/portal';
 
 const PRODUCT_OPTIONS = [
@@ -32,6 +33,7 @@ export function NewRegistration() {
   const navigate = useNavigate();
   const createMutation = useCreateRegistration();
   const submitMutation = useSubmitRegistration();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState<CreateDealRegistrationDto>({
     accountName: '',
@@ -83,9 +85,11 @@ export function NewRegistration() {
         await submitMutation.mutateAsync(registration.id);
       }
 
+      showToast({ type: 'success', title: type === 'submit' ? 'Registration Submitted' : 'Draft Saved' });
       navigate('/portal/registrations');
     } catch (error) {
       console.error('Failed to create registration:', error);
+      showToast({ type: 'error', title: 'Failed to Create Registration', message: (error as Error).message || 'Please try again' });
     }
   };
 

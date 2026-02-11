@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Command, Eye, EyeOff, X, Apple, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../src/context/AuthContext';
+import { useToast } from '../src/components/ui/Toast';
 
 // Custom Google Icon component
 const GoogleIcon = () => (
@@ -17,6 +18,7 @@ const GoogleIcon = () => (
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { register, isAuthenticated, isLoading, error, clearError } = useAuth();
+  const { showToast } = useToast();
 
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
@@ -65,9 +67,9 @@ export const SignUp: React.FC = () => {
     if (!providerStatus?.enabled) {
       const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
       if (!providerStatus?.configured) {
-        alert(`${providerName} login is being configured. Please use email signup for now.`);
+        showToast({ type: 'warning', title: `${providerName} Signup Unavailable`, message: `${providerName} login is being configured. Please use email signup for now.` });
       } else {
-        alert(`${providerName} login is currently disabled. Please use email signup.`);
+        showToast({ type: 'warning', title: `${providerName} Signup Disabled`, message: `${providerName} login is currently disabled. Please use email signup.` });
       }
       return;
     }

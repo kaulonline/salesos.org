@@ -24,6 +24,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmationModal } from '../../src/components/ui/ConfirmationModal';
 import { useTwoFactorStatus, useTwoFactorSetup, useTrustedDevices, useBackupCodes } from '../../src/hooks/useTwoFactor';
 import { authApi } from '../../src/api/auth';
+import { useToast } from '../../src/components/ui/Toast';
 import type { TwoFactorSetupResponse, BackupCodesResponse } from '../../src/types';
 
 interface SetupModalProps {
@@ -333,6 +334,7 @@ export const PortalSecurity: React.FC = () => {
   const { setup, verifySetup, disable } = useTwoFactorSetup();
   const { devices, remove: removeDevice } = useTrustedDevices();
   const { codes, regenerate } = useBackupCodes();
+  const { showToast } = useToast();
 
   const [setupData, setSetupData] = useState<TwoFactorSetupResponse | null>(null);
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -398,6 +400,7 @@ export const PortalSecurity: React.FC = () => {
       setShowSetupModal(true);
     } catch (err) {
       console.error('Failed to initiate 2FA setup:', err);
+      showToast({ type: 'error', title: 'Failed to Initiate 2FA Setup', message: (err as Error).message || 'Please try again' });
     }
   };
 
@@ -423,11 +426,14 @@ export const PortalSecurity: React.FC = () => {
         setDisabling(true);
         await disable({ password: confirmModal.password });
         setDisabling(false);
+        showToast({ type: 'success', title: 'Two-Factor Authentication Disabled' });
       } else if (confirmModal.type === 'removeDevice' && confirmModal.deviceId) {
         await removeDevice(confirmModal.deviceId);
+        showToast({ type: 'success', title: 'Trusted Device Removed' });
       }
     } catch (err) {
       console.error('Failed to complete action:', err);
+      showToast({ type: 'error', title: 'Security Action Failed', message: (err as Error).message || 'Please try again' });
     } finally {
       setConfirmLoading(false);
       setConfirmModal({ isOpen: false, type: null });

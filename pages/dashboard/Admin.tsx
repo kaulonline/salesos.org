@@ -3550,7 +3550,7 @@ export const Admin: React.FC = () => {
                     onClick={async () => {
                       if (!editingGateway) return;
                       const result = await testGatewayConnection(editingGateway);
-                      alert(result.message);
+                      showToast({ type: result.message?.toLowerCase().includes('fail') ? 'error' : 'success', title: 'Gateway Connection Test', message: result.message });
                     }}
                     disabled={testingGateway === editingGateway}
                     className="px-4 py-2 bg-[#F8F8F6] text-[#666] rounded-lg text-sm font-medium hover:bg-[#F2F1EA] transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -3583,7 +3583,7 @@ export const Admin: React.FC = () => {
                           setEditingGateway(null);
                           refetchGateways();
                         } catch (err) {
-                          alert('Failed to save configuration');
+                          showToast({ type: 'error', title: 'Failed to Save Configuration', message: 'Please try again' });
                         }
                       }}
                       className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-[#333] transition-colors"
@@ -4045,7 +4045,7 @@ export const Admin: React.FC = () => {
               <button
                 onClick={async () => {
                   if (!planForm.name || !planForm.slug) {
-                    alert('Please fill in name and slug');
+                    showToast({ type: 'warning', title: 'Missing Fields', message: 'Please fill in name and slug' });
                     return;
                   }
                   try {
@@ -4064,7 +4064,7 @@ export const Admin: React.FC = () => {
                       isActive: true, isPublic: true,
                     });
                   } catch (err) {
-                    alert('Failed to save plan');
+                    showToast({ type: 'error', title: 'Failed to Save Plan', message: 'Please try again' });
                   } finally {
                     setFormSubmitting(false);
                   }
@@ -4150,7 +4150,7 @@ export const Admin: React.FC = () => {
               <button
                 onClick={async () => {
                   if (!assignLicenseForm.userEmail || !assignLicenseForm.licenseTypeId) {
-                    alert('Please select a user and license type');
+                    showToast({ type: 'warning', title: 'Missing Fields', message: 'Please select a user and license type' });
                     return;
                   }
                   try {
@@ -4169,7 +4169,7 @@ export const Admin: React.FC = () => {
                     setAssignLicenseForm({ userEmail: '', licenseTypeId: '', isTrial: false, durationDays: 365 });
                     refetchLicenses();
                   } catch (err) {
-                    alert('Failed to assign license');
+                    showToast({ type: 'error', title: 'Failed to Assign License', message: 'Please try again' });
                   } finally {
                     setFormSubmitting(false);
                   }
@@ -4265,7 +4265,7 @@ export const Admin: React.FC = () => {
               <button
                 onClick={async () => {
                   if (!generateKeysForm.licenseTypeId) {
-                    alert('Please select a license type');
+                    showToast({ type: 'warning', title: 'Missing Field', message: 'Please select a license type' });
                     return;
                   }
                   try {
@@ -4281,7 +4281,7 @@ export const Admin: React.FC = () => {
                     setGenerateKeysForm({ licenseTypeId: '', count: 5, durationDays: 365, isTrial: false, notes: '' });
                     refetchKeys();
                   } catch (err) {
-                    alert('Failed to generate keys');
+                    showToast({ type: 'error', title: 'Failed to Generate Keys', message: 'Please try again' });
                   } finally {
                     setFormSubmitting(false);
                   }
@@ -4462,7 +4462,7 @@ export const Admin: React.FC = () => {
               <button
                 onClick={async () => {
                   if (!couponForm.code) {
-                    alert('Please enter a coupon code');
+                    showToast({ type: 'warning', title: 'Missing Field', message: 'Please enter a coupon code' });
                     return;
                   }
                   try {
@@ -4490,7 +4490,7 @@ export const Admin: React.FC = () => {
                     setShowCreateCouponModal(false);
                     refetchCoupons();
                   } catch (err) {
-                    alert('Failed to save coupon. Please try again.');
+                    showToast({ type: 'error', title: 'Failed to Save Coupon', message: 'Please try again' });
                   }
                 }}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors"

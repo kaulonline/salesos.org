@@ -78,7 +78,7 @@ export const Knowledge: React.FC = () => {
 
     for (const file of Array.from(files)) {
       if (!file.name.toLowerCase().endsWith('.pdf')) {
-        alert(`Only PDF files are supported. Skipping: ${file.name}`);
+        showToast({ type: 'warning', title: 'Unsupported File Type', message: `Only PDF files are supported. Skipping: ${file.name}` });
         continue;
       }
 

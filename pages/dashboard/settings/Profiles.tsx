@@ -326,7 +326,7 @@ export default function ProfilesPage() {
   const handleDelete = (id: string) => {
     const profile = profiles.find(p => p.id === id);
     if (profile?.isSystem) {
-      alert('System profiles cannot be deleted');
+      showToast({ type: 'warning', title: 'Cannot Delete', message: 'System profiles cannot be deleted' });
       return;
     }
     setDeleteModal({ isOpen: true, profileId: id });
