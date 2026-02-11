@@ -154,4 +154,15 @@ export class TerritoriesController {
     await this.territoriesService.recalculatePerformance(id);
     return { success: true };
   }
+
+  @Post(':id/cleanup-mismatched')
+  async cleanupMismatchedAccounts(
+    @Param('id') id: string,
+    @Req() req: any,
+    @CurrentOrganization() organizationId: string,
+  ) {
+    const userId = req.user?.userId || req.user?.id;
+    const isAdmin = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN';
+    return this.territoriesService.cleanupMismatchedAccounts(id, userId, isAdmin, organizationId);
+  }
 }

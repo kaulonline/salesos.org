@@ -48,10 +48,99 @@ export const TerritoryDetailDrawer: React.FC<TerritoryDetailDrawerProps> = ({
   const [accountSearch, setAccountSearch] = useState('');
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
 
+  // Helper function to normalize state names/codes
+  const normalizeState = (state: string): string => {
+    const stateMap: Record<string, string> = {
+      'california': 'CA', 'ca': 'CA',
+      'oregon': 'OR', 'or': 'OR',
+      'washington': 'WA', 'wa': 'WA',
+      'texas': 'TX', 'tx': 'TX',
+      'new york': 'NY', 'ny': 'NY',
+      'florida': 'FL', 'fl': 'FL',
+      'illinois': 'IL', 'il': 'IL',
+      'massachusetts': 'MA', 'ma': 'MA',
+    };
+    return stateMap[state.toLowerCase()] || state.toUpperCase();
+  };
+
+  // Helper function to check if account matches territory criteria
+  const accountMatchesCriteria = (account: Account): boolean => {
+    if (!territory?.criteria || Object.keys(territory.criteria).length === 0) {
+      return true; // No criteria means all accounts are eligible
+    }
+
+    const criteria = territory.criteria as Record<string, any>;
+
+    // Handle both flat and nested criteria structures
+    const states = criteria.states || criteria.geographic?.states;
+    const countries = criteria.countries || criteria.geographic?.countries;
+    const industries = criteria.industries || criteria.industry?.industries;
+
+    // Check states
+    if (states && Array.isArray(states) && states.length > 0) {
+      if (!account.billingState) return false;
+      const accountState = normalizeState(account.billingState);
+      const matchesState = states.some(
+        (state: string) => normalizeState(state) === accountState
+      );
+      if (!matchesState) return false;
+    }
+
+    // Check countries
+    if (countries && Array.isArray(countries) && countries.length > 0) {
+      if (!account.billingCountry) return false;
+      const matchesCountry = countries.some(
+        (country: string) => country.toLowerCase() === account.billingCountry?.toLowerCase()
+      );
+      if (!matchesCountry) return false;
+    }
+
+    // Check industries
+    if (industries && Array.isArray(industries) && industries.length > 0) {
+      if (!account.industry) return false;
+      const matchesIndustry = industries.some(
+        (industry: string) => industry.toLowerCase() === account.industry?.toLowerCase()
+      );
+      if (!matchesIndustry) return false;
+    }
+
+    // Check employee count
+    if (criteria.minEmployees && account.numberOfEmployees) {
+      if (account.numberOfEmployees < criteria.minEmployees) return false;
+    }
+    if (criteria.maxEmployees && account.numberOfEmployees) {
+      if (account.numberOfEmployees > criteria.maxEmployees) return false;
+    }
+
+    // Check revenue
+    if (criteria.minRevenue && account.annualRevenue) {
+      if (account.annualRevenue < criteria.minRevenue) return false;
+    }
+    if (criteria.maxRevenue && account.annualRevenue) {
+      if (account.annualRevenue > criteria.maxRevenue) return false;
+    }
+
+    // Check account types
+    if (criteria.accountTypes && Array.isArray(criteria.accountTypes) && criteria.accountTypes.length > 0) {
+      if (!account.type) return false;
+      if (!criteria.accountTypes.includes(account.type)) return false;
+    }
+
+    return true;
+  };
+
   const availableAccounts = useMemo(() => {
     const assignedIds = new Set(accounts.map(a => a.id));
-    return allCompanies.filter(c => !assignedIds.has(c.id));
-  }, [allCompanies, accounts]);
+    return allCompanies.filter(c => !assignedIds.has(c.id) && accountMatchesCriteria(c));
+  }, [allCompanies, accounts, territory?.criteria]);
+
+  // Identify accounts that don't match territory criteria
+  const mismatchedAccounts = useMemo(() => {
+    if (!territory?.criteria || Object.keys(territory.criteria).length === 0) {
+      return [];
+    }
+    return accounts.filter(account => !accountMatchesCriteria(account));
+  }, [accounts, territory?.criteria]);
 
   const filteredAvailableAccounts = useMemo(() => {
     if (!accountSearch) return availableAccounts.slice(0, 50);
@@ -179,6 +268,67 @@ export const TerritoryDetailDrawer: React.FC<TerritoryDetailDrawerProps> = ({
               <RefreshCw size={16} className={isRecalculating ? 'animate-spin' : ''} />
             </button>
           </div>
+
+          {/* Mismatched Accounts Warning */}
+          {mismatchedAccounts.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold">!</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div>
+                      <p className="font-medium text-orange-900 text-sm">
+                        {mismatchedAccounts.length} account{mismatchedAccounts.length !== 1 ? 's' : ''} don't match territory criteria
+                      </p>
+                      <p className="text-xs text-orange-700 mt-1">
+                        These accounts were manually assigned but don't meet the defined criteria for this territory.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(`/api/territories/${territoryId}/cleanup-mismatched`, {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            },
+                          });
+                          const result = await response.json();
+                          if (response.ok) {
+                            showToast({ type: 'success', title: 'Cleanup Complete', message: result.message });
+                            window.location.reload();
+                          } else {
+                            throw new Error(result.message || 'Failed to cleanup accounts');
+                          }
+                        } catch (error) {
+                          console.error('Failed to cleanup mismatched accounts:', error);
+                          showToast({ type: 'error', title: 'Cleanup Failed', message: (error as Error).message || 'Please try again' });
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-medium hover:bg-orange-700 transition-colors whitespace-nowrap"
+                    >
+                      Remove All
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {mismatchedAccounts.map(account => (
+                      <button
+                        key={account.id}
+                        onClick={() => handleRemoveAccount(account.id)}
+                        disabled={isRemovingAccount}
+                        className="px-2.5 py-1 bg-white border border-orange-300 rounded-lg text-xs font-medium text-orange-900 hover:bg-orange-100 transition-colors flex items-center gap-1.5"
+                      >
+                        <span className="truncate max-w-[120px]">{account.name}</span>
+                        <X size={12} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Account Picker Modal */}
           {showAccountPicker && (
