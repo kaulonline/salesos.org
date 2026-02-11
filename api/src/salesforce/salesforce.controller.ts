@@ -38,16 +38,7 @@ export class SalesforceController {
     private readonly salesforceCdcService: SalesforceCdcService,
     private readonly prisma: PrismaService,
   ) {
-    // Clean up expired OAuth states every 5 minutes
-    setInterval(async () => {
-      try {
-        await this.prisma.oAuthState.deleteMany({
-          where: { expiresAt: { lt: new Date() } },
-        });
-      } catch (error) {
-        this.logger.error('Failed to clean up OAuth states:', error);
-      }
-    }, 5 * 60 * 1000);
+    // OAuth cleanup moved to SalesforceService as a cron job
   }
 
   /**

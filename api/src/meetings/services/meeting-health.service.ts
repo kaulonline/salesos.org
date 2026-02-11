@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ZoomBotService } from './zoom-bot.service';
@@ -39,7 +39,7 @@ interface MetricWindow {
 }
 
 @Injectable()
-export class MeetingHealthService implements OnModuleInit {
+export class MeetingHealthService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MeetingHealthService.name);
   private startTime: Date;
   private metricsWindow: MetricWindow[] = [];
@@ -56,6 +56,14 @@ export class MeetingHealthService implements OnModuleInit {
   onModuleInit() {
     this.logger.log('Meeting Health Service initialized');
     this.setupEventListeners();
+  }
+
+  onModuleDestroy() {
+    // Remove all event listeners to prevent memory leaks
+    this.eventEmitter.removeAllListeners('transcription.completed');
+    this.eventEmitter.removeAllListeners('transcription.failed');
+    this.eventEmitter.removeAllListeners('bot.error');
+    this.logger.log('Meeting Health Service event listeners cleaned up');
   }
 
   private setupEventListeners(): void {

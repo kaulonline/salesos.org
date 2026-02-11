@@ -253,6 +253,25 @@ export class SalesforceService implements OnModuleInit {
   }
 
   /**
+   * Clean up expired OAuth states periodically
+   * Runs every 5 minutes to remove expired OAuth state entries
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async cleanupExpiredOAuthStates(): Promise<void> {
+    try {
+      const result = await this.prisma.oAuthState.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
+
+      if (result.count > 0) {
+        this.logger.log(`Cleaned up ${result.count} expired OAuth state(s)`);
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to clean up OAuth states: ${error.message}`);
+    }
+  }
+
+  /**
    * Force refresh a specific user's token (can be called externally)
    */
   async forceRefreshToken(userId: string): Promise<{ success: boolean; expiresAt?: Date; error?: string }> {

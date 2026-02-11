@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { PageIndexService } from '../pageindex/pageindex.service';
 import { IndexingStatus } from '@prisma/client';
@@ -24,7 +24,7 @@ export interface DocumentResponse {
 }
 
 @Injectable()
-export class DocumentsService implements OnModuleInit {
+export class DocumentsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DocumentsService.name);
   private syncInterval: NodeJS.Timeout | null = null;
 
@@ -39,13 +39,24 @@ export class DocumentsService implements OnModuleInit {
   async onModuleInit() {
     // Initial sync on startup
     await this.syncFromPageIndex();
-    
+
     // Set up periodic sync every 30 seconds to catch any missed updates
     this.syncInterval = setInterval(async () => {
       await this.refreshPendingDocuments();
     }, 30000);
-    
+
     this.logger.log('Document sync service initialized');
+  }
+
+  /**
+   * Clean up interval on module destroy to prevent memory leaks
+   */
+  onModuleDestroy() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+      this.logger.log('Document sync service stopped');
+    }
   }
 
   /**
