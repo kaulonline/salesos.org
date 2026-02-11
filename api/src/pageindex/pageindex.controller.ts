@@ -9,10 +9,12 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PageIndexService, SearchResult } from './pageindex.service';
 
 interface SearchDocumentDto {
@@ -21,6 +23,7 @@ interface SearchDocumentDto {
 }
 
 @Controller('pageindex')
+@UseGuards(JwtAuthGuard)
 export class PageIndexController {
   constructor(private readonly pageIndexService: PageIndexService) {}
 

@@ -1908,24 +1908,63 @@ export class AdminService implements OnModuleInit {
         case 'microsoft365':
         case 'teams':
         case 'sharepoint': {
-          // Microsoft Graph services - these use OAuth which requires browser redirect
-          // For now, validate credentials are present
           const creds = integration.credentials as any;
           if (!creds?.clientId || !creds?.clientSecret || !creds?.tenantId) {
             return { success: false, message: 'Missing required Microsoft 365 credentials (clientId, clientSecret, tenantId)', latencyMs: 0 };
           }
-          // TODO: Implement actual Microsoft Graph connection test when OAuth flow is complete
-          return { success: true, message: 'Credentials validated (OAuth connection required)', latencyMs: 50 };
+          // Test connection by requesting an app-only access token from Microsoft
+          const msStart = Date.now();
+          try {
+            const tokenResponse = await fetch(
+              `https://login.microsoftonline.com/${creds.tenantId}/oauth2/v2.0/token`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                  client_id: creds.clientId,
+                  client_secret: creds.clientSecret,
+                  scope: 'https://graph.microsoft.com/.default',
+                  grant_type: 'client_credentials',
+                }),
+              },
+            );
+            const msLatency = Date.now() - msStart;
+            if (!tokenResponse.ok) {
+              const err = await tokenResponse.json().catch(() => ({}));
+              return { success: false, message: `Microsoft auth failed: ${err.error_description || err.error || 'Unknown error'}`, latencyMs: msLatency };
+            }
+            return { success: true, message: 'Microsoft 365 connection verified', latencyMs: msLatency };
+          } catch (err: any) {
+            return { success: false, message: `Microsoft connection failed: ${err.message}`, latencyMs: Date.now() - msStart };
+          }
         }
 
         case 'sixsense': {
-          // 6sense integration - validate API key format
           const creds = integration.credentials as any;
           if (!creds?.sixSenseApiKey || !creds?.sixSenseAccountId) {
             return { success: false, message: 'Missing required 6sense credentials (API key, Account ID)', latencyMs: 0 };
           }
-          // TODO: Implement actual 6sense API validation when available
-          return { success: true, message: 'Credentials validated', latencyMs: 50 };
+          // Validate 6sense API credentials by hitting the account info endpoint
+          const sixStart = Date.now();
+          try {
+            const sixResponse = await fetch(
+              `https://api.6sense.com/v3/company/details?domain=6sense.com`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${creds.sixSenseApiKey}`,
+                  'X-6sense-Account-Id': creds.sixSenseAccountId,
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+            const sixLatency = Date.now() - sixStart;
+            if (!sixResponse.ok) {
+              return { success: false, message: `6sense API returned ${sixResponse.status}: ${sixResponse.statusText}`, latencyMs: sixLatency };
+            }
+            return { success: true, message: '6sense API connection verified', latencyMs: sixLatency };
+          } catch (err: any) {
+            return { success: false, message: `6sense connection failed: ${err.message}`, latencyMs: Date.now() - sixStart };
+          }
         }
 
         default:

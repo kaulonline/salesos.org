@@ -742,14 +742,43 @@ export class SupportAgentExecutor {
   private async checkKnownIssues(
     input: { symptoms: string[] },
   ): Promise<ToolResult> {
-    // TODO: Integrate with issue tracking system
+    // Search resolved support tickets for matching symptoms
+    const symptomTerms = input.symptoms.join(' ');
+    const knownIssues = await this.prisma.supportTicket.findMany({
+      where: {
+        status: { in: ['RESOLVED', 'CLOSED'] },
+        OR: input.symptoms.map(symptom => ({
+          OR: [
+            { subject: { contains: symptom, mode: 'insensitive' as const } },
+            { description: { contains: symptom, mode: 'insensitive' as const } },
+          ],
+        })),
+      },
+      select: {
+        caseId: true,
+        subject: true,
+        category: true,
+        resolution: true,
+        resolvedAt: true,
+      },
+      orderBy: { resolvedAt: 'desc' },
+      take: 5,
+    });
+
     return {
       success: true,
-      message: 'No known issues matching symptoms',
+      message: knownIssues.length > 0
+        ? `Found ${knownIssues.length} similar resolved tickets`
+        : 'No known issues matching symptoms',
       data: {
         symptoms: input.symptoms,
-        knownIssues: [],
-        note: 'Issue tracking integration pending',
+        knownIssues: knownIssues.map(issue => ({
+          caseId: issue.caseId,
+          subject: issue.subject,
+          category: issue.category,
+          resolution: issue.resolution,
+          resolvedAt: issue.resolvedAt?.toISOString(),
+        })),
       },
     };
   }

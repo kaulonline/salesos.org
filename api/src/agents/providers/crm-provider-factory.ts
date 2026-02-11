@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CRMDataProvider, CRMProviderType } from './crm-data-provider.interface';
 import { OracleCXProvider } from './oracle-cx-provider';
+import { SalesforceProvider } from './salesforce-provider';
 import { SalesforceService } from '../../salesforce/salesforce.service';
 import { OracleCXService } from '../../oracle-cx/oracle-cx.service';
 import { PrismaService } from '../../database/prisma.service';
@@ -15,8 +16,7 @@ import { PrismaService } from '../../database/prisma.service';
 export class CRMProviderFactory {
   private readonly logger = new Logger(CRMProviderFactory.name);
   private readonly oracleCXProvider: OracleCXProvider;
-  // Note: SalesforceProvider would be implemented similarly
-  // private readonly salesforceProvider: SalesforceProvider;
+  private readonly salesforceProvider: SalesforceProvider;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -24,7 +24,7 @@ export class CRMProviderFactory {
     private readonly salesforceService: SalesforceService,
   ) {
     this.oracleCXProvider = new OracleCXProvider(oracleCXService);
-    // this.salesforceProvider = new SalesforceProvider(salesforceService);
+    this.salesforceProvider = new SalesforceProvider(salesforceService);
   }
 
   /**
@@ -53,10 +53,8 @@ export class CRMProviderFactory {
     // Check Salesforce
     const salesforceStatus = await this.salesforceService.getConnectionStatus(userId);
     if (salesforceStatus.connected) {
-      // For now, return null provider but indicate Salesforce
-      // TODO: Implement SalesforceProvider
       return {
-        provider: null, // Would be this.salesforceProvider once implemented
+        provider: this.salesforceProvider,
         providerType: 'salesforce',
         providerLabel: `Salesforce (${salesforceStatus.connection?.displayName || salesforceStatus.connection?.instanceUrl || 'Connected'})`,
       };
@@ -77,10 +75,8 @@ export class CRMProviderFactory {
     switch (providerType) {
       case 'oracle_cx':
         return this.oracleCXProvider;
-      // case 'salesforce':
-      //   return this.salesforceProvider;
-      // case 'local':
-      //   return this.localProvider;
+      case 'salesforce':
+        return this.salesforceProvider;
       default:
         return null;
     }

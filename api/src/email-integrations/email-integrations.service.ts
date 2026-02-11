@@ -529,8 +529,11 @@ export class EmailIntegrationsService {
       await this.refreshAccessToken(connectionId);
     }
 
-    // TODO: Implement actual email sync
-    // For now, just update lastSyncAt
+    // Email sync is currently limited to connection validation and timestamp update.
+    // Full IMAP/Graph API message sync requires provider-specific implementation
+    // (Gmail API for Google, Microsoft Graph for Outlook/M365).
+    this.logger.log(`Triggering sync for connection ${connectionId} (provider: ${connection.provider})`);
+
     await this.prisma.emailConnection.update({
       where: { id: connectionId },
       data: {
@@ -538,6 +541,6 @@ export class EmailIntegrationsService {
       },
     });
 
-    return { success: true, message: 'Sync triggered' };
+    return { success: true, message: `Sync triggered for ${connection.provider} connection` };
   }
 }

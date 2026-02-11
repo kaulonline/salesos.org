@@ -1197,10 +1197,37 @@ Generate the response:`;
       byStatus,
       byCategory,
       byPriority,
-      avgResponseTime: null, // TODO: Calculate average response time
+      avgResponseTime: await this.calculateAvgResponseTime(),
       openTickets,
       resolvedThisWeek,
     };
+  }
+
+  /**
+   * Calculate average first response time across resolved tickets
+   * Returns value in minutes, or null if no data available
+   */
+  private async calculateAvgResponseTime(): Promise<number | null> {
+    const ticketsWithResponse = await this.prisma.supportTicket.findMany({
+      where: {
+        firstRespondedAt: { not: null },
+      },
+      select: {
+        createdAt: true,
+        firstRespondedAt: true,
+      },
+      take: 500, // Cap to avoid scanning entire table
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (ticketsWithResponse.length === 0) return null;
+
+    const totalMinutes = ticketsWithResponse.reduce((sum, ticket) => {
+      const responseTime = ticket.firstRespondedAt!.getTime() - ticket.createdAt.getTime();
+      return sum + responseTime / (1000 * 60); // Convert ms to minutes
+    }, 0);
+
+    return Math.round(totalMinutes / ticketsWithResponse.length);
   }
 
   // ==================== EMAIL HELPERS (Using Premium Templates) ====================

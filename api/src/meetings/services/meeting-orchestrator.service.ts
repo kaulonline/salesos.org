@@ -379,8 +379,18 @@ export class MeetingOrchestratorService implements OnModuleInit {
   }
 
   private async processTeamsMeeting(meetingId: string, crmContext?: ScheduleMeetingRequest['crmContext']): Promise<ProcessedTranscript> {
-    // Teams requires organizer user ID
-    const organizerUserId = crmContext?.leadId || ''; // TODO: Get from meeting metadata
+    // Teams requires organizer user ID - resolve from pending meetings map or CRM context
+    let organizerUserId = '';
+    const pendingMeeting = this.pendingMeetings.get(meetingId);
+    if (pendingMeeting?.crmContext?.contactIds?.[0]) {
+      organizerUserId = pendingMeeting.crmContext.contactIds[0];
+    } else if (crmContext?.contactIds?.[0]) {
+      organizerUserId = crmContext.contactIds[0];
+    } else if (crmContext?.leadId) {
+      organizerUserId = crmContext.leadId;
+    } else {
+      this.logger.warn(`No organizer user ID found for Teams meeting ${meetingId}, transcript retrieval may fail`);
+    }
     
     // Get transcripts
     const transcripts = await this.teamsService.getMeetingTranscripts(meetingId, organizerUserId);

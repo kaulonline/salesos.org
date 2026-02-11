@@ -106,7 +106,7 @@ export class SalesforcePackageService {
         totalConversations,
         activeUsers: users.length,
         avgMessagesPerUser: users.length > 0 ? Math.round(totalMessages / users.length) : 0,
-        peakUsageDay: new Date().toISOString().split('T')[0], // TODO: Implement proper tracking
+        peakUsageDay: this.calculatePeakUsageDay(users),
       },
       users: users.map((u) => ({
         email: u.email,
@@ -114,7 +114,7 @@ export class SalesforcePackageService {
         conversationCount: u.conversationCount,
         lastActiveAt: u.lastActiveAt.toISOString(),
       })),
-      apiCallsByDay: [], // TODO: Implement daily tracking
+      apiCallsByDay: this.aggregateByDay(users, startDate, endDate)
     };
   }
 
@@ -888,5 +888,62 @@ How would you like me to assist you today?`;
     }
 
     return chunks;
+  }
+
+  /**
+   * Calculate the peak usage day from user activity data
+   */
+  private calculatePeakUsageDay(users: any[]): string {
+    if (users.length === 0) return new Date().toISOString().split('T')[0];
+
+    const dayCount: Record<string, number> = {};
+    for (const user of users) {
+      const day = user.lastActiveAt.toISOString().split('T')[0];
+      dayCount[day] = (dayCount[day] || 0) + user.messageCount;
+    }
+
+    let peakDay = new Date().toISOString().split('T')[0];
+    let peakCount = 0;
+    for (const [day, count] of Object.entries(dayCount)) {
+      if (count > peakCount) {
+        peakCount = count;
+        peakDay = day;
+      }
+    }
+    return peakDay;
+  }
+
+  /**
+   * Aggregate user activity data by day within the date range
+   */
+  private aggregateByDay(users: any[], startDate: Date, endDate: Date): Array<{ date: string; apiCalls: number; messages: number; activeUsers: number }> {
+    const dayMap: Record<string, { apiCalls: number; messages: number; activeUsers: Set<string> }> = {};
+
+    // Initialize all days in the range
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const day = current.toISOString().split('T')[0];
+      dayMap[day] = { apiCalls: 0, messages: 0, activeUsers: new Set() };
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Distribute user activity across their active days
+    for (const user of users) {
+      const day = user.lastActiveAt.toISOString().split('T')[0];
+      if (dayMap[day]) {
+        dayMap[day].messages += user.messageCount;
+        dayMap[day].apiCalls += user.conversationCount;
+        dayMap[day].activeUsers.add(user.email);
+      }
+    }
+
+    return Object.entries(dayMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({
+        date,
+        apiCalls: data.apiCalls,
+        messages: data.messages,
+        activeUsers: data.activeUsers.size,
+      }));
   }
 }
