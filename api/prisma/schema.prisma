@@ -125,6 +125,10 @@ model User {
 
   // Entity audit trail
   fieldChanges  EntityFieldChange[]  @relation("UserFieldChanges")
+
+  // CRM Migrations & Connections
+  crmConnections CrmConnection[]     @relation("UserCrmConnections")
+  migrations     Migration[]         @relation("UserMigrations")
 }
 
 // Salesforce OAuth Connection
@@ -195,9 +199,10 @@ model CrmIntegration {
 
 // CRM User Connection (per-user OAuth tokens)
 model CrmConnection {
-  id            String @id @default(cuid())
-  userId        String
-  integrationId String
+  id             String @id @default(cuid())
+  userId         String
+  organizationId String // Multi-tenant isolation
+  integrationId  String
 
   // Connection details
   instanceUrl  String // e.g., https://mycompany.my.salesforce.com
@@ -226,11 +231,16 @@ model CrmConnection {
   updatedAt DateTime @updatedAt
 
   // Relations
-  integration CrmIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  integration  CrmIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  user         User           @relation("UserCrmConnections", fields: [userId], references: [id])
+  organization Organization   @relation("OrganizationCrmConnections", fields: [organizationId], references: [id], onDelete: Cascade)
+  migrations   Migration[]
 
   @@unique([userId, integrationId])
   @@index([integrationId])
   @@index([externalOrgId])
+  @@index([organizationId])
+  @@index([userId])
 }
 
 // OAuth State for CSRF protection (stored in DB for cluster support)
@@ -3167,6 +3177,10 @@ model Organization {
   entityFieldChanges  EntityFieldChange[]  @relation("OrganizationFieldChanges")
   duplicateSets       DuplicateSet[]       @relation("OrganizationDuplicateSets")
   mergeHistories      MergeHistory[]       @relation("OrganizationMergeHistories")
+
+  // CRM Migrations & Connections
+  crmConnections      CrmConnection[]      @relation("OrganizationCrmConnections")
+  migrations          Migration[]          @relation("OrganizationMigrations")
 
   @@index([status])
   @@index([domain])
@@ -8547,4 +8561,57 @@ model MergeHistory {
   @@index([organizationId])
   @@index([survivorId])
   @@map("merge_histories")
+}
+
+model Migration {
+  id              String          @id @default(cuid())
+  organizationId  String
+  userId          String
+  crmConnectionId String?         // Link to CRM connection if using direct API
+
+  sourceCRM       String          // "salesforce", "hubspot", "pipedrive", "zoho", "monday"
+  entityType      String          // "LEAD", "CONTACT", "ACCOUNT", "OPPORTUNITY"
+  status          MigrationStatus @default(PENDING)
+  importMethod    String          @default("csv") // "csv" or "api"
+
+  // File info (for CSV imports)
+  fileName        String
+  fileSize        Int
+  totalRows       Int
+
+  // API import info
+  apiRecordsFetched Int           @default(0) // Number of records fetched from API
+
+  // Results
+  successCount    Int             @default(0)
+  failedCount     Int             @default(0)
+  skippedCount    Int             @default(0)
+  errors          Json?           // Array of error details
+
+  // Field mappings used
+  fieldMappings   Json
+
+  // Timestamps
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  organization    Organization    @relation("OrganizationMigrations", fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User            @relation("UserMigrations", fields: [userId], references: [id])
+  crmConnection   CrmConnection?  @relation(fields: [crmConnectionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+  @@index([crmConnectionId])
+  @@map("migrations")
+}
+
+enum MigrationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
 }
