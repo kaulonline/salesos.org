@@ -28,6 +28,10 @@ export class FieldMappingDto {
   @IsOptional()
   @IsString()
   transformation?: string; // e.g., 'uppercase', 'lowercase', 'trim'
+
+  @IsOptional()
+  @IsString()
+  transform?: string; // Alias for transformation (used by templates)
 }
 
 export class ImportOptionsDto {
@@ -59,6 +63,10 @@ export class ImportOptionsDto {
   @IsOptional()
   @IsString()
   dateFormat?: string; // e.g., 'MM/DD/YYYY', 'YYYY-MM-DD'
+
+  @IsOptional()
+  @IsString()
+  sourceCRM?: string; // Source CRM for migration tracking (e.g., 'salesforce', 'hubspot')
 }
 
 export class ImportPreviewDto {
