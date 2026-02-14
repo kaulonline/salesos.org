@@ -50,6 +50,9 @@ const PublicForm = lazy(() => import('./pages/PublicForm'));
 const Alternatives = lazy(() => import('./pages/Alternatives').then(m => ({ default: m.Alternatives })));
 const VsSalesforce = lazy(() => import('./pages/vs/Salesforce').then(m => ({ default: m.VsSalesforce })));
 const VsHubSpot = lazy(() => import('./pages/vs/HubSpot').then(m => ({ default: m.VsHubSpot })));
+const VsPipedrive = lazy(() => import('./pages/vs/Pipedrive').then(m => ({ default: m.VsPipedrive })));
+const VsZoho = lazy(() => import('./pages/vs/Zoho').then(m => ({ default: m.VsZoho })));
+const VsMonday = lazy(() => import('./pages/vs/Monday').then(m => ({ default: m.VsMonday })));
 
 // Lazy-loaded Dashboard Pages (code splitting for performance)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
@@ -313,6 +316,21 @@ function AppContent() {
           <Route path="/vs/hubspot" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <VsHubSpot />
+            </Suspense>
+          } />
+          <Route path="/vs/pipedrive" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VsPipedrive />
+            </Suspense>
+          } />
+          <Route path="/vs/zoho" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VsZoho />
+            </Suspense>
+          } />
+          <Route path="/vs/monday" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VsMonday />
             </Suspense>
           } />
           <Route path="/careers" element={
