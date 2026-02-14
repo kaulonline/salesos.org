@@ -121,6 +121,11 @@ export class CrmActionAgentService extends BaseAgentService {
   }
 
   private async processSignalRecommendations(context: AgentContext): Promise<number> {
+    if (!context.userId) {
+      this.logger.warn('Skipping signal recommendations - no userId in context');
+      return 0;
+    }
+
     // Get signals with approved recommendations that haven't been actioned
     const signals = await this.prisma.accountSignal.findMany({
       where: {
@@ -203,6 +208,12 @@ export class CrmActionAgentService extends BaseAgentService {
   }
 
   private async createFollowUpTask(signal: any, recommendation: any, context: AgentContext): Promise<void> {
+    const ownerId = context.userId || signal.account?.ownerId;
+    if (!ownerId) {
+      this.logger.warn(`Skipping follow-up task for signal ${signal.id} - no owner available`);
+      return;
+    }
+
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + (recommendation.priority === 'URGENT' ? 1 : 3));
 
@@ -214,7 +225,7 @@ export class CrmActionAgentService extends BaseAgentService {
         priority: recommendation.priority === 'URGENT' ? 'HIGH' : 'NORMAL',
         dueDate,
         accountId: signal.accountId,
-        ownerId: context.userId!,
+        ownerId,
       },
     });
 
@@ -287,6 +298,12 @@ export class CrmActionAgentService extends BaseAgentService {
   }
 
   private async createEscalationTask(signal: any, recommendation: any, context: AgentContext): Promise<void> {
+    const ownerId = context.userId || signal.account?.ownerId;
+    if (!ownerId) {
+      this.logger.warn(`Skipping escalation task for signal ${signal.id} - no owner available`);
+      return;
+    }
+
     const task = await this.prisma.task.create({
       data: {
         subject: `ESCALATION: ${recommendation.title || signal.title}`,
@@ -295,7 +312,7 @@ export class CrmActionAgentService extends BaseAgentService {
         priority: 'HIGH',
         dueDate: new Date(), // Due today
         accountId: signal.accountId,
-        ownerId: context.userId!,
+        ownerId,
       },
     });
 
@@ -311,6 +328,12 @@ export class CrmActionAgentService extends BaseAgentService {
   }
 
   private async createMonitoringTask(signal: any, recommendation: any, context: AgentContext): Promise<void> {
+    const ownerId = context.userId || signal.account?.ownerId;
+    if (!ownerId) {
+      this.logger.warn(`Skipping monitoring task for signal ${signal.id} - no owner available`);
+      return;
+    }
+
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 7); // Review in a week
 
@@ -322,7 +345,7 @@ export class CrmActionAgentService extends BaseAgentService {
         priority: 'NORMAL',
         dueDate,
         accountId: signal.accountId,
-        ownerId: context.userId!,
+        ownerId,
       },
     });
   }
@@ -364,6 +387,9 @@ export class CrmActionAgentService extends BaseAgentService {
             });
 
             if (!existing) {
+              const taskOwnerId = context.userId || meeting.ownerId;
+              if (!taskOwnerId) continue;
+
               await this.prisma.task.create({
                 data: {
                   subject: item.title || item.description?.substring(0, 100),
@@ -373,7 +399,7 @@ export class CrmActionAgentService extends BaseAgentService {
                   dueDate: item.dueDate ? new Date(item.dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                   accountId: meeting.accountId || undefined,
                   opportunityId: meeting.opportunityId || undefined,
-                  ownerId: context.userId!,
+                  ownerId: taskOwnerId,
                 },
               });
               actionsCreated++;
@@ -396,6 +422,10 @@ export class CrmActionAgentService extends BaseAgentService {
     try {
       switch (actionRequest.type) {
         case 'CREATE_TASK':
+          if (!context.userId) {
+            this.logger.warn('Skipping explicit CREATE_TASK - no userId in context');
+            return 0;
+          }
           await this.prisma.task.create({
             data: {
               subject: actionRequest.data.subject as string || 'New Task',
@@ -405,7 +435,7 @@ export class CrmActionAgentService extends BaseAgentService {
               dueDate: actionRequest.data.dueDate ? new Date(actionRequest.data.dueDate as string) : undefined,
               accountId: actionRequest.data.accountId as string,
               opportunityId: actionRequest.data.opportunityId as string,
-              ownerId: context.userId!,
+              ownerId: context.userId,
             },
           });
           break;
@@ -418,6 +448,10 @@ export class CrmActionAgentService extends BaseAgentService {
           break;
 
         case 'LOG_ACTIVITY':
+          if (!context.userId) {
+            this.logger.warn('Skipping explicit LOG_ACTIVITY - no userId in context');
+            return 0;
+          }
           await this.prisma.activity.create({
             data: {
               type: (actionRequest.data.type as any) || 'OTHER',
@@ -425,7 +459,7 @@ export class CrmActionAgentService extends BaseAgentService {
               description: actionRequest.data.description as string,
               accountId: actionRequest.data.accountId as string,
               opportunityId: actionRequest.data.opportunityId as string,
-              userId: context.userId!,
+              userId: context.userId,
             },
           });
           break;
