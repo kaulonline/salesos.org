@@ -2,6 +2,14 @@ import React from 'react';
 import { Check, X, ArrowRight, Zap, Clock, DollarSign, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../src/components/SEO';
+import {
+  SalesforceBadge,
+  HubSpotBadge,
+  PipedriveBadge,
+  ZohoBadge,
+  MondayBadge,
+  SalesOSBadge
+} from '../src/components/CompetitorLogos';
 
 export const Alternatives: React.FC = () => {
   const competitors = [
@@ -41,27 +49,51 @@ export const Alternatives: React.FC = () => {
       modernUI: false,
       color: '#1A1A1A',
     },
+    {
+      name: 'Zoho CRM',
+      tagline: '45+ Disconnected Apps',
+      setup: '2-4 weeks',
+      pricing: 'From $14/user/mo',
+      aiNative: false,
+      complexity: 'High',
+      implementation: 'Often needs consultant',
+      dataEntry: 'Manual',
+      modernUI: false,
+      color: '#C8423F',
+    },
+    {
+      name: 'Monday.com',
+      tagline: 'Project Management Tool',
+      setup: '1-2 weeks',
+      pricing: 'From $99/user/mo',
+      aiNative: false,
+      complexity: 'Medium',
+      implementation: 'Self-serve',
+      dataEntry: 'Manual',
+      modernUI: true,
+      color: '#FF3D57',
+    },
   ];
 
   const comparisonFeatures = [
     { category: 'AI & Automation', features: [
-      { name: 'Native AI (not bolt-on)', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
-      { name: 'AI deal scoring', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
-      { name: 'Predictive forecasting', salesos: true, salesforce: true, hubspot: false, pipedrive: false },
-      { name: 'Automated data entry', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
-      { name: 'Multi-channel sequences', salesos: true, salesforce: false, hubspot: true, pipedrive: false },
+      { name: 'Native AI (not bolt-on)', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'AI deal scoring', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'Predictive forecasting', salesos: true, salesforce: true, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'Automated data entry', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'Multi-channel sequences', salesos: true, salesforce: false, hubspot: true, pipedrive: false, zoho: false, monday: false },
     ]},
     { category: 'Setup & Implementation', features: [
-      { name: '15-minute setup', salesos: true, salesforce: false, hubspot: false, pipedrive: true },
-      { name: 'No consultants needed', salesos: true, salesforce: false, hubspot: true, pipedrive: true },
-      { name: 'Pre-built workflows', salesos: true, salesforce: false, hubspot: true, pipedrive: false },
-      { name: 'Instant data migration', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
+      { name: '15-minute setup', salesos: true, salesforce: false, hubspot: false, pipedrive: true, zoho: false, monday: false },
+      { name: 'No consultants needed', salesos: true, salesforce: false, hubspot: true, pipedrive: true, zoho: false, monday: true },
+      { name: 'Pre-built workflows', salesos: true, salesforce: false, hubspot: true, pipedrive: false, zoho: false, monday: true },
+      { name: 'Instant data migration', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
     ]},
     { category: 'Pricing & Value', features: [
-      { name: 'Outcome-based pricing', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
-      { name: 'No per-seat fees', salesos: true, salesforce: false, hubspot: false, pipedrive: false },
-      { name: 'Transparent pricing', salesos: true, salesforce: false, hubspot: true, pipedrive: true },
-      { name: 'Free trial available', salesos: true, salesforce: false, hubspot: true, pipedrive: true },
+      { name: 'Outcome-based pricing', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'No per-seat fees', salesos: true, salesforce: false, hubspot: false, pipedrive: false, zoho: false, monday: false },
+      { name: 'Transparent pricing', salesos: true, salesforce: false, hubspot: true, pipedrive: true, zoho: false, monday: true },
+      { name: 'Free trial available', salesos: true, salesforce: false, hubspot: true, pipedrive: true, zoho: true, monday: true },
     ]},
   ];
 
@@ -136,7 +168,7 @@ export const Alternatives: React.FC = () => {
           </div>
 
           {/* Quick Comparison Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-16">
             <div className="bg-[#1A1A1A] rounded-3xl p-6 text-white">
               <div className="text-4xl font-bold mb-2">SalesOS</div>
               <div className="text-white/60 text-sm mb-4">AI-First CRM</div>
@@ -158,7 +190,13 @@ export const Alternatives: React.FC = () => {
 
             {competitors.map((comp) => (
               <div key={comp.name} className="bg-white rounded-3xl p-6 border border-black/5">
-                <div className="text-2xl font-bold mb-2 text-[#1A1A1A]">{comp.name}</div>
+                <div className="mb-3">
+                  {comp.name === 'Salesforce' && <SalesforceBadge />}
+                  {comp.name === 'HubSpot' && <HubSpotBadge />}
+                  {comp.name === 'Pipedrive' && <PipedriveBadge />}
+                  {comp.name === 'Zoho CRM' && <ZohoBadge />}
+                  {comp.name === 'Monday.com' && <MondayBadge />}
+                </div>
                 <div className="text-[#666] text-sm mb-4">{comp.tagline}</div>
                 <div className="space-y-2 text-sm text-[#666]">
                   <div className="flex items-center gap-2">
@@ -210,17 +248,19 @@ export const Alternatives: React.FC = () => {
                   <thead className="bg-[#F8F8F6]">
                     <tr>
                       <th className="text-left px-6 py-4 font-semibold text-[#1A1A1A]">Feature</th>
-                      <th className="px-6 py-4 font-semibold text-[#1A1A1A] text-center">SalesOS</th>
-                      <th className="px-6 py-4 font-medium text-[#666] text-center">Salesforce</th>
-                      <th className="px-6 py-4 font-medium text-[#666] text-center">HubSpot</th>
-                      <th className="px-6 py-4 font-medium text-[#666] text-center">Pipedrive</th>
+                      <th className="px-6 py-4 text-center"><SalesOSBadge /></th>
+                      <th className="px-6 py-4 text-center"><SalesforceBadge /></th>
+                      <th className="px-6 py-4 text-center"><HubSpotBadge /></th>
+                      <th className="px-6 py-4 text-center"><PipedriveBadge /></th>
+                      <th className="px-6 py-4 text-center"><ZohoBadge /></th>
+                      <th className="px-6 py-4 text-center"><MondayBadge /></th>
                     </tr>
                   </thead>
                   <tbody>
                     {comparisonFeatures.map((category, catIdx) => (
                       <React.Fragment key={catIdx}>
                         <tr className="bg-[#F8F8F6]">
-                          <td colSpan={5} className="px-6 py-3 font-bold text-[#1A1A1A] text-sm uppercase tracking-wide">
+                          <td colSpan={7} className="px-6 py-3 font-bold text-[#1A1A1A] text-sm uppercase tracking-wide">
                             {category.category}
                           </td>
                         </tr>
@@ -255,6 +295,20 @@ export const Alternatives: React.FC = () => {
                                 <X size={20} className="text-red-500 mx-auto opacity-40" />
                               )}
                             </td>
+                            <td className="px-6 py-4 text-center">
+                              {feature.zoho ? (
+                                <Check size={20} className="text-green-600 mx-auto opacity-40" />
+                              ) : (
+                                <X size={20} className="text-red-500 mx-auto opacity-40" />
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              {feature.monday ? (
+                                <Check size={20} className="text-green-600 mx-auto opacity-40" />
+                              ) : (
+                                <X size={20} className="text-red-500 mx-auto opacity-40" />
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </React.Fragment>
@@ -274,7 +328,7 @@ export const Alternatives: React.FC = () => {
               Learn exactly how SalesOS compares to each platform with our in-depth guides.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Link
                 to="/vs/salesforce"
                 className="bg-white rounded-3xl p-8 border border-black/5 hover:border-[#EAD07D] transition-all group"
@@ -314,6 +368,36 @@ export const Alternatives: React.FC = () => {
                 </h3>
                 <p className="text-[#666] mb-4">
                   Simple + powerful. Enterprise features without enterprise complexity.
+                </p>
+                <div className="inline-flex items-center gap-2 text-[#1A1A1A] font-semibold group-hover:gap-3 transition-all">
+                  Read comparison <ArrowRight size={18} />
+                </div>
+              </Link>
+
+              <Link
+                to="/vs/zoho"
+                className="bg-white rounded-3xl p-8 border border-black/5 hover:border-[#EAD07D] transition-all group"
+              >
+                <h3 className="text-2xl font-bold text-[#1A1A1A] mb-3 group-hover:text-[#EAD07D] transition-colors">
+                  SalesOS vs Zoho CRM
+                </h3>
+                <p className="text-[#666] mb-4">
+                  One unified platform vs 45+ disconnected apps. Escape the complexity.
+                </p>
+                <div className="inline-flex items-center gap-2 text-[#1A1A1A] font-semibold group-hover:gap-3 transition-all">
+                  Read comparison <ArrowRight size={18} />
+                </div>
+              </Link>
+
+              <Link
+                to="/vs/monday"
+                className="bg-white rounded-3xl p-8 border border-black/5 hover:border-[#EAD07D] transition-all group"
+              >
+                <h3 className="text-2xl font-bold text-[#1A1A1A] mb-3 group-hover:text-[#EAD07D] transition-colors">
+                  SalesOS vs Monday.com
+                </h3>
+                <p className="text-[#666] mb-4">
+                  Purpose-built CRM vs adapted project tool. Get real sales intelligence.
                 </p>
                 <div className="inline-flex items-center gap-2 text-[#1A1A1A] font-semibold group-hover:gap-3 transition-all">
                   Read comparison <ArrowRight size={18} />

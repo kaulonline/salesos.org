@@ -1,40 +1,56 @@
 # SalesOS CRM - Project Guidelines
 
-## IMPORTANT: Current Focus
+## CRITICAL: Project Name & PM2 Processes
 
-Current development focus is on the **Sales Coaching AI** solution located at:
-- **Frontend**: `/opt/salesos.org/`
-- **Backend**: `/opt/salesos.org/api/src/coaching/`
+**Project Name**: SalesOS (NOT Iris!)
 
-All new feature development should target the Sales Coaching platform.
+**PM2 Processes for SalesOS:**
+- `salesos-frontend` (PM2 ID: 16) - **RESTART THIS after frontend builds**
+- `salesos-backend` (PM2 IDs: 15, 17) - Backend API servers
+- `salesos-docs` (PM2 ID: 19) - Documentation site
+
+**Command to restart after builds:**
+```bash
+pm2 restart salesos-frontend
+```
+
+**DO NOT restart iris-backend** - that's a completely different project!
 
 ---
 
-## Sales Coaching AI - Active Development
+## IMPORTANT: Current Focus
+
+Current development focus is on the **SalesOS marketing website** and comparison pages for SEO:
+- **Frontend**: `/opt/salesos.org/`
+- **Backend**: `/opt/salesos.org/api/`
+- **Comparison Pages**: `/opt/salesos.org/pages/vs/`
+
+All new feature development should target the SalesOS platform.
+
+---
+
+## SalesOS Platform
+
+SalesOS is an AI-powered Sales CRM and Revenue Intelligence platform built with React (Vite) frontend and NestJS backend.
 
 ### Project Location
 - **Frontend**: `/opt/salesos.org/`
 - **Backend API**: `/opt/salesos.org/api/`
 - **Coaching Module**: `/opt/salesos.org/api/src/coaching/`
 
-### Tech Stack (Sales Coaching)
+### Tech Stack
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
 - **Backend**: NestJS, Prisma ORM, PostgreSQL
 - **Real-time**: Socket.io for live coaching sessions
 - **AI**: Claude API for coaching insights
 
-### Key Components
-- `PracticePanel.tsx` - Main practice/roleplay interface
-- `CoachingAgendaPanel.tsx` - Agenda management for 1:1s
-- `RealtimeCoachingPanel.tsx` - Live coaching during calls
-- `AccountSignals.tsx` - Account health signals
-- `DynamicWidgets.tsx` - Configurable dashboard widgets
-
----
-
-## SalesOS CRM - Reference Only
-
-SalesOS is an AI-powered Sales CRM and Revenue Intelligence platform built with React (Vite) frontend and NestJS backend.
+### Key Marketing Pages (Recent Work)
+- `/pages/vs/Salesforce.tsx` - vs Salesforce comparison
+- `/pages/vs/HubSpot.tsx` - vs HubSpot comparison
+- `/pages/vs/Pipedrive.tsx` - vs Pipedrive comparison
+- `/pages/vs/Zoho.tsx` - vs Zoho comparison
+- `/pages/vs/Monday.tsx` - vs Monday.com comparison
+- `/pages/Alternatives.tsx` - CRM alternatives hub page
 
 ### Tech Stack
 
