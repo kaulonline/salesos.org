@@ -449,3 +449,74 @@ npx prisma generate  # Generate Prisma client
 7. **Form inputs** - Use `bg-[#F8F8F6]` background with focus state transitioning to white.
 
 8. **Icons** - Use Lucide React icons consistently. Size 16-20 for inline, 24+ for decorative.
+
+---
+
+## Admin UI & User Management (Feb 2026)
+
+### Dual-Role System
+
+SalesOS uses a **dual-role architecture**:
+1. **System Role** (User.role) - Controls platform-wide access: ADMIN, MANAGER, USER, VIEWER
+2. **Organization Role** (OrganizationMember.role) - Controls org-specific permissions: OWNER, ADMIN, MANAGER, MEMBER
+
+### Admin UI Location
+- Primary: `https://salesos.org/dashboard/admin`
+- Access: ADMIN (full), MANAGER (limited to their org)
+
+### Admin UI Tabs
+- **Overview** - System stats, metrics, health
+- **Users** - User management with dual-role display
+- **Organizations** - Org management, members
+- **Access Requests** - Inbound lead requests
+- **Billing** - Outcome-based pricing, invoices
+- **Features** - Feature flags
+- **Settings** - System configs, OAuth, maintenance mode
+- **Audit** - Action logs
+- **Backups** - Database backups
+
+### Enhanced Users Table (Feb 14, 2026)
+Shows both system and organization roles:
+- **System Role** column - ADMIN ⭐, MANAGER, USER, VIEWER
+- **Organization** column - Organization name and ID
+- **Org Role** column - OWNER 👑, ADMIN, MANAGER, MEMBER
+- Visual indicators: ⭐ for super admin, 👑 for org owner
+
+### Edit User Modal Features
+- View and edit user name, email, status
+- Change **System Role** (USER, MANAGER, ADMIN, VIEWER)
+- Change **Organization Role** (MEMBER, MANAGER, ADMIN, OWNER)
+- Display organization membership info
+- **Login as User** button (super admins only) - impersonate users to see their view
+
+### Impersonation Feature
+Super admins can login as any user via:
+- UI: Edit User modal → "Login as [user]" button
+- API: `POST /api/admin/users/:id/impersonate`
+- Returns JWT token for impersonated user
+- Logs action in audit trail
+- Can switch back from settings
+
+### Key Files
+- Frontend: `/opt/salesos.org/pages/dashboard/Admin.tsx`
+- Backend: `/opt/salesos.org/api/src/admin/admin.controller.ts`, `admin.service.ts`
+- API Types: `/opt/salesos.org/src/api/admin.ts`
+- Org API: `/opt/salesos.org/src/api/organizations.ts`
+
+### Scripts
+- Check users: `npx ts-node scripts/check-users.ts`
+- SQL queries: `/opt/salesos.org/api/scripts/check-organization-users.sql`
+
+### Security
+- Organization isolation enforced via OrganizationGuard
+- Managers see only their org's users
+- Super admins see all orgs
+- All actions logged in audit trail
+- Impersonation tracked with `impersonatedBy` field in JWT
+
+### Recent Updates
+- Added VIEWER role to system role dropdown (was missing)
+- Enhanced Edit User modal with dual-role editing
+- Added organization info display in modal
+- Implemented user impersonation for super admins
+- Updated AdminUser interface with org fields
