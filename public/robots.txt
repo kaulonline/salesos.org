@@ -1,34 +1,91 @@
 # SalesOS Robots.txt
 # https://salesos.org
+# Updated: 2026-02-14
 
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /billing/
+Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /invite
+Disallow: /portal/
 
 # Allow all major search engine crawlers
 User-agent: Googlebot
 Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-# Disallow dashboard and admin areas (private content)
+Allow: /docs/
+Allow: /*.css
+Allow: /*.js
 Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /billing/
-Disallow: /login
-Disallow: /signup
-
-# Disallow API routes
 Disallow: /api/
+Disallow: /portal/
+
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /billing/
+Disallow: /api/
+Disallow: /portal/
+
+User-agent: Slurp
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: Baiduspider
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: YandexBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+# Block AI scrapers (optional - adjust based on your preferences)
+User-agent: GPTBot
+Allow: /docs/
+Disallow: /
+
+User-agent: ChatGPT-User
+Allow: /docs/
+Disallow: /
+
+User-agent: CCBot
+Allow: /docs/
+Disallow: /
+
+User-agent: anthropic-ai
+Allow: /docs/
+Disallow: /
+
+User-agent: Claude-Web
+Allow: /docs/
+Disallow: /
 
 # Sitemap location
 Sitemap: https://salesos.org/sitemap.xml
 
-# Crawl-delay for respectful crawling (optional)
+# Crawl-delay for respectful crawling
 Crawl-delay: 1
+
+# Host preference (helps prevent duplicate content)
+Host: https://salesos.org

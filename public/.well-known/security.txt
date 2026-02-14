@@ -1,0 +1,6 @@
+Contact: security@salesos.org
+Expires: 2027-12-31T23:59:59.000Z
+Encryption: https://salesos.org/pgp-key.txt
+Preferred-Languages: en
+Canonical: https://salesos.org/.well-known/security.txt
+Policy: https://salesos.org/security-policy
