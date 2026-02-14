@@ -445,42 +445,45 @@ export function VsHubSpot() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$450</div>
-                <div className="text-[#666]">per user/month (base price)</div>
+                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$90</div>
+                <div className="text-[#666]">per user/month (Sales Hub Pro base)</div>
               </div>
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-gray-400" />
-                  <span>Sales Hub Professional</span>
+                  <span>Sales Hub Professional: $90/user</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Breeze AI: +$20-60/user/mo</span>
+                  <span>5-user minimum ($450/mo minimum)</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Marketing Hub: +$800/mo base</span>
+                  <span>Marketing Hub Pro: +$800/month</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Onboarding: $3,000-10,000</span>
+                  <span>Operations Hub: +$720/month</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Admin overhead: 10-15 hrs/week</span>
+                  <span>Onboarding services: $3,000+</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Annual price increases: 8-12%</span>
+                  <span>Annual price increases typical</span>
                 </div>
               </div>
 
               <div className="pt-6 border-t border-black/10">
-                <div className="text-sm text-[#666] mb-2">3-Year Total Cost (10 users):</div>
-                <div className="text-3xl font-light text-red-600">$185,000+</div>
+                <div className="text-sm text-[#666] mb-2">3-Year Estimated Cost (10 users):</div>
+                <div className="text-3xl font-light text-red-600">$50,000+</div>
                 <div className="text-xs text-[#999] mt-1">
-                  $450 × 10 + Breeze AI + Marketing Hub + onboarding + admin time
+                  Sales Hub Pro + typical add-ons (Marketing/Ops Hubs)
+                </div>
+                <div className="text-xs text-orange-600 mt-2 italic">
+                  *Pricing estimates based on public HubSpot rates, Feb 2025
                 </div>
               </div>
             </Card>
@@ -491,8 +494,8 @@ export function VsHubSpot() {
               <div className="flex items-center gap-3">
                 <Award size={24} className="text-[#93C01F]" />
                 <div className="text-left">
-                  <div className="font-semibold text-[#1A1A1A]">Save $149,360 over 3 years</div>
-                  <div className="text-sm text-[#666]">With better features and zero complexity</div>
+                  <div className="font-semibold text-[#1A1A1A]">Save up to $14,000+ over 3 years</div>
+                  <div className="text-sm text-[#666]">With better AI and zero hub complexity</div>
                 </div>
               </div>
             </Card>

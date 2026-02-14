@@ -36,7 +36,7 @@ export function VsMonday() {
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
               <div className="text-3xl font-light text-[#EAD07D] mb-2">$99</div>
-              <div className="text-sm text-white/60 mb-1">vs Monday's $99-$249+ (CRM add-on)</div>
+              <div className="text-sm text-white/60 mb-1">vs Monday's $19-39/user (Pro/Enterprise)</div>
               <div className="text-white font-medium">True All-in Cost</div>
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
@@ -117,7 +117,7 @@ export function VsMonday() {
               <p className="text-sm text-[#666] mb-3">
                 Monday Sales CRM costs extra. Plus integrations, automations, and seat minimums quickly add up.
               </p>
-              <p className="text-xs text-[#999]">Real cost: $99-249+/user</p>
+              <p className="text-xs text-[#999]">Base: $19/user Pro, limited CRM</p>
             </Card>
           </div>
         </div>
@@ -334,7 +334,7 @@ export function VsMonday() {
                 <ComparisonRow
                   feature="Base Price"
                   salesos="$99/user - all sales features included"
-                  monday="$99-249/user for Sales CRM add-on"
+                  monday="$19/user Pro (limited CRM features)"
                   salesosWins={true}
                 />
                 <ComparisonRow
@@ -438,42 +438,45 @@ export function VsMonday() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$129</div>
-                <div className="text-[#666]">per user/month (Pro + CRM add-on)</div>
+                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$19</div>
+                <div className="text-[#666]">per user/month (Pro tier base)</div>
               </div>
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-gray-400" />
-                  <span>Monday Pro: $99/user</span>
+                  <span>Monday Pro: $19/user</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Sales CRM add-on: +$30/user</span>
+                  <span>Project management focused, not CRM</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>Automations pack: +$8/250 actions</span>
+                  <span>Limited sales features (emails, pipelines)</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
-                  <span>3-seat minimum required</span>
+                  <span>3-seat minimum ($57/month min)</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <X size={16} />
+                  <span>No AI forecasting or deal scoring</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-red-600">
                   <X size={16} />
                   <span>No conversation intelligence</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-red-600">
-                  <X size={16} />
-                  <span>Limited AI capabilities</span>
-                </div>
               </div>
 
               <div className="pt-6 border-t border-black/10">
                 <div className="text-sm text-[#666] mb-2">Annual Cost (5 users):</div>
-                <div className="text-3xl font-light text-red-600">$7,740+</div>
+                <div className="text-3xl font-light text-red-600">$1,140</div>
                 <div className="text-xs text-[#999] mt-1">
-                  $129 × 5 users × 12 months (minimum)
+                  $19 × 5 users × 12 months (Pro tier)
+                </div>
+                <div className="text-xs text-orange-600 mt-2 italic">
+                  *Basic project mgmt tool, lacks true CRM capabilities
                 </div>
               </div>
             </Card>
@@ -484,8 +487,8 @@ export function VsMonday() {
               <div className="flex items-center gap-3">
                 <Award size={24} className="text-[#93C01F]" />
                 <div className="text-left">
-                  <div className="font-semibold text-[#1A1A1A]">Save $1,800 annually</div>
-                  <div className="text-sm text-[#666]">Plus get AI, forecasting, and conversation intelligence Monday cannot provide</div>
+                  <div className="font-semibold text-[#1A1A1A]">Purpose-Built CRM vs Project Tool</div>
+                  <div className="text-sm text-[#666]">Get AI forecasting, deal scoring, and conversation intelligence Monday.com lacks entirely</div>
                 </div>
               </div>
             </Card>
