@@ -47,6 +47,7 @@ const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms }
 const PricingLanding = lazy(() => import('./components/Pricing').then(m => ({ default: m.Pricing })));
 const DynamicPricingPage = lazy(() => import('./pages/Pricing').then(m => ({ default: m.PricingPage })));
 const PublicForm = lazy(() => import('./pages/PublicForm'));
+const Alternatives = lazy(() => import('./pages/Alternatives').then(m => ({ default: m.Alternatives })));
 
 // Lazy-loaded Dashboard Pages (code splitting for performance)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
@@ -295,6 +296,11 @@ function AppContent() {
           <Route path="/blog" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <Blog />
+            </Suspense>
+          } />
+          <Route path="/alternatives" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Alternatives />
             </Suspense>
           } />
           <Route path="/careers" element={
