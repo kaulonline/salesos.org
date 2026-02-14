@@ -110,7 +110,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     const permission = profile.permissions.find(p => p.module === module);
     if (!permission) return false;
 
-    return permission.actions.includes(action);
+    return permission.actions?.includes(action) ?? false;
   };
 
   const hasAnyPermission = (module: PermissionModule, actions: PermissionAction[]): boolean => {

@@ -22,6 +22,7 @@ export interface OpportunityFilters extends QueryFilters {
   isClosed?: boolean;
   minAmount?: number;
   source?: 'salesforce' | 'local';
+  cursor?: string;
 }
 
 export const opportunitiesApi = {

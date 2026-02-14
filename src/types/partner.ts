@@ -47,6 +47,7 @@ export interface Partner {
     email: string;
   };
   users?: PartnerUser[];
+  accounts?: PartnerAccount[];
 }
 
 export interface PartnerUser {
@@ -63,6 +64,8 @@ export interface PartnerUser {
   user?: {
     id: string;
     name: string | null;
+    firstName?: string;
+    lastName?: string;
     email: string;
     avatarUrl?: string;
   };
@@ -147,6 +150,7 @@ export interface CreatePartnerDto {
   logoUrl?: string;
   type?: PartnerType;
   tier?: PartnerTier;
+  status?: PartnerStatus;
   commissionRate?: number;
   discountRate?: number;
   portalEnabled?: boolean;
@@ -196,6 +200,8 @@ export interface UpdateDealRegistrationDto extends Partial<CreateDealRegistratio
 
 export interface PartnerStats {
   total: number;
+  active?: number;
+  totalRevenue?: number;
   byStatus: { status: PartnerStatus; count: number }[];
   byTier: { tier: PartnerTier; count: number }[];
   byType: { type: PartnerType; count: number }[];
@@ -204,6 +210,7 @@ export interface PartnerStats {
 
 export interface DealRegistrationStats {
   total: number;
+  pending?: number;
   byStatus: { status: DealRegistrationStatus; count: number }[];
   totalEstimatedValue: number;
   totalEstimatedCommission: number;

@@ -330,7 +330,7 @@ function InsightCard({
         onClick={onAction}
       >
         {/* Subtle gradient accent based on priority */}
-        {insight.priority === 'HIGH' && (
+        {insight.priority === 'high' && (
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent pointer-events-none" />
         )}
 

@@ -32,17 +32,19 @@ export * from './taxRate';
 export {
   type ApprovalWorkflow,
   type ApprovalStep,
-  type ApprovalCondition,
   type ApprovalAction,
   type ApprovalRequest,
   type ApprovalDecision,
   type CreateApprovalWorkflowDto,
   type UpdateApprovalWorkflowDto,
+  type CreateApprovalStepDto,
+  type UpdateApprovalStepDto,
+  type SubmitForApprovalDto,
   type ApprovalDecisionDto,
   type ApprovalStatus,
   type ApprovalEntity,
-  type ApprovalTrigger,
-  type ApprovalActionType,
+  type ApprovalWorkflowStats,
+  type WorkflowCondition,
   CONDITION_OPERATORS as APPROVAL_CONDITION_OPERATORS,
 } from './approvalWorkflow';
 export * from './quoteVersion';
@@ -80,9 +82,11 @@ export type { LeadStats } from './lead';
 // Common types
 export interface PaginatedResponse<T> {
   data: T[];
+  items?: T[];
   total: number;
   page: number;
   limit: number;
+  pageSize?: number;
   totalPages: number;
 }
 

@@ -56,6 +56,11 @@ export interface Meeting {
     id: string;
     name: string;
   };
+  owner?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
 }
 
 export interface CreateMeetingDto {

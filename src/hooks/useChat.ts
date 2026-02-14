@@ -122,7 +122,7 @@ export function useChat(): UseChatReturn {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMessageId
-                    ? { ...m, id: data.assistantMessageId }
+                    ? { ...m, id: data.assistantMessageId! }
                     : m
                 )
               );

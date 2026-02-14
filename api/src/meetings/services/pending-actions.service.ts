@@ -175,7 +175,7 @@ export class PendingActionsService {
     // 3. Generate opportunity update proposal
     if (meeting.opportunityId) {
       const oppUpdates: any = {};
-      let updateReasons: string[] = [];
+      const updateReasons: string[] = [];
 
       if (analysis.nextSteps && analysis.nextSteps.length > 0) {
         oppUpdates.nextStep = analysis.nextSteps[0];
@@ -218,7 +218,7 @@ export class PendingActionsService {
       const buyingIntent = avgConfidence > 0.7 ? 'HIGH' : avgConfidence > 0.4 ? 'MEDIUM' : 'LOW';
 
       const leadUpdates: any = { buyingIntent };
-      let updateReasons: string[] = [`Buying intent: ${buyingIntent} (${Math.round(avgConfidence * 100)}% confidence)`];
+      const updateReasons: string[] = [`Buying intent: ${buyingIntent} (${Math.round(avgConfidence * 100)}% confidence)`];
 
       if (analysis.concerns && analysis.concerns.length > 0) {
         leadUpdates.painPoints = analysis.concerns.slice(0, 5);

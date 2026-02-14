@@ -642,10 +642,10 @@ export const DatabaseBackups: React.FC = () => {
       <ConfirmationModal
         isOpen={!!showDeleteModal}
         onClose={() => setShowDeleteModal(null)}
-        onConfirm={() => showDeleteModal && handleDeleteBackup(showDeleteModal)}
+        onConfirm={() => { if (showDeleteModal) handleDeleteBackup(showDeleteModal); }}
         title="Delete Backup"
         message="Are you sure you want to delete this backup? This action cannot be undone."
-        confirmText="Delete"
+        confirmLabel="Delete"
         variant="danger"
       />
     </div>

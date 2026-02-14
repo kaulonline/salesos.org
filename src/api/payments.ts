@@ -141,6 +141,7 @@ export interface InvoiceLineItem {
 export interface Payment {
   id: string;
   customerId: string;
+  customerEmail?: string;
   invoiceId?: string;
   stripePaymentIntentId?: string;
   razorpayPaymentId?: string;

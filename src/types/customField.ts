@@ -29,7 +29,7 @@ export interface PicklistValue {
   value: string;
   label: string;
   isDefault: boolean;
-  isActive: boolean;
+  isActive?: boolean;
   sortOrder: number;
 }
 

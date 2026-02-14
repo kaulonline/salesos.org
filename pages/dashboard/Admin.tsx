@@ -407,7 +407,7 @@ export const Admin: React.FC = () => {
     setSyncResult(null);
     setSyncError(null);
     try {
-      const result = await paymentsApi.syncStripeData();
+      const result = await (paymentsApi as any).syncStripeData();
       setSyncResult(result);
       // Refetch data after sync
       if (result.subscriptionsCreated > 0 || result.invoicesCreated > 0) {
@@ -1575,7 +1575,7 @@ export const Admin: React.FC = () => {
                     <tr key={request.id} className="border-b border-[#F2F1EA] hover:bg-[#F8F8F6]/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={`${request.firstName} ${request.lastName}`} size={36} />
+                          <Avatar name={`${request.firstName} ${request.lastName}`} size={"md"} />
                           <div>
                             <p className="font-medium text-[#1A1A1A]">{request.firstName} {request.lastName}</p>
                             <p className="text-xs text-[#666]">{request.email}</p>
@@ -4476,7 +4476,7 @@ export const Admin: React.FC = () => {
                     } else {
                       await createCoupon({
                         code: couponForm.code,
-                        name: couponForm.name || undefined,
+                        name: couponForm.name || '',
                         description: couponForm.description || undefined,
                         discountType: couponForm.discountType,
                         discountValue: couponForm.discountValue,

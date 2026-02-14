@@ -455,7 +455,7 @@ export const TaxRates: React.FC = () => {
           onSave={
             editingRate
               ? (data) => handleUpdateRate(editingRate.id, data)
-              : handleCreateRate
+              : (data) => handleCreateRate(data as CreateTaxRateDto)
           }
           saving={isCreating || isUpdating}
         />

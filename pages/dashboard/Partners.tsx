@@ -375,7 +375,7 @@ export const Partners: React.FC = () => {
         >
           <FileText size={14} />
           Deal Registrations
-          {regStats && regStats.pending > 0 && (
+          {regStats && (regStats.pending ?? 0) > 0 && (
             <span className="px-2 py-0.5 bg-orange-500 text-white rounded-full text-xs">
               {regStats.pending}
             </span>
@@ -824,7 +824,7 @@ export const Partners: React.FC = () => {
           }}
           onSave={editingPartner
             ? (data) => handleUpdatePartner(editingPartner.id, data)
-            : handleCreatePartner
+            : (data) => handleCreatePartner(data as CreatePartnerDto)
           }
           saving={isCreating || isUpdating}
         />

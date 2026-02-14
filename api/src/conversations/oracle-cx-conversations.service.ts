@@ -968,7 +968,7 @@ Generate the widget specification JSON:`
 
     try {
       // Build messages with system prompt as first message
-      let currentMessages: Array<{ role: string; content: string }> = [
+      const currentMessages: Array<{ role: string; content: string }> = [
         { role: 'system', content: systemPrompt },
         ...history.map(m => ({
           role: m.role,

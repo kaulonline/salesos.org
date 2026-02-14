@@ -27,19 +27,24 @@ export interface ApiKey {
   description?: string;
   keyPrefix: string;
   keyHash?: string;
-  scopes: ApiKeyScope[];
+  scopes: ApiKeyScope[] | string[];
   status: ApiKeyStatus;
   rateLimitPerMinute: number;
   rateLimitPerDay: number;
+  rateLimit?: number;
+  rateLimitWindow?: number;
   allowedIps?: string[];
   allowedDomains?: string[];
-  expiresAt?: string;
-  lastUsedAt?: string;
+  ipWhitelist?: string[];
+  expiresAt?: string | null;
+  lastUsedAt?: string | null;
   lastUsedIp?: string;
   usageCount: number;
   usageCountToday: number;
   createdAt: string;
   updatedAt: string;
+  message?: string;
+  [key: string]: any;
 }
 
 export interface CreateApiKeyDto {

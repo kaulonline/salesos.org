@@ -448,7 +448,7 @@ export const ApprovalWorkflows: React.FC = () => {
           onSave={
             editingWorkflow
               ? (data) => handleUpdateWorkflow(editingWorkflow.id, data)
-              : handleCreateWorkflow
+              : (data) => handleCreateWorkflow(data as CreateApprovalWorkflowDto)
           }
           saving={isCreating || isUpdating}
         />

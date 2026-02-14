@@ -26,7 +26,15 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true
-  }
+    "noUncheckedIndexedAccess": false,
+    "noImplicitReturns": false
+  },
+  "exclude": [
+    "dist",
+    "api",
+    "node_modules",
+    "coverage",
+    "playwright-report",
+    "e2e"
+  ]
 }

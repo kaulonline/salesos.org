@@ -185,7 +185,7 @@ export class AiSdkService {
     const openaiTools = this.convertToolsToOpenAI(tools);
 
     // Build initial conversation with system message
-    let conversationMessages: any[] = [
+    const conversationMessages: any[] = [
       { role: 'system', content: systemPrompt },
       ...messages.map((msg) => ({
         role: msg.role as 'user' | 'assistant',
@@ -442,7 +442,7 @@ export class AiSdkService {
       );
 
       let fullText = '';
-      let toolCalls: any[] = [];
+      const toolCalls: any[] = [];
       let currentToolCallIndex = -1;
 
       // Create an async generator for the text stream

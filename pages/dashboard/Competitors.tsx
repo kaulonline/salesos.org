@@ -321,7 +321,7 @@ export const Competitors: React.FC = () => {
           }}
           onSave={editingCompetitor
             ? (data) => handleUpdateCompetitor(editingCompetitor.id, data)
-            : handleCreateCompetitor
+            : (data) => handleCreateCompetitor(data as CreateCompetitorDto)
           }
           saving={isCreating || isUpdating}
         />

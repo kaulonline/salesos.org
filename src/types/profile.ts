@@ -39,9 +39,15 @@ export type DataAccessLevel =
   | 'ALL';
 
 export interface Permission {
-  module: PermissionModule;
-  actions: PermissionAction[];
+  module: PermissionModule | string;
+  actions?: PermissionAction[];
   dataAccess: DataAccessLevel;
+  // Alternate flat permission fields (used by some UI components)
+  read?: boolean;
+  create?: boolean;
+  edit?: boolean;
+  delete?: boolean;
+  [key: string]: any;
 }
 
 export interface Profile {
@@ -84,6 +90,9 @@ export interface AssignUsersToProfileDto {
 
 export interface ProfileStats {
   total: number;
+  system?: number;
+  custom?: number;
+  totalUsers?: number;
   systemProfiles: number;
   customProfiles: number;
   usersWithProfiles: number;
@@ -92,6 +101,7 @@ export interface ProfileStats {
 // Permission module definitions for UI
 export interface PermissionModuleDefinition {
   module: PermissionModule;
+  key: string;
   label: string;
   description: string;
   availableActions: PermissionAction[];
@@ -102,6 +112,7 @@ export interface PermissionModuleDefinition {
 export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   {
     module: 'LEADS',
+    key: 'LEADS',
     label: 'Leads',
     description: 'Manage lead records',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT', 'IMPORT', 'ASSIGN', 'TRANSFER', 'BULK_UPDATE', 'BULK_DELETE'],
@@ -109,6 +120,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'CONTACTS',
+    key: 'CONTACTS',
     label: 'Contacts',
     description: 'Manage contact records',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT', 'IMPORT', 'ASSIGN', 'TRANSFER', 'BULK_UPDATE', 'BULK_DELETE'],
@@ -116,6 +128,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'ACCOUNTS',
+    key: 'ACCOUNTS',
     label: 'Accounts',
     description: 'Manage account/company records',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT', 'IMPORT', 'ASSIGN', 'TRANSFER', 'BULK_UPDATE', 'BULK_DELETE'],
@@ -123,6 +136,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'OPPORTUNITIES',
+    key: 'OPPORTUNITIES',
     label: 'Opportunities',
     description: 'Manage deals and pipeline',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT', 'IMPORT', 'ASSIGN', 'TRANSFER', 'BULK_UPDATE', 'BULK_DELETE'],
@@ -130,6 +144,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'PRODUCTS',
+    key: 'PRODUCTS',
     label: 'Products',
     description: 'Manage product catalog',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT', 'IMPORT'],
@@ -137,6 +152,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'QUOTES',
+    key: 'QUOTES',
     label: 'Quotes',
     description: 'Create and manage quotes',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT'],
@@ -144,6 +160,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'CAMPAIGNS',
+    key: 'CAMPAIGNS',
     label: 'Campaigns',
     description: 'Manage marketing campaigns',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT'],
@@ -151,6 +168,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'TASKS',
+    key: 'TASKS',
     label: 'Tasks',
     description: 'Manage tasks and activities',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -158,6 +176,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'MEETINGS',
+    key: 'MEETINGS',
     label: 'Meetings',
     description: 'Manage calendar and meetings',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -165,6 +184,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'REPORTS',
+    key: 'REPORTS',
     label: 'Reports',
     description: 'View and create reports',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'EXPORT'],
@@ -172,6 +192,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'WORKFLOWS',
+    key: 'WORKFLOWS',
     label: 'Workflows',
     description: 'Manage automation workflows',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -179,6 +200,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'EMAIL_TEMPLATES',
+    key: 'EMAIL_TEMPLATES',
     label: 'Email Templates',
     description: 'Manage email templates',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -186,6 +208,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'WEB_FORMS',
+    key: 'WEB_FORMS',
     label: 'Web Forms',
     description: 'Manage lead capture forms',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -193,6 +216,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'CUSTOM_FIELDS',
+    key: 'CUSTOM_FIELDS',
     label: 'Custom Fields',
     description: 'Manage custom field definitions',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -200,6 +224,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'ASSIGNMENT_RULES',
+    key: 'ASSIGNMENT_RULES',
     label: 'Assignment Rules',
     description: 'Manage lead/deal assignment rules',
     availableActions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
@@ -207,6 +232,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'API_KEYS',
+    key: 'API_KEYS',
     label: 'API Keys',
     description: 'Manage API access keys',
     availableActions: ['VIEW', 'CREATE', 'DELETE'],
@@ -214,6 +240,7 @@ export const PERMISSION_MODULES: PermissionModuleDefinition[] = [
   },
   {
     module: 'ADMIN',
+    key: 'ADMIN',
     label: 'Administration',
     description: 'System administration',
     availableActions: ['VIEW', 'EDIT'],

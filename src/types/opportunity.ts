@@ -71,6 +71,7 @@ export interface Opportunity {
     id: string;
     name: string;
   };
+  contacts?: OpportunityContact[];
 }
 
 export interface CreateOpportunityDto {
@@ -204,6 +205,10 @@ export interface OpportunityContact {
   engagementLevel?: 'HIGHLY_ENGAGED' | 'ENGAGED' | 'PASSIVE' | 'DISENGAGED';
   notes?: string;
   lastContactedAt?: string;
+  // Flattened contact fields (populated by backend in some responses)
+  firstName?: string;
+  lastName?: string;
+  title?: string;
   createdAt: string;
   updatedAt: string;
   // Populated contact details

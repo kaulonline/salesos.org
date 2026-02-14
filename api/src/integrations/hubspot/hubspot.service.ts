@@ -183,8 +183,8 @@ export class HubSpotService extends BaseIntegrationService {
 
   async syncContacts(): Promise<{ imported: number; updated: number }> {
     this.logger.log('Starting HubSpot contact sync...');
-    let imported = 0;
-    let updated = 0;
+    const imported = 0;
+    const updated = 0;
     let after: string | undefined;
 
     try {

@@ -61,9 +61,10 @@ interface Integration {
   provider?: EmailProvider | CalendarProvider;
   connectionId?: string;
   configured?: boolean;
-  integrationType?: IntegrationType; // For third-party integrations
+  integrationType?: IntegrationType | string; // For third-party integrations
   oauthBased?: boolean; // Whether this integration uses OAuth
-  configType?: ConfigType; // Type of configuration modal to show
+  configType?: ConfigType | string; // Type of configuration modal to show
+  [key: string]: any;
 }
 
 // Static integrations - organized by implementation status
@@ -421,7 +422,7 @@ export const IntegrationsPage: React.FC = () => {
       } else if (integration.connectionId && integration.category === 'calendar') {
         await calendarIntegrationsApi.triggerSync(integration.connectionId);
       } else if (integration.integrationType) {
-        await thirdPartyIntegrationsApi.triggerSync(integration.integrationType);
+        await thirdPartyIntegrationsApi.triggerSync(integration.integrationType as IntegrationType);
       }
       setNotification({ type: 'success', message: 'Sync triggered successfully' });
       loadData();
@@ -487,7 +488,7 @@ export const IntegrationsPage: React.FC = () => {
       } else if (integration.connectionId && integration.category === 'calendar') {
         await calendarIntegrationsApi.deleteConnection(integration.connectionId);
       } else if (integration.integrationType) {
-        await thirdPartyIntegrationsApi.disconnect(integration.integrationType);
+        await thirdPartyIntegrationsApi.disconnect(integration.integrationType as IntegrationType);
       }
       setNotification({ type: 'success', message: `${integration.name} disconnected successfully` });
       loadData();
@@ -988,7 +989,7 @@ export const IntegrationsPage: React.FC = () => {
             id: configModal.integration.integrationType || configModal.integration.id,
             name: configModal.integration.name,
             logo: configModal.integration.logo,
-            configType: configModal.integration.configType || 'api_key',
+            configType: (configModal.integration.configType || 'api_key') as ConfigType,
           }}
           isEditing={configModal.isEditing}
           existingConfig={configModal.existingConfig}

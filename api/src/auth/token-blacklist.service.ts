@@ -146,7 +146,7 @@ export class TokenBlacklistService {
       const sessionsKey = `${this.USER_SESSIONS_PREFIX}${userId}`;
 
       // Get existing sessions
-      let sessions = await this.cacheManager.get<string[]>(sessionsKey) || [];
+      const sessions = await this.cacheManager.get<string[]>(sessionsKey) || [];
 
       // Add new session
       sessions.push(jti);

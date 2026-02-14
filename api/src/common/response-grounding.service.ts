@@ -285,7 +285,7 @@ export class ResponseGroundingService {
     riskLevel: RiskLevel,
   ): Promise<GroundingResult> {
     const auditTrail: GroundingAuditEntry[] = [];
-    let modifiedResponse = aiResponse;
+    const modifiedResponse = aiResponse;
     const removedClaims: Claim[] = [];
     const correctedClaims: Array<{ original: Claim; corrected: string }> = [];
     const warnings: string[] = [];

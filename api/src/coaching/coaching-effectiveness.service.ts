@@ -815,7 +815,7 @@ export class CoachingEffectivenessService {
       let totalLost = 0;
       let totalRevenue = 0;
       let totalActivities = 0;
-      let totalPipeline = 0;
+      const totalPipeline = 0;
       let coachingInterventions = 0;
       let actionItemsCompleted = 0;
 

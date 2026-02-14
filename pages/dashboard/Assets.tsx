@@ -415,23 +415,23 @@ export const Assets: React.FC = () => {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-red-50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-red-600">{expiringData.summary.expiring0to30}</div>
+                  <div className="text-2xl font-bold text-red-600">{expiringData.summary?.expiring0to30 ?? 0}</div>
                   <div className="text-sm text-red-700">0-30 Days</div>
-                  <div className="text-xs text-red-600 mt-1">{formatCurrency(expiringData.summary.value0to30)}</div>
+                  <div className="text-xs text-red-600 mt-1">{formatCurrency(expiringData.summary?.value0to30 ?? 0)}</div>
                 </div>
                 <div className="bg-orange-50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-orange-600">{expiringData.summary.expiring31to60}</div>
+                  <div className="text-2xl font-bold text-orange-600">{expiringData.summary?.expiring31to60 ?? 0}</div>
                   <div className="text-sm text-orange-700">31-60 Days</div>
-                  <div className="text-xs text-orange-600 mt-1">{formatCurrency(expiringData.summary.value31to60)}</div>
+                  <div className="text-xs text-orange-600 mt-1">{formatCurrency(expiringData.summary?.value31to60 ?? 0)}</div>
                 </div>
                 <div className="bg-yellow-50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{expiringData.summary.expiring61to90}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{expiringData.summary?.expiring61to90 ?? 0}</div>
                   <div className="text-sm text-yellow-700">61-90 Days</div>
-                  <div className="text-xs text-yellow-600 mt-1">{formatCurrency(expiringData.summary.value61to90)}</div>
+                  <div className="text-xs text-yellow-600 mt-1">{formatCurrency(expiringData.summary?.value61to90 ?? 0)}</div>
                 </div>
               </div>
               <div className="space-y-3">
-                {expiringData.assets.map((asset) => {
+                {expiringData.assets?.map((asset: Asset) => {
                   const days = getDaysUntil(asset.renewalDate) || 0;
                   return (
                     <div key={asset.id} className="flex items-center justify-between p-4 bg-[#F8F8F6] rounded-xl">
@@ -702,7 +702,7 @@ export const Assets: React.FC = () => {
           }}
           onSave={editingAsset
             ? (data) => handleUpdateAsset(editingAsset.id, data)
-            : handleCreateAsset
+            : (data) => handleCreateAsset(data as CreateAssetDto)
           }
           saving={isCreating || isUpdating}
         />
@@ -783,9 +783,9 @@ const AssetModal: React.FC<AssetModalProps> = ({ asset, onClose, onSave, saving 
     try {
       await onSave({
         ...formData,
-        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined,
-        warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
-        renewalDate: formData.renewalDate ? new Date(formData.renewalDate) : undefined,
+        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate).toISOString() : undefined,
+        warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate).toISOString() : undefined,
+        renewalDate: formData.renewalDate ? new Date(formData.renewalDate).toISOString() : undefined,
       });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save asset');

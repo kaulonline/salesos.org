@@ -38,7 +38,7 @@ const entityConfig: Record<ApprovalEntity, { icon: React.ReactNode; label: strin
 
 export function PendingApprovals({ maxItems, showHeader = true, compact = false }: PendingApprovalsProps) {
   const navigate = useNavigate();
-  const { requests, loading, error, refetch, decide, isDeciding } = usePendingApprovals();
+  const { pendingRequests: requests, loading, error, refetch, decide, isDeciding } = usePendingApprovals();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [decisionDialog, setDecisionDialog] = useState<{
     open: boolean;
@@ -67,11 +67,13 @@ export function PendingApprovals({ maxItems, showHeader = true, compact = false 
     if (!decisionDialog) return;
 
     try {
-      await decide({
-        requestId: decisionDialog.requestId,
-        decision: decisionDialog.action,
-        comment: comment.trim() || undefined,
-      });
+      await decide(
+        decisionDialog.requestId,
+        {
+          action: decisionDialog.action,
+          comment: comment.trim() || undefined,
+        },
+      );
       handleCloseDecisionDialog();
     } catch (err) {
       // Error handled by hook
@@ -160,7 +162,7 @@ export function PendingApprovals({ maxItems, showHeader = true, compact = false 
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
                         <User className="w-3.5 h-3.5" />
-                        {request.submittedBy?.name || 'Unknown'}
+                        {request.requestedByName || request.submittedByName || 'Unknown'}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -168,9 +170,9 @@ export function PendingApprovals({ maxItems, showHeader = true, compact = false 
                       </span>
                     </div>
 
-                    {request.currentStepName && (
+                    {request.currentStep?.name && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Step {request.currentStep}: {request.currentStepName}
+                        Step {request.currentStepOrder}: {request.currentStep.name}
                       </p>
                     )}
                   </div>
@@ -314,7 +316,7 @@ function ApprovalTimeline({ decisions }: ApprovalTimelineProps) {
                 {decision.decision}
               </Badge>
               <span className="text-xs text-gray-500">
-                {format(new Date(decision.createdAt), 'MMM d, yyyy h:mm a')}
+                {format(new Date(decision.createdAt || decision.decidedAt), 'MMM d, yyyy h:mm a')}
               </span>
             </div>
             {decision.comment && (
@@ -332,7 +334,7 @@ function ApprovalTimeline({ decisions }: ApprovalTimelineProps) {
 
 // Compact card version for dashboard widgets
 export function PendingApprovalsCard() {
-  const { requests, loading } = usePendingApprovals();
+  const { pendingRequests: requests, loading } = usePendingApprovals();
 
   return (
     <Card>

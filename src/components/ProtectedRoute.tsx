@@ -31,7 +31,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   // Check role-based access if required
   if (requiredRole && user) {
-    const roleHierarchy = { USER: 1, MANAGER: 2, ADMIN: 3 };
+    const roleHierarchy: Record<string, number> = { USER: 1, MANAGER: 2, ADMIN: 3, SUPER_ADMIN: 4 };
     const userLevel = roleHierarchy[user.role] || 0;
     const requiredLevel = roleHierarchy[requiredRole] || 0;
 

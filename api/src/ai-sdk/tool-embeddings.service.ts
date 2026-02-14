@@ -432,7 +432,7 @@ export class ToolEmbeddingsService implements OnModuleInit {
 
     for (const word of words) {
       // Check exact match
-      let idx = this.vocabularyIndex.get(word);
+      const idx = this.vocabularyIndex.get(word);
       if (idx !== undefined) {
         vector[idx] = 1;
         continue;

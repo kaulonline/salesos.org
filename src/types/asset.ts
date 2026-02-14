@@ -119,8 +119,10 @@ export interface UpdateSupportContractDto extends Partial<CreateSupportContractD
 
 export interface AssetStats {
   total: number;
+  active?: number;
   byStatus: { status: AssetStatus; count: number }[];
   totalRenewalValue: number;
+  expiringIn30Days?: number;
   expiringIn90Days: number;
 }
 
@@ -151,6 +153,21 @@ export interface ExpiringAssetsResponse {
   later: { assets: Asset[]; totalValue: number };
   totalAssets: number;
   totalValue: number;
+  assets?: Asset[];
+  summary?: {
+    critical?: number;
+    criticalValue?: number;
+    warning?: number;
+    warningValue?: number;
+    upcoming?: number;
+    upcomingValue?: number;
+    expiring0to30?: number;
+    value0to30?: number;
+    expiring31to60?: number;
+    value31to60?: number;
+    expiring61to90?: number;
+    value61to90?: number;
+  };
 }
 
 export interface RenewalPipelineResponse {
@@ -162,6 +179,7 @@ export interface RenewalPipelineResponse {
   byMonth: {
     month: string;
     assetCount: number;
+    count?: number;
     value: number;
     assets: Asset[];
   }[];

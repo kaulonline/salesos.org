@@ -22,10 +22,11 @@ export interface WebFormField {
   id: string;
   name: string;
   label: string;
-  type: FormFieldType;
+  type: FormFieldType | string;
   placeholder?: string;
   helpText?: string;
-  isRequired: boolean;
+  required?: boolean;
+  isRequired?: boolean;
   validation?: {
     minLength?: number;
     maxLength?: number;
@@ -34,8 +35,8 @@ export interface WebFormField {
   };
   options?: { value: string; label: string }[];
   defaultValue?: string;
-  mapToField: string;
-  sortOrder: number;
+  mapToField?: string;
+  sortOrder?: number;
   width?: 'full' | 'half';
 }
 
@@ -57,6 +58,10 @@ export interface WebFormSettings {
   honeypotEnabled: boolean;
   redirectUrl?: string;
   successMessage: string;
+  submitButtonText?: string;
+  showLabels?: boolean;
+  showPlaceholders?: boolean;
+  enableCaptcha?: boolean;
   triggerAssignmentRules: boolean;
   triggerWorkflows: boolean;
   doubleOptIn?: boolean;
@@ -104,8 +109,10 @@ export interface CreateWebFormDto {
   description?: string;
   slug?: string;
   fields: Omit<WebFormField, 'id'>[];
-  settings: WebFormSettings;
+  settings: Partial<WebFormSettings>;
   styling?: Partial<WebFormStyling>;
+  thankYouMessage?: string;
+  redirectUrl?: string;
 }
 
 export interface UpdateWebFormDto {
@@ -144,13 +151,13 @@ export interface WebFormStats {
   total: number;
   active: number;
   totalSubmissions: number;
-  totalConversions: number;
+  totalConversions?: number;
   averageConversionRate: number;
-  submissionsToday: number;
-  submissionsThisWeek: number;
-  submissionsThisMonth: number;
-  topForms: { id: string; name: string; submissions: number; conversions: number }[];
-  submissionsByDay: { date: string; count: number }[];
+  submissionsToday?: number;
+  submissionsThisWeek?: number;
+  submissionsThisMonth?: number;
+  topForms?: { id: string; name: string; submissions: number; conversions: number }[];
+  submissionsByDay?: { date: string; count: number }[];
 }
 
 export interface WebFormEmbedCode {

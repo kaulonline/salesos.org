@@ -260,14 +260,14 @@ export function useEntityLock(
       }
       stopCountdown();
     };
-  }, [entityType, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entityType, entityId]);
 
   // Auto-acquire if requested
   useEffect(() => {
     if (autoAcquire && !isLocked && !hasLock) {
       acquireLock();
     }
-  }, [autoAcquire]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoAcquire]);
 
   const canEdit = !isLocked || hasLock;
 

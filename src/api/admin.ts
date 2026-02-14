@@ -90,6 +90,7 @@ export interface AuditLog {
   userId: string;
   action: string;
   entityType: string;
+  resourceType?: string;
   entityId?: string;
   details?: Record<string, unknown>;
   ipAddress?: string;
@@ -122,13 +123,23 @@ export interface ApplicationLog {
 
 export interface Integration {
   id: string;
-  provider: string;
+  provider?: string;
   name: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'ERROR';
+  description?: string;
+  logo?: string;
+  category?: 'email' | 'calendar' | 'communication' | 'payment' | 'storage' | 'analytics' | 'security';
+  status: 'ACTIVE' | 'INACTIVE' | 'ERROR' | string;
   config?: Record<string, unknown>;
   lastSyncAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // UI-specific fields
+  integrationType?: string;
+  configType?: string;
+  configured?: boolean;
+  popular?: boolean;
+  oauthBased?: boolean;
+  [key: string]: any;
 }
 
 // Database Backup Types
@@ -203,9 +214,11 @@ export interface CreateBackupScheduleRequest {
 
 export interface PaginatedResponse<T> {
   data: T[];
+  items?: T[];
   total: number;
   page: number;
   limit: number;
+  pageSize?: number;
   totalPages: number;
 }
 

@@ -1123,7 +1123,7 @@ export default function WebFormsPage() {
       <CreateFormModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={create}
+        onCreate={async (data: CreateWebFormDto) => { await create(data); }}
       />
 
       <EmbedCodeModal
@@ -1144,7 +1144,7 @@ export default function WebFormsPage() {
         isOpen={!!editForm}
         onClose={() => setEditForm(null)}
         form={editForm}
-        onSave={update}
+        onSave={async (id: string, data: UpdateWebFormDto) => { await update(id, data); }}
       />
 
       <ConfirmationModal

@@ -128,7 +128,7 @@ export function SendQuoteModal({
           <div>
             <h2 className="text-lg font-semibold text-[#1A1A1A]">Send Quote</h2>
             <p className="text-xs text-[#888]">
-              {quote.quoteNumber} · {formatCurrency(quote.total, quote.currency)}
+              {quote.quoteNumber} · {formatCurrency(quote.total ?? 0, quote.currency)}
             </p>
           </div>
         </div>
@@ -278,7 +278,7 @@ export function SendQuoteModal({
             <div className="flex justify-between">
               <span className="text-[#666]">Total Amount</span>
               <span className="font-semibold text-[#1A1A1A]">
-                {formatCurrency(quote.total, quote.currency)}
+                {formatCurrency(quote.total ?? 0, quote.currency)}
               </span>
             </div>
             <div className="flex justify-between">

@@ -86,6 +86,7 @@ export interface CreateCompetitorDto {
   logoUrl?: string;
   description?: string;
   tier?: CompetitorTier;
+  status?: CompetitorStatus;
   strengths?: string[];
   weaknesses?: string[];
   differentiators?: string[];
@@ -130,6 +131,9 @@ export interface LinkOpportunityCompetitorDto {
 
 export interface CompetitorStats {
   total: number;
+  primary?: number;
+  totalWins?: number;
+  overallWinRate?: number;
   byTier: { tier: CompetitorTier; count: number }[];
   byStatus: { status: CompetitorStatus; count: number }[];
   topCompetitors: {

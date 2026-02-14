@@ -71,6 +71,17 @@ export interface Quote {
   description?: string; // Backend field name
   billingAddress?: Address;
   shippingAddress?: Address;
+  // Flattened address fields (used by PDF generator)
+  billingStreet?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingPostalCode?: string;
+  billingCountry?: string;
+  shippingStreet?: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingPostalCode?: string;
+  shippingCountry?: string;
   isSynced?: boolean;
   sentAt?: string;
   sentDate?: string; // Backend field name

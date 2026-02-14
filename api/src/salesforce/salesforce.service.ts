@@ -5885,7 +5885,7 @@ export class SalesforceService implements OnModuleInit {
         }
       );
 
-      let validColumns: string[] = [];
+      const validColumns: string[] = [];
       if (describeResponse.ok) {
         const describeData = await describeResponse.json();
         // Extract available column names from the report type description

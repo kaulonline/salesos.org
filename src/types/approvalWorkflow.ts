@@ -7,7 +7,7 @@ export type ApproverType = 'USER' | 'ROLE' | 'MANAGER' | 'SKIP_LEVEL_MANAGER';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'EXPIRED';
 
-export type ApprovalAction = 'APPROVE' | 'REJECT' | 'DELEGATE' | 'ESCALATE';
+export type ApprovalAction = 'APPROVE' | 'APPROVED' | 'REJECT' | 'REJECTED' | 'DELEGATE' | 'ESCALATE';
 
 export type ConditionOperator =
   | 'EQUALS'
@@ -65,10 +65,17 @@ export interface ApprovalDecision {
   approverId: string;
   approverName: string;
   action: ApprovalAction;
+  decision?: ApprovalAction;
   comment?: string;
   delegatedToId?: string;
   delegatedToName?: string;
   decidedAt: string;
+  createdAt?: string;
+  approver?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
 }
 
 export interface ApprovalRequest {
@@ -81,10 +88,15 @@ export interface ApprovalRequest {
   entityDetails?: Record<string, any>;
   requestedById: string;
   requestedByName: string;
+  submittedBy?: string;
+  submittedByName?: string;
   currentStepOrder: number;
   currentStep?: ApprovalStep;
   status: ApprovalStatus;
+  statusLabel?: string;
+  steps?: ApprovalStep[];
   decisions: ApprovalDecision[];
+  metadata?: Record<string, any>;
   submittedAt: string;
   completedAt?: string;
   expiresAt?: string;

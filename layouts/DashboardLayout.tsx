@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake, Menu, X } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake, Menu, X, type LucideIcon } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -37,7 +37,7 @@ export const DashboardLayout: React.FC = () => {
     ? `${user.firstName[0]}${user.lastName[0]}`
     : user?.email?.[0]?.toUpperCase() || 'U';
 
-  const primaryNavItems = [
+  const primaryNavItems: Array<{ label: string; href: string; icon?: LucideIcon; highlight?: boolean }> = [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Leads', href: '/dashboard/leads' },
     { label: 'Contacts', href: '/dashboard/contacts', icon: User },
@@ -199,7 +199,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => 'href' in item && path.startsWith(item.href))
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => 'href' in item && item.href && path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white shadow-md border-[#1A1A1A]'
                   : showMoreMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
@@ -305,7 +305,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative hidden sm:block" data-tour="settings-menu">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => path.startsWith(item.href))
+              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => item.href && path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
                   : showSettingsMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200'

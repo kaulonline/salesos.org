@@ -554,7 +554,7 @@ export default function ProfilesPage() {
       <CreateProfileModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={create}
+        onCreate={async (data: CreateProfileDto) => { await create(data); }}
         existingProfiles={profiles}
       />
 

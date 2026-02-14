@@ -286,7 +286,7 @@ export class PriceBooksService {
       throw new NotFoundException(`Product not found in price book`);
     }
 
-    let price = entry.unitPrice ?? entry.listPrice;
+    const price = entry.unitPrice ?? entry.listPrice;
     let discountPercent = 0;
 
     // Apply discount tiers

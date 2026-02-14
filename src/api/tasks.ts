@@ -11,6 +11,8 @@ export interface TaskFilters extends QueryFilters {
   accountId?: string;
   opportunityId?: string;
   dueDate?: string;
+  dueBefore?: string;
+  dueAfter?: string;
 }
 
 export const tasksApi = {

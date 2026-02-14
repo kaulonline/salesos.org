@@ -414,7 +414,7 @@ export const DiscountRules: React.FC = () => {
           onSave={
             editingRule
               ? (data) => handleUpdateRule(editingRule.id, data)
-              : handleCreateRule
+              : (data) => handleCreateRule(data as CreateDiscountRuleDto)
           }
           saving={isCreating || isUpdating}
         />

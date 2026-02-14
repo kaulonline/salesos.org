@@ -217,7 +217,7 @@ export class DatabaseBackupService {
       });
 
       // Build pg_dump command
-      let pgDumpArgs = [
+      const pgDumpArgs = [
         `-h ${dbConfig.host}`,
         `-p ${dbConfig.port}`,
         `-U ${dbConfig.user}`,

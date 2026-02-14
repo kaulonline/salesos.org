@@ -143,9 +143,9 @@ export const Knowledge: React.FC = () => {
     : (documents as any)?.documents ?? [];
 
   // Calculate storage stats
-  const totalSize = documentsList.reduce((sum, doc) => sum + (doc.file_size || 0), 0);
-  const totalVectors = documentsList.reduce((sum, doc) => sum + (doc.vector_count || 0), 0);
-  const completedDocs = documentsList.filter(d => d.status === 'completed').length;
+  const totalSize = documentsList.reduce((sum: number, doc: any) => sum + (doc.file_size || 0), 0);
+  const totalVectors = documentsList.reduce((sum: number, doc: any) => sum + (doc.vector_count || 0), 0);
+  const completedDocs = documentsList.filter((d: any) => d.status === 'completed').length;
 
   if (isLoading) {
     return (
@@ -279,7 +279,7 @@ export const Knowledge: React.FC = () => {
                   <p className="text-sm text-[#999]">Upload PDFs to train your AI agents</p>
                 </div>
               ) : (
-                documentsList.map((doc) => {
+                documentsList.map((doc: any) => {
                   const status = statusConfig[doc.status] || statusConfig.pending;
                   const isDeleting = deleteMutation.isPending && deleteConfirm === doc.document_id;
 

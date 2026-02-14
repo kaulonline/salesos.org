@@ -101,6 +101,11 @@ const entityExamples: Record<AIBuilderEntityType, string[]> = {
     'Set up an Enterprise territory for companies with 500+ employees',
     'Create a Healthcare industry territory',
   ],
+  [AIBuilderEntityType.PLAYBOOK]: [
+    'Create a sales playbook for enterprise deal qualification',
+    'Build an onboarding playbook for new customer success',
+    'Design a competitive win-back playbook',
+  ],
 };
 
 export function AIBuilderModal({

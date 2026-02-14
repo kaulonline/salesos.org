@@ -302,7 +302,7 @@ export class LLMService implements OnModuleInit {
     toolExecutor: (name: string, args: any) => Promise<any>,
     maxIterations = 10,
   ): Promise<ChatCompletionResponse> {
-    let messages = [...request.messages];
+    const messages = [...request.messages];
     let iterations = 0;
 
     while (iterations < maxIterations) {

@@ -255,8 +255,8 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICA
 export function createNotificationOptions(
   type: NotificationType,
   data: Record<string, unknown> = {}
-): NotificationOptions {
-  const baseOptions: NotificationOptions = {
+): NotificationOptions & Record<string, any> {
+  const baseOptions: NotificationOptions & Record<string, any> = {
     icon: '/icons/icon-192.png',
     badge: '/icons/badge-72.png',
     vibrate: [100, 50, 100],

@@ -353,7 +353,7 @@ const CreateRuleModal: React.FC<CreateRuleModalProps> = ({ isOpen, onClose, onCr
 };
 
 export default function AssignmentRulesPage() {
-  const { rules, stats, loading, error, create, update, remove, reorder } = useAssignmentRules();
+  const { rules, stats, loading, error, create, update, remove } = useAssignmentRules();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState<AssignmentRuleEntity | 'all'>('all');
@@ -440,9 +440,9 @@ export default function AssignmentRulesPage() {
         operator: operatorMap[c.operator?.toLowerCase() || ''] || 'EQUALS',
         value: c.value,
       })),
-      assignees: (rule.assignees || []).map(a => ({
+      assignees: (rule.assignees || []).map((a: any) => ({
         userId: a.userId,
-        weight: a.weight,
+        weight: a.weight ?? 1,
       })),
     };
 
@@ -620,7 +620,7 @@ export default function AssignmentRulesPage() {
                           <span>·</span>
                           <span className="flex items-center gap-1">
                             <CheckCircle size={12} />
-                            {rule.stats.totalAssignments} assignments
+                            {rule.stats.executionCount} assignments
                           </span>
                         </>
                       )}
@@ -669,7 +669,7 @@ export default function AssignmentRulesPage() {
       <CreateRuleModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={create}
+        onCreate={async (data: CreateAssignmentRuleDto) => { await create(data); }}
       />
 
       <AIBuilderModal

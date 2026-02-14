@@ -11130,7 +11130,7 @@ Returns executive changes, funding events, expansion signals, technology changes
           const searchName = name.toLowerCase().trim();
 
           let results: any[] = [];
-          let entityTypeLabel = entityType;
+          const entityTypeLabel = entityType;
 
           switch (entityType) {
             case 'lead': {
@@ -16350,7 +16350,7 @@ Returns executive changes, funding events, expansion signals, technology changes
             }
 
             // Auto-fetch attendee emails from linked CRM records if not provided by AI
-            let attendeeEmails: string[] = toolInput.attendeeEmails || [];
+            const attendeeEmails: string[] = toolInput.attendeeEmails || [];
 
             if (attendeeEmails.length === 0) {
               this.logger.log(`[SCHEDULE_MEETING] No attendeeEmails provided by AI, attempting to fetch from CRM records...`);
@@ -22887,7 +22887,7 @@ ${overallRank < 0.4 ? '⚠️ **Improvement Needed:** Consider increasing engage
     const recordIdSet = new Set(recordIds);
 
     // Query relationships based on entity type
-    let relationships: Map<string, Array<{ targetId: string; targetType: string; relationshipType: string; createdDate: Date }>> = new Map();
+    const relationships: Map<string, Array<{ targetId: string; targetType: string; relationshipType: string; createdDate: Date }>> = new Map();
 
     try {
       if (entityType === 'Contact' || entityType === 'Opportunity') {

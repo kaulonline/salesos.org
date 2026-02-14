@@ -17,6 +17,7 @@ import { useTerritory } from '../../hooks';
 import { typeLabels, formatCurrency } from './types';
 import { useToast } from '../ui/Toast';
 import type { Account } from '../../types';
+import type { TerritoryAccount } from '../../types/territory';
 
 interface TerritoryDetailDrawerProps {
   territoryId: string;
@@ -64,7 +65,7 @@ export const TerritoryDetailDrawer: React.FC<TerritoryDetailDrawerProps> = ({
   };
 
   // Helper function to check if account matches territory criteria
-  const accountMatchesCriteria = (account: Account): boolean => {
+  const accountMatchesCriteria = (account: Account | TerritoryAccount): boolean => {
     if (!territory?.criteria || Object.keys(territory.criteria).length === 0) {
       return true; // No criteria means all accounts are eligible
     }

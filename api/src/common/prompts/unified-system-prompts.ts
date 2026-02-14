@@ -322,7 +322,7 @@ export function buildSystemPrompt(options: PromptOptions): string {
   const sections: string[] = [BASE_IDENTITY];
 
   // Add user context with substitutions
-  let userContext = USER_CONTEXT_TEMPLATE
+  const userContext = USER_CONTEXT_TEMPLATE
     .replace(/\{\{USER_NAME\}\}/g, userName)
     .replace(/\{\{USER_EMAIL\}\}/g, userEmail)
     .replace(/\{\{USER_TITLE\}\}/g, userTitle)
@@ -330,7 +330,7 @@ export function buildSystemPrompt(options: PromptOptions): string {
   sections.push(userContext);
 
   // Add email signature instructions
-  let emailSig = EMAIL_SIGNATURE_INSTRUCTIONS
+  const emailSig = EMAIL_SIGNATURE_INSTRUCTIONS
     .replace(/\{\{USER_NAME\}\}/g, userName)
     .replace(/\{\{USER_EMAIL\}\}/g, userEmail)
     .replace(/\{\{USER_TITLE\}\}/g, userTitle);

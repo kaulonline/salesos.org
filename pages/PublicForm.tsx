@@ -28,6 +28,12 @@ interface PublicWebForm {
     backgroundColor?: string;
     fontFamily?: string;
     buttonText?: string;
+    buttonColor?: string;
+    buttonTextColor?: string;
+    textColor?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    fontSize?: string;
   };
   settings?: {
     showTitle?: boolean;

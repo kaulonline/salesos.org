@@ -349,7 +349,7 @@ export default function QuotesPage() {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-xl font-semibold text-[#1A1A1A]">
-                      {formatCurrency(quote.total, quote.currency)}
+                      {formatCurrency(quote.total ?? 0, quote.currency)}
                     </p>
                     <p className="text-sm text-[#666]">{quote.lineItems.length} items</p>
                   </div>

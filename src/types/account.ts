@@ -85,6 +85,8 @@ export interface UpdateAccountDto extends Partial<CreateAccountDto> {
   rating?: AccountRating;
   healthScore?: number;
   churnRisk?: ChurnRisk;
+  painPoints?: string[];
+  competitors?: string[];
 }
 
 export interface AccountStats {

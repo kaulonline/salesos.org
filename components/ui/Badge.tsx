@@ -1,9 +1,10 @@
 import React from 'react';
 import { cn } from '../../utils/cn'; // Assuming you might have a utility, otherwise I'll stick to template literals
 
-type BadgeVariant =
+export type BadgeVariant =
   | 'neutral' | 'dark' | 'yellow' | 'green' | 'red' | 'blue' | 'purple' | 'outline'
-  | 'default' | 'warning' | 'success' | 'danger' | 'gray';
+  | 'default' | 'warning' | 'success' | 'danger' | 'gray'
+  | 'secondary' | 'destructive';
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -36,6 +37,8 @@ export const Badge: React.FC<BadgeProps> = ({
     blue: "bg-blue-100 text-blue-700",
     purple: "bg-purple-100 text-purple-700",
     outline: "bg-transparent border border-black/10 text-[#666]",
+    secondary: "bg-[#F8F8F6] text-[#666]",
+    destructive: "bg-red-100 text-red-700",
   };
 
   const sizes = {

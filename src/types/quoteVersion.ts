@@ -7,6 +7,7 @@ export type ChangeType = 'ADDED' | 'REMOVED' | 'MODIFIED';
 
 export interface QuoteVersionSnapshot {
   // Core quote fields
+  quoteNumber?: string;
   name: string;
   status: string;
   total: number;
@@ -38,6 +39,7 @@ export interface QuoteLineItemSnapshot {
   unitPrice: number;
   discount: number;
   total: number;
+  totalPrice?: number;
   description?: string;
 }
 
@@ -62,6 +64,8 @@ export interface LineItemChange {
   productName: string;
   changeType: ChangeType;
   fieldChanges?: FieldChange[];
+  newItem?: QuoteLineItemSnapshot;
+  oldItem?: QuoteLineItemSnapshot;
 }
 
 export interface QuoteVersionChanges {
@@ -78,8 +82,14 @@ export interface QuoteVersion {
   versionNumber: number;
   snapshot: QuoteVersionSnapshot;
   changes?: QuoteVersionChanges;
+  description?: string;
   createdById: string;
   createdByName: string;
+  createdBy?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
   reason?: string;
   createdAt: string;
 }
@@ -88,16 +98,19 @@ export interface QuoteVersionComparison {
   versionA: QuoteVersion;
   versionB: QuoteVersion;
   differences: QuoteVersionChanges;
+  changes?: QuoteVersionChanges;
 }
 
 // DTOs
 export interface CreateQuoteVersionDto {
   reason?: string;
+  description?: string;
 }
 
 export interface RestoreVersionDto {
   versionId: string;
   reason?: string;
+  createBackup?: boolean;
 }
 
 export interface CompareVersionsDto {

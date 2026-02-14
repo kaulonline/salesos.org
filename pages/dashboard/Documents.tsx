@@ -9,7 +9,7 @@ import type { Opportunity } from '../../src/types';
 // Map deal stages to document types/statuses
 const getDocumentFromDeal = (deal: Opportunity) => {
   let type: 'Proposal' | 'Quote' | 'Contract' = 'Proposal';
-  let status: 'Draft' | 'Sent' | 'Viewed' | 'Signed' = 'Draft';
+  let status: string = 'Draft';
 
   // Determine document type based on stage
   if (deal.stage === 'PROPOSAL_PRICE_QUOTE' || deal.stage === 'NEGOTIATION_REVIEW') {

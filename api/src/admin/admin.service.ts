@@ -46,7 +46,7 @@ export class AdminService implements OnModuleInit {
   private getZoominfoService(): any {
     if (!this._zoominfoService) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const { ZoominfoService } = require('../integrations/zoominfo/zoominfo.service');
         this._zoominfoService = this.moduleRef.get(ZoominfoService, { strict: false });
       } catch (error) {
@@ -63,7 +63,7 @@ export class AdminService implements OnModuleInit {
   private getSnowflakeService(): any {
     if (!this._snowflakeService) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const { SnowflakeService } = require('../integrations/snowflake/snowflake.service');
         this._snowflakeService = this.moduleRef.get(SnowflakeService, { strict: false });
       } catch (error) {
@@ -129,7 +129,7 @@ export class AdminService implements OnModuleInit {
   private getAgentOrchestrator(): any {
     if (!this.agentOrchestrator) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const { AgentOrchestratorService } = require('../agents/orchestrator/agent-orchestrator.service');
         this.agentOrchestrator = this.moduleRef.get(AgentOrchestratorService, { strict: false });
       } catch (error) {

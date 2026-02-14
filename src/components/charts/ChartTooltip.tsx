@@ -1,6 +1,7 @@
-import { TooltipProps } from "recharts";
-
-interface ChartTooltipProps extends TooltipProps<number, string> {
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value?: number; name?: string; [key: string]: any }>;
+  label?: string | number;
   formatter?: (value: number, name: string) => string;
   labelFormatter?: (label: string) => string;
 }
@@ -22,7 +23,7 @@ export function ChartTooltip({
   return (
     <div className="bg-white/80 backdrop-blur-xl rounded-xl px-4 py-3 shadow-lg border border-white/50">
       <p className="text-xs text-[#666] mb-1">{formattedLabel}</p>
-      {payload.map((entry, index) => {
+      {payload.map((entry: any, index: number) => {
         const entryValue = entry.value as number;
         const entryName = entry.name as string;
         const displayValue = formatter ? formatter(entryValue, entryName) : entryValue.toLocaleString();

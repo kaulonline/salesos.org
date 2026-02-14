@@ -23,7 +23,7 @@ module.exports = {
       name: 'salesos-frontend',
       cwd: './',
       script: 'node_modules/.bin/serve',
-      args: '-s dist -l 3000',
+      args: '-s dist -l 5001',
       env: {
         NODE_ENV: 'production',
       },

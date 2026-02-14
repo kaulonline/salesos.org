@@ -364,7 +364,7 @@ export const PriceBooks: React.FC = () => {
           onSave={
             editingPriceBook
               ? (data) => handleUpdatePriceBook(editingPriceBook.id, data)
-              : handleCreatePriceBook
+              : (data) => handleCreatePriceBook(data as CreatePriceBookDto)
           }
           saving={isCreating || isUpdating}
         />

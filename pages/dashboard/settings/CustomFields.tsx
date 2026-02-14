@@ -553,7 +553,7 @@ export default function CustomFieldsPage() {
       <CreateFieldModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={create}
+        onCreate={async (data: CreateCustomFieldDto) => { await create(data); }}
       />
 
       <AIBuilderModal

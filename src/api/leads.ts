@@ -15,6 +15,7 @@ export interface LeadFilters extends QueryFilters {
   rating?: string;
   source?: string;
   ownerId?: string;
+  cursor?: string;
 }
 
 export const leadsApi = {

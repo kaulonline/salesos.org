@@ -156,7 +156,7 @@ export function useEntityPresence(
     return () => {
       leave();
     };
-  }, [entityType, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entityType, entityId]);
 
   const viewerCount = viewers.length;
   const isBeingEdited = editingUser !== null;

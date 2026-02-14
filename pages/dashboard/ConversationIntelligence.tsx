@@ -608,7 +608,7 @@ export const ConversationIntelligence: React.FC = () => {
                       <Card className="p-6">
                         <h3 className="font-semibold text-[#1A1A1A] mb-4">Action Items</h3>
                         <div className="space-y-3">
-                          {(analysis?.actionItems || selectedMeeting.actionItems?.map(item => ({ item })) || []).map((action, i) => (
+                          {(analysis?.actionItems || selectedMeeting.actionItems?.map(item => ({ item, assignee: undefined as string | undefined })) || []).map((action, i) => (
                             <div key={i} className="flex items-start gap-3 p-3 bg-[#F8F8F6] rounded-xl">
                               <CheckCircle size={16} className="text-[#93C01F] mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
@@ -701,11 +701,11 @@ export const ConversationIntelligence: React.FC = () => {
                     )}
 
                     {/* Next Steps */}
-                    {analysis?.nextSteps?.length > 0 && !loadingAnalysis && (
+                    {(analysis?.nextSteps?.length ?? 0) > 0 && !loadingAnalysis && (
                       <Card className="p-6">
                         <h3 className="font-semibold text-[#1A1A1A] mb-4">Recommended Next Steps</h3>
                         <div className="space-y-2">
-                          {analysis.nextSteps.map((step, i) => (
+                          {analysis!.nextSteps!.map((step, i) => (
                             <div key={i} className="flex items-start gap-3">
                               <div className="w-6 h-6 rounded-full bg-[#EAD07D] flex items-center justify-center flex-shrink-0">
                                 <span className="text-xs font-semibold text-[#1A1A1A]">{i + 1}</span>
