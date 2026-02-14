@@ -48,6 +48,8 @@ const PricingLanding = lazy(() => import('./components/Pricing').then(m => ({ de
 const DynamicPricingPage = lazy(() => import('./pages/Pricing').then(m => ({ default: m.PricingPage })));
 const PublicForm = lazy(() => import('./pages/PublicForm'));
 const Alternatives = lazy(() => import('./pages/Alternatives').then(m => ({ default: m.Alternatives })));
+const VsSalesforce = lazy(() => import('./pages/vs/Salesforce').then(m => ({ default: m.VsSalesforce })));
+const VsHubSpot = lazy(() => import('./pages/vs/HubSpot').then(m => ({ default: m.VsHubSpot })));
 
 // Lazy-loaded Dashboard Pages (code splitting for performance)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
@@ -301,6 +303,16 @@ function AppContent() {
           <Route path="/alternatives" element={
             <Suspense fallback={<PageLoadingFallback />}>
               <Alternatives />
+            </Suspense>
+          } />
+          <Route path="/vs/salesforce" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VsSalesforce />
+            </Suspense>
+          } />
+          <Route path="/vs/hubspot" element={
+            <Suspense fallback={<PageLoadingFallback />}>
+              <VsHubSpot />
             </Suspense>
           } />
           <Route path="/careers" element={
