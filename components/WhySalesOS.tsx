@@ -1,8 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { DIFFERENTIATORS } from '../constants';
 import { ScrollReveal } from './ui/ScrollReveal';
 import { AnimatedCounter } from './ui/AnimatedCounter';
 import { TiltCard } from './ui/TiltCard';
+import { ArrowRight } from 'lucide-react';
 
 // Parse metrics to extract numbers for animation
 const parseMetric = (metric: string) => {
@@ -114,6 +116,38 @@ export const WhySalesOS: React.FC = () => {
                   <div className="text-sm text-white/60 font-medium">{stat.label}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Comparisons Section */}
+        <ScrollReveal animation="fade-up" delay={700}>
+          <div className="mt-12 text-center">
+            <p className="text-[#666] mb-6">
+              See how we compare to legacy CRM platforms
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link
+                to="/vs/salesforce"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-black/10 hover:border-[#EAD07D] hover:bg-[#F8F8F6] transition-all text-[#1A1A1A] font-medium text-sm group"
+              >
+                vs Salesforce
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/vs/hubspot"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-black/10 hover:border-[#EAD07D] hover:bg-[#F8F8F6] transition-all text-[#1A1A1A] font-medium text-sm group"
+              >
+                vs HubSpot
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/alternatives"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1A1A1A] text-white hover:bg-[#333] transition-colors font-medium text-sm group"
+              >
+                View All Comparisons
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </ScrollReveal>
