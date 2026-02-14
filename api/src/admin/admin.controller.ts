@@ -356,6 +356,14 @@ export class AdminController {
     return this.adminService.resetUserPassword(id, req.user.userId);
   }
 
+  @Post('users/:id/impersonate')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Generate JWT token to impersonate user (super admin only)' })
+  @ApiResponse({ status: 200, description: 'Impersonation token generated' })
+  async impersonateUser(@Param('id') id: string, @Request() req) {
+    return this.adminService.impersonateUser(id, req.user.userId);
+  }
+
   // ============================================
   // INTEGRATIONS
   // ============================================
