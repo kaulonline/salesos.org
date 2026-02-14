@@ -5,6 +5,7 @@ import {
   ArrowRight, Star, ChevronRight, Award, Layers, AlertTriangle
 } from 'lucide-react';
 import { Card } from '../../src/components/ui/Card';
+import { PricingDisclaimer } from '../../src/components/PricingDisclaimer';
 
 export function VsZoho() {
   return (
@@ -230,14 +231,20 @@ export function VsZoho() {
               </h3>
               <div className="grid gap-4">
                 <ComparisonRow
-                  feature="Base CRM Price"
-                  salesos="$99/user - everything included"
+                  feature="Pricing Model"
+                  salesos="2.5% of closed deal value - pay for results"
                   zoho="$14-$52/user (need Ultimate for key features)"
-                  salesosWins={false}
+                  salesosWins={true}
+                />
+                <ComparisonRow
+                  feature="User Limits"
+                  salesos="Unlimited users & seats - no per-user fees"
+                  zoho="Per-user pricing plus add-ons"
+                  salesosWins={true}
                 />
                 <ComparisonRow
                   feature="True Cost with Add-Ons"
-                  salesos="$99/user - no add-ons needed"
+                  salesos="No add-ons needed - all features included"
                   zoho="$52 + Campaigns ($6) + Analytics ($45) + extra modules"
                   salesosWins={true}
                 />
@@ -399,8 +406,9 @@ export function VsZoho() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$99</div>
-                <div className="text-[#666]">per user/month</div>
+                <div className="text-4xl font-light text-[#1A1A1A] mb-2">2.5%</div>
+                <div className="text-[#666]">of closed deal value</div>
+                <div className="text-sm text-[#93C01F] mt-2 font-medium">Only pay when you close deals</div>
               </div>
 
               <div className="space-y-3 mb-6">
@@ -422,7 +430,11 @@ export function VsZoho() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
-                  <span>No setup fees</span>
+                  <span>No per-user fees</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check size={16} className="text-[#93C01F]" />
+                  <span>Unlimited users & seats</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
@@ -431,10 +443,12 @@ export function VsZoho() {
               </div>
 
               <div className="pt-6 border-t border-black/10">
-                <div className="text-sm text-[#666] mb-2">Annual Total (10 users):</div>
-                <div className="text-3xl font-light text-[#1A1A1A]">$11,880</div>
-                <div className="text-xs text-[#999] mt-1">$99 × 10 × 12 months</div>
+                <div className="text-sm text-[#666] mb-2">Cost Example:</div>
+                <div className="text-3xl font-light text-[#1A1A1A]">$2,500</div>
+                <div className="text-xs text-[#999] mt-1">$100K in closed deals = $2,500</div>
               </div>
+
+              <PricingDisclaimer />
             </Card>
 
             {/* Zoho Pricing */}
@@ -496,8 +510,8 @@ export function VsZoho() {
               <div className="flex items-center gap-3">
                 <Award size={24} className="text-[#93C01F]" />
                 <div className="text-left">
-                  <div className="font-semibold text-[#1A1A1A]">Save $11,480 in year one</div>
-                  <div className="text-sm text-[#666]">Plus 40+ hours of setup time and zero complexity</div>
+                  <div className="font-semibold text-[#1A1A1A]">Outcome-Based Pricing</div>
+                  <div className="text-sm text-[#666]">Only pay for closed deals with unlimited users - no monthly per-seat fees</div>
                 </div>
               </div>
             </Card>
@@ -522,7 +536,7 @@ export function VsZoho() {
                 ))}
               </div>
               <p className="text-[#666] mb-6 italic">
-                "Zoho was cheap but we spent 60 hours configuring it and our team hated the interface. SalesOS took 1 hour to setup and everyone actually uses it. Worth every penny."
+                "Zoho was cheap but we spent 60 hours configuring it and our team hated the interface. SalesOS took 1 hour to setup, only charges on closed deals with unlimited users, and everyone actually uses it. Worth it."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
@@ -564,7 +578,7 @@ export function VsZoho() {
                 ))}
               </div>
               <p className="text-[#666] mb-6 italic">
-                "Zoho looked cheap at $52/user but we paid $8,000 for a consultant just to set it up. Plus analytics cost extra. SalesOS is actually cheaper and includes everything."
+                "Zoho looked cheap at $52/user but we paid $8,000 for a consultant just to set it up. Plus analytics cost extra. SalesOS only charges on closed deals, includes everything, and unlimited users."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
@@ -622,10 +636,10 @@ export function VsZoho() {
             <Card className="p-6">
               <h3 className="font-semibold text-[#1A1A1A] mb-2 flex items-center gap-2">
                 <ChevronRight size={20} className="text-[#EAD07D]" />
-                Why is SalesOS more expensive than Zoho CRM base price?
+                How does outcome-based pricing compare to Zoho's per-user model?
               </h3>
               <p className="text-[#666] ml-7">
-                Zoho CRM base ($14-$52) looks cheap but you will need Analytics (+$45), Campaigns (+$6), premium support (+$50), and consultant setup ($5k+). SalesOS at $99 includes everything with zero add-ons and zero setup costs.
+                With SalesOS, you only pay 2.5% of closed deal value - no monthly per-user fees. Zoho charges $14-$52/user plus Analytics (+$45), Campaigns (+$6), premium support (+$50), and consultant setup ($5k+). Our model aligns costs with your success, not headcount.
               </p>
             </Card>
           </div>

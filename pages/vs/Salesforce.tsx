@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, X, ArrowRight, Clock, DollarSign, Zap, Users, Shield, TrendingUp, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../src/components/SEO';
+import { PricingDisclaimer } from '../../src/components/PricingDisclaimer';
 
 export const VsSalesforce: React.FC = () => {
   const comparisonData = [
@@ -518,6 +519,8 @@ export const VsSalesforce: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <PricingDisclaimer />
           </div>
 
           {/* Customer Testimonials */}

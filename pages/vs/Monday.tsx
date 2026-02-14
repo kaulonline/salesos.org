@@ -5,6 +5,7 @@ import {
   ArrowRight, Star, ChevronRight, Award, Kanban, Phone
 } from 'lucide-react';
 import { Card } from '../../src/components/ui/Card';
+import { PricingDisclaimer } from '../../src/components/PricingDisclaimer';
 
 export function VsMonday() {
   return (
@@ -35,9 +36,9 @@ export function VsMonday() {
               <div className="text-white font-medium">AI Intelligence</div>
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-              <div className="text-3xl font-light text-[#EAD07D] mb-2">$99</div>
+              <div className="text-3xl font-light text-[#EAD07D] mb-2">2.5%</div>
               <div className="text-sm text-white/60 mb-1">vs Monday's $19-39/user (Pro/Enterprise)</div>
-              <div className="text-white font-medium">True All-in Cost</div>
+              <div className="text-white font-medium">Pay for Results</div>
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
               <div className="text-3xl font-light text-[#EAD07D] mb-2">Purpose-Built</div>
@@ -332,14 +333,14 @@ export function VsMonday() {
               </h3>
               <div className="grid gap-4">
                 <ComparisonRow
-                  feature="Base Price"
-                  salesos="$99/user - all sales features included"
+                  feature="Pricing Model"
+                  salesos="2.5% of closed deal value - pay for results"
                   monday="$19/user Pro (limited CRM features)"
                   salesosWins={true}
                 />
                 <ComparisonRow
-                  feature="Seat Minimum"
-                  salesos="No minimum seats"
+                  feature="User Limits"
+                  salesos="Unlimited users & seats - no per-user fees"
                   monday="3-seat minimum on most plans"
                   salesosWins={true}
                 />
@@ -387,8 +388,9 @@ export function VsMonday() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$99</div>
-                <div className="text-[#666]">per user/month</div>
+                <div className="text-4xl font-light text-[#1A1A1A] mb-2">2.5%</div>
+                <div className="text-[#666]">of closed deal value</div>
+                <div className="text-sm text-[#93C01F] mt-2 font-medium">Only pay when you close deals</div>
               </div>
 
               <div className="space-y-3 mb-6">
@@ -410,7 +412,11 @@ export function VsMonday() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
-                  <span>No seat minimums</span>
+                  <span>No per-user fees</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check size={16} className="text-[#93C01F]" />
+                  <span>Unlimited users & seats</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
@@ -419,10 +425,12 @@ export function VsMonday() {
               </div>
 
               <div className="pt-6 border-t border-black/10">
-                <div className="text-sm text-[#666] mb-2">Annual Cost (5 users):</div>
-                <div className="text-3xl font-light text-[#1A1A1A]">$5,940</div>
-                <div className="text-xs text-[#999] mt-1">$99 × 5 users × 12 months</div>
+                <div className="text-sm text-[#666] mb-2">Cost Example:</div>
+                <div className="text-3xl font-light text-[#1A1A1A]">$2,500</div>
+                <div className="text-xs text-[#999] mt-1">$100K in closed deals = $2,500</div>
               </div>
+
+              <PricingDisclaimer />
             </Card>
 
             {/* Monday Pricing */}
@@ -487,8 +495,8 @@ export function VsMonday() {
               <div className="flex items-center gap-3">
                 <Award size={24} className="text-[#93C01F]" />
                 <div className="text-left">
-                  <div className="font-semibold text-[#1A1A1A]">Purpose-Built CRM vs Project Tool</div>
-                  <div className="text-sm text-[#666]">Get AI forecasting, deal scoring, and conversation intelligence Monday.com lacks entirely</div>
+                  <div className="font-semibold text-[#1A1A1A]">Outcome-Based Pricing</div>
+                  <div className="text-sm text-[#666]">Only pay for closed deals with unlimited users - no monthly per-seat fees</div>
                 </div>
               </div>
             </Card>
@@ -555,7 +563,7 @@ export function VsMonday() {
                 ))}
               </div>
               <p className="text-[#666] mb-6 italic">
-                "Monday charged us $129/user plus automation fees. SalesOS is $99 and includes AI forecasting that Monday will never have. Easy decision."
+                "Monday charged us $129/user plus automation fees. SalesOS only charges on closed deals with unlimited users. No monthly fees plus AI forecasting. Easy decision."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">

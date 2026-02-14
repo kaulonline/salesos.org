@@ -6,6 +6,7 @@ import {
   ArrowRight, Star, ChevronRight, Award
 } from 'lucide-react';
 import { Card } from '../../src/components/ui/Card';
+import { PricingDisclaimer } from '../../src/components/PricingDisclaimer';
 
 export function VsHubSpot() {
   return (
@@ -394,14 +395,19 @@ export function VsHubSpot() {
               </div>
 
               <div className="mb-6">
-                <div className="text-4xl font-light text-[#1A1A1A] mb-2">$99</div>
-                <div className="text-[#666]">per user/month</div>
+                <div className="text-4xl font-light text-[#1A1A1A] mb-2">2.5%</div>
+                <div className="text-[#666]">of closed deal value</div>
+                <div className="text-sm text-[#93C01F] mt-2 font-medium">Only pay when you close deals</div>
               </div>
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
                   <span>All features included</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check size={16} className="text-[#93C01F]" />
+                  <span>No per-user fees</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
@@ -413,11 +419,7 @@ export function VsHubSpot() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
-                  <span>Unlimited custom reports</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Check size={16} className="text-[#93C01F]" />
-                  <span>24/7 support included</span>
+                  <span>Unlimited users & seats</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check size={16} className="text-[#93C01F]" />
@@ -426,9 +428,9 @@ export function VsHubSpot() {
               </div>
 
               <div className="pt-6 border-t border-black/10">
-                <div className="text-sm text-[#666] mb-2">3-Year Total Cost (10 users):</div>
-                <div className="text-3xl font-light text-[#1A1A1A]">$35,640</div>
-                <div className="text-xs text-[#999] mt-1">$99 × 10 users × 36 months</div>
+                <div className="text-sm text-[#666] mb-2">Example: $100K in closed deals =</div>
+                <div className="text-3xl font-light text-[#1A1A1A]">$2,500</div>
+                <div className="text-xs text-[#999] mt-1">Pay only for results, unlimited team size</div>
               </div>
             </Card>
 
@@ -494,12 +496,14 @@ export function VsHubSpot() {
               <div className="flex items-center gap-3">
                 <Award size={24} className="text-[#93C01F]" />
                 <div className="text-left">
-                  <div className="font-semibold text-[#1A1A1A]">Save up to $14,000+ over 3 years</div>
-                  <div className="text-sm text-[#666]">With better AI and zero hub complexity</div>
+                  <div className="font-semibold text-[#1A1A1A]">Pay Only for Results</div>
+                  <div className="text-sm text-[#666]">No per-seat fees, no minimums, no hidden costs - only pay when deals close</div>
                 </div>
               </div>
             </Card>
           </div>
+
+          <PricingDisclaimer />
         </div>
       </section>
 
