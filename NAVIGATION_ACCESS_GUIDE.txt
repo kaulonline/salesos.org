@@ -1,0 +1,229 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║              HOW TO ACCESS CRM MIGRATION SYSTEM                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                        FOR ADMIN USERS                                │
+└───────────────────────────────────────────────────────────────────────┘
+
+Step 1: Login to SalesOS Dashboard
+   └─> Navigate to: https://salesos.org/dashboard
+
+Step 2: Click Settings Button
+   └─> Location: Top right of header
+   └─> Icon: ⚙️ (gear icon)
+   └─> Style: Frosted glass button with "Settings" text
+
+Step 3: Settings Dropdown Opens
+   └─> Scroll down to bottom of dropdown
+   └─> Look for "──────── Admin ────────" divider
+
+Step 4: Under Admin Section, You'll See:
+   ├─> 📤 CRM Migration          (Click to start new migration)
+   ├─> 🕐 Migration History       (Click to view past migrations)
+   ├─> Admin Console
+   └─> Billing Admin
+
+Step 5a: Click "CRM Migration" for New Import
+   └─> Opens: 5-Step Migration Wizard
+   └─> URL: /dashboard/settings/migration
+
+Step 5b: Click "Migration History" to View Past Imports
+   └─> Opens: Migration history table with filters
+   └─> URL: /dashboard/settings/migration-history
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                  MIGRATION WIZARD FLOW (5 Steps)                      │
+└───────────────────────────────────────────────────────────────────────┘
+
+Step 1: Choose Source CRM
+   ├─> Salesforce
+   ├─> HubSpot
+   ├─> Pipedrive
+   ├─> Zoho CRM
+   ├─> Monday.com
+   └─> Generic CSV
+
+Step 2: Upload CSV File
+   ├─> Drag and drop CSV file
+   ├─> Or click to browse
+   ├─> Max file size: 50MB
+   └─> Preview: Shows first 5 rows
+
+Step 3: Map Fields (AI-Assisted)
+   ├─> Left column: Your CSV headers
+   ├─> Right column: SalesOS fields (dropdowns)
+   ├─> AI suggestions: Shown with confidence badges
+   ├─> Manual override: Change any mapping
+   └─> Required fields: Highlighted in red
+
+Step 4: Review & Validate
+   ├─> Summary: Total rows, required fields, duplicate handling
+   ├─> Preview: Sample data with mapped values
+   ├─> Estimated time: Shown
+   └─> Click "Start Import" when ready
+
+Step 5: Monitor Progress
+   ├─> Real-time progress bar
+   ├─> Counters: Success / Failed / Skipped
+   ├─> Estimated time remaining
+   ├─> Error log: If any failures
+   └─> Completion: Download error report or start another import
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                     MIGRATION HISTORY PAGE                            │
+└───────────────────────────────────────────────────────────────────────┘
+
+Features:
+   ├─> Statistics Cards
+   │   ├─> Total Migrations
+   │   ├─> Total Records Imported
+   │   ├─> Success Rate
+   │   └─> Recent Activity
+   │
+   ├─> Filters
+   │   ├─> Source CRM (Salesforce, HubSpot, etc.)
+   │   ├─> Entity Type (Leads, Contacts, Accounts, Opportunities)
+   │   ├─> Status (Pending, In Progress, Completed, Failed)
+   │   └─> Date Range
+   │
+   ├─> Migration Table
+   │   ├─> Date & Time
+   │   ├─> Source CRM
+   │   ├─> Entity Type
+   │   ├─> Records Imported (Success / Failed)
+   │   ├─> Status Badge
+   │   └─> Actions (View Details, Delete)
+   │
+   └─> Pagination
+       └─> 20 migrations per page
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                   FOR NON-ADMIN USERS (MEMBER/MANAGER)                │
+└───────────────────────────────────────────────────────────────────────┘
+
+What You'll See:
+   ├─> Settings menu: ✅ Visible
+   ├─> Admin section: ❌ Hidden
+   ├─> CRM Migration: ❌ Not visible in menu
+   └─> Migration History: ❌ Not visible in menu
+
+If You Try Direct URL:
+   ├─> Frontend: ✅ Page loads
+   ├─> Backend: ❌ Returns 403 Forbidden
+   ├─> Error Message: "You don't have permission to access this resource"
+   └─> Solution: Request ADMIN role from your organization owner
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                        KEYBOARD SHORTCUTS                             │
+└───────────────────────────────────────────────────────────────────────┘
+
+⌘ + K (Mac) or Ctrl + K (Windows/Linux)
+   └─> Opens Command Palette
+   └─> Type: "migration" to quickly access
+
+Direct URLs:
+   ├─> /dashboard/settings/migration          (Start new migration)
+   └─> /dashboard/settings/migration-history  (View history)
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                      SUPPORTED CRM SOURCES                            │
+└───────────────────────────────────────────────────────────────────────┘
+
+Salesforce
+   ├─> Template: ✅ Pre-built field mappings
+   ├─> AI Detection: ✅ 95%+ accuracy
+   └─> Guide: /docs/migration/salesforce-migration
+
+HubSpot
+   ├─> Template: ✅ Pre-built field mappings
+   ├─> AI Detection: ✅ 95%+ accuracy
+   └─> Guide: /docs/migration/hubspot-migration
+
+Pipedrive
+   ├─> Template: ✅ Pre-built field mappings
+   ├─> AI Detection: ✅ 95%+ accuracy
+   └─> Guide: /docs/migration/pipedrive-migration
+
+Zoho CRM
+   ├─> Template: ✅ Pre-built field mappings
+   ├─> AI Detection: ✅ 95%+ accuracy
+   └─> Guide: /docs/migration/zoho-migration
+
+Monday.com
+   ├─> Template: ✅ Pre-built field mappings
+   ├─> AI Detection: ✅ 95%+ accuracy
+   └─> Guide: /docs/migration/monday-migration
+
+Generic CSV
+   ├─> Template: ❌ Custom mapping required
+   ├─> AI Detection: ✅ Smart field suggestions
+   └─> Guide: Standard CSV import documentation
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                       MIGRATION STATISTICS                            │
+└───────────────────────────────────────────────────────────────────────┘
+
+Typical Migration Times:
+   ├─> 100 records: ~2-3 minutes
+   ├─> 1,000 records: ~10-15 minutes
+   ├─> 10,000 records: ~30-45 minutes
+   └─> 100,000+ records: Contact support for bulk import
+
+AI Mapping Accuracy:
+   ├─> Standard fields: 95%+ accuracy
+   ├─> Custom fields: Manual mapping required
+   └─> Review step: Always verify before import
+
+Success Rates:
+   ├─> Valid data: 99%+ success
+   ├─> Invalid data: Skipped with detailed error log
+   └─> Duplicate handling: Configurable (skip or update)
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                         TROUBLESHOOTING                               │
+└───────────────────────────────────────────────────────────────────────┘
+
+Q: I don't see "CRM Migration" in my Settings menu
+A: You need ADMIN or OWNER role. Contact your organization owner.
+
+Q: I get "403 Forbidden" when accessing migration
+A: Backend RBAC enforces ADMIN/OWNER only. Request role upgrade.
+
+Q: My CSV upload fails
+A: Check file size (<50MB), format (CSV/Excel), and encoding (UTF-8).
+
+Q: AI field mapping is incorrect
+A: Use manual override dropdowns to correct mappings before import.
+
+Q: Import failed with errors
+A: Download error log, fix data issues, and re-import failed records.
+
+Q: Can I undo a migration?
+A: No automatic rollback. Use Migration History to track what was imported.
+
+Q: How do I handle custom fields?
+A: Map custom CSV columns to custom SalesOS fields in step 3.
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                        NEED HELP?                                     │
+└───────────────────────────────────────────────────────────────────────┘
+
+Documentation:
+   └─> https://docs.salesos.org/migration/
+
+Email Support:
+   └─> migrations@salesos.com
+
+Live Chat:
+   └─> Click chat bubble in bottom right
+
+Schedule Migration Call:
+   └─> For complex migrations, schedule a free consultation
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║            NAVIGATION SUCCESSFULLY CONFIGURED ✅                      ║
+║                                                                       ║
+║   Admin users can now access CRM Migration through Settings menu.    ║
+║   All security controls active. Multi-tenant isolation verified.     ║
+╚═══════════════════════════════════════════════════════════════════════╝

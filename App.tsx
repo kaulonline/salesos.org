@@ -98,6 +98,8 @@ const AssignmentRules = lazy(() => import('./pages/dashboard/settings/Assignment
 const WebForms = lazy(() => import('./pages/dashboard/settings/WebForms'));
 const ApiSettings = lazy(() => import('./pages/dashboard/settings/ApiSettings'));
 const DataPrivacy = lazy(() => import('./pages/dashboard/settings/DataPrivacy'));
+const Migration = lazy(() => import('./pages/dashboard/settings/Migration'));
+const MigrationHistory = lazy(() => import('./pages/dashboard/settings/MigrationHistory'));
 const NotificationPreferences = lazy(() => import('./pages/dashboard/settings/NotificationPreferences'));
 
 // Phase 2 CPQ Feature Pages
@@ -808,6 +810,20 @@ function AppContent() {
               <PageErrorBoundary>
                 <Suspense fallback={<DashboardLoadingFallback />}>
                   <NotificationPreferences />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/migration" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <Migration />
+                </Suspense>
+              </PageErrorBoundary>
+            } />
+            <Route path="settings/migration-history" element={
+              <PageErrorBoundary>
+                <Suspense fallback={<DashboardLoadingFallback />}>
+                  <MigrationHistory />
                 </Suspense>
               </PageErrorBoundary>
             } />
