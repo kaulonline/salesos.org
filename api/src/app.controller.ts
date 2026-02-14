@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { PrismaService } from './database/prisma.service';
 import { AzureOpenAIRetryService } from './common/azure-openai-retry.service';
 
+@ApiTags('App')
 @Controller()
 export class AppController {
   constructor(

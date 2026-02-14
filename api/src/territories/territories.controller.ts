@@ -10,11 +10,14 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { TerritoriesService } from './territories.service';
 import { TerritoryType } from '@prisma/client';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Territories')
+@ApiBearerAuth('JWT')
 @Controller('territories')
 @UseGuards(JwtAuthGuard)
 export class TerritoriesController {

@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 import { PipelinesService } from './pipelines.service';
@@ -22,6 +23,8 @@ import {
   DuplicatePipelineDto,
 } from './dto';
 
+@ApiTags('Pipelines')
+@ApiBearerAuth('JWT')
 @Controller('pipelines')
 @UseGuards(JwtAuthGuard)
 export class PipelinesController {

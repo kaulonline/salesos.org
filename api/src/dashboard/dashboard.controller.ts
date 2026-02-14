@@ -14,12 +14,15 @@ import {
   Request,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PrismaService } from '../database/prisma.service';
 import { SalesforceService } from '../salesforce/salesforce.service';
 import { OracleCXService } from '../oracle-cx/oracle-cx.service';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Dashboard')
+@ApiBearerAuth('JWT')
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard)
 export class DashboardController {

@@ -12,3 +12,8 @@ test-results/
 api/dist/
 api/node_modules/
 api/coverage/
+
+# Docs build artifacts
+docs/.next/
+docs/.source/
+docs/node_modules/

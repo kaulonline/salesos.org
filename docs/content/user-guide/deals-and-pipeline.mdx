@@ -1,0 +1,252 @@
+---
+title: Deals & Pipeline
+description: Track sales opportunities through your pipeline from qualification to close.
+---
+
+Deals (also called opportunities) represent active sales engagements with a potential or existing customer. The pipeline is the visual representation of where each deal stands in your sales process. SalesOS provides both a Kanban board view and a list view for managing your deals, along with AI-powered insights to help you close more business.
+
+## Pipeline Overview
+
+Navigate to **Pipeline** from the left sidebar. The page header displays:
+
+- **Total pipeline value** -- The sum of all deal amounts across all open stages.
+- **Total opportunities** -- The number of active deals.
+
+## Pipeline Selector
+
+If your organization uses multiple pipelines (for example, separate pipelines for new business, renewals, and partnerships), use the **Pipeline Selector** dropdown at the top of the page to switch between them.
+
+- Select a specific pipeline to view only deals in that pipeline.
+- Select **All Pipelines** to see a combined view of all deals.
+- The pipeline selector also includes a link to **Pipeline Settings** where administrators can configure stages and pipeline properties.
+
+Each pipeline has its own set of stages with customizable names, colors, and probability percentages.
+
+## Kanban Board View
+
+The Kanban board is the default view for the pipeline page. It displays deals as cards organized into columns, where each column represents a stage or group of stages.
+
+### How Columns Are Organized
+
+SalesOS intelligently groups pipeline stages into Kanban columns:
+
+- If your pipeline has three or fewer open stages, each stage gets its own column.
+- If your pipeline has more stages, they are grouped by probability range:
+  - **Discovery** -- Low probability stages (below 40%).
+  - **Proposal** -- Mid-range probability stages (40% to 69%).
+  - **Negotiation** -- High probability stages (70% and above).
+- A **Closed Won** column always appears on the right side for won deals.
+
+Each column header shows the stage name, a count of deals in that column, and the total value of those deals.
+
+### Deal Cards
+
+Each deal is displayed as a card on the Kanban board showing:
+
+- **Account name** at the top.
+- **Deal name** as the main title.
+- **Stage badge** with the specific sub-stage name.
+- **Deal amount** formatted as currency.
+- **Probability percentage** indicating likelihood of close.
+- **Owner avatar** in the bottom-right corner.
+- A **progress bar** at the bottom that fills based on the deal's probability.
+
+Click on any deal card to navigate to its detail page.
+
+### Deal Card Actions
+
+Click the **three-dot menu** on a deal card to access quick actions:
+
+- **View Details** -- Navigate to the full deal detail page.
+- **AI Analysis** -- Run an AI-powered analysis of the deal's health and next steps.
+- **Mark Won** -- Close the deal as won (see Closing Deals below).
+- **Mark Lost** -- Close the deal as lost with a required reason (see Closing Deals below).
+- **Delete Opportunity** -- Permanently remove the deal.
+
+### Adding Deals from the Kanban Board
+
+Each column includes a dashed **Add Opportunity** button at the bottom. Click it to create a new deal that starts in that stage. You can also use the **+** button in the top toolbar.
+
+## List View
+
+Click the **list icon** in the view toggle (next to the grid icon) to switch to the list view. The list view displays deals in a tabular format with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| Opportunity Name | Deal name and account name |
+| Stage | Current stage with a color-coded badge |
+| Value | Deal amount in currency format |
+| Probability | A visual progress bar with percentage |
+| Close Date | Expected close date |
+
+Click on any row to navigate to the deal detail page.
+
+## Filtering and Searching Deals
+
+### Search
+
+Use the **search bar** in the toolbar to find deals by opportunity name or account name.
+
+### Stage Filter
+
+Use the **All Stages** dropdown to filter deals by a specific Kanban column (Discovery, Proposal, Negotiation, or Closed Won).
+
+### Probability Filter
+
+Use the **All Probabilities** dropdown to show only deals above a certain probability threshold:
+
+- All Probabilities (no filter)
+- Greater than 25%
+- Greater than 50%
+- Greater than 75%
+
+## Creating New Deals
+
+Click the **+** button in the toolbar to open the New Opportunity form. Fill in:
+
+- **Opportunity Name** (required) -- A descriptive name such as "Q1 Enterprise License - Acme Corp."
+- **Account** (required) -- Select the company this deal is with.
+- **Pipeline** -- If you have multiple active pipelines, select which one this deal belongs to. (Shown only when multiple pipelines exist.)
+- **Amount** -- The expected deal value in dollars.
+- **Stage** -- The initial stage for this deal. Only open stages (not Closed Won/Lost) are available.
+
+Click **Create Opportunity** to save.
+
+## Deal Detail Page
+
+Click on any deal from the Kanban board or list view to open its detail page. The deal detail page provides a comprehensive view of the opportunity.
+
+### Header
+
+The header shows the deal name, current stage badge, deal amount, and probability. Action buttons let you:
+
+- **Edit** the deal's information.
+- **Advance Stage** to move the deal to the next stage.
+- **Close Won** or **Close Lost**.
+- **AI Analysis** to generate insights.
+
+### Sidebar
+
+The left sidebar shows a list of recently viewed deals for quick navigation.
+
+### Accordion Sections
+
+Expandable sections organize deal details:
+
+- **Basic Information** -- Deal name, amount, probability, close date, stage, deal type (New Business, Existing Business, etc.), next steps, and needs analysis notes.
+- **Additional details** as configured by your administrator.
+
+### Buyer Committee
+
+The deal detail page includes a **Buyer Committee** section showing all contacts associated with this opportunity. You can:
+
+- View each contact's name, role, and title.
+- Add contacts from the associated account.
+- Remove contacts from the opportunity.
+- Set a contact as the **primary contact** for this deal.
+
+### Deal Charts
+
+Visual charts display deal progression over time, probability trends, and other analytical data.
+
+### AI Deal Analysis
+
+Click **AI Analysis** to generate an AI-powered assessment of the deal. The analysis widget provides:
+
+- **Deal health assessment** -- An overall evaluation of the deal's likelihood to close.
+- **Risk factors** -- Potential issues that could derail the deal.
+- **Recommendations** -- Suggested next actions to improve the deal's chances.
+- **Key insights** -- Observations about the deal based on activity patterns and data completeness.
+
+### AI Email Drafts
+
+The deal detail page includes an **AI Email Draft** button that generates personalized email drafts based on the deal context, stage, and related contacts.
+
+### Integration Links
+
+If the deal is linked to external systems (via integrations), external reference links and attachments are displayed on the detail page.
+
+### Quick Log Activity
+
+Use the **Quick Log Activity** feature on the deal detail page to quickly record calls, emails, meetings, and notes without leaving the page.
+
+### Field Change History
+
+An audit trail shows all changes made to the deal's fields, including who made each change and when.
+
+## Moving Deals Between Stages
+
+There are several ways to advance a deal through your pipeline:
+
+1. **From the detail page** -- Click the **Advance Stage** button or edit the deal to change its stage.
+2. **Edit the deal** -- Open the edit modal and select a new stage from the dropdown.
+3. **Quick actions on Kanban** -- Use the three-dot menu to mark a deal as Won or Lost, which moves it to the respective closed stage.
+
+When you change a deal's stage, its probability is automatically updated to match the new stage's default probability (as configured in pipeline settings).
+
+## Stage Probability and Forecasting
+
+Each pipeline stage has a default probability percentage that represents the statistical likelihood of a deal closing from that stage. For example:
+
+- Prospecting: 10%
+- Qualification: 20%
+- Needs Analysis: 30%
+- Value Proposition: 50%
+- Proposal/Quote: 60%
+- Negotiation: 80%
+- Closed Won: 100%
+- Closed Lost: 0%
+
+These probabilities directly feed into your revenue forecasting. The **weighted pipeline value** is calculated as the sum of (deal amount x probability) across all open deals. You can override the probability on individual deals if a specific opportunity is stronger or weaker than the stage average.
+
+## Closing Deals
+
+### Marking a Deal as Won
+
+To mark a deal as won:
+
+1. Click the **three-dot menu** on the deal card and select **Mark Won**, or use the **Close Won** button on the deal detail page.
+2. The deal is moved to the Closed Won stage with 100% probability.
+3. A success confirmation is shown.
+
+### Marking a Deal as Lost
+
+To mark a deal as lost:
+
+1. Click the **three-dot menu** on the deal card and select **Mark Lost**, or use the **Close Lost** button on the deal detail page.
+2. A modal appears asking for a **Reason for Loss** (required). Enter a clear reason such as "Lost to competitor," "Budget constraints," or "Timing not right."
+3. Click **Mark as Lost** to confirm.
+4. The deal moves to the Closed Lost stage with 0% probability.
+
+Tracking loss reasons helps your team identify patterns and improve your sales process over time.
+
+## Pipeline Summary Metrics
+
+The pipeline page header shows real-time summary metrics:
+
+- **Total Value** -- Sum of all deal amounts in the current view.
+- **Total Opportunities** -- Count of deals in the current view.
+
+Each Kanban column also shows its own count and total value, giving you a quick snapshot of where your pipeline weight is concentrated.
+
+## Deleting Deals
+
+To delete a deal, use the **three-dot menu** on the deal card and select **Delete Opportunity**. A confirmation modal will ask you to verify the deletion. This action is permanent and cannot be undone.
+
+## Best Practices for Pipeline Management
+
+1. **Keep your pipeline current.** Update deal stages and amounts weekly. A stale pipeline leads to inaccurate forecasts and missed follow-ups.
+
+2. **Use realistic amounts.** Enter the actual expected contract value, not aspirational numbers. Overstating deal amounts inflates your forecast and erodes trust in the data.
+
+3. **Set close dates and update them.** Every deal should have an expected close date. If a deal slips, update the close date rather than leaving it in the past.
+
+4. **Track loss reasons consistently.** When closing deals as lost, provide specific, honest reasons. Over time, loss reason data reveals patterns that can improve your sales strategy.
+
+5. **Leverage AI analysis.** Run AI analysis on important deals to surface risks you may have missed. The AI can identify gaps in your engagement, buyer committee coverage, and deal progression.
+
+6. **Fill in the buyer committee.** Adding contacts to deals and assigning roles (Champion, Decision Maker, Economic Buyer) gives you a clear picture of whether you have the right relationships to close.
+
+7. **Review pipeline in both views.** Use the Kanban board for a visual overview and the list view for detailed analysis. Each view highlights different aspects of your pipeline.
+
+8. **Use multiple pipelines when appropriate.** If your sales process differs for new business vs. renewals vs. partnerships, set up separate pipelines with their own stages rather than forcing everything into one.

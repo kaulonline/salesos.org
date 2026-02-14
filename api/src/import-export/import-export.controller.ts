@@ -14,6 +14,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { ImportExportService } from './import-export.service';
@@ -21,6 +22,8 @@ import { ImportEntityType, ImportOptionsDto } from './dto/import.dto';
 import { ExportEntityType, ExportRequestDto } from './dto/export.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Import/Export')
+@ApiBearerAuth('JWT')
 @Controller('import-export')
 @UseGuards(JwtAuthGuard)
 export class ImportExportController {

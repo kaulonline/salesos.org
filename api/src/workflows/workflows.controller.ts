@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { WorkflowsService } from './workflows.service';
 import {
@@ -26,6 +27,8 @@ import {
   WorkflowEntityType,
 } from './dto/workflow.dto';
 
+@ApiTags('Workflows')
+@ApiBearerAuth('JWT')
 @Controller('workflows')
 @UseGuards(JwtAuthGuard)
 export class WorkflowsController {

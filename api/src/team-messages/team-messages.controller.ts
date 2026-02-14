@@ -10,10 +10,13 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { TeamMessagesService } from './team-messages.service';
 import { CreateChannelDto, UpdateChannelDto, SendMessageDto, UpdateMessageDto, AddMembersDto, ReactionDto } from './dto';
 
+@ApiTags('Team Messages')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class TeamMessagesController {

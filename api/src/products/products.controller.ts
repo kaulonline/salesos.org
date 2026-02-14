@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -17,6 +18,8 @@ import { ProductType, ProductCategory } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Products')
+@ApiBearerAuth('JWT')
 @Controller('products')
 @UseGuards(JwtAuthGuard)
 export class ProductsController {

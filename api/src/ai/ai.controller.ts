@@ -12,6 +12,7 @@ import {
   Request,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PrismaService } from '../database/prisma.service';
 
@@ -43,6 +44,8 @@ interface InsightsResponse {
   lastUpdated: string;
 }
 
+@ApiTags('AI')
+@ApiBearerAuth('JWT')
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AIController {

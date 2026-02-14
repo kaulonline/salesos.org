@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ContractsService } from './contracts.service';
 import { ContractStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Contracts')
+@ApiBearerAuth('JWT')
 @Controller('contracts')
 @UseGuards(JwtAuthGuard)
 export class ContractsController {

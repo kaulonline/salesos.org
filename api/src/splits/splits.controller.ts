@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { SplitsService } from './splits.service';
 import { SplitsAIService } from './splits-ai.service';
@@ -17,6 +18,8 @@ import { CreateSplitDto } from './dto/create-split.dto';
 import { UpdateSplitDto } from './dto/update-split.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Splits')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class SplitsController {

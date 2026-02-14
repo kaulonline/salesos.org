@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CpqAnalyticsService } from './cpq-analytics.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('CPQ Analytics')
+@ApiBearerAuth('JWT')
 @Controller('analytics/cpq')
 @UseGuards(JwtAuthGuard)
 export class CpqAnalyticsController {

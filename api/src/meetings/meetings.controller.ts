@@ -15,6 +15,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import * as crypto from 'crypto';
@@ -43,6 +44,8 @@ import {
   ApproveActionsDto,
 } from './dto';
 
+@ApiTags('Meetings')
+@ApiBearerAuth('JWT')
 @Controller('meetings')
 export class MeetingsController {
   private readonly logger = new Logger(MeetingsController.name);

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ESignatureService } from './esignature.service';
 import { ESignProvider, ESignStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -20,6 +21,8 @@ interface CreateSignerDto {
   order?: number;
 }
 
+@ApiTags('E-Signature')
+@ApiBearerAuth('JWT')
 @Controller('esignature')
 export class ESignatureController {
   constructor(private readonly esignatureService: ESignatureService) {}

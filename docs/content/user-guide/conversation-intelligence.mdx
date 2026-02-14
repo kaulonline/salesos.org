@@ -1,0 +1,234 @@
+---
+title: Conversation Intelligence
+description: Gain AI-powered insights from your sales calls and meetings.
+---
+
+Conversation Intelligence in SalesOS uses AI to analyze your completed sales meetings, providing transcription, sentiment analysis, action item extraction, and coaching insights. It transforms every call into a data-rich resource that helps you close more deals and improve your selling skills.
+
+## What Is Conversation Intelligence?
+
+Conversation Intelligence automatically processes your completed meetings to deliver:
+
+- **Transcription** with speaker identification (diarization), so you know who said what.
+- **Sentiment analysis** that scores each conversation as Positive, Neutral, or Needs Attention.
+- **AI-generated summaries** that capture the essence of each conversation in a few sentences.
+- **Key topic extraction** that highlights what was discussed.
+- **Action item detection** that pulls out next steps and assigns them to participants.
+- **Competitive intelligence** that flags competitor mentions during calls.
+- **Buying signals and objection tracking** that reveal deal health indicators.
+- **Decision maker identification** with influence scoring.
+
+## Accessing Conversation Intelligence
+
+Navigate to **Conversation Intelligence** from the **AI** section in the left sidebar. The page displays all completed meetings with their associated AI analysis.
+
+If you have no completed meetings yet, the page shows an onboarding state explaining the four core capabilities: Transcription, AI Analysis, Sentiment, and Coaching. From this empty state, you can navigate directly to the Calendar to schedule your first meeting.
+
+## Overview Statistics
+
+At the top of the Conversation Intelligence page, four summary cards provide an at-a-glance view of your conversation data:
+
+| Metric | Description |
+|--------|-------------|
+| **Analyzed Calls** | Total number of completed meetings that have been processed |
+| **Positive Sentiment** | Percentage of conversations scored as Positive (70% or above) |
+| **Avg Duration** | Average length of your completed meetings |
+| **With Recording** | Number of conversations that have an available recording for playback |
+
+The "With Recording" card uses the dark card variant to visually distinguish it and indicate that these conversations are available for deeper review.
+
+## Conversation List
+
+The left panel displays a scrollable list of your recent completed conversations. Each conversation card shows:
+
+- **Meeting title** -- The name of the meeting.
+- **Meeting type icon** -- A phone icon for calls, or a video icon for video meetings.
+- **Date and duration** -- When the meeting occurred and how long it lasted.
+- **Sentiment badge** -- A color-coded indicator showing the conversation's sentiment:
+  - **Positive** (green) -- Sentiment score of 70 or above.
+  - **Neutral** (gray) -- Sentiment score between 40 and 69.
+  - **Needs Attention** (gold) -- Sentiment score below 40.
+- **Account name** -- The linked account, if applicable.
+- **Recording indicator** -- A speaker icon appears when a recording is available.
+
+Click any conversation in the list to load its detailed analysis in the right panel.
+
+### Filtering Conversations
+
+You can narrow down the conversation list using multiple filter controls:
+
+#### By Type
+Use the **Type** dropdown to filter by:
+- **All Types** -- Show all conversations.
+- **Calls** -- Show only phone call meetings.
+- **Video** -- Show only video and webinar meetings.
+
+#### By Sentiment
+Use the **Sentiment** dropdown to filter by:
+- **All Sentiment** -- Show all conversations regardless of score.
+- **Positive** -- Show only conversations with positive sentiment.
+- **Neutral** -- Show only neutral conversations.
+- **Needs Attention** -- Show conversations that may require follow-up or coaching.
+
+#### By Search
+Use the search bar to find conversations by:
+- Meeting title
+- Meeting summary content
+- Account name
+- Key topics discussed
+
+## Conversation Detail View
+
+When you select a conversation, the right panel displays the full analysis in several sections.
+
+### Meeting Summary
+
+The top of the detail view shows:
+
+- **Meeting title and date/time** with full duration.
+- **Linked account** -- If the meeting is linked to an account, the account name appears as a clickable link that navigates to the account detail page.
+- **Recording playback** -- If a recording URL is available, a play button in the top-right corner opens the recording.
+
+### Participants
+
+All meeting participants are listed with their name and role. Speaker identification (diarization) maps each portion of the transcript to the correct participant, so you can see exactly who said what during the conversation.
+
+### AI Summary
+
+The AI Summary section provides a concise, automatically generated overview of the conversation. This summary captures the key points discussed and the overall outcome, saving you the time of re-watching or re-listening to the full recording.
+
+### Sentiment Score
+
+A visual progress bar displays the conversation's sentiment score on a scale from 0 to 100:
+
+- **Green bar** (score 70+) -- Indicates a positive, productive conversation.
+- **Gold bar** (score 40-69) -- Indicates a neutral conversation.
+- **Red bar** (score below 40) -- Indicates a conversation that needs attention.
+
+The numeric score is displayed alongside the progress bar for precision.
+
+### Topics Discussed
+
+Key topics extracted from the conversation appear as pill-shaped tags. These topics help you quickly understand what was covered without reading the full transcript. Common topics include product features, pricing discussions, implementation timelines, and competitive comparisons.
+
+### Action Items
+
+The Action Items section lists tasks and follow-ups that were identified during the conversation. Each action item shows:
+
+- **The action to be taken** -- A clear description of the task.
+- **Assignee** -- The person responsible, when identifiable from the conversation.
+
+Action items are extracted automatically by the AI and can be approved and converted into tasks within SalesOS.
+
+### AI Insights
+
+The AI Insights section appears on a dark card for visual emphasis and contains deeper intelligence extracted from the conversation:
+
+#### Buying Signals
+Positive indicators that suggest the prospect is moving toward a purchase decision. Examples include asking about pricing details, requesting references, or discussing implementation timelines.
+
+#### Objections Raised
+Concerns or pushback expressed by the prospect. Tracking objections helps you prepare better responses for future calls and identify patterns across deals.
+
+#### Competitor Mentions
+Any competitors mentioned during the conversation appear as labeled tags. This information feeds into competitive intelligence and helps your team understand the competitive landscape for each deal.
+
+#### Decision Makers
+People identified as key decision makers in the deal, including:
+- **Name** -- The decision maker's name.
+- **Role** -- Their job title or function.
+- **Influence level** -- Rated as HIGH, MEDIUM, or LOW based on the conversation context.
+
+### Recommended Next Steps
+
+When the AI identifies clear next steps from the conversation, they appear as a numbered list of recommended actions. These are ordered by priority and provide concrete guidance on what to do after the meeting.
+
+### Full Transcript
+
+If a transcript is available, a link at the bottom of the detail view opens the full transcript in a new tab. The transcript includes speaker identification so you can follow the flow of the conversation.
+
+## Linking Conversations to Deals
+
+When meetings are linked to opportunities (deals), the conversation intelligence data enriches the deal record with:
+
+- A history of all conversations related to the deal.
+- Aggregated sentiment trends showing how the relationship is evolving over time.
+- Competitive intelligence specific to that deal.
+- A record of objections raised and buying signals detected.
+
+To link a conversation to a deal, ensure the original meeting was associated with an opportunity when it was created. You can do this from the Calendar or when scheduling a meeting from a deal's detail page.
+
+## Exporting Conversation Data
+
+Click the **Export Report** button in the top-right corner to download a CSV file containing all conversation data. The export includes:
+
+- Meeting title
+- Date
+- Duration (in minutes)
+- Meeting type (Call or Video)
+- Sentiment classification and score
+- Linked account name
+- Key topics
+- AI-generated summary
+
+This export is useful for reporting, sharing with management, or analyzing trends across a large number of conversations.
+
+## Using Conversation Insights for Coaching
+
+Conversation Intelligence is a powerful tool for sales coaching and improvement:
+
+### For Sales Managers
+
+- Review conversations with low sentiment scores to identify reps who may need coaching.
+- Compare buying signal and objection patterns across the team to share best practices.
+- Use the decision maker identification to ensure reps are engaging with the right stakeholders.
+- Track competitor mention frequency to understand market positioning.
+
+### For Sales Reps
+
+- Review your own calls to identify areas for improvement in talk track delivery.
+- Study calls with high sentiment scores to understand what techniques work well.
+- Use action items from the AI to ensure timely follow-up after every meeting.
+- Prepare for follow-up calls by reviewing the AI summary and key topics from previous conversations.
+
+### For Deal Reviews
+
+- Pull up all conversations linked to a deal to get a complete history of the engagement.
+- Review sentiment trends across multiple meetings to gauge whether a deal is progressing positively.
+- Identify early warning signs from objections and negative sentiment patterns.
+
+## Privacy Considerations and Recording Consent
+
+When using Conversation Intelligence features that involve recording and transcription:
+
+- **Inform participants** -- Always inform meeting participants that the call may be recorded and analyzed. SalesOS can be configured to display a recording notice when the meeting bot joins.
+- **Obtain consent** -- Follow your organization's policies and local regulations regarding recording consent. Some jurisdictions require all-party consent for call recording.
+- **Data retention** -- Recordings and transcripts are stored securely within SalesOS. Consult your administrator about data retention policies.
+- **Access controls** -- Conversation intelligence data respects your organization's role-based access controls. Only authorized users can view recordings, transcripts, and AI analysis.
+- **Meeting bot** -- SalesOS can join meetings via a meeting bot (Attendee Bot) that records and transcribes in real time. The bot's presence is visible to all meeting participants.
+
+## Best Practices
+
+### Record all customer-facing calls
+
+Enable recording for discovery calls, demos, negotiations, and check-ins. The more conversations you analyze, the richer your insights become.
+
+### Review insights promptly
+
+Check the AI summary and action items soon after a meeting ends. Prompt follow-up on action items demonstrates professionalism and keeps deals moving.
+
+### Use filters to focus your review
+
+If you have a large volume of calls, use sentiment and type filters to prioritize your review. Start with "Needs Attention" conversations that may require immediate action.
+
+### Link meetings to the right records
+
+Always associate meetings with the correct account and opportunity. This ensures conversation intelligence data flows into the deal context and contributes to accurate deal health scoring.
+
+### Share insights with your team
+
+Use the export feature to share conversation trends with your team during weekly meetings. Patterns in objections, competitor mentions, and buying signals can inform broader sales strategy.
+
+### Leverage insights for meeting preparation
+
+Before a follow-up call, review the previous conversation's AI summary, key topics, and action items. This allows you to pick up exactly where you left off and demonstrate attentiveness to the prospect's needs.

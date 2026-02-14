@@ -13,6 +13,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PageIndexService, SearchResult } from './pageindex.service';
@@ -22,6 +23,8 @@ interface SearchDocumentDto {
   maxResults?: number;
 }
 
+@ApiTags('Page Index')
+@ApiBearerAuth('JWT')
 @Controller('pageindex')
 @UseGuards(JwtAuthGuard)
 export class PageIndexController {

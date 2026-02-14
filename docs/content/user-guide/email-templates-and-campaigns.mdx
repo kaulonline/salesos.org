@@ -1,0 +1,339 @@
+---
+title: Email Templates & Campaigns
+description: Create reusable email templates and run targeted campaigns to engage prospects.
+---
+
+SalesOS provides a complete system for creating reusable email templates with dynamic merge fields and managing marketing campaigns that track engagement from first touch to conversion. Together, these tools help you scale your outreach while maintaining personalization.
+
+## Email Templates
+
+### Accessing Email Templates
+
+Navigate to **Email Templates** from the left sidebar. The Email Templates page displays all your templates in a searchable, filterable grid layout.
+
+### Template Statistics
+
+At the top of the page, four summary cards provide an overview of your template library:
+
+| Metric | Description |
+|--------|-------------|
+| **Total Templates** | The total number of templates in your organization |
+| **Active** | Templates that are currently enabled for use |
+| **Shared** | Templates shared with the entire team |
+| **Most Used** | The usage count of your most popular template |
+
+### Browsing and Searching Templates
+
+Templates are displayed as cards in a responsive grid. Each card shows:
+
+- **Category badge** -- The template's category with a color-coded label.
+- **Shared indicator** -- A people icon if the template is shared with the team.
+- **Active/Inactive status** -- An "Inactive" badge if the template has been deactivated.
+- **Template name** -- The display name of the template.
+- **Subject line** -- A preview of the email subject.
+- **Body preview** -- A truncated preview of the email body content.
+- **Usage count** -- How many times the template has been used.
+
+Use the **search bar** to find templates by name or subject line. Use the **category dropdown** to filter templates by their assigned category.
+
+### Template Categories
+
+Templates can be organized into the following categories:
+
+| Category | Label | Use Case |
+|----------|-------|----------|
+| `SALES` | Sales Outreach | Initial prospecting and cold outreach emails |
+| `FOLLOW_UP` | Follow Up | Post-meeting or post-demo follow-up messages |
+| `QUOTE` | Quote & Proposal | Sending quotes, proposals, and pricing information |
+| `MEETING` | Meeting | Meeting invitations, confirmations, and reminders |
+| `ONBOARDING` | Onboarding | Welcome emails and onboarding sequences for new customers |
+| `NURTURING` | Lead Nurturing | Long-term nurture emails to keep prospects engaged |
+| `ANNOUNCEMENT` | Announcement | Product updates, company news, and announcements |
+| `CUSTOM` | Custom | Any template that does not fit the predefined categories |
+
+### Creating an Email Template
+
+Click the **New Template** button to open the template creation modal. Fill in the following fields:
+
+#### Template Name (required)
+A descriptive internal name for the template (e.g., "Welcome Email" or "Post-Demo Follow Up"). This name is not visible to email recipients.
+
+#### Category
+Select a category from the dropdown to organize the template. Defaults to "Custom" if not specified.
+
+#### Subject Line (required)
+The email subject line. You can include merge fields in the subject to personalize it dynamically (e.g., `Hello {{contact.firstName}}!`).
+
+#### Email Body (required)
+The main content of the email. The body editor supports rich text and merge fields. Write your email content and insert merge fields where you want personalized data to appear.
+
+#### Share with Team
+Check this option to make the template available to all users in your organization. Unshared templates are only visible to the creator.
+
+### Using Merge Fields
+
+Merge fields are dynamic placeholders that get replaced with actual data when the email is sent. To insert a merge field:
+
+1. Place your cursor in the body editor where you want the field to appear.
+2. Click the **Merge Field** button above the editor.
+3. Select the field you want to insert from the dropdown menu.
+
+Available merge fields include:
+
+| Merge Field | Description | Example Value |
+|-------------|-------------|---------------|
+| `{{contact.firstName}}` | Contact's first name | John |
+| `{{contact.lastName}}` | Contact's last name | Smith |
+| `{{contact.email}}` | Contact's email address | john.smith@example.com |
+| `{{contact.phone}}` | Contact's phone number | +1 (555) 123-4567 |
+| `{{contact.company}}` | Contact's company name | Acme Corporation |
+| `{{account.name}}` | Account name | Acme Corporation |
+| `{{account.website}}` | Account website | www.acme.com |
+| `{{opportunity.name}}` | Opportunity/deal name | Enterprise Deal Q1 |
+| `{{opportunity.amount}}` | Deal amount | $50,000 |
+| `{{user.name}}` | Your name (the sender) | Sarah Johnson |
+| `{{user.email}}` | Your email address | sarah@company.com |
+| `{{user.phone}}` | Your phone number | +1 (555) 987-6543 |
+| `{{lead.firstName}}` | Lead's first name | Mike |
+| `{{lead.lastName}}` | Lead's last name | Johnson |
+| `{{lead.company}}` | Lead's company | Startup Inc |
+| `{{lead.email}}` | Lead's email address | mike@startup.io |
+
+### Previewing Templates
+
+When editing a template, switch to the **Preview** tab to see how the email will look with merge fields replaced by sample data. The preview shows:
+
+- The rendered subject line with sample values.
+- The full email body with all merge fields replaced.
+- A reference table showing which sample values were used.
+
+This helps you verify that your merge fields are placed correctly and that the email reads naturally before sending it to real recipients.
+
+### Creating Templates with AI
+
+Click the **Create with AI** button to open the AI Builder modal. Describe the type of email you want to create, and SalesOS will generate a complete template including the name, subject line, body content, and category. You can review and edit the AI-generated template before saving it.
+
+### Editing Templates
+
+Click the **edit icon** (pencil) on any template card to open the Edit Template modal. The edit modal provides the same fields as the create modal plus the Preview tab. Make your changes and click **Save Changes**.
+
+### Cloning Templates
+
+Click the **clone icon** (copy) on a template card to create a duplicate. The cloned template is named with a "(Copy)" suffix and can be edited independently. This is useful when you want to create a variation of an existing template without starting from scratch.
+
+### Activating and Deactivating Templates
+
+Click the **toggle icon** on a template card to activate or deactivate it. Deactivated templates remain in your library but are not available for selection when composing emails. This is useful for seasonal templates or templates that are under revision.
+
+### Deleting Templates
+
+Click the **delete icon** (trash can) on a template card. A confirmation dialog will ask you to confirm the deletion. Deleted templates cannot be recovered, so exercise caution. The confirmation dialog displays the template name to help you verify you are deleting the correct one.
+
+### Using Templates When Composing Emails
+
+When composing an email from a lead or contact record, you can select a template to pre-fill the subject line and body. The merge fields in the template are automatically replaced with the actual data from the lead or contact record, saving you time and ensuring consistency.
+
+## Campaigns
+
+### Accessing Campaigns
+
+Navigate to **Campaigns** from the left sidebar. The Campaigns page displays all your marketing campaigns in a filterable card grid layout.
+
+### Campaign Overview Statistics
+
+At the top of the page, summary pills show key aggregate metrics:
+
+- **Total** -- Total number of campaigns in the system.
+- **Active** -- Number of campaigns currently in progress.
+- **Leads** -- Total leads generated across all campaigns.
+- **Budget** -- Total budgeted cost across all campaigns.
+- **Spend Progress** -- A visual progress bar showing what percentage of the total budget has been spent.
+
+### Campaign Types
+
+SalesOS supports a wide range of campaign types to cover different marketing channels:
+
+| Type | Description |
+|------|-------------|
+| **Email** | Email marketing campaigns and drip sequences |
+| **Webinar** | Online webinar events and follow-up sequences |
+| **Conference** | In-person or virtual conference participation |
+| **Trade Show** | Trade show and exhibition campaigns |
+| **Advertisement** | Paid advertising campaigns |
+| **Direct Mail** | Physical direct mail campaigns |
+| **Referral Program** | Referral and advocacy programs |
+| **Social Media** | Social media marketing campaigns |
+| **Content Marketing** | Blog posts, whitepapers, ebooks, and other content |
+| **SEO** | Search engine optimization campaigns |
+| **PPC** | Pay-per-click advertising campaigns |
+| **Partner** | Partner and co-marketing campaigns |
+| **Other** | Any campaign type not listed above |
+
+Each campaign type is represented by a unique icon in the campaign card for quick visual identification.
+
+### Campaign Statuses
+
+Campaigns progress through the following statuses:
+
+| Status | Description |
+|--------|-------------|
+| **Planned** | The campaign is in the planning phase and has not started yet |
+| **In Progress** | The campaign is currently active and running |
+| **Paused** | The campaign has been temporarily paused |
+| **Completed** | The campaign has finished running |
+| **Aborted** | The campaign was stopped before completion |
+
+Each status is color-coded with a matching badge: blue for Planned, green for In Progress, yellow for Paused, neutral for Completed, and red for Aborted.
+
+### Creating a Campaign
+
+Click the **New Campaign** button to open the campaign creation modal. Fill in the following fields:
+
+#### Campaign Name (required)
+A descriptive name for the campaign (e.g., "Q1 Product Launch" or "2026 Enterprise Webinar Series").
+
+#### Type
+Select the campaign type from the dropdown. Defaults to Email.
+
+#### Status
+Set the initial status. Defaults to Planned. You can change this later as the campaign progresses.
+
+#### Description
+Add a detailed description of the campaign's objectives, target audience, messaging strategy, or any other relevant context.
+
+#### Start Date and End Date
+Set the campaign's planned date range. These dates appear on the campaign card and in the campaign detail view.
+
+#### Budget
+Enter the planned budget for the campaign in your organization's currency.
+
+#### Expected Revenue
+Enter the revenue you expect the campaign to generate. This is used to calculate projected ROI.
+
+### Campaign Card View
+
+Each campaign appears as a card showing:
+
+- **Campaign name and type** with a color-coded type icon.
+- **Status badge** with a status-specific icon.
+- **Lead count** -- Number of leads associated with the campaign.
+- **Opportunity count** -- Number of opportunities generated by the campaign.
+- **Budget progress bar** -- Visual indicator of how much of the budget has been spent.
+- **Date range** -- The campaign's start and end dates.
+
+Click any campaign card to open its detail panel.
+
+### Campaign Detail Panel
+
+The detail panel slides in from the right side and displays comprehensive information about the campaign:
+
+#### Key Metrics
+Four cards at the top show:
+
+- **Leads** -- Total leads generated by the campaign.
+- **Opportunities** -- Number of opportunities created from campaign leads.
+- **Revenue** -- Total revenue from won opportunities attributed to this campaign.
+- **ROI** -- Return on investment, calculated as `(Won Revenue - Actual Cost) / Actual Cost * 100`.
+
+#### Budget Utilization
+A progress bar shows how much of the budgeted cost has been spent (actual cost vs. budgeted cost).
+
+#### Campaign Details
+A table listing:
+
+- Start date and end date.
+- Expected revenue.
+- Number of converted leads.
+
+#### Description
+The full campaign description, if provided.
+
+#### Performance Metrics
+When performance data is available, additional metrics are displayed:
+
+- **Response Rate** -- Percentage of campaign members who responded.
+- **Conversion Rate** -- Percentage of campaign members who converted.
+
+### Filtering and Searching Campaigns
+
+Use the following controls to find specific campaigns:
+
+- **Search bar** -- Search campaigns by name.
+- **Type dropdown** -- Filter by campaign type (Email, Webinar, Conference, etc.).
+- **Status dropdown** -- Filter by campaign status (Planned, In Progress, Paused, Completed, Aborted).
+
+Filters can be combined. For example, you can search for "Product Launch" while filtering to only show Email campaigns that are In Progress.
+
+### Campaign Members
+
+Campaign members are the leads and contacts enrolled in a campaign. Each member record tracks:
+
+| Field | Description |
+|-------|-------------|
+| **Lead or Contact** | The associated lead or contact record |
+| **Status** | The member's engagement status: Sent, Responded, Converted, or Opted Out |
+| **First Responded Date** | When the member first engaged with the campaign |
+| **Has Responded** | Whether the member has responded at all |
+
+Adding leads and contacts to campaigns allows you to track which campaigns are generating engagement and ultimately driving conversions.
+
+### Campaign Metrics and Attribution
+
+SalesOS tracks the following metrics for each campaign to measure effectiveness:
+
+- **Number Sent** -- How many messages or touches were sent.
+- **Number of Leads** -- Total leads attributed to the campaign.
+- **Number of Contacts** -- Total contacts associated with the campaign.
+- **Number of Opportunities** -- Deals generated from the campaign.
+- **Number of Converted Leads** -- Leads that were converted to contacts/opportunities.
+- **Amount All Opportunities** -- Total pipeline value from campaign-generated opportunities.
+- **Amount Won Opportunities** -- Revenue from closed-won deals attributed to the campaign.
+- **ROI** -- Return on investment based on actual cost and won revenue.
+- **Cost Per Lead** -- Average cost to acquire a lead through this campaign.
+- **Conversion Rate** -- Percentage of leads that converted.
+
+#### Lead Attribution
+
+When a lead is generated through a campaign, SalesOS tracks the campaign source on the lead record. This attribution persists through the lead lifecycle, so when the lead converts to a contact and generates an opportunity, the originating campaign receives credit for the revenue.
+
+## Best Practices
+
+### Email Template Best Practices
+
+#### Personalize with merge fields
+Always use merge fields for the recipient's name, company, and other relevant details. Personalized emails see significantly higher engagement rates than generic messages.
+
+#### Organize templates by category
+Use the category system to keep your template library organized. This makes it easy for team members to find the right template quickly.
+
+#### Share high-performing templates
+When a template performs well, mark it as shared so your entire team can benefit. Track usage counts to identify which templates resonate best.
+
+#### Preview before sending
+Always use the Preview tab to verify that merge fields render correctly and that the email reads naturally with sample data.
+
+#### Keep templates up to date
+Regularly review and update your templates. Deactivate outdated templates rather than deleting them, in case you need to reference them later.
+
+#### Use AI to jumpstart creation
+If you are starting from scratch, use the AI Builder to generate a first draft. Then customize the AI-generated content to match your voice and specific use case.
+
+### Campaign Management Best Practices
+
+#### Set clear objectives
+Before creating a campaign, define what success looks like. Set realistic budget and expected revenue numbers so you can measure ROI accurately.
+
+#### Track all channels
+Create campaigns for every marketing channel you use, including events, content, and partner activities. Comprehensive tracking gives you a full picture of what drives leads and revenue.
+
+#### Monitor budget utilization
+Use the budget progress bar to keep spending on track. If a campaign is underspending, consider reallocating budget to higher-performing campaigns.
+
+#### Review ROI regularly
+Check the ROI metric on each campaign to understand which campaign types and channels deliver the best return. Use this data to inform future campaign planning.
+
+#### Link leads to campaigns
+Always associate new leads with their source campaign. This ensures accurate attribution and helps you understand which campaigns are generating the most valuable leads.
+
+#### Use status transitions thoughtfully
+Move campaigns through statuses (Planned, In Progress, Paused, Completed, Aborted) to maintain an accurate view of your active marketing efforts. Pausing a campaign is preferable to aborting it if you plan to resume later.

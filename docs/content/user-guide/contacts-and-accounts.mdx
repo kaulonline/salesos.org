@@ -1,0 +1,219 @@
+---
+title: Contacts & Accounts
+description: Organize and manage your customer relationships with contacts and accounts.
+---
+
+Contacts and accounts form the foundation of your customer relationship data in SalesOS. An **account** represents a company or organization, while a **contact** represents an individual person associated with an account. Together, they provide a complete picture of who you are selling to.
+
+## Contacts
+
+### Contact List View
+
+Navigate to **Contacts** from the left sidebar. The contacts page opens with a header showing summary statistics:
+
+- **Total Contacts** -- The total number of contacts in your CRM.
+- **With Email** -- Contacts that have an email address on file.
+- **With Phone** -- Contacts that have a phone number on file.
+- **Accounts** -- The number of distinct accounts your contacts are associated with.
+
+### Searching and Filtering Contacts
+
+Use the search bar to find contacts by name, email, job title, or account name. Results update in real time as you type.
+
+### Grid and List Views
+
+Toggle between two display modes using the view switcher next to the search bar:
+
+- **List View** -- A tabular layout showing Contact name, Account, Title, Email, and Role in columns. This is the default view and is best for quickly scanning many contacts.
+- **Grid View** -- A card-based layout that shows each contact as a visual card with their avatar, name, title, account, role badge, email, phone, and LinkedIn link. This view is better for visual browsing.
+
+### Creating a Contact
+
+Click **Add Contact** in the top-right corner to open the New Contact form. Fill in the following fields:
+
+- **First Name** (required)
+- **Last Name** (required)
+- **Account** (required) -- Select the account this contact belongs to from the dropdown.
+- **Email**
+- **Phone**
+- **Title** (job title, such as "VP of Sales")
+
+Click **Create Contact** to save the record.
+
+### Smart Capture for Contacts
+
+Click the **Smart Capture** button (with the camera icon) to use AI-powered image recognition to create contacts from business cards or screenshots. The system extracts name, email, phone, and other details automatically.
+
+### Editing a Contact
+
+Click on any contact in the list or grid to open the contact detail page, where you can edit all fields.
+
+### Contact Detail Page
+
+The contact detail page shows comprehensive information about an individual:
+
+- **Contact Information** -- Full name, email, phone, job title, and LinkedIn profile.
+- **Related Account** -- The account (company) this contact belongs to, with a link to the account detail page.
+- **Role** -- The contact's role in the buying process. Possible roles include:
+  - **Champion** -- Your internal advocate at the account.
+  - **Decision Maker** -- Has authority to approve purchases.
+  - **Economic Buyer** -- Controls the budget.
+  - **Influencer** -- Can influence the decision but does not have final authority.
+  - **Blocker** -- May be opposed to or delaying the purchase.
+- **Related Deals** -- Opportunities this contact is associated with.
+- **Activity Timeline** -- A chronological record of all interactions with this contact, including calls, emails, meetings, and notes.
+
+### Linking Contacts to Accounts
+
+Every contact in SalesOS is linked to an account. When creating a contact, you must select an existing account from the dropdown. If the account does not yet exist, create it first from the Accounts page.
+
+You can also add contacts directly from an account detail page by clicking **Add Contact**, which pre-fills the account association.
+
+## Accounts
+
+### Account List View
+
+Navigate to **Accounts** (labeled "Companies" in the sidebar) to see your accounts. The accounts page shows summary statistics at the top, followed by a searchable, filterable list of all accounts.
+
+### Searching and Filtering Accounts
+
+Use the search bar to find accounts by name. The accounts page supports toggling between grid and list view modes, similar to contacts.
+
+Each account in the list displays:
+
+- **Account name** and industry
+- **Account type** (Customer, Prospect, Partner, Reseller, Competitor)
+- **Health score** (if available)
+- **Annual revenue**
+- **Number of contacts and deals**
+- **Last activity date**
+
+### Creating an Account
+
+Click **Add Account** to open the New Account form. Fill in:
+
+- **Account Name** (required)
+- **Type** -- Select from Prospect, Customer, Partner, Reseller, or Competitor.
+- **Website**
+- **Industry**
+- **Phone**
+
+Click **Create Account** to save the record.
+
+### Editing an Account
+
+Click on any account to open its detail page, then click the **Edit** button to modify account information.
+
+### Account Detail Page
+
+The account detail page provides a comprehensive view of a company and all its related data:
+
+#### Header
+
+Shows the account name, type badge, industry, and action buttons for editing and deleting.
+
+#### Sidebar
+
+A left sidebar provides quick navigation to other recently viewed accounts.
+
+#### Accordion Sections
+
+The detail page organizes information into expandable accordion sections:
+
+- **Basic Information** -- Company name, website, phone, industry, account type, number of employees, annual revenue, and description.
+- **Hierarchy** -- Shows parent and child account relationships (see Account Hierarchy below).
+
+#### Main Content Area
+
+The right side of the detail page includes:
+
+- **Revenue data** -- Charts and metrics showing the account's revenue history.
+- **Related Contacts** -- All contacts associated with this account, with the ability to add new contacts directly.
+- **Related Deals** -- All opportunities linked to this account, with the ability to create new deals.
+- **Activity Timeline** -- A complete record of interactions with this account.
+
+### Account Hierarchy
+
+SalesOS supports parent-child relationships between accounts. This is useful for modeling corporate structures where a parent company has subsidiaries or divisions.
+
+The hierarchy is displayed in the account detail page's accordion section. You can:
+
+- View the parent account and navigate to it.
+- See all child (subsidiary) accounts.
+- Understand the organizational structure at a glance.
+
+### Account Health Scoring
+
+SalesOS calculates a health score (0-100) for each account based on multiple factors:
+
+| Factor | Impact |
+|--------|--------|
+| Recent activity (last 30 days) | High positive impact |
+| Moderate activity (last 90 days) | Moderate positive impact |
+| Open deals | Positive impact |
+| Number of contacts on file | Positive impact |
+| Annual revenue recorded | Minor positive impact |
+| Website and phone on file | Minor positive impact |
+| Account type (Customer) | Minor positive impact |
+| Account status (Active) | Minor positive impact |
+
+Health scores are categorized into four statuses:
+
+- **Healthy** (65+) -- Strong engagement and relationship.
+- **At Risk** (40-64) -- Some warning signs that need attention.
+- **Critical** (below 40) -- Significant risk of churn or disengagement.
+- **Unknown** (0) -- Not enough data to calculate a score.
+
+Each account also has a **trend indicator**:
+
+- **Improving** -- Recent activity with open deals.
+- **Stable** -- Moderate, consistent engagement.
+- **Declining** -- Extended periods without activity or missing relationships.
+
+#### Account Health Dashboard
+
+Navigate to **Account Health** from the sidebar for a dedicated view of all accounts sorted by health score. This page shows:
+
+- Summary cards: counts of Healthy, At Risk, Critical accounts, and the average score.
+- A searchable, filterable list of accounts sorted with the most critical accounts first.
+- A detail panel on the right that shows risk factors and opportunities for the selected account.
+
+## Importing and Exporting Contacts and Accounts
+
+### Importing
+
+SalesOS supports CSV imports for both contacts and accounts. Use the import functionality from the respective list pages to:
+
+1. Upload a CSV file.
+2. Map your file columns to SalesOS fields.
+3. Run the import and review results.
+
+### Exporting
+
+Export contacts or accounts to CSV files for use in spreadsheets, mail merges, or other tools. Use the export options available on each list page.
+
+## Merging Duplicate Records
+
+SalesOS includes a **Duplicate Detection Panel** that automatically identifies potential duplicate contacts and leads. When duplicates are detected on a record's detail page:
+
+1. Review the suggested duplicates and their match confidence.
+2. Select which record to keep as the primary.
+3. Merge the records, combining data from both into a single clean record.
+
+Regularly reviewing and merging duplicates keeps your CRM data clean and prevents confusion about which record is the source of truth.
+
+## Best Practices
+
+1. **Always link contacts to accounts.** Every contact should be associated with an account. This ensures that when you view an account, you see the full picture of all people you are engaging with at that company.
+
+2. **Assign contact roles.** Marking contacts as Champion, Decision Maker, Economic Buyer, or Influencer helps your team understand the buying committee and tailor their approach.
+
+3. **Keep account information complete.** Fill in website, industry, annual revenue, and employee count. This data feeds into health scoring and AI insights.
+
+4. **Monitor account health regularly.** Use the Account Health dashboard to identify at-risk accounts before they churn. Accounts with declining trends need immediate outreach.
+
+5. **Use Smart Capture for speed.** At events or when processing business cards, use Smart Capture to quickly create contacts without manual data entry.
+
+6. **Leverage the hierarchy feature.** For enterprise accounts with multiple divisions or subsidiaries, set up parent-child relationships to maintain a clear organizational picture.
+
+7. **Clean up duplicates promptly.** When the duplicate detection panel flags potential matches, review and merge them right away. Duplicate records lead to fragmented activity histories and inaccurate reporting.

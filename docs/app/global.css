@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
+  --font-body: var(--font-inter), 'Inter', sans-serif;
+}
+
+:root {
+  --color-fd-primary: #EAD07D;
+  --color-fd-primary-foreground: #1A1A1A;
+  --color-fd-background: #F2F1EA;
+  --color-fd-foreground: #1A1A1A;
+  --color-fd-card: #FFFFFF;
+  --color-fd-card-foreground: #1A1A1A;
+  --color-fd-muted: #F8F8F6;
+  --color-fd-muted-foreground: #666666;
+  --color-fd-border: rgba(0, 0, 0, 0.05);
+  --color-fd-ring: #EAD07D;
+  --color-fd-accent: #EAD07D;
+  --color-fd-accent-foreground: #1A1A1A;
+  --color-fd-popover: #FFFFFF;
+  --color-fd-popover-foreground: #1A1A1A;
+  --color-fd-secondary: #F0EBD8;
+  --color-fd-secondary-foreground: #1A1A1A;
+}
+
+.dark {
+  --color-fd-background: #0F0F0F;
+  --color-fd-foreground: #F2F1EA;
+  --color-fd-card: #1A1A1A;
+  --color-fd-card-foreground: #F2F1EA;
+  --color-fd-muted: #262626;
+  --color-fd-muted-foreground: #999999;
+  --color-fd-border: rgba(255, 255, 255, 0.08);
+  --color-fd-popover: #1A1A1A;
+  --color-fd-popover-foreground: #F2F1EA;
+  --color-fd-secondary: #262626;
+  --color-fd-secondary-foreground: #F2F1EA;
+  --color-fd-accent: #EAD07D;
+  --color-fd-accent-foreground: #1A1A1A;
+}

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PipelineIntelligenceService } from './pipeline-intelligence.service';
 import {
@@ -17,6 +18,8 @@ import {
   UpdateForecastCategoryDto,
 } from './dto/pipeline.dto';
 
+@ApiTags('Pipelines')
+@ApiBearerAuth('JWT')
 @Controller('pipeline')
 @UseGuards(JwtAuthGuard)
 export class PipelineController {

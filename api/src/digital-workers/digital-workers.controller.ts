@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { SignalsService } from './signals/signals.service';
 import { CoachingAgendaService } from './coaching-agenda/coaching-agenda.service';
@@ -29,6 +30,8 @@ import {
   CompareSessionsDto,
 } from './dto/coaching-sessions.dto';
 
+@ApiTags('Digital Workers')
+@ApiBearerAuth('JWT')
 @Controller('digital-workers')
 @UseGuards(JwtAuthGuard)
 export class DigitalWorkersController {

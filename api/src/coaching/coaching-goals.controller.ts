@@ -17,6 +17,7 @@ import {
   Request,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PrismaService } from '../database/prisma.service';
 
@@ -43,6 +44,8 @@ interface PracticePattern {
   isActive: boolean;
 }
 
+@ApiTags('Coaching Goals')
+@ApiBearerAuth('JWT')
 @Controller('coaching')
 @UseGuards(JwtAuthGuard)
 export class CoachingGoalsController {

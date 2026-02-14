@@ -1,0 +1,280 @@
+---
+title: Quotes (CPQ)
+description: Configure, price, and generate professional quotes for your customers.
+---
+
+SalesOS includes a full Configure, Price, Quote (CPQ) engine that lets your sales team build accurate, professional quotes in minutes. Quotes pull products from your catalog, apply pricing from price books, factor in discounts and taxes, and can be sent directly to customers for review and acceptance. This guide walks through the entire quoting process from creation to conversion.
+
+## Quote Lifecycle
+
+Every quote in SalesOS moves through a defined set of statuses. Understanding this lifecycle helps you track where each quote stands and what actions are available at each stage.
+
+| Status | Description |
+|--------|-------------|
+| **Draft** | The quote is being built. Line items, pricing, and details can be freely edited. This is the initial status for all new quotes. |
+| **Pending Approval** | The quote has been submitted for internal approval. It cannot be sent to the customer until approved. See the approval workflows section below. |
+| **Approved** | The quote has passed all required approval steps and is ready to be sent. |
+| **Sent** | The quote has been emailed to the customer. SalesOS records the sent date and time. |
+| **Viewed** | The customer has opened the quote. SalesOS tracks when the quote was first viewed, giving you insight into customer engagement. |
+| **Accepted** | The customer has formally accepted the quote. The accepted date is recorded and the quote can now be converted to an order. |
+| **Rejected** | The customer has declined the quote. A rejection reason is captured for reporting and follow-up. |
+| **Expired** | The quote's expiration date has passed without the customer accepting or rejecting it. |
+| **Cancelled** | The quote was cancelled internally before it reached a final outcome. |
+
+Quotes generally flow from Draft through Sent to Accepted (the "happy path"), but can branch to Rejected, Expired, or Cancelled at various points.
+
+## Creating a New Quote
+
+### From the Quotes Page
+
+1. Navigate to **Quotes** from the dashboard.
+2. Click the **New Quote** button.
+3. Fill in the required fields:
+   - **Quote Name** -- A descriptive name for the quote (e.g., "Q-2024-001 - Enterprise License").
+   - **Opportunity ID** -- The deal or opportunity this quote is associated with. Linking a quote to an opportunity keeps your pipeline data accurate.
+   - **Account ID** -- The customer account the quote is for.
+   - **Expiration Date** (optional) -- The date after which the quote is no longer valid. Setting an expiration creates urgency and keeps your pipeline clean.
+4. Click **Create Quote**.
+
+The system automatically generates a unique quote number and creates the quote in **Draft** status. You are taken to the quote detail page where you can add line items.
+
+### From an Opportunity
+
+You can also create a quote directly from an opportunity's detail page. This pre-fills the opportunity and account information, saving time and reducing errors.
+
+## Adding Line Items
+
+Line items are the individual products and services that make up the quote. Each line item represents one product at a specific quantity and price.
+
+To add line items:
+
+1. Open the quote detail page.
+2. Click **Add Line Item**.
+3. Select a product from the catalog. Only active products are available for selection.
+4. Specify the **quantity**.
+5. The **unit price** is automatically populated based on the quote's price book (if one is set) or the product's list price. You can override it manually.
+6. Optionally add a **description** specific to this line item.
+7. Save the line item.
+
+Repeat for each product you want to include. Line items can be reordered by adjusting their sort order.
+
+### Editing Line Items
+
+Click on any existing line item to modify its quantity, unit price, discount, description, or sort order. Changes are recalculated immediately.
+
+### Removing Line Items
+
+Click the delete button on a line item to remove it from the quote. The quote totals are recalculated automatically.
+
+## Applying Price Books, Discounts, and Tax Rates
+
+### Price Books
+
+When creating or editing a quote, you can associate it with a specific price book. When a price book is set:
+
+- Adding a product that has an entry in the selected price book will use the price book's unit price instead of the product's list price.
+- Products without an entry in the price book fall back to their list price.
+- Changing the price book on a quote does not retroactively update existing line items. You can manually recalculate the quote to refresh prices.
+
+### Discounts
+
+Discounts can be applied at two levels:
+
+- **Line item level** -- Each line item can have its own discount, specified as either a fixed dollar amount or a percentage of the line item's subtotal.
+- **Quote level** -- A discount amount or percentage can be applied to the entire quote, reducing the overall total after all line item subtotals are summed.
+
+Discount rules configured in the system (volume discounts, promo codes, customer segment discounts, bundle discounts, and time-limited offers) can be applied to eligible quotes. See [Products, Price Books & Pricing](/user-guide/products-and-pricing) for details on setting up discount rules.
+
+### Tax Rates
+
+Tax is calculated based on the configured tax rates for the customer's billing region. Tax can be applied at the line item level (a tax percentage per line item) or at the quote level. SalesOS supports multiple tax types including Sales Tax, VAT, GST, HST, and PST.
+
+## Quote Totals
+
+The quote detail page displays a breakdown of the financial summary:
+
+| Component | Calculation |
+|-----------|-------------|
+| **Subtotal** | Sum of all line item totals (quantity x unit price for each item). |
+| **Discount** | Total discount applied, whether at the line item level, quote level, or both. |
+| **Tax** | Tax amount based on configured tax rates and percentages. |
+| **Shipping / Handling** | Optional shipping or handling charges. |
+| **Total** | Subtotal - Discount + Tax + Shipping/Handling. |
+
+All calculations update in real time as you add, edit, or remove line items and adjust discounts or tax.
+
+## Editing and Cloning Quotes
+
+### Editing a Quote
+
+Quotes in **Draft** status can be freely edited. You can change the quote name, expiration date, contact, price book, terms, notes, billing and shipping addresses, and all line items.
+
+Once a quote has been sent, editing is restricted to prevent discrepancies between what you and the customer see. If changes are needed after sending, consider creating a new version (see versioning below) or cloning the quote.
+
+### Cloning a Quote
+
+Cloning creates an exact copy of an existing quote, including all line items, pricing, and configuration. The cloned quote starts in **Draft** status with a new quote number, allowing you to make modifications without affecting the original.
+
+To clone a quote, open the quote detail page and use the clone action. This is useful when:
+
+- You need to create a revised version of a quote with different pricing or products.
+- You want to use a previous quote as a template for a new customer.
+- A quote expired and you want to recreate it with updated dates.
+
+## Sending Quotes to Customers
+
+When your quote is ready, you can send it directly to the customer via email from within SalesOS.
+
+1. Open the quote in Draft or Approved status.
+2. Click **Send Quote**.
+3. Configure the email:
+   - **Recipient email** -- The primary recipient's email address.
+   - **CC emails** (optional) -- Additional recipients.
+   - **Subject** -- A default subject is generated, but you can customize it.
+   - **Message** -- Include a personal message alongside the quote.
+   - **Attach PDF** -- Optionally attach the quote as a PDF document.
+4. Click **Send**.
+
+The quote status changes to **Sent** and the sent date is recorded. The customer receives a professional email with the quote details or an attached PDF.
+
+### PDF Generation
+
+SalesOS can generate a formatted PDF of any quote. The PDF includes the quote header, customer information, line items with pricing, totals, and any terms or notes. PDF templates are available in three styles:
+
+- **Standard** -- A clean, all-purpose layout.
+- **Professional** -- A polished layout suitable for enterprise sales.
+- **Minimal** -- A simplified layout with only essential information.
+
+You can download the PDF at any time from the quote detail page, regardless of the quote's status.
+
+## Tracking Quote Views
+
+When a customer opens the quote (via an emailed link or shared document), SalesOS records the view. The quote status transitions from **Sent** to **Viewed**, and the timestamp is captured.
+
+This gives your sales team real-time visibility into customer engagement. If a customer has viewed the quote but not responded, it signals an opportunity for a timely follow-up.
+
+## Approval Workflows
+
+For quotes that exceed certain thresholds or meet specific conditions, SalesOS can require internal approval before the quote can be sent to the customer.
+
+### How Approval Workflows Work
+
+1. An admin configures an **approval workflow** with conditions (e.g., "total amount greater than $50,000" or "discount percentage greater than 20%").
+2. The workflow defines one or more **approval steps**, each assigned to a specific user, role, direct manager, or skip-level manager.
+3. When a sales rep finishes building a quote that matches the workflow's conditions, they submit it for approval.
+4. The quote enters **Pending Approval** status.
+5. Approvers are notified and can approve, reject, or delegate the request.
+6. If all steps are approved, the quote moves to **Approved** and can be sent.
+7. If any step is rejected, the quote returns to the rep with the rejection reason and comments.
+
+### Approval Workflow Features
+
+- **Multi-level approvals** -- Chain multiple approval steps in sequence (e.g., sales manager first, then VP of Sales).
+- **Auto-approve / Auto-reject** -- Steps can be configured to automatically approve or reject after a specified number of hours if no action is taken.
+- **Delegation** -- Approvers can delegate their review to another user when they are unavailable.
+- **Required comments** -- Steps can require approvers to provide comments with their decision.
+- **Condition-based routing** -- Workflows are triggered based on configurable conditions: total amount, discount amount, discount percentage, line item count, account type, or region.
+
+## Accepting and Rejecting Quotes (Customer-Facing)
+
+### Accepting a Quote
+
+When a customer accepts a quote, the status changes to **Accepted** and the acceptance date is recorded. An accepted quote is ready to be converted into an order.
+
+### Rejecting a Quote
+
+When a customer rejects a quote, they provide a reason for the rejection. The quote status changes to **Rejected** and the rejection reason and date are captured. This data feeds into CPQ Analytics, helping you understand common lost-deal reasons and improve future quoting.
+
+## Converting Accepted Quotes to Orders
+
+One of the most powerful features of the SalesOS CPQ system is the ability to convert an accepted quote directly into an order with a single action.
+
+When you convert a quote to an order:
+
+- A new order is created with a unique order number.
+- All line items from the quote -- including products, quantities, unit prices, discounts, and tax -- are automatically copied to the order.
+- The order is linked back to the original quote (and to the associated opportunity and account).
+- The order starts in **Draft** status, ready for fulfillment processing.
+
+You can optionally specify an order date, expected delivery date, and any internal notes during conversion.
+
+For details on managing orders after conversion, see [Orders](/user-guide/orders).
+
+## Quote Versioning
+
+SalesOS maintains a version history for each quote, allowing you to track changes over time and compare different iterations.
+
+### How Versioning Works
+
+- Each time a significant change is made to a quote, a new **version snapshot** is created.
+- The snapshot captures the complete state of the quote at that point: all line items, pricing, totals, terms, contacts, and addresses.
+- Versions are numbered sequentially (v1, v2, v3, etc.).
+
+### What You Can Do with Versions
+
+- **View version history** -- See a chronological list of all versions for a quote, including who made each change and when.
+- **Compare versions** -- Select two versions to see a side-by-side comparison of what changed, including field-level differences and line item additions, removals, or modifications.
+- **Restore a previous version** -- Roll back to a prior version if needed, with an option to create a backup of the current state before restoring.
+- **Add a reason** -- Document why a version was created (e.g., "Customer requested lower pricing" or "Added implementation services").
+
+Versioning is particularly useful in complex sales cycles with multiple rounds of negotiation, ensuring you never lose track of what was proposed at each stage.
+
+## CPQ Analytics
+
+SalesOS provides a dedicated **CPQ Analytics** dashboard that gives you visibility into your quoting and ordering performance. Access it from the dashboard navigation.
+
+### Key Metrics
+
+The CPQ Analytics page tracks:
+
+- **Total Revenue** -- Sum of all order revenue, with month-over-month change indicators.
+- **Quotes Created** -- Volume of quotes generated, with trend data.
+- **Orders** -- Number of orders created and completed.
+- **Conversion Rate** -- The percentage of quotes that convert to orders.
+
+### Analytics Views
+
+- **Revenue Trend** -- A bar chart showing revenue over time (daily, weekly, or monthly), with configurable date ranges (last 7 days, 30 days, 90 days, month-to-date, or year-to-date).
+- **Quote Pipeline** -- A breakdown of quotes by status, showing how many quotes and how much value sit at each stage.
+- **Top Products** -- Ranked list of your best-selling products by revenue and quantity.
+- **Top Accounts** -- Your highest-value accounts by order revenue.
+- **Conversion Funnel** -- A visual funnel showing drop-off rates at each stage from quote creation to order completion.
+- **Sales Rep Performance** -- A table comparing reps by quotes created, won, lost, win rate, total value, and average deal size.
+- **Revenue Forecast** -- Projected revenue for the next three months, with confidence scores based on pipeline data.
+
+### Exporting Analytics
+
+Click the **Export** button to download CPQ Analytics data in XLSX, CSV, or PDF format for sharing with stakeholders or offline analysis.
+
+## Best Practices for Effective Quoting
+
+### Speed and Responsiveness
+
+- Set up your product catalog and price books thoroughly before your team starts quoting. A well-configured catalog means reps can build quotes in minutes, not hours.
+- Use the **clone** feature to quickly create new quotes based on successful past quotes.
+- Send quotes promptly -- SalesOS tracks when customers view them, and data consistently shows that faster response times correlate with higher conversion rates.
+
+### Accuracy and Professionalism
+
+- Always set an **expiration date** on your quotes. This creates urgency, keeps your pipeline accurate, and prevents stale pricing from persisting.
+- Double-check line items, quantities, and discounts before sending. Use the quote totals breakdown (subtotal, discount, tax, total) as a final review.
+- Include clear **terms and conditions** and any relevant **notes** to set customer expectations upfront.
+- Choose the appropriate **PDF template** for your audience -- professional for enterprise deals, minimal for quick transactional sales.
+
+### Pipeline Hygiene
+
+- Use **status filters** on the Quotes page to quickly identify quotes that need attention (e.g., all Sent quotes that have not been viewed, or all quotes approaching expiration).
+- When a quote is rejected, ensure the rejection reason is captured. This data powers your CPQ Analytics and helps your team improve future proposals.
+- Convert accepted quotes to orders promptly to keep your revenue pipeline moving.
+
+### Discount Governance
+
+- Use approval workflows for quotes above your organization's discount or value thresholds. This protects margins while still empowering reps to offer competitive pricing.
+- Review the **Sales Rep Performance** table in CPQ Analytics regularly to ensure discount practices are consistent across the team.
+- Leverage **discount rules** rather than ad-hoc line item discounts so that pricing remains consistent and auditable.
+
+### Version Control
+
+- Add a reason or description when creating a new quote version so that you and your team can easily understand the context of changes months later.
+- Before making significant changes to a sent or viewed quote, create a version snapshot as a record of what the customer previously saw.
+- Use version comparison to clearly articulate changes to the customer when presenting a revised quote.

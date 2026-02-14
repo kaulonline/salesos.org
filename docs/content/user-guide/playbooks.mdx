@@ -1,0 +1,256 @@
+---
+title: Playbooks
+description: Build automated sales sequences to standardize and scale your outreach.
+---
+
+Playbooks in SalesOS are structured, multi-step sales sequences that guide reps through repeatable processes. Whether you are running a discovery call sequence, an enterprise closing playbook, or a customer onboarding workflow, playbooks ensure that every rep follows the same proven steps -- consistently and at scale.
+
+## What Playbooks Are
+
+A playbook is an ordered series of steps that define a sales process. Each step represents an action -- such as sending an email, making a call, scheduling a meeting, or completing a task -- along with a timing offset that determines when the step should occur relative to the playbook's start.
+
+Playbooks can be triggered automatically when certain events occur (such as a new deal being created) or enrolled manually by a rep for a specific lead or contact. Once a playbook is running, SalesOS tracks which step each enrolled contact is on and prompts the rep to complete each step on schedule.
+
+---
+
+## Accessing Playbooks
+
+Navigate to the Playbooks page from the **More > Productivity** menu in the main navigation. The Playbooks page shows all your organization's playbooks along with key statistics.
+
+---
+
+## Playbook List View
+
+The Playbooks page displays your playbooks in a list format. Each playbook card shows:
+
+- **Name** and **Description** -- What the playbook is for
+- **Status** -- Whether the playbook is Active or Inactive
+- **Trigger** -- What event starts the playbook (Manual, Deal Created, Stage Change, Lead Qualified, or Account Created)
+- **Target Stage** -- The specific pipeline stage the playbook targets, if applicable
+- **Step Count** -- How many steps are in the sequence
+- **Execution Count** -- How many times the playbook has been run
+
+### Filtering Playbooks
+
+Use the filter tabs at the top to narrow the list:
+
+- **All Playbooks** -- Shows everything
+- **Active** -- Shows only playbooks that are currently enabled and running
+- **Inactive** -- Shows playbooks that have been paused or disabled
+
+### Stats Cards
+
+Above the playbook list, four summary cards provide an overview:
+
+- **Total Playbooks** -- The total number of playbooks in your organization
+- **Active** -- How many playbooks are currently active
+- **Total Executions** -- The cumulative number of times playbooks have been run
+- **Completion Rate** -- The percentage of playbook executions that completed all steps
+
+---
+
+## Creating a New Playbook
+
+Click the **Create Playbook** button in the top-right corner to open the creation modal. You can create a playbook manually or use AI to generate one.
+
+### Manual Creation
+
+The creation form includes the following fields:
+
+#### Name
+
+Give your playbook a descriptive name, such as "Enterprise Discovery Process" or "SMB Outbound Cadence."
+
+#### Trigger
+
+Select what event starts the playbook:
+
+- **Manual** -- The playbook must be manually enrolled for each contact
+- **Deal Created** -- The playbook starts automatically when a new deal is created
+- **Stage Change** -- The playbook starts when a deal moves to a specific stage
+- **Lead Qualified** -- The playbook starts when a lead is qualified
+- **Account Created** -- The playbook starts when a new account is created
+
+#### Target Stage
+
+Optionally specify a pipeline stage that this playbook targets. This is useful for stage-change triggers and for organizational clarity.
+
+#### Description
+
+Provide a brief description of the playbook's purpose and intended use.
+
+#### Steps
+
+Build your sequence by adding steps one at a time (see the Step Types section below). For each step, specify:
+
+- **Type** -- The kind of action (Task, Email, Call, Meeting, Wait, or Condition)
+- **Title** -- A descriptive name for the step
+- **Days Offset** -- When this step should execute, relative to the playbook start (Day 0 = immediately, Day 3 = three days after enrollment)
+- **Required** -- Whether this step must be completed before the sequence can advance
+
+Steps are displayed in order with visual indicators showing their type and timing.
+
+---
+
+## Six Step Types
+
+Playbooks support six types of steps, each designed for a different action:
+
+### Task
+
+Assigns a task to the rep. This could be a research task, a data entry step, or any other action that needs to be tracked and completed. The task appears in the rep's Action Items.
+
+**Example:** "Research the prospect's recent earnings call and identify three talking points."
+
+### Email
+
+Sends an automated email or prompts the rep to send an email using a template. Email steps can leverage SalesOS email templates for consistent messaging.
+
+**Example:** "Send the initial discovery email using the 'Enterprise Introduction' template."
+
+### Call
+
+Schedules a call reminder for the rep. The step creates a task or reminder to make the call at the specified time offset.
+
+**Example:** "Call the champion to discuss the proposal and address initial objections."
+
+### Meeting
+
+Schedules a meeting. Meeting steps prompt the rep to book a meeting at the appropriate point in the sequence.
+
+**Example:** "Schedule a demo with the technical evaluation team."
+
+### Wait
+
+Pauses the sequence for a specified duration before advancing to the next step. Wait steps do not require any action from the rep -- they simply introduce a delay.
+
+**Example:** "Wait 3 days after sending the proposal before following up."
+
+### Condition
+
+Branches the sequence based on criteria. Condition steps evaluate whether a specific event has occurred (such as an email being opened or a deal stage changing) and determine which path the sequence takes next.
+
+**Example:** "If the prospect opened the proposal email, proceed to the follow-up call. Otherwise, send a re-engagement email."
+
+---
+
+## Building a Sequence
+
+When creating or editing a playbook, you build the sequence by adding steps in order:
+
+1. Select the step type from the dropdown
+2. Enter a title for the step
+3. Set the days offset (the number of days after enrollment when this step should execute)
+4. Click **Add** to append the step to the sequence
+
+Steps are displayed in a visual timeline with connecting lines, making it easy to see the flow. Each step shows its type icon, title, description, required status, and day offset.
+
+To remove a step, click the **X** button next to it. Steps can be reordered by removing and re-adding them in the desired order.
+
+---
+
+## Triggers: What Starts a Playbook
+
+Playbooks can be started in several ways:
+
+### Automatic Triggers
+
+- **Deal Created** -- The playbook enrolls the deal's primary contact as soon as a new deal is created
+- **Stage Change** -- The playbook starts when a deal moves to a specified pipeline stage
+- **Lead Qualified** -- The playbook starts when a lead's status changes to qualified
+- **Account Created** -- The playbook starts when a new account is added to the system
+
+Automatic triggers fire without any manual action. When the triggering event occurs, SalesOS starts the playbook for the relevant entity.
+
+### Manual Enrollment
+
+For playbooks with a **Manual** trigger, reps enroll specific leads or contacts into the playbook themselves. This is useful for playbooks that require human judgment about when to start, such as a custom outreach sequence for a specific prospect segment.
+
+---
+
+## Monitoring Execution
+
+Once playbooks are running, you can monitor their progress:
+
+- **Execution Count** -- Each playbook card shows how many times it has been executed
+- **Completion Rate** -- The dark stats card shows the overall percentage of executions that reached the final step
+- **Expanded View** -- Click the expand arrow on any playbook to see its full step sequence, including which steps are marked as required
+
+The playbook execution history allows you to see which contacts are at which step, helping you ensure that no one falls through the cracks.
+
+---
+
+## Pausing and Resuming Playbooks
+
+### Deactivating a Playbook
+
+To pause a playbook, toggle it from Active to Inactive. When a playbook is deactivated:
+
+- No new enrollments will occur (even for automatic triggers)
+- Existing in-progress executions are paused
+- The playbook remains in your list and can be reactivated at any time
+
+### Reactivating a Playbook
+
+Toggle the playbook back to Active to resume operations. Automatic triggers will begin firing again, and paused executions will resume from where they left off.
+
+### Duplicating a Playbook
+
+Click the **Duplicate** button on any playbook card to create a copy. This is useful when you want to create a variation of an existing playbook without starting from scratch. The duplicate will be created in an inactive state so you can modify it before enabling.
+
+### Deleting a Playbook
+
+Click the **Delete** button to permanently remove a playbook. A confirmation dialog will appear before deletion occurs. Deleting a playbook also removes its execution history.
+
+---
+
+## AI-Assisted Playbook Generation
+
+SalesOS includes an AI-powered playbook builder that can generate complete playbook sequences from a natural language description.
+
+### How It Works
+
+1. Open the Create Playbook modal
+2. In the **AI Assistant** section at the top, describe the playbook you want to create in plain language
+3. Click **Generate** or press Enter
+
+IRIS will analyze your description and generate a complete playbook configuration including:
+
+- A name and description
+- An appropriate trigger
+- A full sequence of steps with types, titles, descriptions, and day offsets
+
+### Example Prompts
+
+The AI builder provides several example prompts you can click to get started:
+
+- "Enterprise discovery process using MEDDIC"
+- "Lead qualification playbook using BANT"
+- "Deal closing sequence for negotiation stage"
+- "Customer onboarding and handoff process"
+
+### Editing AI-Generated Playbooks
+
+After AI generates a playbook, the form fields are pre-filled with the generated content. You can review and edit any aspect of the playbook -- name, description, trigger, and individual steps -- before clicking **Create Playbook** to save it.
+
+---
+
+## Best Practices for Effective Playbooks
+
+1. **Start with your highest-volume process.** Identify the sales process you repeat most often and build a playbook for it first. Common starting points include initial outreach sequences, discovery call workflows, and deal closing checklists.
+
+2. **Keep sequences focused.** A playbook should cover one distinct phase of your sales process, not the entire journey from lead to close. Shorter, focused playbooks are easier to manage and more likely to be completed.
+
+3. **Use realistic timing.** Set day offsets based on actual buyer behavior, not an ideal scenario. If prospects typically need a week to review a proposal, set the follow-up step at Day 7, not Day 2.
+
+4. **Mark critical steps as required.** Use the required flag for steps that must be completed for the process to be valid. This ensures reps do not skip essential actions.
+
+5. **Leverage AI generation for initial drafts.** Use the AI builder to create a first draft, then customize it based on your team's specific process and preferences. AI-generated playbooks are a starting point, not a final product.
+
+6. **Review completion rates regularly.** If your completion rate is low, investigate which steps are causing drop-off. The issue might be unrealistic timing, unclear step descriptions, or too many steps in the sequence.
+
+7. **Iterate based on results.** Duplicate a playbook, make changes, and compare performance. Over time, this iterative approach helps you converge on the most effective sequence for each scenario.
+
+8. **Use condition steps for branching.** Not every prospect responds the same way. Use condition steps to create branching paths that adapt the sequence based on prospect behavior.
+
+9. **Combine playbooks with automations.** Playbooks handle the step-by-step process; automations (workflows) handle the event-driven responses. Together, they create a comprehensive automation layer for your sales process.

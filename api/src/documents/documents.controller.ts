@@ -14,6 +14,7 @@ import {
   BadRequestException,
   PayloadTooLargeException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService, CreateDocumentDto } from './documents.service';
 import { PageIndexService } from '../pageindex/pageindex.service';
@@ -35,6 +36,8 @@ const multerOptions = {
   },
 };
 
+@ApiTags('Documents')
+@ApiBearerAuth('JWT')
 @Controller('documents')
 @UseGuards(JwtAuthGuard)
 export class DocumentsController {

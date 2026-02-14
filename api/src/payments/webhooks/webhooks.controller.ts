@@ -9,11 +9,14 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
 import { StripeWebhookService } from './stripe-webhook.service';
 import { RazorpayWebhookService } from './razorpay-webhook.service';
 
+@ApiTags('Payment Webhooks')
+@ApiBearerAuth('JWT')
 @Controller('webhooks')
 export class WebhooksController {
   private readonly logger = new Logger(WebhooksController.name);

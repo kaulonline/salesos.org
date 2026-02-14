@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { ApprovalWorkflowsService } from './approval-workflows.service';
 import {
@@ -27,6 +28,8 @@ import {
 } from './dto/approval-workflow.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Approval Workflows')
+@ApiBearerAuth('JWT')
 @Controller('approval-workflows')
 @UseGuards(JwtAuthGuard)
 export class ApprovalWorkflowsController {

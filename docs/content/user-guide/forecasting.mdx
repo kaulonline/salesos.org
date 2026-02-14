@@ -1,0 +1,184 @@
+---
+title: Forecasting
+description: Predict your quarterly revenue with SalesOS's forecasting tools.
+---
+
+SalesOS Forecasting gives you a structured, data-driven view of your expected revenue for the current and upcoming quarters. By automatically categorizing your open deals into forecast buckets based on stage and probability, the forecasting page helps you and your managers understand what revenue is likely to close and where the gaps are.
+
+## Forecasting Page Overview
+
+Navigate to the Forecasting page from the main navigation menu. The page is organized around a quarterly view, with summary cards at the top, a detailed forecast breakdown in the middle, and a monthly close timeline at the bottom.
+
+At the top of the page, you will see the page title "Revenue Forecast" along with a quarter selector dropdown and an Export button. The quarter selector lets you view the current quarter or look ahead up to three quarters into the future.
+
+---
+
+## Forecast Summary Cards
+
+Four summary cards provide an at-a-glance view of your forecast:
+
+### Weighted Forecast
+
+This is the probability-weighted total across all your open deals. It represents the expected revenue if every deal closes at its current probability. For example, a $100,000 deal at 50% probability contributes $50,000 to the weighted forecast.
+
+### Commit
+
+The total dollar value of deals in the Commit category (90%+ probability). These are deals you are highly confident will close in the selected quarter.
+
+### Best Case
+
+The combined total of Commit and Best Case deals. This represents your optimistic but plausible revenue target if both committed and likely deals close as expected.
+
+### Total Pipeline
+
+The sum of all open deals across all forecast categories (Commit, Best Case, Pipeline, and Omitted). This is the maximum possible revenue if every open deal closes.
+
+---
+
+## Forecast Categories
+
+SalesOS automatically assigns each open deal to one of four forecast categories based on its probability and deal stage. Understanding these categories is essential for accurate forecasting.
+
+### Commit
+
+Deals with a probability of 90% or higher, or deals in the Negotiation/Review stage. These are deals where verbal agreement has been reached, contracts are in review, or the deal is otherwise virtually certain to close.
+
+### Best Case
+
+Deals with a probability between 70% and 89%, or deals in the Proposal/Price Quote stage. These are strong opportunities where the buyer is engaged and you have a reasonable expectation of winning, but final commitment has not yet been secured.
+
+### Pipeline
+
+Deals with a probability between 30% and 69%. These are active opportunities at various stages of qualification and evaluation. They represent potential upside but carry meaningful uncertainty.
+
+### Omitted
+
+Deals with a probability below 30%. These are early-stage or low-confidence opportunities that are not factored into the primary forecast. They remain visible so you can track them, but they should not be relied upon for revenue planning.
+
+---
+
+## Forecast Breakdown
+
+The Forecast Breakdown section displays each category as a horizontal bar, sized proportionally to its share of the total pipeline. For each category, you can see:
+
+- **Category label** (Commit, Best Case, Pipeline, or Omitted)
+- **Total dollar amount** for the category
+- **Number of deals** in the category
+
+Click on any category bar to expand it and see the individual deals within that category. Each deal shows:
+
+- Deal name
+- Account name
+- Current stage
+- Deal amount
+- Probability percentage
+
+Click on any individual deal to navigate directly to the deal detail page.
+
+---
+
+## Monthly Breakdown
+
+Below the forecast breakdown, the Monthly Close Timeline divides the selected quarter into its three months. For each month, the view shows:
+
+- The month name and year
+- The total dollar amount of deals with close dates in that month
+- A list of the top deals closing in that month (up to three shown)
+
+This timeline helps you understand the distribution of expected revenue across the quarter. If most of your revenue is concentrated in the final month, that may indicate a need to pull some deals forward.
+
+Deals are assigned to months based on their expected close date. If a deal does not have a close date set, it will not appear in the monthly breakdown.
+
+---
+
+## How Deals Automatically Categorize
+
+Deals are categorized in real time based on two factors:
+
+1. **Probability** -- The probability percentage assigned to the deal (either manually or based on your pipeline stage defaults)
+2. **Stage** -- Certain stages automatically map to categories regardless of the probability field
+
+The mapping works as follows:
+
+| Probability | Stage | Category |
+|---|---|---|
+| 90% or higher | Any | Commit |
+| Any | Negotiation/Review | Commit |
+| 70% - 89% | Any | Best Case |
+| Any | Proposal/Price Quote | Best Case |
+| 30% - 69% | Any | Pipeline |
+| Below 30% | Any | Omitted |
+
+When a deal's stage or probability changes, its forecast category updates automatically. There is no manual step required to recategorize deals.
+
+---
+
+## How Stage Changes Affect Forecast Categories
+
+As deals progress through your pipeline, their forecast categorization shifts accordingly:
+
+- Moving a deal from Qualification to Needs Analysis will not change its category if probability remains the same.
+- Moving a deal into Proposal/Price Quote automatically elevates it to at least Best Case.
+- Moving a deal into Negotiation/Review automatically elevates it to Commit.
+- If a deal's probability drops (for example, from 80% to 25%), it may move from Best Case to Omitted.
+
+This dynamic behavior ensures that your forecast always reflects the latest state of your pipeline without requiring manual intervention.
+
+---
+
+## Manager vs. Rep Forecast Views
+
+### Sales Rep View
+
+As a sales rep, the forecasting page shows your personal deals and your individual forecast. The summary cards reflect only your pipeline, and the breakdown shows only deals you own.
+
+### Manager View
+
+Managers and admins see an aggregated forecast across their team. The Forecast report (available on the Reports page) includes a table that breaks down quota, committed, best case, and closed amounts for each rep on the team. This view helps managers identify which reps are on track and which may need support to hit their targets.
+
+---
+
+## Adjusting Forecasts Manually
+
+While SalesOS automatically categorizes deals based on probability and stage, there are scenarios where you may want to override the automatic categorization:
+
+- **Update deal probability** -- Edit the probability field on a deal to move it to a different forecast category. For example, if you have inside information that a "Pipeline" deal is actually very likely to close, increase its probability to 90% or above to move it to Commit.
+- **Update the deal stage** -- Advancing the deal stage will naturally adjust its forecast category based on the rules described above.
+- **Set or change the close date** -- Updating the expected close date determines which month and quarter the deal appears in.
+
+All overrides are made at the deal level. There is no separate "forecast override" field; the categorization is always derived from the deal's probability and stage.
+
+---
+
+## Exporting Forecast Data
+
+Click the **Export** button in the top-right corner of the Forecasting page to download a CSV file containing all open deals with their forecast data. The export includes:
+
+- Deal name
+- Account name
+- Owner
+- Deal amount
+- Probability
+- Forecast category
+- Stage
+- Expected close date
+
+This export is useful for offline analysis, sharing with leadership, or importing into presentation tools.
+
+---
+
+## Best Practices for Accurate Forecasting
+
+1. **Keep probabilities up to date.** The quality of your forecast is only as good as the probability data on your deals. Review and update deal probabilities at least weekly, especially for deals in the Commit and Best Case categories.
+
+2. **Set realistic close dates.** Avoid pushing all close dates to the end of the quarter. Distribute them based on where you genuinely expect each deal to close. This produces a more useful monthly breakdown.
+
+3. **Review your forecast weekly.** Make forecast review a standing item in your weekly routine. Look at what moved between categories and investigate any unexpected changes.
+
+4. **Use the monthly timeline for planning.** If your revenue is heavily back-loaded in the quarter, consider what actions you can take now to accelerate deals and smooth out the timeline.
+
+5. **Cross-reference with the Win Rate report.** Your historical win rate by stage can help you calibrate whether your current probabilities are realistic. If you typically win 60% of deals at the Proposal stage but have those deals marked at 85% probability, your forecast may be overly optimistic.
+
+6. **Communicate category definitions to your team.** Ensure everyone on the team understands what Commit, Best Case, Pipeline, and Omitted mean. Consistent interpretation leads to a more reliable aggregate forecast.
+
+7. **Export and share before QBRs.** Use the CSV export to prepare for quarterly business reviews. Having the raw data allows you to build custom analyses and presentations tailored to your audience.

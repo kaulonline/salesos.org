@@ -7,6 +7,7 @@ import {
   Headers,
   Ip,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { EmailTrackingUtils } from './email-tracking.utils';
 
@@ -14,6 +15,8 @@ import { EmailTrackingUtils } from './email-tracking.utils';
  * Controller for tracking pixel and click tracking endpoints
  * These endpoints are called when users open emails or click links
  */
+@ApiTags('Tracking Pixel')
+@ApiBearerAuth('JWT')
 @Controller('email-tracking')
 export class TrackingPixelController {
   private readonly logger = new Logger(TrackingPixelController.name);

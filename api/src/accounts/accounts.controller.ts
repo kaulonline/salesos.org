@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AccountsService } from './accounts.service';
 import { AccountType } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Accounts')
+@ApiBearerAuth('JWT')
 @Controller('accounts')
 @UseGuards(JwtAuthGuard)
 export class AccountsController {

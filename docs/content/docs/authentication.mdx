@@ -1,0 +1,144 @@
+---
+title: Authentication
+description: Authenticate with the SalesOS API using JWT tokens, API keys, or OAuth.
+---
+
+## Overview
+
+SalesOS uses two primary authentication methods: **JWT Bearer tokens** for user sessions and **API Keys** for server-to-server integrations.
+
+All authenticated endpoints require either a valid JWT token or API key. Unauthenticated requests return `401 Unauthorized`.
+
+## JWT Bearer Tokens
+
+JWT tokens are issued after successful login and are used for user-context operations.
+
+### Obtaining a Token
+
+```bash title="Login"
+curl -X POST https://www.salesos.org/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@company.com",
+    "password": "your-password"
+  }'
+```
+
+```json title="Response"
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "usr_abc123",
+    "email": "user@company.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+}
+```
+
+### Using the Token
+
+Include the token in the `Authorization` header:
+
+```bash
+curl -X GET https://www.salesos.org/api/leads \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+### Token Expiration
+
+- Access tokens expire after **24 hours**
+- When a token expires, you will receive a `401` response
+- Re-authenticate by calling the login endpoint again
+
+## API Keys
+
+API keys provide long-lived authentication for integrations and automated systems.
+
+### Creating an API Key
+
+1. Navigate to **Settings > API Keys** in the SalesOS dashboard
+2. Click **Create API Key**
+3. Assign a descriptive name and select the required permissions
+4. Copy the key immediately -- it will not be shown again
+
+### Using an API Key
+
+Include the key in the `X-API-Key` header:
+
+```bash
+curl -X GET https://www.salesos.org/api/leads \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Key Permissions
+
+API keys can be scoped to specific operations:
+
+| Scope | Access |
+|-------|--------|
+| `read` | Read-only access to all resources |
+| `write` | Create and update resources |
+| `delete` | Delete resources |
+| `admin` | Full administrative access |
+
+## Magic Link Authentication
+
+SalesOS supports passwordless login via magic links:
+
+```bash
+curl -X POST https://www.salesos.org/api/auth/magic-link \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "user@company.com" }'
+```
+
+The user receives an email with a one-time login link.
+
+## Two-Factor Authentication (2FA)
+
+When 2FA is enabled, the login flow requires an additional TOTP code:
+
+```bash title="Login with 2FA"
+curl -X POST https://www.salesos.org/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@company.com",
+    "password": "your-password",
+    "twoFactorCode": "123456"
+  }'
+```
+
+### 2FA Setup
+
+```bash title="Enable 2FA"
+curl -X POST https://www.salesos.org/api/two-factor/setup \
+  -H "Authorization: Bearer <token>"
+```
+
+Returns a QR code URL for authenticator app setup.
+
+## CSRF Protection
+
+Browser-based clients must include a CSRF token for state-changing requests:
+
+```
+X-CSRF-Token: <token>
+```
+
+CSRF tokens are returned in the login response and must be sent with all `POST`, `PATCH`, `PUT`, and `DELETE` requests from browser contexts.
+
+## Organization Context
+
+SalesOS is multi-tenant. The organization is determined automatically from the authenticated user. For API key requests that span organizations, include:
+
+```
+X-Organization-ID: org_abc123
+```
+
+## Security Best Practices
+
+- Store tokens and API keys securely; never expose them in client-side code
+- Use API keys with minimum required permissions
+- Rotate API keys periodically
+- Enable 2FA for all user accounts
+- Use HTTPS for all API requests

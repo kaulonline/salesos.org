@@ -13,6 +13,7 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response, Request } from 'express';
 import { SalesforceService } from './salesforce.service';
 import { SalesforceCdcService } from './salesforce-cdc.service';
@@ -29,6 +30,8 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+@ApiTags('Salesforce Sync')
+@ApiBearerAuth('JWT')
 @Controller('salesforce')
 export class SalesforceController {
   private readonly logger = new Logger(SalesforceController.name);

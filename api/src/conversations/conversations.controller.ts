@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Res, Header, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ConversationsService } from './conversations.service';
 import { OracleCXConversationsService } from './oracle-cx-conversations.service';
@@ -20,6 +21,8 @@ class UpdateConversationDto {
   isStarred?: boolean;
 }
 
+@ApiTags('Conversations')
+@ApiBearerAuth('JWT')
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
 export class ConversationsController {

@@ -18,6 +18,7 @@ import {
   ExecutionContext,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { OutcomeBillingService } from './outcome-billing.service';
 import { OutcomeInvoiceGeneratorService } from './outcome-invoice-generator.service';
@@ -48,6 +49,8 @@ class RolesGuard implements CanActivate {
 
 // ============= Organization Endpoints (User's own org) =============
 
+@ApiTags('Outcome Billing')
+@ApiBearerAuth('JWT')
 @Controller('outcome-billing')
 @UseGuards(JwtAuthGuard)
 export class OutcomeBillingController {
@@ -102,6 +105,8 @@ export class OutcomeBillingController {
 
 // ============= Admin Endpoints =============
 
+@ApiTags('Outcome Billing')
+@ApiBearerAuth('JWT')
 @Controller('admin/outcome-billing')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')

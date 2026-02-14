@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Features', href: '/features' },
   { label: 'Integrations', href: '/integrations' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'Docs', href: 'https://docs.salesos.org' },
   { label: 'Company', href: '/about' },
 ];
 

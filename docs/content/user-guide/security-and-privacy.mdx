@@ -1,0 +1,258 @@
+---
+title: Security & Privacy
+description: Configure security settings, manage authentication, and protect your organization's data.
+---
+
+Protecting your organization's data and your customers' information is a core priority in SalesOS. This guide covers the security features, privacy controls, and notification preferences available to every user and administrator.
+
+## Password Management
+
+### Changing Your Password
+
+To change your password:
+
+1. Click your avatar in the bottom-left corner of the SalesOS sidebar.
+2. Select **Account Settings**.
+3. Under the **Security** section, click **Change Password**.
+4. Enter your current password, then enter and confirm your new password.
+5. Click **Save**.
+
+### Password Requirements
+
+SalesOS enforces the following password rules by default:
+
+- Minimum 8 characters in length
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character (for example, !, @, #, $, %)
+
+Administrators can configure stricter password requirements at the organization level (see Organization Security Policies below).
+
+## Two-Factor Authentication (2FA)
+
+Two-factor authentication adds a second layer of security to your account by requiring a time-based one-time password (TOTP) in addition to your regular password when signing in.
+
+### Enabling 2FA
+
+1. Go to **Account Settings > Security**.
+2. Click **Enable Two-Factor Authentication**.
+3. SalesOS displays a QR code on screen.
+4. Open your authenticator app (such as Google Authenticator, Authy, or 1Password) and scan the QR code to add SalesOS.
+5. Enter the 6-digit code displayed in your authenticator app to verify the setup.
+6. Click **Confirm**.
+
+From this point forward, every login requires both your password and a code from your authenticator app.
+
+### Backup Codes
+
+During 2FA setup, SalesOS generates a set of one-time backup codes. These codes can be used to sign in if you lose access to your authenticator app (for example, if your phone is lost or reset).
+
+- Each backup code can only be used once.
+- Store your backup codes in a secure location, such as a password manager.
+- You can regenerate backup codes from **Account Settings > Security** at any time. Regenerating codes invalidates all previously issued codes.
+
+### Disabling 2FA
+
+To disable two-factor authentication:
+
+1. Go to **Account Settings > Security**.
+2. Click **Disable Two-Factor Authentication**.
+3. Enter a current TOTP code from your authenticator app to confirm.
+
+If your organization enforces 2FA (see below), individual users cannot disable it.
+
+## Organization Security Policies
+
+Administrators can enforce security policies that apply to all team members across the organization.
+
+### Enforcing Two-Factor Authentication
+
+Require all team members to enable 2FA:
+
+1. Navigate to **Settings > Security**.
+2. Toggle **Require Two-Factor Authentication** to on.
+3. Click **Save**.
+
+Team members who have not yet configured 2FA will be prompted to set it up on their next login. They will not be able to access SalesOS until 2FA is enabled.
+
+### Password Complexity Rules
+
+Administrators can tighten password requirements beyond the defaults:
+
+- **Minimum length**: Increase from 8 to 10, 12, or more characters.
+- **Character requirements**: Require uppercase, lowercase, numbers, and special characters (or any combination).
+- **Password history**: Prevent users from reusing their last N passwords (for example, the last 5).
+- **Password expiration**: Require users to change their password every 30, 60, or 90 days.
+
+Configure these settings under **Settings > Security > Password Policy**.
+
+### Session Timeouts
+
+Control how long a user session remains active:
+
+- **Idle timeout**: Automatically sign out users after a period of inactivity (for example, 30 minutes, 1 hour, 4 hours).
+- **Maximum session duration**: Force re-authentication after a set period regardless of activity (for example, 24 hours).
+
+These settings are found under **Settings > Security > Session Policy**.
+
+### IP Allowlisting
+
+For organizations with strict network requirements, administrators can restrict SalesOS access to a list of approved IP addresses or CIDR ranges. When IP allowlisting is enabled, login attempts from non-approved IP addresses are blocked.
+
+## Data Privacy
+
+### What Data SalesOS Stores and Processes
+
+SalesOS stores the CRM data your organization creates and manages, including:
+
+- Lead, contact, and account records (names, email addresses, phone numbers, company information)
+- Deal and opportunity data (values, stages, notes, activities)
+- Communication data (logged emails, call recordings, meeting notes)
+- User account information (names, email addresses, roles, login history)
+- Analytics and reporting data derived from the above
+
+SalesOS processes this data to provide CRM functionality, AI-powered insights (such as deal scoring, coaching recommendations, and conversation intelligence), and reporting. AI features use your organization's data in isolation -- your data is never shared with other organizations or used to train models for other customers.
+
+### Data Retention Policies
+
+SalesOS retains your data for as long as your organization's subscription is active. Specific retention details include:
+
+- **Active subscription**: All data is retained indefinitely while your subscription is active.
+- **Cancelled subscription**: After cancellation, your data is retained for 90 days to allow for reactivation or export. After 90 days, data is permanently deleted.
+- **Deleted records**: When you delete a record in SalesOS (a lead, contact, deal, and so on), it is moved to the trash and retained for 30 days. After 30 days, it is permanently deleted. You can restore records from the trash within this window.
+- **Call recordings and attachments**: Audio recordings and file attachments follow the same retention policies as their parent records.
+
+### Data Export and Portability
+
+You can export your data at any time:
+
+1. Navigate to **Settings > Data Management > Export**.
+2. Select the data types you want to export (leads, contacts, accounts, deals, activities, or all data).
+3. Choose the export format (CSV or JSON).
+4. Click **Export**. SalesOS generates the export file and sends a download link to your email when it is ready.
+
+Exports include all standard fields and custom field values. Large exports are packaged as ZIP files.
+
+### Data Deletion Requests
+
+If you need to delete specific data for compliance reasons (such as GDPR right to erasure requests):
+
+1. Navigate to **Settings > Data Management > Deletion Requests**.
+2. Submit a deletion request specifying the records or data subject.
+3. An administrator reviews and approves the request.
+4. Once approved, the specified data is permanently deleted within 72 hours.
+
+You can also contact SalesOS support for assistance with large-scale or complex deletion requests.
+
+## Notification Preferences
+
+SalesOS keeps you informed about important events through email and in-app notifications. You can customize exactly what you receive and how.
+
+### Email Notifications
+
+Configure which email notifications you receive from **Account Settings > Notifications > Email**. Available email notification types include:
+
+- **Deal updates** -- Notifications when deals you own or follow change stage, value, or close date.
+- **Task reminders** -- Email reminders for upcoming and overdue tasks.
+- **Mentions** -- Notifications when a teammate mentions you in a note, comment, or activity.
+- **Lead assignments** -- Notifications when a new lead is assigned to you.
+- **Weekly summary** -- A weekly digest of your pipeline performance, closed deals, and upcoming tasks.
+- **Form submissions** -- Notifications when a web form you manage receives a submission.
+- **Integration alerts** -- Notifications about integration connection issues or sync errors.
+
+Each notification type can be individually enabled or disabled.
+
+### In-App Notifications
+
+In-app notifications appear in the notification bell in the SalesOS header. These are enabled by default for all event types and provide real-time awareness without leaving the application.
+
+You can manage in-app notification preferences from **Account Settings > Notifications > In-App**. Options include:
+
+- Toggle specific event types on or off.
+- Enable or disable notification sounds.
+- Configure desktop push notifications (requires browser permission).
+
+### Configuring Notification Channels and Frequency
+
+For each notification type, you can choose which channels deliver it:
+
+- **Email only** -- Receive the notification by email.
+- **In-app only** -- Receive the notification within SalesOS.
+- **Both** -- Receive the notification in both channels.
+- **None** -- Disable the notification entirely.
+
+For digest-style notifications (like the weekly summary), you can choose the delivery day and time.
+
+## API Keys
+
+API keys allow developers and automated systems to interact with the SalesOS API programmatically. While the full details of API usage are covered in the [Developer Guides](/docs), here is an overview of managing API keys from the SalesOS interface.
+
+### Creating an API Key
+
+1. Navigate to **Settings > API Keys**.
+2. Click **Create API Key**.
+3. Enter a descriptive name (for example, "Marketing Automation Sync" or "Data Warehouse ETL").
+4. Select the permission scopes the key should have (read, write, delete, admin).
+5. Click **Create**.
+6. Copy the generated API key immediately. For security, the full key is only displayed once at creation time.
+
+### Viewing and Managing API Keys
+
+The **Settings > API Keys** page lists all keys created by your account, showing the key name, creation date, last used date, and status. You can view usage logs and statistics for each key to monitor how it is being used.
+
+### Revoking an API Key
+
+If an API key is compromised or no longer needed:
+
+1. Go to **Settings > API Keys**.
+2. Find the key and click **Revoke**.
+3. Confirm the action.
+
+Revoked keys are immediately invalidated. Any system using the revoked key will begin receiving `401 Unauthorized` responses.
+
+You can also regenerate a key, which creates a new key value while preserving the key's name and permissions. The old key value is invalidated immediately.
+
+### Further Reading
+
+For detailed API documentation, including authentication methods, endpoints, rate limits, and code examples, see the [Developer Guides](/docs) and [API Reference](/api-reference).
+
+## Audit Log
+
+The audit log provides a chronological record of security-relevant events in your organization. Administrators can access the audit log from **Settings > Security > Audit Log**.
+
+Events captured in the audit log include:
+
+- **User logins and logouts** -- Including the IP address, browser, and device used.
+- **Failed login attempts** -- Useful for identifying potential unauthorized access attempts.
+- **Permission changes** -- When a user's role is changed or custom role permissions are modified.
+- **Team changes** -- When team members are invited, deactivated, or reactivated.
+- **Data exports** -- When a data export is initiated, including what data was exported and by whom.
+- **API key events** -- When API keys are created, revoked, or regenerated.
+- **Security policy changes** -- When organization security settings (2FA enforcement, password policies, session timeouts) are modified.
+- **Integration changes** -- When integrations are connected, disconnected, or re-authenticated.
+- **Record deletions** -- When records are permanently deleted (not just moved to trash).
+
+### Filtering the Audit Log
+
+You can filter audit log entries by:
+
+- **Date range** -- View events within a specific time period.
+- **Event type** -- Filter by category (login events, permission changes, data exports, and so on).
+- **User** -- View events associated with a specific team member.
+
+### Exporting the Audit Log
+
+Administrators can export the audit log as a CSV file for compliance reporting or external analysis. Click **Export** on the audit log page and select the date range to include.
+
+## Best Practices for Keeping Your Account Secure
+
+- **Enable two-factor authentication.** Every user should enable 2FA. Administrators should enforce it at the organization level using the security policy settings.
+- **Use strong, unique passwords.** Avoid reusing passwords from other services. Use a password manager to generate and store strong passwords.
+- **Review the audit log regularly.** Check the audit log at least monthly for suspicious activity such as failed login attempts from unfamiliar locations or unexpected data exports.
+- **Apply the principle of least privilege.** Assign users the role with the minimum permissions they need. Avoid granting Admin access unless it is truly required.
+- **Rotate API keys periodically.** Regenerate API keys on a regular schedule (for example, every 90 days) to limit the impact of a compromised key.
+- **Configure session timeouts.** Set idle and maximum session timeouts appropriate for your security requirements. Shorter timeouts reduce the window of opportunity for unauthorized access to unattended sessions.
+- **Keep integrations up to date.** Promptly re-authenticate any integration that enters an Error state. Disconnect integrations that are no longer in use.
+- **Export data for backup.** Periodically export your CRM data as a backup. Store exports securely and in accordance with your organization's data governance policies.
+- **Train your team.** Ensure all team members understand your organization's security policies, know how to recognize phishing attempts, and know who to contact if they suspect a security issue.

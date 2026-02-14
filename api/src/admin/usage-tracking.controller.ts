@@ -7,10 +7,13 @@ import {
   ParseEnumPipe,
   BadRequestException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { UsageTrackingService, UsageFilters } from './usage-tracking.service';
 import { ApiServiceType } from '@prisma/client';
 
+@ApiTags('Usage Tracking')
+@ApiBearerAuth('JWT')
 @Controller('admin/usage')
 @UseGuards(JwtAuthGuard)
 export class UsageTrackingController {

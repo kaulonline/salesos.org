@@ -12,12 +12,15 @@ import {
   Res,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { CalendarIntegrationsService } from './calendar-integrations.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CalendarProvider } from '@prisma/client';
 import { InitiateCalendarOAuthDto, UpdateCalendarConnectionDto } from './dto/calendar-integration.dto';
 
+@ApiTags('Calendar Integrations')
+@ApiBearerAuth('JWT')
 @Controller('calendar-integrations')
 export class CalendarIntegrationsController {
   private readonly logger = new Logger(CalendarIntegrationsController.name);

@@ -20,6 +20,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -34,6 +35,8 @@ import {
   AcknowledgeAlertDto,
 } from './dto/action-item.dto';
 
+@ApiTags('Action Item Tracker')
+@ApiBearerAuth('JWT')
 @Controller('coaching/action-items')
 @UseGuards(JwtAuthGuard)
 export class ActionItemTrackerController {

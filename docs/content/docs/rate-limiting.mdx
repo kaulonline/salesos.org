@@ -1,0 +1,82 @@
+---
+title: Rate Limiting
+description: Understand SalesOS API rate limits and how to handle them.
+---
+
+## Overview
+
+SalesOS enforces rate limits to ensure API stability and fair usage across all tenants. Rate limits apply per-user or per-API-key.
+
+## Default Limits
+
+| Scope | Limit | Window |
+|-------|-------|--------|
+| **Global** | 100 requests | 60 seconds |
+| **Auth endpoints** | 5 requests | 60 seconds |
+| **Sensitive operations** (password reset, 2FA) | 3 requests | 5 minutes |
+
+## Response Headers
+
+Every API response includes rate limit headers:
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1705312800
+```
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the window |
+| `X-RateLimit-Remaining` | Remaining requests in the current window |
+| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+
+## Rate Limit Exceeded
+
+When you exceed the rate limit, the API returns `429 Too Many Requests`:
+
+```json
+{
+  "statusCode": 429,
+  "message": "Too Many Requests"
+}
+```
+
+The `Retry-After` header indicates how many seconds to wait:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+```
+
+## Handling Rate Limits
+
+### Exponential Backoff
+
+Implement exponential backoff when receiving `429` responses:
+
+```javascript
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+
+    if (response.status !== 429) return response;
+
+    const retryAfter = response.headers.get('Retry-After');
+    const delay = retryAfter
+      ? parseInt(retryAfter) * 1000
+      : Math.pow(2, attempt) * 1000;
+
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+### Best Practices
+
+- **Cache responses** when possible to reduce API calls
+- **Batch operations** using bulk endpoints where available
+- **Monitor usage** via the `X-RateLimit-Remaining` header
+- **Spread requests** evenly over time rather than bursting
+- **Use webhooks** for event-driven workflows instead of polling

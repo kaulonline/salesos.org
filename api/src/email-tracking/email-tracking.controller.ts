@@ -15,6 +15,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { EmailTrackingService, SendTrackedEmailParams, InboundEmailParams } from './email-tracking.service';
 import { ImapPollingService } from './imap-polling.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -115,6 +116,8 @@ class GetThreadsQueryDto {
 
 // ==================== CONTROLLER ====================
 
+@ApiTags('Email Tracking')
+@ApiBearerAuth('JWT')
 @Controller('email-tracking')
 export class EmailTrackingController {
   private readonly logger = new Logger(EmailTrackingController.name);

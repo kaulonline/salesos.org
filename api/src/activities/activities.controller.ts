@@ -8,11 +8,14 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ActivitiesService } from './activities.service';
 import { ActivityType } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Activities')
+@ApiBearerAuth('JWT')
 @Controller('activities')
 @UseGuards(JwtAuthGuard)
 export class ActivitiesController {

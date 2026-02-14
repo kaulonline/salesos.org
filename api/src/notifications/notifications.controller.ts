@@ -14,6 +14,7 @@ import {
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
@@ -46,6 +47,8 @@ import {
   NotificationFiltersDto,
 } from './dto';
 
+@ApiTags('Notifications')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {

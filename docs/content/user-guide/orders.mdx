@@ -1,0 +1,294 @@
+---
+title: Orders
+description: Manage orders from creation through fulfillment and payment tracking.
+---
+
+Orders in SalesOS represent the finalized commitment between your organization and a customer. Whether created from an accepted quote or built from scratch, orders track the full lifecycle from confirmation through fulfillment and payment. This guide covers everything you need to manage orders effectively.
+
+## Order List View
+
+Navigate to **Orders** from the dashboard to access the main orders page. The list view provides:
+
+- **Summary statistics** at the top: total orders, total revenue, pending orders, and orders created this month.
+- **Search** -- Type in the search bar to find orders by order number, name, or account name.
+- **Status filter** -- Use the dropdown to filter orders by status (Draft, Pending, Confirmed, Processing, Shipped, Delivered, Completed, Cancelled, or Returned).
+- **Sortable table** -- The order table displays columns for order number, account, status, payment status, fulfillment status, total amount, date, and available actions.
+
+Click on any row to open the full order detail page.
+
+## Order Statuses
+
+Every order has three independent status dimensions: the overall order status, the payment status, and the fulfillment status. These work together to give you a complete picture of where each order stands.
+
+### Order Status
+
+The order status tracks the overall progression of the order:
+
+| Status | Description |
+|--------|-------------|
+| **Draft** | The order is being assembled. Line items, pricing, and details can be edited freely. Draft orders can be deleted. |
+| **Pending** | The order has been created and is awaiting confirmation or processing. |
+| **Confirmed** | The order has been reviewed and confirmed. Fulfillment can now begin. |
+| **Processing** | The order is actively being prepared or assembled for delivery. |
+| **Shipped** | The order has been dispatched to the customer. Tracking information can be recorded. |
+| **Delivered** | The order has been received by the customer. |
+| **Completed** | The order is fully closed -- delivered and paid in full. |
+| **Cancelled** | The order was cancelled before completion. |
+| **Returned** | The customer returned the order after delivery. |
+
+The typical order flow is: Draft -> Confirmed -> Processing -> Shipped -> Delivered -> Completed. Orders can be cancelled at most stages, and returned after delivery.
+
+### Payment Status
+
+The payment status tracks the financial state of the order independently from fulfillment:
+
+| Status | Description |
+|--------|-------------|
+| **Pending** | No payment has been received yet. |
+| **Partial** | Some payment has been received, but the full amount is still outstanding. |
+| **Paid** | The full order amount has been received. |
+| **Refunded** | The payment has been refunded to the customer. |
+| **Failed** | A payment attempt failed. |
+
+### Fulfillment Status
+
+The fulfillment status tracks the delivery state of the order's line items:
+
+| Status | Description |
+|--------|-------------|
+| **Unfulfilled** | No items have been shipped or delivered yet. |
+| **Partial** | Some line items have been fulfilled, but not all. |
+| **Fulfilled** | All line items have been shipped and/or delivered. |
+| **Returned** | Fulfilled items have been returned by the customer. |
+
+## Creating Orders from Accepted Quotes
+
+The most common way to create an order is by converting an accepted quote. This ensures pricing accuracy and maintains the link between the sales process and order fulfillment.
+
+### How Quote-to-Order Conversion Works
+
+1. Navigate to the accepted quote's detail page (or use the conversion action from the Quotes list).
+2. Click **Convert to Order**.
+3. Optionally specify:
+   - **Order date** -- Defaults to today if not set.
+   - **Expected delivery date** -- When the customer expects to receive the order.
+   - **Notes** -- Customer-facing notes included on the order.
+   - **Internal notes** -- Notes visible only to your team.
+4. Click **Convert**.
+
+When conversion completes:
+
+- A new order is created with a unique, auto-generated order number.
+- All **line items** from the quote are copied to the order, including product references, quantities, unit prices, discounts, and tax amounts.
+- The order's **subtotal**, **discount**, **tax**, **shipping**, and **total** are carried over from the quote.
+- The order is **linked to the original quote**, the associated **opportunity**, and the **account**.
+- The order starts in **Draft** status with **Pending** payment status and **Unfulfilled** fulfillment status.
+- The **contact** and **billing/shipping addresses** from the quote are copied to the order.
+
+## Creating Orders Directly
+
+You can also create orders without a prior quote -- useful for repeat purchases, internal orders, or situations where the quoting process was handled outside SalesOS.
+
+1. Navigate to **Orders** and click **Create Order**.
+2. Fill in the order details:
+   - **Account** -- The customer account for the order.
+   - **Contact** (optional) -- The specific contact at the account.
+   - **Opportunity** (optional) -- Link the order to a deal if applicable.
+   - **Order date** and **expected delivery date**.
+   - **Currency** -- Defaults to USD but can be changed.
+   - **Billing and shipping addresses**.
+   - **Payment terms** -- e.g., Net 30, Net 60, Due on Receipt.
+   - **Notes** and **internal notes**.
+3. Add **line items** by selecting products from the catalog, specifying quantities and prices.
+4. Configure any **discounts**, **tax**, and **shipping costs**.
+5. Save the order.
+
+The order is created in **Draft** status. You can continue editing it before confirming.
+
+## Order Detail Page
+
+Clicking into an order opens its full detail page, which provides a comprehensive view:
+
+### Order Information
+
+The top section displays the order number, name, status badges (order status, payment status, fulfillment status), the associated account and contact, and key dates (order date, expected delivery, shipped date, delivered date).
+
+### Line Items
+
+A table of all products on the order, showing:
+
+| Column | Description |
+|--------|-------------|
+| **Product** | Product name and code. |
+| **Description** | Optional line item description. |
+| **Quantity** | Number of units ordered. |
+| **Unit Price** | Price per unit. |
+| **Discount** | Any discount applied to this line item (amount or percentage). |
+| **Tax** | Tax applied to this line item. |
+| **Total** | Line item total after discount and tax: (Quantity x Unit Price) - Discount + Tax. |
+| **Fulfilled** | Number of units that have been fulfilled. |
+| **Returned** | Number of units returned. |
+
+You can add, edit, or remove line items while the order is in Draft status. After confirmation, line item modifications may be restricted depending on fulfillment progress.
+
+### Financial Summary
+
+A breakdown showing subtotal, discount, tax, shipping/handling, total, and amount paid. This makes it easy to see the outstanding balance at a glance.
+
+### Activity Timeline
+
+The order detail page includes a timeline of all events and changes, such as:
+
+- Order created (with user name and timestamp).
+- Status changes (e.g., "Status changed from Draft to Confirmed").
+- Payment recorded (amount, method, reference).
+- Fulfillment updates (items shipped, tracking number added).
+- Notes and comments added.
+
+The timeline provides a complete audit trail of everything that has happened with the order.
+
+## Updating Order Status
+
+As an order moves through its lifecycle, update its status to reflect the current stage:
+
+### Confirming an Order
+
+When a draft order is ready to be processed, confirm it. This signals that the order has been reviewed and is authorized to proceed. The status changes from Draft to Confirmed.
+
+### Processing
+
+Move the order to Processing status when your team begins preparing or assembling it.
+
+### Shipping
+
+When the order ships, update the status to Shipped. At this point, you can record:
+
+- **Tracking number** -- The carrier's tracking identifier.
+- **Tracking URL** -- A link to the carrier's tracking page.
+- **Shipped date** -- When the shipment left your facility.
+
+### Delivery
+
+When the customer receives the shipment, update the status to Delivered and record the **delivered date**.
+
+### Completing
+
+Once the order is fully delivered and paid, change the status to Completed. This represents the final, closed state of a successful order.
+
+### Cancelling
+
+Orders can be cancelled at any stage before completion. When cancelling, the order status changes to Cancelled. Cancellation should be used when the customer withdraws their purchase or when the order cannot be fulfilled.
+
+Only **Draft** orders can be deleted entirely. Orders in other statuses should be cancelled rather than deleted, preserving the audit trail.
+
+## Payment Tracking
+
+SalesOS provides detailed payment tracking for each order so you always know the financial status.
+
+### Recording Payments
+
+To record a payment against an order:
+
+1. Open the order detail page.
+2. Use the payment update action.
+3. Enter the payment details:
+   - **Amount** -- The payment amount received.
+   - **Payment method** -- e.g., Credit Card, Wire Transfer, ACH, Check.
+   - **Payment date** -- When the payment was received.
+   - **Reference** -- A reference number such as a check number or transaction ID.
+   - **Notes** -- Any additional context about the payment.
+4. Save.
+
+The **paid amount** on the order is updated, and the **payment status** automatically adjusts:
+
+- If the paid amount is zero: **Pending**.
+- If the paid amount is greater than zero but less than the total: **Partial**.
+- If the paid amount equals or exceeds the total: **Paid**.
+
+Payment status can also be manually set to **Refunded** or **Failed** as needed.
+
+### Viewing Payment History
+
+All payment activity is recorded in the order's activity timeline, providing a chronological record of every payment, refund, and status change.
+
+## Order Statistics and Metrics
+
+The Orders page displays summary statistics at the top of the list view:
+
+- **Total Orders** -- The count of all orders in the system.
+- **Total Revenue** -- The sum of all order totals.
+- **Pending** -- The number of orders in Pending status awaiting action.
+- **This Month** -- Orders created in the current month.
+
+For more detailed analytics, including revenue trends, conversion rates, top products, top accounts, and sales rep performance, visit the **CPQ Analytics** dashboard. See [Quotes (CPQ)](/user-guide/quotes) for details on the analytics features.
+
+### Order Stats Breakdown
+
+The backend provides detailed order statistics including:
+
+- **By order status** -- Count of orders in each status (Draft, Confirmed, Processing, Shipped, etc.).
+- **By payment status** -- Count of orders in each payment state (Pending, Partial, Paid, Refunded, Failed).
+- **By fulfillment status** -- Count of orders in each fulfillment state (Unfulfilled, Partial, Fulfilled, Returned).
+- **Revenue metrics** -- Total revenue, paid revenue, pending revenue, and average order value.
+- **Monthly metrics** -- Orders and revenue for the current month.
+
+## Linking Orders to Deals and Quotes
+
+Orders maintain relationships to other SalesOS records, providing end-to-end traceability:
+
+- **Quote link** -- If the order was created from a quote, the order displays the originating quote's name and number. Click through to view the original quote.
+- **Opportunity link** -- If the order is associated with a deal, the opportunity reference is recorded. This allows revenue to be attributed back to the pipeline.
+- **Account link** -- Every order is associated with an account. You can view all orders for an account from the account detail page or by filtering the orders list.
+- **Contact link** -- The order can reference a specific contact at the account, useful for delivery coordination and invoicing.
+
+These links ensure that your CRM data tells a complete story from lead to deal to quote to order to revenue.
+
+## Additional Order Features
+
+### Cloning Orders
+
+Similar to quote cloning, you can clone an order to create a copy with all line items and configuration. The cloned order starts in Draft status with a new order number. This is useful for repeat orders or when a customer wants to reorder with minor modifications.
+
+### Downloading Order PDFs
+
+Generate and download a PDF of any order from the order detail page or from the actions menu on the orders list. The PDF includes the order header, account details, line items with pricing, and the financial summary. PDFs can be shared with customers, attached to emails, or filed for record-keeping.
+
+### Recalculating Orders
+
+If product prices, discounts, or tax rates have changed, you can trigger a recalculation on an order to update its financial totals. This is useful for draft orders that were created some time ago and may reflect outdated pricing.
+
+## Best Practices for Order Management
+
+### Keep Statuses Current
+
+- Update order statuses promptly as orders progress through fulfillment. Accurate status information helps your team, your customers, and your reporting.
+- Use the activity timeline as your single source of truth for what happened and when.
+
+### Payment Discipline
+
+- Record payments as soon as they are received to keep payment status accurate.
+- Use the **payment terms** field (e.g., Net 30) to set expectations and track overdue orders.
+- Monitor the gap between total and paid amounts across your order portfolio to identify collection issues early.
+
+### Quote-to-Order Consistency
+
+- Whenever possible, create orders by converting accepted quotes rather than building them from scratch. This ensures pricing consistency and maintains the audit trail from opportunity through revenue.
+- After converting a quote, review the resulting order to confirm that all line items, discounts, and tax amounts transferred correctly.
+
+### Organization and Searchability
+
+- Use descriptive order names in addition to the auto-generated order numbers. Names like "Acme Corp - Q1 2024 Software Renewal" are easier to find than order numbers alone.
+- Use status filters regularly to focus on orders that need attention -- for example, all Processing orders, or all orders with Partial payment status.
+- Take advantage of the account filter to quickly view a customer's complete order history.
+
+### Fulfillment Tracking
+
+- Add tracking numbers and tracking URLs as soon as shipments are dispatched. This information is valuable both internally and when communicating with customers.
+- Update fulfilled quantities at the line item level for partial shipments, so the fulfillment status accurately reflects what has been delivered.
+- For returned items, record the returned quantity at the line item level to maintain accurate inventory and financial records.
+
+### Data Integrity
+
+- Avoid deleting orders unless they are in Draft status and were created in error. For all other scenarios, cancel the order to preserve the historical record.
+- Use internal notes for information your team needs that should not be visible to the customer.
+- Review the activity timeline before making changes to understand the full context of an order's history.

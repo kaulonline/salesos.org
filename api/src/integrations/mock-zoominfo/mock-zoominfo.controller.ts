@@ -19,6 +19,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 // ==================== TYPES ====================
 
@@ -147,6 +148,8 @@ function generateEmployeeCount(): { value: number; range: string } {
 
 // ==================== CONTROLLER ====================
 
+@ApiTags('Integrations - ZoomInfo Mock')
+@ApiBearerAuth('JWT')
 @Controller('mock-zoominfo')
 export class MockZoomInfoController {
   private readonly logger = new Logger(MockZoomInfoController.name);

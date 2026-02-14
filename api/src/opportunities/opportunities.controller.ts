@@ -11,6 +11,7 @@ import {
   UseGuards,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { OpportunitiesService } from './opportunities.service';
 import { OpportunityStage } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -47,6 +48,8 @@ function parseStage(stage?: string): OpportunityStage | undefined {
   return STAGE_NAME_MAP[normalized];
 }
 
+@ApiTags('Opportunities')
+@ApiBearerAuth('JWT')
 @Controller('opportunities')
 @UseGuards(JwtAuthGuard)
 export class OpportunitiesController {

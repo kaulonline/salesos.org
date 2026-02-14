@@ -1,0 +1,241 @@
+---
+title: Automations & Workflows
+description: Automate repetitive tasks with trigger-based workflows and approval rules.
+---
+
+Automations in SalesOS let you define rules that execute actions automatically when specific events occur. Instead of manually sending follow-up emails, creating tasks, assigning owners, or updating fields, you can set up workflows that handle these actions for you -- consistently and instantly. This frees your team to focus on selling rather than administrative tasks.
+
+## What Automations Are
+
+An automation (also called a workflow) in SalesOS is a trigger-action rule: when a specified event happens on a record, one or more actions are performed automatically. For example, "When a new lead is created, send a welcome email and create a follow-up task for the assigned rep."
+
+Automations are different from Playbooks. While Playbooks define a multi-step sequence that progresses over time, automations are event-driven -- they fire immediately when their trigger condition is met and execute their actions right away. Playbooks are best for guided selling processes; automations are best for instant, reactive tasks.
+
+---
+
+## Accessing Automations
+
+Navigate to the Automations page from the main navigation. The Automations page includes two tabs:
+
+- **Active Workflows** -- Shows all workflows you have created, with their status and execution counts
+- **Templates** -- Provides pre-built automation templates you can deploy with one click
+
+---
+
+## Overview Stats
+
+Three summary cards at the top of the page provide a quick snapshot:
+
+- **Active Automations** -- The number of workflows currently enabled and running
+- **Total Runs** -- The cumulative number of times your automations have executed
+- **Success Rate** -- The percentage of executions that completed successfully without errors
+
+---
+
+## Trigger-Based Workflows
+
+The core concept of SalesOS automations is the trigger-action pattern: an event triggers the workflow, optional conditions filter whether it should run, and actions define what happens.
+
+### Trigger Events
+
+A trigger defines the event that starts the workflow. SalesOS supports the following trigger types:
+
+- **Record Created** -- Fires when a new record is created (e.g., a new lead, contact, or deal)
+- **Record Updated** -- Fires when an existing record is modified
+- **Field Changed** -- Fires when a specific field on a record changes to a new value
+- **Stage Changed** -- Fires when a deal or opportunity moves to a different pipeline stage
+- **Time-Based** -- Fires on a schedule or when a time condition is met (e.g., 7 days since last activity)
+- **Manual** -- Fires only when explicitly triggered by a user
+- **Webhook** -- Fires when an external system sends a webhook to SalesOS
+
+### Entity Types
+
+Each trigger is associated with an entity type that determines which kind of record it monitors:
+
+- **Lead** -- Lead records
+- **Contact** -- Contact records
+- **Account** -- Account/company records
+- **Opportunity** -- Deal/opportunity records
+- **Task** -- Task records
+
+### Actions
+
+Actions are the operations performed when a workflow fires. You can add multiple actions to a single workflow, and they execute in sequence. Available action types include:
+
+- **Send Email** -- Sends an automated email to the record owner, the contact, or a specified recipient
+- **Create Task** -- Creates a task assigned to the record owner or a specified user, with a configurable due date
+- **Update Field** -- Modifies a field on the triggering record (e.g., sets status to "Contacted")
+- **Send Notification** -- Sends an in-app notification to the record owner or specified users
+- **Assign Owner** -- Assigns or reassigns the record's owner (supports round-robin assignment)
+- **Add Tag** -- Adds a tag to the record for categorization
+- **Remove Tag** -- Removes a tag from the record
+- **Log Activity** -- Creates an activity record (note, log entry) associated with the record
+- **Webhook Call** -- Sends an HTTP request to an external URL, enabling integration with third-party systems
+
+---
+
+## Creating a Workflow
+
+There are three ways to create a workflow: from a template, manually through the creation wizard, or using AI.
+
+### From a Template
+
+The Templates tab displays pre-built automation templates organized by category (Lead, Opportunity, Contact, Account). Each template shows:
+
+- A name and description
+- The trigger event and entity
+- The actions that will be performed
+- A visual flow diagram showing trigger -> actions
+
+Click **Use Template** on any template to instantly create a workflow based on that template. The workflow is created in active state and begins firing immediately. Popular templates are marked with a "Popular" badge.
+
+Available templates include:
+
+- **New Lead Welcome Sequence** -- Sends a welcome email when a lead is created, then creates a follow-up task
+- **Opportunity Stage Notification** -- Notifies the team when a deal moves to the Proposal stage
+- **Meeting Follow-up** -- Creates a follow-up task after a meeting with a contact
+- **At-Risk Opportunity Alert** -- Alerts the owner when an opportunity has no activity for 7 days
+- **Lead Assignment** -- Automatically assigns new leads using round-robin
+- **Account Activity Log** -- Logs an activity when an account is updated
+
+### Manual Creation (Wizard)
+
+Click **New Automation** to open the step-by-step creation wizard:
+
+#### Step 1: Basic Information
+
+- **Automation Name** -- Give your workflow a clear, descriptive name (e.g., "Welcome New Enterprise Leads")
+- **Description** -- Explain what the workflow does and when it should fire
+
+#### Step 2: Trigger Configuration
+
+- **When should this run?** -- Select the trigger type (Record Created, Record Updated, Stage Changed, Field Changed, or Time-Based)
+- **For which entity?** -- Select the entity type (Lead, Contact, Account, Opportunity, or Task)
+
+#### Step 3: Actions
+
+- **What should happen?** -- Add one or more actions from the available action types
+- Each action shows its type, a description of what it does, and can be removed with the trash icon
+- Add multiple actions by clicking additional action buttons
+
+Click **Create Automation** to save and activate the workflow.
+
+### AI-Generated Workflows
+
+Click **Create with AI** to open the AI Builder. Describe the workflow you want in natural language, and SalesOS will generate a complete workflow configuration including the trigger, conditions, and actions. You can review and modify the generated workflow before saving it.
+
+---
+
+## Workflow List
+
+The Active Workflows tab shows all your created workflows. Each workflow card displays:
+
+- **Name** and **Description**
+- **Status** -- Active (green) or Inactive (gray)
+- **Trigger Type** and **Entity** -- What event and record type the workflow monitors
+- **Action Count** -- How many actions the workflow performs
+- **Execution Count** -- How many times the workflow has run
+
+### Enabling and Disabling Workflows
+
+Each workflow has a toggle button (Play/Pause icon) that lets you enable or disable it:
+
+- **Active** -- The workflow is monitoring for trigger events and will execute when conditions are met
+- **Inactive** -- The workflow is paused and will not fire, even if the trigger event occurs
+
+Disabling a workflow does not delete it or its execution history. You can re-enable it at any time.
+
+### Deleting Workflows
+
+Click the delete button (trash icon) on a workflow card to remove it permanently. A confirmation dialog appears before deletion. This action cannot be undone.
+
+---
+
+## Conditions
+
+When creating workflows (especially through the AI builder or API), you can add conditions that must be met for the workflow to execute. Conditions act as filters on the trigger event.
+
+For example, a "Record Created" trigger on Leads might include a condition that the lead's source must equal "Website" -- so the workflow only fires for web-generated leads, not manually entered ones.
+
+Conditions can evaluate field values using operators like equals, not equals, contains, greater than, and less than.
+
+---
+
+## Approval Workflows
+
+Beyond simple trigger-action automations, SalesOS supports approval workflows for scenarios that require human sign-off before proceeding.
+
+### Quote Approval
+
+When a sales rep creates a quote with a discount that exceeds a defined threshold, an approval workflow can automatically route the quote to a manager for review. The quote remains in a pending state until the approver accepts or rejects it.
+
+### Deal Approval
+
+For high-value opportunities that exceed a certain dollar amount, an approval workflow can require manager or executive sign-off before the deal can advance to certain stages (such as Contract Sent or Closed Won).
+
+### Configuring Approval Chains
+
+Approval workflows support three routing patterns:
+
+- **Single Approver** -- The request goes to one designated approver who can approve or reject
+- **Sequential** -- The request passes through multiple approvers in order; each must approve before it advances to the next
+- **Parallel** -- The request goes to multiple approvers simultaneously; all must approve (or a majority, depending on configuration) for the approval to pass
+
+---
+
+## Assignment Rules
+
+SalesOS automations include specialized assignment capabilities for distributing leads and deals to your team.
+
+### Territory-Based Assignment
+
+Route leads and deals to specific reps based on geographic region, industry segment, company size, or other account attributes. When a new lead comes in from a region or segment that matches a territory rule, it is automatically assigned to the rep who owns that territory.
+
+### Round-Robin Assignment
+
+Distribute new leads or deals evenly across a group of reps. The round-robin algorithm cycles through the list of eligible reps, assigning each new record to the next rep in the rotation. This ensures a fair and balanced distribution of work.
+
+The Lead Assignment template provides a ready-to-use round-robin workflow that you can deploy with one click.
+
+### Capacity-Based Assignment
+
+Factor in each rep's current workload when making assignments. Capacity-based rules consider how many open leads or deals each rep currently has and route new records to the rep with the most available capacity. This prevents overloading high-performers while underutilizing newer team members.
+
+---
+
+## Workflow Execution Logs
+
+Every time a workflow fires, SalesOS records an execution log entry. You can view execution history to understand:
+
+- **When the workflow fired** -- The timestamp of each execution
+- **What triggered it** -- The specific record and event that caused the trigger
+- **What actions were performed** -- The results of each action (success or failure)
+- **Execution count** -- Displayed on each workflow card for quick reference
+
+The overall **Total Runs** and **Success Rate** on the Automations dashboard aggregate these metrics across all your workflows.
+
+If a workflow action fails (for example, an email cannot be delivered or a field update encounters a validation error), the failure is logged but does not prevent other actions in the same workflow from executing.
+
+---
+
+## Best Practices for Automation
+
+1. **Start with templates.** The pre-built templates cover the most common automation scenarios. Use them as-is or as a starting point for customization. This is the fastest way to get value from automations.
+
+2. **Name workflows clearly.** Use descriptive names that explain what the workflow does, such as "Welcome Email - Website Leads" or "Stage Change Notification - Enterprise Deals." Clear naming makes it easy to manage workflows as your library grows.
+
+3. **Test before activating.** When creating a new workflow, consider testing it with a sample record first. Create a test lead or deal that matches the trigger conditions and verify that the actions execute correctly.
+
+4. **Avoid over-automating.** Not every process benefits from automation. Automations work best for repetitive, predictable tasks. Processes that require nuanced human judgment are better served by Playbooks or manual workflows.
+
+5. **Monitor success rates.** A declining success rate on the dashboard indicates that some workflows are encountering errors. Investigate failed executions promptly to prevent important actions from being missed.
+
+6. **Use conditions to be precise.** Rather than creating a workflow that fires for every record update, add conditions to target only the specific changes that matter. This reduces noise and ensures that actions are relevant.
+
+7. **Combine with playbooks.** Use automations for instant, event-driven responses (such as welcome emails and notifications) and Playbooks for guided, multi-step processes. The two systems complement each other.
+
+8. **Review and prune regularly.** Over time, your automation library will grow. Periodically review your workflows to disable or delete ones that are no longer relevant. Stale workflows can cause confusion and unintended side effects.
+
+9. **Leverage AI for complex workflows.** When you need a workflow with multiple conditions and actions, the AI builder can save significant time. Describe what you want in plain language, review the generated configuration, and fine-tune as needed.
+
+10. **Document approval chains.** When setting up approval workflows, clearly communicate the approval process to your team. Reps should understand when approvals are required, who the approvers are, and how long approvals typically take.

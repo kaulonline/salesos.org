@@ -59,6 +59,19 @@ export const Hero: React.FC = () => {
               Watch Demo
             </Button>
           </div>
+
+          {/* Documentation Link */}
+          <p className={`mt-6 text-sm text-[#666] ${getTransition(0)}`} style={{ transitionDelay: '400ms' }}>
+            Looking for API docs?{' '}
+            <a
+              href="https://docs.salesos.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#1A1A1A] font-medium hover:text-[#EAD07D] transition-colors underline"
+            >
+              View Documentation →
+            </a>
+          </p>
         </div>
 
         {/* Dashboard Preview Mockup */}

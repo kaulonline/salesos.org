@@ -13,6 +13,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { NotesService } from './notes.service';
 import { NoteIntelligenceService } from './note-intelligence.service';
@@ -24,6 +25,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+@ApiTags('Notes')
+@ApiBearerAuth('JWT')
 @Controller('notes')
 @UseGuards(JwtAuthGuard)
 export class NotesController {

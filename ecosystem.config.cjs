@@ -36,5 +36,23 @@ module.exports = {
       log_file: './logs/frontend-combined.log',
       time: true,
     },
+    {
+      name: 'salesos-docs',
+      cwd: './docs/.next/standalone',
+      script: 'server.js',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5002,
+        HOSTNAME: '0.0.0.0',
+      },
+      watch: false,
+      instances: 1,
+      autorestart: true,
+      max_memory_restart: '300M',
+      error_file: './logs/docs-error.log',
+      out_file: './logs/docs-out.log',
+      log_file: './logs/docs-combined.log',
+      time: true,
+    },
   ],
 };

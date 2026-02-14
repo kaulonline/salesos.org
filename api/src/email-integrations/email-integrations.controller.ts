@@ -12,12 +12,15 @@ import {
   Res,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { EmailIntegrationsService } from './email-integrations.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { EmailProvider } from '@prisma/client';
 import { InitiateOAuthDto, UpdateEmailConnectionDto, CompleteOAuthDto } from './dto/email-integration.dto';
 
+@ApiTags('Email Integrations')
+@ApiBearerAuth('JWT')
 @Controller('email-integrations')
 export class EmailIntegrationsController {
   private readonly logger = new Logger(EmailIntegrationsController.name);

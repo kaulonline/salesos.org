@@ -14,6 +14,7 @@ import {
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { DeviceTrackingService } from './device-tracking.service';
@@ -47,6 +48,8 @@ import {
 } from './dto';
 import { ApnsPushService } from '../notifications/apns-push.service';
 
+@ApiTags('Device Tracking')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class DeviceTrackingController {

@@ -1,0 +1,247 @@
+---
+title: Products, Price Books & Pricing
+description: Manage your product catalog, price books, discount rules, and tax rates.
+---
+
+Your product catalog is the foundation of the SalesOS quote-to-cash process. Every quote and order you create draws from the products, pricing, discounts, and tax rates you configure here. This guide covers everything you need to set up and maintain your catalog so your sales team can move quickly and accurately.
+
+## Product Catalog Overview
+
+The Product Catalog is where you define every item, service, or subscription your organization sells. Each product in the catalog can be added as a line item on quotes and orders, and its pricing information flows through price books, discount rules, and tax calculations to produce accurate totals.
+
+You can access the product catalog from the main navigation by selecting **Products** under the Sales Operations section of the dashboard.
+
+The catalog page displays summary statistics at the top -- total products, active count, number of product types in use, and average price -- followed by a card grid of all your products. You can search products by name or SKU using the search bar.
+
+## Product Types
+
+Every product must be assigned one of the following types. The type determines how the product is presented and billed:
+
+| Type | Description | Typical Use |
+|------|-------------|-------------|
+| **Product** | A tangible or digital good | Physical hardware, downloadable software packages |
+| **Service** | A professional or managed service | Consulting engagements, implementation services, training |
+| **Subscription** | A recurring access or usage offering | SaaS licenses, ongoing support plans |
+| **License** | A right-to-use entitlement | Perpetual software licenses, IP licensing |
+| **Bundle** | A combination of multiple products or services sold together | Starter kits, solution packages |
+
+Choose the type carefully -- it appears as a label on product cards, in quote line items, and in CPQ Analytics breakdowns.
+
+## Creating and Editing Products
+
+### Creating a New Product
+
+1. Navigate to the **Products** page.
+2. Click the **Add Product** button in the top-right corner. Alternatively, click the dashed "Create New Product" placeholder card in the grid.
+3. Fill out the product form:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Product Name** | Yes | A descriptive name (e.g., "Enterprise License" or "Implementation Services"). |
+| **SKU** | Yes | A unique stock-keeping unit code. SKU values are automatically uppercased (e.g., `SW-ENT-001`). |
+| **Description** | No | A free-text description shown on product cards and optionally on quotes. |
+| **Type** | No (defaults to Product) | One of: Product, Service, Subscription, License, Bundle. |
+| **Category** | No (defaults to Other) | One of: Software, Hardware, Consulting, Training, Support, Other. |
+| **List Price** | Yes | The standard price for the product. Must be zero or a positive number. |
+| **Billing Frequency** | No (defaults to One-time) | How often the customer is billed. See the billing frequency section below. |
+| **Active** | No (defaults to checked) | Whether the product is active and available for use in quotes and orders. |
+
+4. Click **Create Product** to save.
+
+You can also create products using the **Create with AI** feature, which uses AI to generate product details from a brief description.
+
+### Editing a Product
+
+Click the edit (pencil) icon on any product card to open the same form pre-populated with the product's current values. Make your changes and click **Update Product**.
+
+### Deleting a Product
+
+Click the delete (trash) icon on a product card. A confirmation dialog will appear before the product is permanently removed. Deleting a product does not affect existing quotes or orders that already reference it.
+
+## Billing Frequency Options
+
+The billing frequency determines how a product is invoiced:
+
+| Frequency | Description |
+|-----------|-------------|
+| **One-time** | A single charge at the time of purchase. |
+| **Monthly** | Billed every month on a recurring basis. |
+| **Quarterly** | Billed every three months. |
+| **Annual** | Billed once per year. |
+| **Usage-based** | Billed based on actual consumption or usage metrics. |
+
+Billing frequency is displayed on product cards alongside the product type and influences how recurring revenue is calculated in CPQ Analytics.
+
+## Active and Inactive Products
+
+Each product has an **Active** toggle. When a product is marked inactive:
+
+- It appears dimmed (reduced opacity) in the product catalog.
+- It displays an "Inactive" badge.
+- It is excluded from the product selection list when adding line items to quotes.
+
+You can reactivate a product at any time by editing it and checking the Active checkbox. Existing quotes and orders that already contain the inactive product are unaffected.
+
+## Price Books
+
+### What Are Price Books?
+
+A price book is a collection of product prices tailored to a specific market, customer segment, currency, or time period. While each product has a standard list price defined in the catalog, price books let you override that price for different contexts.
+
+Common reasons to use multiple price books:
+
+- **Different markets or regions** -- Offer different pricing in North America vs. Europe vs. Asia Pacific.
+- **Customer segments** -- Provide discounted pricing for enterprise customers, partners, or government accounts.
+- **Currencies** -- Maintain product prices in USD, EUR, GBP, CAD, AUD, JPY, INR, CHF, CNY, and SGD.
+- **Promotional periods** -- Create a time-limited price book with special pricing that expires on a set date.
+
+### Default (Standard) Price Book vs. Custom Price Books
+
+SalesOS includes a **Standard** price book, indicated by a star icon. The standard price book typically uses your primary currency and serves as the baseline for product pricing. It cannot be deleted.
+
+Custom price books are any additional price books you create. They can have their own currency, validity dates, and product entries. When a quote references a specific price book, line item prices are pulled from that book rather than the product's list price.
+
+### Creating a Price Book
+
+1. Navigate to **Price Books** from the dashboard navigation.
+2. Click **New Price Book**.
+3. Fill in the details:
+   - **Name** -- A descriptive name (e.g., "EMEA Enterprise Pricing" or "Partner Discount Tier").
+   - **Description** -- Optional context about when this price book should be used.
+   - **Currency** -- Select the currency for all entries in this book.
+   - **Valid From / Valid To** -- Optional date range during which this price book is effective.
+4. Click **Create**.
+
+### Managing Price Book Entries
+
+Each price book contains **entries** -- one entry per product, each specifying the unit price for that product within the book.
+
+To manage entries:
+
+1. Open a price book by clicking **View & Edit Entries** on its card, or by clicking the eye icon.
+2. Click **Add Product** to create a new entry.
+3. Select a product from the dropdown (only active products that are not already in the book are listed).
+4. Enter the unit price for this product within this price book.
+5. Click **Add**.
+
+To update an entry's price, click the pencil icon next to the price, enter the new value, and confirm. To remove an entry, click the trash icon.
+
+### Cloning a Price Book
+
+If you need a new price book that is similar to an existing one, use the clone feature:
+
+1. Click the copy icon on the price book card.
+2. Enter a name for the new price book.
+3. Click **Clone**.
+
+The cloned price book will contain all the same entries as the original, which you can then modify individually.
+
+## Discount Rules
+
+Discount rules let you define reusable pricing adjustments that can be applied to quotes. SalesOS supports multiple discount rule types and flexible conditions.
+
+### Discount Types
+
+Every discount rule applies its discount in one of two ways:
+
+| Discount Type | Description |
+|---------------|-------------|
+| **Percentage** | A percentage reduction off the line item or quote total (e.g., 15% off). |
+| **Fixed Amount** | A flat dollar amount reduction (e.g., $500 off). |
+
+### Discount Rule Categories
+
+| Rule Type | Description |
+|-----------|-------------|
+| **Volume Discount** | Automatically applies when a customer orders above a quantity threshold. Supports multiple tiers (e.g., 10% off for 10+ units, 20% off for 50+ units). |
+| **Promo Code** | A code the customer or sales rep enters to activate the discount. Useful for marketing campaigns. |
+| **Customer Segment** | Automatically applies to accounts matching criteria such as account type, industry, region, or minimum lifetime value. |
+| **Time Limited** | A discount available only during a specific date range. |
+| **Bundle Discount** | Applies when specific products are purchased together. |
+
+### Discount Rule Conditions
+
+Discount rules can include conditions that control when they apply:
+
+- **Product scope** -- Apply only to specific products or product categories, or exclude certain products.
+- **Order value thresholds** -- Require a minimum or maximum order value.
+- **Customer criteria** -- Restrict to certain account types, industries, regions, or minimum purchase history.
+- **Usage limits** -- Set a maximum number of uses per customer or a total usage cap across all customers.
+- **First purchase only** -- Limit the discount to a customer's first purchase.
+
+### Stackability and Priority
+
+- **Stackable** -- When enabled, this discount can be combined with other active discounts on the same quote.
+- **Priority** -- Higher-priority rules are evaluated and applied first. Use priority to control which discounts take precedence when multiple rules match.
+
+## Tax Rates
+
+SalesOS supports region-based tax calculation so that quotes and orders reflect the correct tax for each customer's location.
+
+### Supported Tax Types
+
+| Tax Type | Description |
+|----------|-------------|
+| **Sales Tax** | US state and local sales tax. |
+| **VAT** | Value Added Tax, used in the EU and UK. |
+| **GST** | Goods and Services Tax, used in Australia, New Zealand, and parts of Canada. |
+| **HST** | Harmonized Sales Tax, used in certain Canadian provinces. |
+| **PST** | Provincial Sales Tax, used in certain Canadian provinces. |
+| **Custom** | Any other tax type your organization needs. |
+
+### Configuring Tax Rates
+
+Each tax rate includes:
+
+- **Name** and optional **description**.
+- **Tax type** (Sales, VAT, GST, HST, PST, or Custom).
+- **Rate** as a percentage (e.g., 8.25 for 8.25%).
+- **Country**, and optionally **region** (state/province), **city**, and **postal code** for geographic specificity.
+- **Default** flag -- whether this rate should be automatically applied when no more specific rate matches.
+- **Compound** flag -- when enabled, this tax is calculated on top of other taxes (tax-on-tax) rather than on the subtotal alone.
+- **Active** toggle and optional **Effective From / Effective To** dates.
+
+SalesOS includes built-in support for US states, Canadian provinces, and common international markets. When calculating tax for a quote or order, the system matches the customer's billing address against configured tax rates, applying the most specific match available.
+
+## How Products, Price Books, Discounts, and Taxes Flow Into Quotes and Orders
+
+Understanding how these components work together is essential for accurate pricing:
+
+1. **Product selection** -- When you add a line item to a quote, you select a product from the catalog.
+2. **Price book lookup** -- If a price book is associated with the quote, the unit price for each line item is pulled from that price book's entry for the product. If no price book is set, or no entry exists for the product, the product's list price is used.
+3. **Quantity and subtotal** -- The line item subtotal is calculated as quantity multiplied by unit price.
+4. **Discount application** -- Discounts can be applied at the line item level (per-item percentage or fixed amount) or at the quote level. Discount rules that match the quote's conditions are evaluated in priority order.
+5. **Tax calculation** -- Tax percentages are applied to each line item or to the quote subtotal after discounts, based on the configured tax rates for the customer's region.
+6. **Quote totals** -- The final quote total is: Subtotal - Discount + Tax + Shipping/Handling.
+7. **Order creation** -- When a quote is accepted and converted to an order, all line items, prices, discounts, and tax amounts carry over automatically.
+
+## Best Practices for Catalog Organization
+
+### Naming Conventions
+
+- Use clear, descriptive product names that your customers will recognize on quotes and invoices.
+- Establish a consistent SKU format (e.g., `SW-ENT-001` for software products, `SVC-IMP-001` for services) so products can be quickly found and filtered.
+
+### Product Lifecycle
+
+- Create products in an **inactive** state while you are still finalizing pricing or descriptions. Activate them only when they are ready for quoting.
+- Rather than deleting a discontinued product, mark it as inactive. This preserves historical data on past quotes and orders while preventing the product from being added to new ones.
+
+### Price Book Strategy
+
+- Keep your **Standard** price book updated with your default list prices. Use it as the baseline from which custom price books diverge.
+- Create separate price books for each major pricing scenario (e.g., partner pricing, enterprise pricing, regional pricing) rather than trying to manage exceptions manually on individual quotes.
+- Set **validity dates** on promotional price books so they automatically expire without manual intervention.
+- Clone existing price books when creating similar ones to save time and reduce errors.
+
+### Discount Governance
+
+- Use **approval workflows** for discounts above a certain threshold to maintain margin discipline.
+- Set **usage limits** on promo codes to prevent overuse.
+- Review discount rule performance periodically using CPQ Analytics to identify which discounts drive conversions and which may be eroding margins unnecessarily.
+
+### Tax Compliance
+
+- Configure tax rates for every region where you do business before your team begins quoting.
+- Use the **compound tax** flag carefully -- it is only needed in jurisdictions that require tax-on-tax calculations.
+- Set effective dates on tax rates when rates change, rather than editing existing rates, so historical quotes and orders retain the correct tax amounts.

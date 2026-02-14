@@ -1,0 +1,217 @@
+---
+title: Calendar & Meetings
+description: Schedule meetings, manage your calendar, and keep your sales activities organized.
+---
+
+The Calendar page in SalesOS is your centralized hub for scheduling, tracking, and managing all sales meetings. Whether you are booking a discovery call, a product demo, or an in-person client visit, the Calendar keeps your schedule organized and synced with your external calendars.
+
+## Accessing the Calendar
+
+Navigate to **Calendar** from the left sidebar in the dashboard. The Calendar page displays a monthly grid view alongside a daily schedule panel.
+
+## Calendar Overview
+
+When you open the Calendar, you will see three key areas:
+
+### Monthly Statistics
+
+At the top of the page, three summary cards provide a quick snapshot of your month:
+
+- **Meetings** -- The total number of meetings scheduled for the current month.
+- **Meeting Time** -- The total hours of scheduled meeting time for the month.
+- **External** -- The number of client-facing meetings linked to accounts or opportunities.
+
+### Monthly Grid View
+
+The main calendar grid shows the current month with day-by-day navigation. Each day cell displays colored indicator bars representing your scheduled meetings. Click any day to view its detailed schedule in the right-hand panel.
+
+Use the navigation controls above the grid to:
+
+- Move forward or backward by month using the arrow buttons.
+- Jump to today's date by clicking the **Today** button.
+
+Today's date is highlighted with a gold dot indicator when it is not the currently selected day.
+
+### Daily Schedule Panel
+
+The right-hand panel shows the selected day's schedule in detail. For each meeting, you can see:
+
+- Meeting title
+- Time range (start and end time)
+- Participant avatars
+- Meeting type and location
+- Linked account (if associated with a customer account)
+
+If no meetings are scheduled for the selected day, an empty state appears with a quick link to add a new event.
+
+## Creating Meetings
+
+To create a new meeting, click the **New Event** button in the top-right corner of the page, or click the **+** icon in the daily schedule panel.
+
+The new event form includes the following fields:
+
+### Required Fields
+
+- **Event Title** -- A descriptive name for the meeting (e.g., "Discovery Call with Acme Corp").
+- **Start Time** -- The date and time when the meeting begins. Defaults to 9:00 AM on the selected day.
+- **End Time** -- The date and time when the meeting ends. Defaults to 10:00 AM on the selected day.
+
+### Optional Fields
+
+- **Meeting Type** -- Select the type of meeting:
+  - **Video Call** -- For Zoom, Google Meet, or other video conferences.
+  - **Phone Call** -- For traditional phone meetings.
+  - **In Person** -- For face-to-face meetings at a physical location.
+  - **Webinar** -- For webinar-style presentations with a larger audience.
+- **Location / Room** -- Enter a physical location or conference room name.
+- **Meeting Link** -- Paste a URL for a video conferencing link (e.g., a Zoom or Google Meet URL).
+- **Description** -- Add an agenda or notes for the meeting.
+
+Click **Create Event** to save the meeting to your calendar.
+
+## Editing and Canceling Meetings
+
+To manage an existing meeting, click on it in the daily schedule panel. The meeting detail card displays the full meeting information including participants, time, type, and linked records.
+
+Hover over a meeting card to reveal the options menu (three-dot icon), which allows you to:
+
+- **Edit** the meeting details such as title, time, location, or description.
+- **Cancel** the meeting, which updates its status to CANCELLED and visually grays it out on the calendar.
+- **Delete** the meeting to remove it entirely.
+
+When you update a meeting that is synced with an external calendar, the changes will propagate to Google Calendar or Outlook Calendar during the next sync cycle.
+
+## Meeting Types and Color Coding
+
+SalesOS uses a consistent color-coding system so you can quickly identify different meeting types at a glance:
+
+| Color | Meaning |
+|-------|---------|
+| **Gold** (`#EAD07D`) | External meetings linked to an account or opportunity |
+| **Dark** (`#1A1A1A` with white text) | Video calls and phone calls |
+| **White with border** | In-person meetings and other internal events |
+| **Gray** | Cancelled meetings |
+
+The daily schedule panel also shows type-specific icons next to each meeting: a video icon for video calls, a phone icon for phone calls, a map pin for in-person meetings, and a people icon for webinars.
+
+## Searching and Filtering
+
+### Search
+
+Use the search bar at the top of the Calendar page to find meetings by title or location. The search filters the meetings displayed in the daily schedule panel for the selected day.
+
+### Type Filter
+
+Click the **Filter** icon next to the search bar to filter meetings by type:
+
+- **All Types** -- Show all meetings.
+- **Video Call** -- Show only video meetings.
+- **Phone Call** -- Show only phone meetings.
+- **In Person** -- Show only in-person meetings.
+- **Webinar** -- Show only webinar events.
+
+When a filter is active, the filter icon turns gold to indicate that not all meetings are being displayed.
+
+## Calendar Integrations
+
+SalesOS supports two-way calendar sync with external calendar providers, so your meetings stay up to date across all your tools.
+
+### Supported Providers
+
+- **Google Calendar** -- Sync with your Google Workspace or personal Google Calendar.
+- **Outlook Calendar** -- Sync with your Microsoft 365 or Outlook calendar.
+
+### Connecting Your Calendar
+
+1. Navigate to **Settings > Integrations** from the left sidebar.
+2. Find Google Calendar or Outlook Calendar in the integrations list.
+3. Click **Connect** and follow the OAuth authorization flow to grant SalesOS access.
+4. Once connected, your calendar connection will appear with an "Active" status.
+
+You can connect multiple calendar accounts simultaneously.
+
+### Two-Way Sync
+
+Once connected, SalesOS provides two-way synchronization:
+
+- **SalesOS to External Calendar** -- Meetings you create in SalesOS automatically appear in your connected Google or Outlook calendar.
+- **External Calendar to SalesOS** -- Meetings created in Google Calendar or Outlook are pulled into SalesOS so your full schedule is visible in one place.
+
+### Manual Sync
+
+To trigger an immediate sync, click the **Sync Calendar** button at the bottom of the daily schedule panel. This button displays the number of connected calendars and syncs all active connections at once.
+
+After syncing, a success message confirms how many calendars were synced. If no calendars are connected, an informational message directs you to the Integrations page.
+
+## Linking Meetings to Records
+
+Meetings in SalesOS can be linked to your CRM records to maintain context and history:
+
+- **Accounts** -- Link a meeting to a company account. Linked meetings appear in the account detail view and are counted in the External meetings statistic.
+- **Opportunities / Deals** -- Link a meeting to a specific deal. This helps track engagement throughout the sales cycle. You can retrieve all meetings for a given opportunity.
+- **Leads** -- Link a meeting to a lead record. When creating a meeting via the API or from a lead's detail page, the `leadId` field associates the meeting with the lead.
+
+When a meeting is linked to an account, the account name appears as a badge on the meeting card in the daily schedule panel.
+
+## Dashboard Meetings Widget
+
+Your upcoming meetings also appear on the **Dashboard Home** page as part of the daily activity summary. The dashboard aggregates meeting counts alongside tasks, calls, and emails to give you a complete view of your day's workload without needing to navigate to the Calendar page.
+
+## Meeting Reminders and Notifications
+
+SalesOS supports meeting-related notifications to help you stay on top of your schedule:
+
+- **Upcoming meeting reminders** -- Receive notifications before meetings are about to start.
+- **Meeting creation alerts** -- Get notified when a new meeting is scheduled that involves you.
+- **Cancellation notifications** -- Receive alerts when meetings you are invited to are cancelled.
+
+You can configure your notification preferences under **Settings > Notifications** to choose which meeting alerts you receive and how (in-app or email).
+
+## Meeting Prep
+
+SalesOS provides AI-powered meeting preparation insights. Before an important meeting, you can access the **Meeting Prep** feature which provides:
+
+- Background information on the account or opportunity linked to the meeting.
+- Recent activity history with the participants.
+- Suggested talking points based on deal context.
+
+Access meeting prep from the meeting detail view or via the API endpoint for a specific meeting.
+
+## Post-Meeting Features
+
+After a meeting is completed, SalesOS offers several features to capture and analyze what happened:
+
+- **Transcripts** -- If the meeting was recorded, the transcript is available for review.
+- **AI Analysis** -- SalesOS can analyze the meeting to extract key topics, action items, sentiment scores, and next steps. See [Conversation Intelligence](/user-guide/conversation-intelligence) for more details.
+- **Action Items** -- Review and approve extracted action items, which can be converted into tasks.
+- **Summary Generation** -- Generate an AI-powered summary of the meeting.
+
+## Best Practices for Calendar Management
+
+### Keep your calendar synced
+
+Connect your Google or Outlook calendar and use the Sync Calendar button regularly. This ensures your SalesOS calendar reflects your full schedule and prevents double-booking.
+
+### Link meetings to records
+
+Always associate meetings with the relevant account, deal, or lead. This builds a complete engagement history on each record and helps your team understand the full context of customer interactions.
+
+### Use descriptive titles
+
+Instead of generic names like "Call," use titles like "Discovery Call - Acme Corp - Q1 Enterprise Package." This makes it easier to search for meetings later and provides context at a glance in the calendar grid.
+
+### Choose the correct meeting type
+
+Selecting the right meeting type (Video Call, Phone Call, In Person, or Webinar) enables proper color coding and filtering, making it easier to manage a busy schedule.
+
+### Add meeting links and locations
+
+Including a video conference link or physical location in the meeting details saves time when the meeting starts. Participants can join directly from the meeting card.
+
+### Review meeting insights
+
+After important sales calls, check the Conversation Intelligence page for AI-generated insights including sentiment analysis, key topics, and recommended action items. This turns every meeting into a learning opportunity.
+
+### Use meeting prep before calls
+
+Before a client meeting, review the meeting prep insights to go in prepared with relevant context about the account, recent interactions, and deal status.

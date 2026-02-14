@@ -1,0 +1,275 @@
+---
+title: Meetings
+description: Meeting scheduling and management
+full: true
+_openapi:
+  toc:
+    - depth: 2
+      title: Meetings Controller_schedule Meeting
+      url: '#meetings-controller_schedule-meeting'
+    - depth: 2
+      title: Meetings Controller_join Ad Hoc Meeting
+      url: '#meetings-controller_join-ad-hoc-meeting'
+    - depth: 2
+      title: Meetings Controller_validate Meeting Url
+      url: '#meetings-controller_validate-meeting-url'
+    - depth: 2
+      title: Meetings Controller_get Meetings
+      url: '#meetings-controller_get-meetings'
+    - depth: 2
+      title: Meetings Controller_create Meeting
+      url: '#meetings-controller_create-meeting'
+    - depth: 2
+      title: Meetings Controller_handle Transcript Webhook
+      url: '#meetings-controller_handle-transcript-webhook'
+    - depth: 2
+      title: Meetings Controller_handle Status Webhook
+      url: '#meetings-controller_handle-status-webhook'
+    - depth: 2
+      title: Meetings Controller_get Zoom Webhook Health
+      url: '#meetings-controller_get-zoom-webhook-health'
+    - depth: 2
+      title: Meetings Controller_handle Zoom Webhook
+      url: '#meetings-controller_handle-zoom-webhook'
+    - depth: 2
+      title: Meetings Controller_search Meetings
+      url: '#meetings-controller_search-meetings'
+    - depth: 2
+      title: Meetings Controller_get Meetings For Opportunity
+      url: '#meetings-controller_get-meetings-for-opportunity'
+    - depth: 2
+      title: Meetings Controller_get Meetings For Account
+      url: '#meetings-controller_get-meetings-for-account'
+    - depth: 2
+      title: Meetings Controller_get Attendee Status
+      url: '#meetings-controller_get-attendee-status'
+    - depth: 2
+      title: Meetings Controller_join Meeting With Attendee
+      url: '#meetings-controller_join-meeting-with-attendee'
+    - depth: 2
+      title: Meetings Controller_get Attendee Bot Status
+      url: '#meetings-controller_get-attendee-bot-status'
+    - depth: 2
+      title: Meetings Controller_get Attendee Bot Transcript
+      url: '#meetings-controller_get-attendee-bot-transcript'
+    - depth: 2
+      title: Meetings Controller_get Attendee Bot Recording
+      url: '#meetings-controller_get-attendee-bot-recording'
+    - depth: 2
+      title: Meetings Controller_leave Attendee Bot Meeting
+      url: '#meetings-controller_leave-attendee-bot-meeting'
+    - depth: 2
+      title: Meetings Controller_list Attendee Bots
+      url: '#meetings-controller_list-attendee-bots'
+    - depth: 2
+      title: Meetings Controller_get Health Status
+      url: '#meetings-controller_get-health-status'
+    - depth: 2
+      title: Meetings Controller_get Bot Detailed Status
+      url: '#meetings-controller_get-bot-detailed-status'
+    - depth: 2
+      title: Meetings Controller_get Transcription Stats
+      url: '#meetings-controller_get-transcription-stats'
+    - depth: 2
+      title: Meetings Controller_get Liveness
+      url: '#meetings-controller_get-liveness'
+    - depth: 2
+      title: Meetings Controller_get Readiness
+      url: '#meetings-controller_get-readiness'
+    - depth: 2
+      title: Meetings Controller_get Realtime Status
+      url: '#meetings-controller_get-realtime-status'
+    - depth: 2
+      title: Meetings Controller_get Realtime Config
+      url: '#meetings-controller_get-realtime-config'
+    - depth: 2
+      title: Meetings Controller_get Realtime Token
+      url: '#meetings-controller_get-realtime-token'
+    - depth: 2
+      title: Meetings Controller_exchange Realtime Sdp
+      url: '#meetings-controller_exchange-realtime-sdp'
+    - depth: 2
+      title: Meetings Controller_receive Realtime Transcript
+      url: '#meetings-controller_receive-realtime-transcript'
+    - depth: 2
+      title: Meetings Controller_end Realtime Session
+      url: '#meetings-controller_end-realtime-session'
+    - depth: 2
+      title: Meetings Controller_get Meeting Prep
+      url: '#meetings-controller_get-meeting-prep'
+    - depth: 2
+      title: Meetings Controller_get Meeting Prep By Id
+      url: '#meetings-controller_get-meeting-prep-by-id'
+    - depth: 2
+      title: Meetings Controller_get Meeting
+      url: '#meetings-controller_get-meeting'
+    - depth: 2
+      title: Meetings Controller_delete Meeting
+      url: '#meetings-controller_delete-meeting'
+    - depth: 2
+      title: Meetings Controller_update Meeting
+      url: '#meetings-controller_update-meeting'
+    - depth: 2
+      title: Meetings Controller_get Transcript
+      url: '#meetings-controller_get-transcript'
+    - depth: 2
+      title: Meetings Controller_upload Transcript
+      url: '#meetings-controller_upload-transcript'
+    - depth: 2
+      title: Meetings Controller_get Analysis
+      url: '#meetings-controller_get-analysis'
+    - depth: 2
+      title: Meetings Controller_get Audit Logs
+      url: '#meetings-controller_get-audit-logs'
+    - depth: 2
+      title: Meetings Controller_analyze Meeting
+      url: '#meetings-controller_analyze-meeting'
+    - depth: 2
+      title: Meetings Controller_generate Summary
+      url: '#meetings-controller_generate-summary'
+    - depth: 2
+      title: Meetings Controller_get Summary
+      url: '#meetings-controller_get-summary'
+    - depth: 2
+      title: Meetings Controller_approve Actions
+      url: '#meetings-controller_approve-actions'
+    - depth: 2
+      title: Meetings Controller_resync Meeting
+      url: '#meetings-controller_resync-meeting'
+    - depth: 2
+      title: Meetings Controller_get Action Items
+      url: '#meetings-controller_get-action-items'
+    - depth: 2
+      title: Meetings Controller_get Insights
+      url: '#meetings-controller_get-insights'
+    - depth: 2
+      title: Meetings Controller_join Meeting With Bot
+      url: '#meetings-controller_join-meeting-with-bot'
+    - depth: 2
+      title: Meetings Controller_leave Meeting With Bot
+      url: '#meetings-controller_leave-meeting-with-bot'
+    - depth: 2
+      title: Meetings Controller_get Bot Status
+      url: '#meetings-controller_get-bot-status'
+    - depth: 2
+      title: Meetings Controller_get Live Transcript
+      url: '#meetings-controller_get-live-transcript'
+    - depth: 2
+      title: Meetings Controller_get Active Bots
+      url: '#meetings-controller_get-active-bots'
+    - depth: 2
+      title: Meetings Controller_is Bot Configured
+      url: '#meetings-controller_is-bot-configured'
+  structuredData:
+    headings:
+      - content: Meetings Controller_schedule Meeting
+        id: meetings-controller_schedule-meeting
+      - content: Meetings Controller_join Ad Hoc Meeting
+        id: meetings-controller_join-ad-hoc-meeting
+      - content: Meetings Controller_validate Meeting Url
+        id: meetings-controller_validate-meeting-url
+      - content: Meetings Controller_get Meetings
+        id: meetings-controller_get-meetings
+      - content: Meetings Controller_create Meeting
+        id: meetings-controller_create-meeting
+      - content: Meetings Controller_handle Transcript Webhook
+        id: meetings-controller_handle-transcript-webhook
+      - content: Meetings Controller_handle Status Webhook
+        id: meetings-controller_handle-status-webhook
+      - content: Meetings Controller_get Zoom Webhook Health
+        id: meetings-controller_get-zoom-webhook-health
+      - content: Meetings Controller_handle Zoom Webhook
+        id: meetings-controller_handle-zoom-webhook
+      - content: Meetings Controller_search Meetings
+        id: meetings-controller_search-meetings
+      - content: Meetings Controller_get Meetings For Opportunity
+        id: meetings-controller_get-meetings-for-opportunity
+      - content: Meetings Controller_get Meetings For Account
+        id: meetings-controller_get-meetings-for-account
+      - content: Meetings Controller_get Attendee Status
+        id: meetings-controller_get-attendee-status
+      - content: Meetings Controller_join Meeting With Attendee
+        id: meetings-controller_join-meeting-with-attendee
+      - content: Meetings Controller_get Attendee Bot Status
+        id: meetings-controller_get-attendee-bot-status
+      - content: Meetings Controller_get Attendee Bot Transcript
+        id: meetings-controller_get-attendee-bot-transcript
+      - content: Meetings Controller_get Attendee Bot Recording
+        id: meetings-controller_get-attendee-bot-recording
+      - content: Meetings Controller_leave Attendee Bot Meeting
+        id: meetings-controller_leave-attendee-bot-meeting
+      - content: Meetings Controller_list Attendee Bots
+        id: meetings-controller_list-attendee-bots
+      - content: Meetings Controller_get Health Status
+        id: meetings-controller_get-health-status
+      - content: Meetings Controller_get Bot Detailed Status
+        id: meetings-controller_get-bot-detailed-status
+      - content: Meetings Controller_get Transcription Stats
+        id: meetings-controller_get-transcription-stats
+      - content: Meetings Controller_get Liveness
+        id: meetings-controller_get-liveness
+      - content: Meetings Controller_get Readiness
+        id: meetings-controller_get-readiness
+      - content: Meetings Controller_get Realtime Status
+        id: meetings-controller_get-realtime-status
+      - content: Meetings Controller_get Realtime Config
+        id: meetings-controller_get-realtime-config
+      - content: Meetings Controller_get Realtime Token
+        id: meetings-controller_get-realtime-token
+      - content: Meetings Controller_exchange Realtime Sdp
+        id: meetings-controller_exchange-realtime-sdp
+      - content: Meetings Controller_receive Realtime Transcript
+        id: meetings-controller_receive-realtime-transcript
+      - content: Meetings Controller_end Realtime Session
+        id: meetings-controller_end-realtime-session
+      - content: Meetings Controller_get Meeting Prep
+        id: meetings-controller_get-meeting-prep
+      - content: Meetings Controller_get Meeting Prep By Id
+        id: meetings-controller_get-meeting-prep-by-id
+      - content: Meetings Controller_get Meeting
+        id: meetings-controller_get-meeting
+      - content: Meetings Controller_delete Meeting
+        id: meetings-controller_delete-meeting
+      - content: Meetings Controller_update Meeting
+        id: meetings-controller_update-meeting
+      - content: Meetings Controller_get Transcript
+        id: meetings-controller_get-transcript
+      - content: Meetings Controller_upload Transcript
+        id: meetings-controller_upload-transcript
+      - content: Meetings Controller_get Analysis
+        id: meetings-controller_get-analysis
+      - content: Meetings Controller_get Audit Logs
+        id: meetings-controller_get-audit-logs
+      - content: Meetings Controller_analyze Meeting
+        id: meetings-controller_analyze-meeting
+      - content: Meetings Controller_generate Summary
+        id: meetings-controller_generate-summary
+      - content: Meetings Controller_get Summary
+        id: meetings-controller_get-summary
+      - content: Meetings Controller_approve Actions
+        id: meetings-controller_approve-actions
+      - content: Meetings Controller_resync Meeting
+        id: meetings-controller_resync-meeting
+      - content: Meetings Controller_get Action Items
+        id: meetings-controller_get-action-items
+      - content: Meetings Controller_get Insights
+        id: meetings-controller_get-insights
+      - content: Meetings Controller_join Meeting With Bot
+        id: meetings-controller_join-meeting-with-bot
+      - content: Meetings Controller_leave Meeting With Bot
+        id: meetings-controller_leave-meeting-with-bot
+      - content: Meetings Controller_get Bot Status
+        id: meetings-controller_get-bot-status
+      - content: Meetings Controller_get Live Transcript
+        id: meetings-controller_get-live-transcript
+      - content: Meetings Controller_get Active Bots
+        id: meetings-controller_get-active-bots
+      - content: Meetings Controller_is Bot Configured
+        id: meetings-controller_is-bot-configured
+    contents: []
+---
+
+{/* This file was generated by Fumadocs.
+Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+<APIPage document={"./openapi-public.json"} operations={[{"path":"/api/meetings/schedule","method":"post"},{"path":"/api/meetings/join-adhoc","method":"post"},{"path":"/api/meetings/validate-url","method":"post"},{"path":"/api/meetings","method":"get"},{"path":"/api/meetings","method":"post"},{"path":"/api/meetings/webhook/transcript","method":"post"},{"path":"/api/meetings/webhook/status","method":"post"},{"path":"/api/meetings/webhook/zoom","method":"get"},{"path":"/api/meetings/webhook/zoom","method":"post"},{"path":"/api/meetings/search","method":"post"},{"path":"/api/meetings/opportunity/{opportunityId}","method":"get"},{"path":"/api/meetings/account/{accountId}","method":"get"},{"path":"/api/meetings/attendee/status","method":"get"},{"path":"/api/meetings/attendee/join","method":"post"},{"path":"/api/meetings/attendee/bot/{botId}","method":"get"},{"path":"/api/meetings/attendee/bot/{botId}/transcript","method":"get"},{"path":"/api/meetings/attendee/bot/{botId}/recording","method":"get"},{"path":"/api/meetings/attendee/bot/{botId}/leave","method":"post"},{"path":"/api/meetings/attendee/bots","method":"get"},{"path":"/api/meetings/health","method":"get"},{"path":"/api/meetings/health/bots","method":"get"},{"path":"/api/meetings/health/transcriptions","method":"get"},{"path":"/api/meetings/health/live","method":"get"},{"path":"/api/meetings/health/ready","method":"get"},{"path":"/api/meetings/realtime/status","method":"get"},{"path":"/api/meetings/realtime/config","method":"get"},{"path":"/api/meetings/{id}/realtime/token","method":"post"},{"path":"/api/meetings/{id}/realtime/sdp","method":"post"},{"path":"/api/meetings/{id}/realtime/transcript","method":"post"},{"path":"/api/meetings/{id}/realtime/end","method":"post"},{"path":"/api/meetings/prep","method":"get"},{"path":"/api/meetings/{id}/prep","method":"get"},{"path":"/api/meetings/{id}","method":"get"},{"path":"/api/meetings/{id}","method":"delete"},{"path":"/api/meetings/{id}","method":"put"},{"path":"/api/meetings/{id}/transcript","method":"get"},{"path":"/api/meetings/{id}/transcript","method":"post"},{"path":"/api/meetings/{id}/analysis","method":"get"},{"path":"/api/meetings/{id}/audit-logs","method":"get"},{"path":"/api/meetings/{id}/analyze","method":"post"},{"path":"/api/meetings/{id}/generate-summary","method":"post"},{"path":"/api/meetings/{id}/summary","method":"get"},{"path":"/api/meetings/{id}/approve-actions","method":"post"},{"path":"/api/meetings/{id}/resync","method":"post"},{"path":"/api/meetings/{id}/action-items","method":"get"},{"path":"/api/meetings/{id}/insights","method":"get"},{"path":"/api/meetings/{id}/bot/join","method":"post"},{"path":"/api/meetings/{id}/bot/leave","method":"post"},{"path":"/api/meetings/{id}/bot/status","method":"get"},{"path":"/api/meetings/{id}/bot/transcript","method":"get"},{"path":"/api/meetings/bots/active","method":"get"},{"path":"/api/meetings/bots/configured","method":"get"}]} webhooks={[]} hasHead={true} />

@@ -1,0 +1,207 @@
+---
+title: Managing Leads
+description: Capture, qualify, and convert leads into sales opportunities in SalesOS.
+---
+
+Leads are the starting point of your sales process in SalesOS. A lead represents a person or organization that has shown interest in your product or service but has not yet been qualified as a sales opportunity. This guide covers everything you need to know about capturing, managing, and converting leads.
+
+## Lead List View
+
+Navigate to **Leads** from the left sidebar to access your lead list. The leads page displays a summary stats strip at the top showing your total lead count, how many are qualified, the percentage bar of qualified vs. total, the number of hot leads, and your average lead score.
+
+Below the stats strip, SalesOS shows an **AI Insights Banner** that surfaces relevant AI-generated observations about your leads, such as leads that may need attention or patterns in your pipeline.
+
+### Searching Leads
+
+Use the search bar at the top of the lead table to find leads by name, company, job title, or email address. Results filter in real time as you type.
+
+### Filtering by Status
+
+Use the quick-filter pill buttons above the lead table to narrow your view by status:
+
+- **All** -- Show all leads regardless of status.
+- **New** -- Leads that have just entered the system and have not been contacted.
+- **Contacted** -- Leads that your team has reached out to at least once.
+- **Qualified** -- Leads that meet your qualification criteria and are ready for conversion.
+- **Hot** -- A special shortcut that filters leads with a Hot rating, regardless of their status.
+
+Additional statuses tracked by the system include **Unqualified**, **Nurturing**, **Converted**, and **Lost**.
+
+### Filtering by Rating
+
+Click the **Filter** icon (funnel) next to the search bar to open the rating filter dropdown. You can filter leads by:
+
+- **All Ratings** -- No rating filter applied.
+- **Hot** -- High-intent leads that should be prioritized.
+- **Warm** -- Leads showing moderate interest.
+- **Cold** -- Leads with low engagement or early-stage interest.
+
+### Selecting and Working with Leads
+
+Each row in the lead table includes a checkbox. Use the checkbox in the table header to select or deselect all visible leads. Individual leads can be selected by clicking their row checkbox. Click anywhere else on the row to navigate to the lead detail page.
+
+The table columns display:
+
+| Column | Description |
+|--------|-------------|
+| Name | Lead's full name and job title |
+| Company | Company or organization |
+| Email | Contact email address |
+| Score | AI-generated lead score (color-coded: green for 70+, yellow for 40-69, gray below 40) |
+| Status | Current lead status badge |
+| Actions | AI Score, Convert, and View Details buttons |
+
+## Creating Leads Manually
+
+Click the **+** button in the toolbar to open the New Lead form. Fill in the following fields:
+
+- **First Name** (required)
+- **Last Name** (required)
+- **Email**
+- **Phone**
+- **Company**
+- **Title** (job title)
+- **Campaign** (optional) -- Associate the lead with an active campaign for source tracking.
+
+Click **Create Lead** to save. The lead will appear in your list with a status of New.
+
+## Smart Capture
+
+Smart Capture is an AI-powered feature that automatically creates leads from business cards, screenshots, or other visual inputs. Click the **camera icon** in the toolbar to open the Smart Capture modal.
+
+Smart Capture uses image recognition to extract contact details such as name, company, email, phone number, and job title, and pre-fills the lead creation form for you. This is especially useful at trade shows, conferences, and networking events.
+
+## Importing and Exporting Leads
+
+### Importing Leads via CSV
+
+Click the **Import** button in the toolbar to open the import dialog. SalesOS supports CSV file imports with the following workflow:
+
+1. Upload your CSV file.
+2. Map the columns in your file to SalesOS lead fields.
+3. Review the mapping and start the import.
+4. SalesOS will report how many leads were successfully created and flag any errors.
+
+### Exporting Leads
+
+Click the **Export** button in the toolbar to export your leads. You can export:
+
+- **All leads** -- Exports every lead matching your current filters.
+- **Selected leads** -- If you have leads selected via checkboxes, only those leads will be exported.
+
+Exports are generated as CSV files that you can open in any spreadsheet application.
+
+## Bulk Actions
+
+When you select one or more leads using the checkboxes, a **Bulk Actions Bar** appears at the bottom of the screen. Available bulk actions include:
+
+- **Delete** -- Permanently remove selected leads.
+- **Export** -- Export only the selected leads to CSV.
+
+Use the **Clear Selection** button to deselect all leads.
+
+## Lead Detail Page
+
+Click on any lead row to open its detail page. The lead detail page is organized into several sections:
+
+### Header
+
+The header displays the lead's full name, status badge, and rating. Action buttons let you:
+
+- **Edit** the lead's information.
+- **Score** the lead using AI.
+- **Convert** the lead to a contact, account, and/or opportunity.
+- **Delete** the lead.
+
+### Sidebar
+
+The left sidebar shows a list of recent leads for quick navigation between records.
+
+### Accordion Sections
+
+The main content area uses expandable accordion sections to organize lead information:
+
+- **Basic Information** -- Name, email, phone, company, job title, and description.
+- **Additional details** -- Source, rating, status, and other metadata.
+
+### Lead Score Section
+
+A dedicated section displays the AI-generated lead score along with scoring factors. The score indicates how likely a lead is to convert based on factors such as engagement level, company fit, and completeness of contact information.
+
+### Duplicate Detection
+
+SalesOS automatically scans for potential duplicate leads and displays a **Duplicate Detection Panel** on the detail page. If duplicates are found, you can review and merge them.
+
+### Field Change History
+
+The detail page includes an audit trail showing the history of changes made to each field, including who made the change and when.
+
+## Lead Scoring and Rating
+
+### AI-Powered Lead Scoring
+
+SalesOS uses AI to assign a numeric score (0-100) to each lead. To score a lead:
+
+1. From the lead list, click the **sparkle icon** in the Actions column for any lead.
+2. Or from the lead detail page, click the **Score** button.
+
+The scoring algorithm considers factors such as:
+
+- Completeness of contact information (email, phone, company).
+- Company fit based on industry and size.
+- Engagement history and activity levels.
+- Lead source quality.
+
+Scores are color-coded in the list view: green (70+) indicates a strong lead, yellow (40-69) indicates moderate potential, and gray (below 40) indicates a lead that may need nurturing.
+
+### Manual Rating
+
+In addition to the AI score, you can manually assign a rating of **Hot**, **Warm**, or **Cold** to any lead by editing the lead record. Ratings provide a quick visual indicator and are useful for filtering.
+
+## Converting Leads
+
+When a lead is qualified, you can convert it into proper CRM records. The convert action is available for leads with a **Qualified** status.
+
+### How to Convert
+
+1. From the lead list, click the **convert icon** (arrows) on a qualified lead. Or from the lead detail page, click **Convert**.
+2. The Convert Lead modal lets you choose what to create:
+   - **Create Account** -- Creates a new account (company) record.
+   - **Create Contact** -- Creates a contact record linked to the account.
+   - **Create Opportunity** -- Optionally creates a new deal/opportunity.
+3. Click **Convert** to complete the process.
+
+After conversion, the lead's status changes to **Converted** and the newly created records are linked together.
+
+## Lead Source Tracking
+
+When creating leads, you can associate them with a **Campaign** to track where leads are coming from. This helps you understand which marketing efforts and channels are generating the most valuable leads.
+
+Common lead sources tracked through campaigns include:
+
+- Inbound marketing (website forms, content downloads)
+- Outbound prospecting
+- Trade shows and events
+- Referrals
+- Partner channels
+- Paid advertising
+
+Review campaign performance in the Campaigns section to see conversion rates by source.
+
+## Best Practices for Lead Management
+
+1. **Respond quickly to new leads.** Move leads from New to Contacted status as soon as you make first contact. Speed-to-lead is one of the strongest predictors of conversion.
+
+2. **Use AI scoring regularly.** Run AI scoring on your leads to prioritize your outreach. Focus your time on leads with scores of 70 or above.
+
+3. **Keep lead data clean.** Fill in as many fields as possible (email, phone, company, title). Complete records produce more accurate AI scores and make conversion smoother.
+
+4. **Use ratings alongside scores.** While AI scores are data-driven, your manual Hot/Warm/Cold rating captures your gut instinct and context that the algorithm might miss. Use both together.
+
+5. **Convert qualified leads promptly.** Once a lead is qualified, convert it to create an account, contact, and opportunity. This moves the lead into your active pipeline and ensures nothing falls through the cracks.
+
+6. **Leverage Smart Capture at events.** Use the camera-based Smart Capture feature to quickly digitize business cards and create leads on the spot, rather than entering them manually later.
+
+7. **Review the AI Insights banner.** The AI Insights banner on the leads page surfaces actionable observations. Check it regularly for recommendations on which leads to prioritize.
+
+8. **Clean up lost leads.** Periodically review and update or archive leads that are no longer viable. This keeps your lead list focused and your metrics accurate.

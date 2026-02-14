@@ -1,0 +1,239 @@
+---
+title: AI Agents
+description: Autonomous AI agents that monitor your deals, accounts, and sales activities.
+---
+
+AI Agents in SalesOS are specialized, autonomous systems that run in the background and continuously analyze your sales data. Unlike IRIS, which responds to your questions on demand, AI Agents proactively surface insights, flag risks, and recommend actions without you having to ask. They function as an always-on team of virtual assistants, each focused on a specific domain of your sales process.
+
+## What AI Agents Are
+
+AI Agents are purpose-built intelligent agents that monitor your deals, accounts, activities, and outreach in real time. Each agent is designed for a specific function -- such as monitoring deal health or optimizing outreach timing -- and generates alerts when it detects something that requires your attention.
+
+Agents work autonomously. Once enabled, they continuously analyze data patterns, compare current activity to historical baselines, and apply AI reasoning to identify situations that merit action. The result is a stream of prioritized alerts and recommendations that help you stay ahead of problems and capitalize on opportunities.
+
+---
+
+## Available Agents
+
+SalesOS includes five AI agents, each with distinct capabilities:
+
+### Deal Health Agent
+
+The Deal Health Agent monitors the progress and health of your open deals. It watches for signs of trouble and alerts you before deals slip away.
+
+**Capabilities:**
+
+- **Risk Detection** -- Identifies deals showing warning signs such as lack of recent activity, stalled stage progression, or declining engagement
+- **Health Scoring** -- Assigns a health score to each deal based on multiple factors including activity frequency, stakeholder engagement, and competitive presence
+- **Stall Alerts** -- Notifies you when a deal has been in the same stage for longer than your typical cycle time
+- **Win Probability** -- Provides AI-adjusted win probability estimates that factor in behavioral signals beyond the stage-based probability
+
+### Pipeline Acceleration Agent
+
+The Pipeline Acceleration Agent identifies bottlenecks in your pipeline and recommends actions to speed up deal velocity.
+
+**Capabilities:**
+
+- **Bottleneck Detection** -- Spots stages where deals are accumulating and moving slowly
+- **Stage Optimization** -- Suggests actions to help deals progress to the next stage
+- **Velocity Tracking** -- Monitors changes in your average deal cycle time and alerts you to slowdowns
+- **Forecast Accuracy** -- Compares forecast predictions to actual outcomes and helps calibrate future forecasts
+
+### Account Intelligence Agent
+
+The Account Intelligence Agent tracks your accounts and surfaces signals that indicate expansion opportunities or engagement risks.
+
+**Capabilities:**
+
+- **Account Enrichment** -- Surfaces additional context about your accounts from CRM data patterns
+- **Expansion Signals** -- Identifies accounts that show buying signals for additional products or services
+- **Risk Monitoring** -- Flags accounts where engagement is declining or where health scores are dropping
+- **Stakeholder Mapping** -- Highlights gaps in your contact coverage at key accounts
+
+### Sales Coach Agent
+
+The Sales Coach Agent provides coaching insights based on your activities and performance patterns. It acts as a virtual coach, helping you improve your selling skills over time.
+
+**Capabilities:**
+
+- **Activity Analysis** -- Reviews your activity patterns and compares them to high-performing benchmarks
+- **Best Practice Tips** -- Suggests tactical improvements based on observed patterns in your workflow
+- **Performance Insights** -- Highlights trends in your metrics such as win rate changes, activity volume shifts, and pipeline quality
+- **Skill Development** -- Recommends areas for skill improvement based on where your metrics diverge from top performers
+
+### Outreach Optimization Agent
+
+The Outreach Optimization Agent helps you communicate more effectively by analyzing your outreach patterns and suggesting improvements.
+
+**Capabilities:**
+
+- **Email Optimization** -- Analyzes email engagement patterns and suggests improvements to subject lines, content, and structure
+- **Send Time Analysis** -- Identifies the best times to send emails or make calls based on historical response data
+- **Message Personalization** -- Recommends personalization approaches based on contact and account data
+- **Sequence Automation** -- Suggests optimal sequences and cadences for multi-touch outreach campaigns
+
+---
+
+## Accessing AI Agents
+
+Navigate to the AI Agents page from the **AI** menu in the main navigation. This opens the Agent Dashboard, which serves as the central hub for managing and monitoring all your AI agents.
+
+---
+
+## The Agent Dashboard
+
+The Agent Dashboard is organized into several sections:
+
+### Stats Strip
+
+At the top of the page, four metric cards provide a quick overview:
+
+- **Agents Active** -- The number of currently enabled agents
+- **Alerts Today** -- How many alerts have been generated today
+- **Action Rate** -- The percentage of alerts you have acted on (actioned vs. total)
+- **Time Saved** -- An estimate of the time saved by following agent recommendations
+
+### Agent Cards
+
+The main section displays a card for each agent. Each card shows:
+
+- The agent's name and icon
+- Its current status (Active or Disabled)
+- A brief description of what the agent does
+- The number of alerts it has generated
+- Recent activity (the latest alerts from this agent)
+- **Configure** and **View Alerts** buttons
+
+Click on any agent card to select it and see additional details in the Agent Details panel.
+
+### Agent Details Panel
+
+When you select an agent, the right-side panel shows:
+
+- The agent's full description
+- Its capabilities listed with checkmarks
+- Performance metrics (alerts generated and actioned count)
+- **Configure** and **Toggle** (enable/disable) buttons
+
+### Recent Agent Activity
+
+Below the agent cards, a feed shows the most recent alerts across all agents. Each alert displays:
+
+- The agent that generated it
+- The alert title and description
+- Priority level (Urgent, High, or Normal)
+- How long ago it was generated
+- Whether it has been actioned or is still pending
+
+Click on any alert to navigate to the full alerts page with details.
+
+---
+
+## Enabling and Disabling Agents
+
+You can control which agents are active in two ways:
+
+### From Agent Cards
+
+On each agent card, click **Configure** to open the agent's configuration modal. From there, you can adjust settings or use the toggle button on the details panel to enable or disable the agent.
+
+### From Agent Settings
+
+Click the **Agent Settings** button in the top-right corner of the dashboard to open a settings modal. This modal shows all five agents with toggle switches, allowing you to quickly enable or disable any agent. The same modal includes notification preferences (see below).
+
+When an agent is disabled, it stops monitoring your data and generating new alerts. Existing alerts from the agent remain visible in your alert history.
+
+---
+
+## Agent Alerts
+
+Agents communicate their findings through alerts. Each alert includes:
+
+- **Title** -- A brief summary of the finding
+- **Description** -- Additional context and explanation
+- **Priority** -- Urgent, High, or Normal
+- **Status** -- Pending (not yet reviewed), Actioned (you took action), or Dismissed
+- **Timestamp** -- When the alert was generated
+- **Agent Type** -- Which agent created the alert
+
+### Viewing Alerts
+
+Click **View All Alerts** from the Agent Dashboard to see a complete list of all agent alerts. You can filter alerts by agent type using the URL parameter or the filter controls on the alerts page.
+
+### Alert Priority Levels
+
+- **Urgent** -- Requires immediate attention. These alerts are styled with a dark background and gold text to stand out.
+- **High** -- Important but not critical. Styled with a gold background.
+- **Normal** -- Informational insights and recommendations. Styled with a light background.
+
+### Acting on Alerts
+
+When you review an alert, you can mark it as actioned to track your response rate. A higher action rate indicates that you are effectively using agent insights to improve your sales process.
+
+---
+
+## Configuring Individual Agents
+
+Click **Configure** on any agent card to open its configuration modal. Configuration options include:
+
+### Alert Sensitivity
+
+Choose between Low, Medium, and High sensitivity. Higher sensitivity means the agent will generate more alerts, including for less severe situations. Lower sensitivity limits alerts to only the most significant findings.
+
+### Capabilities
+
+Each agent has multiple capabilities that can be individually enabled or disabled. For example, you might enable the Deal Health Agent's Risk Detection and Stall Alerts but disable Win Probability if you prefer to use your own probability assessments.
+
+### Alert Frequency
+
+Choose how often you want to receive agent alerts:
+
+- **Real-time** -- Alerts are generated and delivered as soon as they are detected
+- **Hourly digest** -- Alerts are batched and delivered once per hour
+- **Daily digest** -- Alerts are compiled into a daily summary
+- **Weekly summary** -- A weekly rollup of all agent findings
+
+---
+
+## Notification Preferences
+
+In the Agent Settings modal, you can configure how agent alerts reach you:
+
+- **Email notifications for urgent alerts** -- Receive an email when an agent generates an urgent-priority alert
+- **In-app notifications** -- Receive notifications within the SalesOS interface
+- **Daily digest summary** -- Receive a daily email summarizing all agent activity
+
+These preferences apply across all agents. Individual agent frequency settings (configured per agent) determine when alerts are generated; notification preferences determine how they are delivered.
+
+---
+
+## How Agents Use Your CRM Data
+
+AI Agents analyze the same data that is available in your SalesOS account:
+
+- Deal stages, amounts, probabilities, and activity history
+- Account engagement patterns, contact coverage, and health scores
+- Activity logs including calls, emails, meetings, and tasks
+- Historical performance data for trend analysis
+
+Agents apply AI reasoning to this data, looking for patterns and anomalies that a human reviewer might miss when managing a large pipeline. For example, the Deal Health Agent might notice that a deal's email response times are gradually increasing -- a subtle signal that the buyer is losing interest -- even if the deal's stage and probability have not changed.
+
+Like IRIS, agents only access data you have permission to view. Agent alerts and insights are private to your account.
+
+---
+
+## Best Practices for Using AI Agents Effectively
+
+1. **Start with all agents enabled.** Begin by enabling all five agents to understand the range of insights they provide. After a few weeks, you can fine-tune which agents and capabilities are most valuable for your role.
+
+2. **Review alerts daily.** Make it a habit to check your agent alerts each morning. The most valuable insights are time-sensitive -- acting on a stalled deal alert promptly is far more effective than seeing it a week later.
+
+3. **Adjust sensitivity over time.** If you find yourself overwhelmed with alerts, reduce the sensitivity. If alerts are too infrequent to be useful, increase it. The right balance depends on the size of your pipeline and your personal workflow.
+
+4. **Act on alerts and track your action rate.** The action rate metric on the dashboard helps you measure how effectively you are using agent insights. A low action rate may indicate that sensitivity is too high or that the alerts are not relevant to your current focus.
+
+5. **Combine agent insights with IRIS.** When an agent flags a deal as at risk, open an IRIS conversation and ask for more detail. "Tell me more about why the [deal name] deal might be at risk" can provide deeper context than the alert alone.
+
+6. **Use the coaching agent for self-improvement.** The Sales Coach Agent's insights can reveal blind spots in your selling approach. Treat its recommendations as data points for your own professional development.
+
+7. **Share insights in team meetings.** Agent findings about pipeline bottlenecks, competitive patterns, and account risks are valuable discussion topics for team meetings and one-on-ones.

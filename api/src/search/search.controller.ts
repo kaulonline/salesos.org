@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Query, HttpException, HttpStatus, UseGuards, Logger } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SearchService, WebResearchResult } from './search.service';
 import { AnthropicService } from '../anthropic/anthropic.service';
 import {
@@ -66,6 +67,8 @@ interface CompanyBriefResponse {
   financialData?: FrontendFinancialData;
 }
 
+@ApiTags('Search')
+@ApiBearerAuth('JWT')
 @Controller('search')
 @UseGuards(JwtAuthGuard)
 export class SearchController {

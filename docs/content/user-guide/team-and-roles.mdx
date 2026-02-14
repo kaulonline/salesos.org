@@ -1,0 +1,198 @@
+---
+title: Team Management & Roles
+description: Manage your team members, assign roles, and configure permissions in SalesOS.
+---
+
+Your SalesOS organization is only as effective as the team behind it. The Team Management settings give you full control over who has access, what they can do, and how your sales territories are organized. This guide walks through every aspect of managing your team in SalesOS.
+
+## Viewing Your Team
+
+Navigate to **Settings > Team** to see a complete list of all team members in your organization. The team page displays each member's name, email address, assigned role, status (active or deactivated), and the date they were added.
+
+You can filter the team list by role or status using the dropdown filters at the top of the page. Use the search bar to quickly find a specific team member by name or email.
+
+## Inviting New Team Members
+
+To add someone to your SalesOS organization:
+
+1. Go to **Settings > Team** and click **Invite Member**.
+2. Enter the new member's email address.
+3. Select a role to assign (Admin, Sales Manager, Sales Rep, or a custom role).
+4. Optionally assign the member to a territory.
+5. Click **Send Invite**.
+
+The invited user will receive an email with a link to create their account and join your organization. Pending invitations appear in the team list with an "Invited" status badge. You can resend or revoke an invitation at any time before the user accepts it.
+
+### Bulk Invitations
+
+If you are onboarding multiple team members at once, you can invite several people in a single step. Click the **Bulk Invite** option, enter multiple email addresses (one per line or comma-separated), select a default role, and send all invitations at once.
+
+## Built-in Roles
+
+SalesOS ships with three built-in roles that cover the most common team structures. These roles cannot be deleted, but you can create custom roles for more specialized needs.
+
+### Admin
+
+Admins have unrestricted access to every feature and setting in SalesOS. This includes:
+
+- Full access to all CRM data (leads, contacts, accounts, deals, orders, quotes)
+- Organization settings, billing, and subscription management
+- Team management: inviting, editing, and deactivating members
+- Pipeline configuration, custom fields, and integrations
+- Security policies, audit logs, and API key management
+- Data import, export, and deletion
+
+Reserve the Admin role for organization owners, IT administrators, and revenue operations leaders who need to configure the platform.
+
+### Sales Manager
+
+Sales Managers have broad access to data and team management, but cannot modify organization-level settings. Their permissions include:
+
+- View and manage all leads, contacts, accounts, and deals across the team
+- Access to team members' activity feeds and performance dashboards
+- Configure and manage pipelines and pipeline stages
+- Create and manage reports, dashboards, and forecasts
+- Assign leads and deals to reps; manage territory assignments
+- Access coaching tools and call intelligence
+
+Sales Managers cannot change billing settings, security policies, or manage integrations.
+
+### Sales Rep
+
+Sales Reps have access to the data and tools they need to do their jobs, with limited administrative capabilities. Their permissions include:
+
+- Create, view, and manage their own leads, contacts, and deals
+- View account information for accounts they are associated with
+- Log activities, create tasks, and manage their own calendar
+- Access assigned playbooks and email templates
+- View their own performance metrics and dashboards
+- Use the IRIS AI assistant for coaching and deal guidance
+
+Sales Reps cannot view other reps' deals (unless explicitly shared), modify pipeline configurations, or access organization settings.
+
+## Custom Permission Profiles
+
+When the built-in roles do not match your organization's needs, you can create custom permission profiles with granular control over every feature area.
+
+### Creating a Custom Role
+
+1. Navigate to **Settings > Roles & Permissions**.
+2. Click **Create Role**.
+3. Enter a name and description for the role (for example, "SDR Lead" or "Solutions Engineer").
+4. Configure permissions for each feature area. For every module (Leads, Contacts, Accounts, Deals, Quotes, Orders, Reports, and so on), you can grant or restrict:
+   - **View** -- Can the user see records in this module?
+   - **Create** -- Can the user create new records?
+   - **Edit** -- Can the user modify existing records?
+   - **Delete** -- Can the user remove records?
+   - **View All** -- Can the user see records owned by other team members?
+   - **Edit All** -- Can the user modify records owned by other team members?
+5. Click **Save Role**.
+
+### Assigning a Custom Role
+
+Custom roles appear alongside built-in roles when inviting a new team member or editing an existing member's role. Simply select the custom role from the role dropdown.
+
+### Editing and Deleting Custom Roles
+
+To modify a custom role, go to **Settings > Roles & Permissions**, select the role, and update the permission checkboxes. Changes take effect immediately for all users assigned to that role.
+
+To delete a custom role, you must first reassign all members who hold that role to a different role. Once the role has no members, the **Delete** option becomes available.
+
+## Editing and Deactivating Team Members
+
+### Editing a Team Member
+
+Click on any team member in the **Settings > Team** list to open their profile. From here you can:
+
+- Change their assigned role
+- Update their territory assignment
+- Edit their display name or contact details
+- View their recent activity and login history
+
+### Deactivating a Team Member
+
+When someone leaves your organization or no longer needs access, deactivate their account instead of deleting it. Deactivation preserves all of the member's historical data (activities, notes, deals) while immediately revoking their access.
+
+1. Open the team member's profile in **Settings > Team**.
+2. Click **Deactivate Member**.
+3. Confirm the action.
+
+Deactivated members no longer count toward your seat limit. If needed, you can reactivate a member at any time to restore their access.
+
+### Reassigning Records
+
+When deactivating a team member, SalesOS prompts you to reassign their open leads, deals, and tasks to another active team member. This ensures that no opportunities fall through the cracks during transitions.
+
+## Territories
+
+Territories allow you to segment your market and assign reps to specific regions, industries, or customer segments. When territories are configured, new leads and deals can be automatically routed to the correct rep based on territory rules.
+
+### Viewing Territories
+
+Navigate to **Settings > Territories** to see all configured territories. Each territory card shows the territory name, the number of assigned reps, the number of accounts, and key performance metrics such as total pipeline value and closed-won revenue.
+
+### Creating a Territory
+
+1. Go to **Settings > Territories** and click **Create Territory**.
+2. Enter a territory name and optional description.
+3. Define the territory criteria (see below).
+4. Assign one or more sales reps to the territory.
+5. Click **Save**.
+
+### Defining Territory Criteria
+
+Territory criteria determine which accounts and leads belong to a territory. You can define rules based on one or more of the following attributes:
+
+- **Region / Geography** -- Country, state, city, or postal code ranges
+- **Industry** -- Vertical or sector (for example, Healthcare, Financial Services, Technology)
+- **Company Size** -- Employee count ranges or revenue tiers (SMB, Mid-Market, Enterprise)
+- **Lead Source** -- Inbound, outbound, partner referral, and so on
+- **Custom Fields** -- Any custom field you have defined on accounts or leads
+
+Criteria can be combined with AND/OR logic to create precise territory definitions.
+
+### Auto-Assignment
+
+When auto-assignment is enabled for a territory, new leads and accounts that match the territory criteria are automatically assigned to the reps in that territory. If multiple reps are assigned to the same territory, SalesOS uses round-robin distribution to balance the workload evenly.
+
+### Territory Performance
+
+The territory detail page provides performance metrics including:
+
+- Total pipeline value and deal count
+- Closed-won revenue for the current period
+- Average deal size and win rate
+- Account coverage (percentage of accounts with recent activity)
+
+Use these metrics to identify underserved territories and rebalance assignments as needed.
+
+## Subscription and Billing
+
+Admins can manage the organization's SalesOS subscription from **Settings > Billing**.
+
+### Viewing Your Plan
+
+The billing page displays your current plan name, billing cycle (monthly or annual), the number of seats included, and the number of seats in use. It also shows your next billing date and payment method on file.
+
+### Managing Seats
+
+As your team grows, you can add seats to your plan directly from the billing page. Click **Add Seats**, specify the number of additional seats, and confirm. New seats are prorated for the remainder of the current billing cycle.
+
+If you reduce your team size, you can remove unused seats at the end of the current billing period. Seats occupied by active members cannot be removed until those members are deactivated.
+
+### Updating Payment Information
+
+Click **Update Payment Method** to change the credit card or payment method on file. SalesOS uses Stripe for secure payment processing, and your card details are never stored on SalesOS servers.
+
+### Invoices
+
+A full invoice history is available on the billing page. You can download individual invoices as PDF files for your records or accounting team.
+
+## Best Practices for Team Organization
+
+- **Start with built-in roles.** Use Admin, Sales Manager, and Sales Rep as your foundation. Only create custom roles when you have specific permission requirements that the built-in roles do not satisfy.
+- **Limit the number of Admins.** Restrict Admin access to two or three trusted individuals. This reduces the risk of accidental configuration changes and improves your security posture.
+- **Use territories for routing.** Even small teams benefit from territory-based lead routing. It ensures leads are distributed fairly and reduces response time.
+- **Deactivate instead of deleting.** Always deactivate departed team members rather than deleting their accounts. This preserves data integrity and audit trails.
+- **Review permissions quarterly.** As roles evolve and new features are released, periodically review your custom permission profiles to ensure they still align with your team's needs.
+- **Reassign records promptly.** When a team member leaves or changes roles, reassign their open deals and tasks immediately to maintain pipeline momentum.

@@ -13,6 +13,7 @@ import {
   Logger,
   HttpCode,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response, Request } from 'express';
 import { OracleCXService } from './oracle-cx.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -35,6 +36,8 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+@ApiTags('Oracle CX')
+@ApiBearerAuth('JWT')
 @Controller('oracle-cx')
 export class OracleCXController {
   private readonly logger = new Logger(OracleCXController.name);

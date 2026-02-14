@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AppContentService } from './app-content.service';
 import { CreateAppContentDto } from './dto/create-app-content.dto';
 import { UpdateAppContentDto } from './dto/update-app-content.dto';
@@ -39,6 +40,8 @@ export class RolesGuard implements CanActivate {
   }
 }
 
+@ApiTags('App Content')
+@ApiBearerAuth('JWT')
 @Controller('app-content')
 export class AppContentController {
   constructor(private readonly appContentService: AppContentService) {}

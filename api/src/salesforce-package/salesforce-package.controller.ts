@@ -14,6 +14,7 @@ import {
   HttpStatus,
   Headers,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { SalesforcePackageService } from './salesforce-package.service';
 import { SalesforcePackageAuthService } from './salesforce-package-auth.service';
@@ -24,6 +25,8 @@ import { GetUserTokenDto, RefreshTokenDto } from './dto/package-auth.dto';
 import { SendMessageDto, InitiateStreamDto, PollChunksDto, CreateConversationDto } from './dto/chat-message.dto';
 import { SkipThrottle } from '@nestjs/throttler';
 
+@ApiTags('Salesforce Package')
+@ApiBearerAuth('JWT')
 @Controller('salesforce-package')
 export class SalesforcePackageController {
   private readonly logger = new Logger(SalesforcePackageController.name);

@@ -11,6 +11,7 @@ import {
   UseGuards,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import { TaskStatus, TaskPriority } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -46,6 +47,8 @@ function parseTaskStatus(status?: string): TaskStatus | undefined {
   return STATUS_NAME_MAP[normalized];
 }
 
+@ApiTags('Tasks')
+@ApiBearerAuth('JWT')
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
 export class TasksController {

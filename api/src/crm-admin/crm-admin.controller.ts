@@ -16,6 +16,7 @@ import {
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { CrmAdminService } from './crm-admin.service';
 import type { CreateCrmIntegrationDto, UpdateCrmIntegrationDto } from './crm-admin.service';
@@ -49,6 +50,8 @@ interface AuthenticatedRequest {
   };
 }
 
+@ApiTags('CRM Admin')
+@ApiBearerAuth('JWT')
 @Controller('admin/crm')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

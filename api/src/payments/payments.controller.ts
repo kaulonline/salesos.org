@@ -20,6 +20,7 @@ import {
   StreamableFile,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Reflector } from '@nestjs/core';
 import { PaymentsService } from './payments.service';
@@ -62,6 +63,7 @@ import { InvoicePdfService } from './invoice-pdf.service';
 import { PaymentGateway } from '@prisma/client';
 
 // ============= Public Controller (No Auth Required) =============
+@ApiTags('Payments')
 @Controller('payments/public')
 export class PublicPaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
@@ -73,6 +75,8 @@ export class PublicPaymentsController {
   }
 }
 
+@ApiTags('Payments')
+@ApiBearerAuth('JWT')
 @Controller('payments')
 @UseGuards(JwtAuthGuard)
 export class PaymentsController {
@@ -260,6 +264,8 @@ export class PaymentsController {
 
 // ============= Admin Controller =============
 
+@ApiTags('Payments')
+@ApiBearerAuth('JWT')
 @Controller('admin/payments')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

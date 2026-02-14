@@ -1,5 +1,6 @@
 
 import { Controller, Post, Body, UseGuards, Request, Get, Query, Res, Logger } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from './strategies/jwt-auth.guard';
 const AUTH_RATE_LIMIT = { default: { ttl: 60000, limit: 5 } }; // 5 requests per minute
 const SENSITIVE_RATE_LIMIT = { default: { ttl: 300000, limit: 3 } }; // 3 requests per 5 minutes
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     private readonly logger = new Logger(AuthController.name);

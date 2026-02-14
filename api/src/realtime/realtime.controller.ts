@@ -11,6 +11,7 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RealtimeService } from './realtime.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
@@ -23,6 +24,8 @@ import { SaveCallHistoryDto } from './dto/save-call-history.dto';
  * Realtime Voice API Controller
  * Handles WebRTC session creation and SDP exchange for Azure OpenAI Realtime
  */
+@ApiTags('Realtime')
+@ApiBearerAuth('JWT')
 @Controller('realtime')
 @UseGuards(JwtAuthGuard)
 export class RealtimeController {

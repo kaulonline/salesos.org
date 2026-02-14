@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CompetitorsService } from './competitors.service';
 import { BattlecardsService } from './battlecards.service';
@@ -24,6 +25,8 @@ import {
 } from './dto/competitor.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Competitors')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class CompetitorsController {

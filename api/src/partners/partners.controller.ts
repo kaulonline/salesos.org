@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { PartnersService } from './partners.service';
 import { DealRegistrationService } from './deal-registration.service';
@@ -17,6 +18,8 @@ import { PartnersAIService } from './partners-ai.service';
 import { CreatePartnerDto, UpdatePartnerDto, AddPartnerUserDto, InvitePartnerUserDto, AssignAccountDto } from './dto/create-partner.dto';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Partners')
+@ApiBearerAuth('JWT')
 @Controller('partners')
 @UseGuards(JwtAuthGuard)
 export class PartnersController {

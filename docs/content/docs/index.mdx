@@ -1,0 +1,95 @@
+---
+title: Getting Started
+description: Start building with the SalesOS API in minutes.
+---
+
+## Base URL
+
+All API requests are made to:
+
+```
+https://www.salesos.org/api
+```
+
+## Quick Start
+
+### 1. Get Your API Key
+
+Navigate to **Settings > API Keys** in your SalesOS dashboard and create a new API key.
+
+### 2. Make Your First Request
+
+```bash title="cURL"
+curl -X GET https://www.salesos.org/api/leads \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+### 3. Example Response
+
+```json
+[
+  {
+    "id": "lead_abc123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "status": "NEW",
+    "createdAt": "2025-01-15T10:30:00Z"
+  }
+]
+```
+
+## Authentication
+
+SalesOS supports two authentication methods:
+
+| Method | Header | Best For |
+|--------|--------|----------|
+| **JWT Bearer Token** | `Authorization: Bearer <token>` | User sessions, frontend apps |
+| **API Key** | `X-API-Key: <key>` | Server-to-server, integrations |
+
+See [Authentication](/docs/authentication) for full details.
+
+## Request Format
+
+- All request bodies must be JSON with `Content-Type: application/json`
+- Query parameters use standard URL encoding
+- IDs are UUID strings
+- Dates are ISO 8601 format (`2025-01-15T10:30:00Z`)
+
+## Response Format
+
+All responses return JSON. Successful responses return the resource directly:
+
+```json
+{
+  "id": "abc123",
+  "name": "Acme Corp",
+  "createdAt": "2025-01-15T10:30:00Z"
+}
+```
+
+Error responses follow a consistent format:
+
+```json
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "email", "message": "must be a valid email" }
+  ]
+}
+```
+
+## Rate Limiting
+
+The API enforces rate limits to ensure fair usage. See [Rate Limiting](/docs/rate-limiting) for details.
+
+## Next Steps
+
+- [Authentication](/docs/authentication) - Detailed auth guide
+- [Error Handling](/docs/error-handling) - Status codes and error format
+- [Pagination](/docs/pagination) - Paginating list endpoints
+- [Webhooks](/docs/webhooks) - Real-time event notifications
+- [API Reference](/api-reference) - Full endpoint documentation

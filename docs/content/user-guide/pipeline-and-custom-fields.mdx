@@ -1,0 +1,198 @@
+---
+title: Pipeline Configuration & Custom Fields
+description: Customize your sales process with configurable pipelines, stages, and custom fields.
+---
+
+Every sales organization has its own process. SalesOS lets you model that process precisely with configurable pipelines, stages, and custom fields. This guide covers how to set up and manage these foundational building blocks so your CRM reflects how your team actually sells.
+
+## Pipeline Configuration
+
+Pipelines represent distinct sales processes in your organization. Most teams start with a single pipeline, but you can create multiple pipelines for different sales motions -- for example, one for new business, one for renewals, and another for partner deals.
+
+### Accessing Pipeline Settings
+
+Navigate to **Settings > Pipelines** to view, create, and manage your pipelines. The pipeline settings page lists all pipelines in your organization, with the default pipeline highlighted.
+
+### Creating a New Pipeline
+
+1. Go to **Settings > Pipelines** and click **Create Pipeline**.
+2. Enter a pipeline name (for example, "Enterprise Sales", "SMB Inbound", or "Renewal Pipeline").
+3. Add your pipeline stages (see the next section).
+4. Click **Save Pipeline**.
+
+You can also duplicate an existing pipeline by clicking the three-dot menu on any pipeline card and selecting **Duplicate**. This creates a copy of the pipeline with all its stages, which you can then rename and modify.
+
+### Adding Stages to a Pipeline
+
+Each pipeline consists of an ordered sequence of stages that represent the milestones in your sales process. When adding or editing a pipeline, you configure the following for each stage:
+
+- **Stage Name** -- A descriptive label such as "Discovery", "Proposal Sent", or "Negotiation".
+- **Probability Percentage** -- The likelihood that a deal in this stage will close (0-100%). This value is used for weighted pipeline forecasting.
+- **Stage Order** -- The position of this stage in the pipeline sequence.
+
+To add a stage:
+
+1. Open the pipeline you want to modify.
+2. Click **Add Stage**.
+3. Enter the stage name and probability percentage.
+4. The new stage is added to the end of the pipeline. Use drag-and-drop to reposition it.
+
+### Reordering Stages
+
+Stages can be reordered by dragging and dropping them into the desired position within the pipeline editor. The stage order determines how deals progress through the pipeline view and the Kanban board.
+
+### Editing a Stage
+
+Click on any stage within the pipeline editor to modify its name or probability percentage. Changes are applied immediately and affect all deals currently in that stage.
+
+### Deleting a Stage
+
+When you delete a stage, SalesOS prompts you to migrate any deals currently in that stage to a different stage. This prevents deals from being orphaned.
+
+1. Click the delete icon on the stage you want to remove.
+2. Select the target stage where existing deals should be moved.
+3. Confirm the deletion.
+
+If the stage has no deals, it is removed immediately without a migration prompt.
+
+### Setting the Default Pipeline
+
+Your default pipeline is the one used when creating new deals unless the user explicitly selects a different pipeline. To change the default:
+
+1. Go to **Settings > Pipelines**.
+2. Click the three-dot menu on the pipeline you want to set as default.
+3. Select **Set as Default**.
+
+The previous default pipeline is unchanged -- it simply loses its default designation.
+
+### How Stage Probabilities Affect Forecasting
+
+Stage probabilities feed directly into SalesOS's forecasting engine. When you view your forecast, the weighted pipeline value is calculated by multiplying each deal's value by its current stage probability.
+
+For example, a $100,000 deal in a "Proposal Sent" stage with a 40% probability contributes $40,000 to your weighted forecast. As the deal advances to "Negotiation" at 70%, its weighted contribution increases to $70,000.
+
+Setting accurate probabilities based on your historical win rates at each stage will produce more reliable forecasts. Review and adjust probabilities quarterly as you gather more conversion data.
+
+## Custom Fields
+
+Custom fields let you capture data specific to your business that is not covered by SalesOS's built-in fields. Custom fields can be added to leads, contacts, accounts, and deals.
+
+### Supported Field Types
+
+SalesOS supports the following custom field types:
+
+| Field Type | Description | Example Use |
+|-----------|-------------|-------------|
+| **Text** | Single-line text input | Customer reference number |
+| **Number** | Numeric value (integer or decimal) | Number of employees |
+| **Date** | Date picker | Contract renewal date |
+| **Dropdown** | Single-select from predefined options | Lead qualification tier |
+| **Multi-Select** | Multiple selections from predefined options | Product interests |
+| **Checkbox** | Boolean true/false toggle | NDA signed |
+| **URL** | Clickable web link | Company LinkedIn page |
+| **Email** | Email address with mailto link | Secondary contact email |
+| **Phone** | Phone number with click-to-call | Direct line |
+
+### Creating a Custom Field
+
+1. Navigate to **Settings > Custom Fields**.
+2. Click **Create Field**.
+3. Configure the field:
+   - **Field Name** -- A descriptive label (for example, "Renewal Date" or "Customer Tier").
+   - **Entity Type** -- Select where this field appears: Leads, Contacts, Accounts, or Deals.
+   - **Field Type** -- Choose from the types listed above.
+   - **Required / Optional** -- Mark the field as required if it must be filled in before saving a record.
+   - **Default Value** -- Optionally set a default value that is pre-populated on new records.
+4. For Dropdown and Multi-Select fields, add the list of options (picklist values). You can reorder options by dragging them into the desired sequence.
+5. Click **Save Field**.
+
+### Custom Field Visibility and Ordering
+
+Custom fields appear on the record detail page in the order you define. To change the display order:
+
+1. Go to **Settings > Custom Fields**.
+2. Filter by entity type (Leads, Contacts, Accounts, or Deals).
+3. Drag and drop fields into the desired order.
+4. The new order is saved automatically.
+
+Custom fields also appear in the record creation and edit forms, following the same display order.
+
+### Editing a Custom Field
+
+You can edit a custom field's name, default value, and required/optional status at any time. Changing a field's type after creation is not supported because it could cause data inconsistencies. If you need a different field type, create a new field and migrate your data.
+
+For Dropdown and Multi-Select fields, you can add new picklist values, rename existing values, reorder values, or deactivate values that should no longer be selectable (existing records that use the deactivated value retain it).
+
+### Deleting a Custom Field
+
+Deleting a custom field permanently removes the field definition and all stored values across every record. This action cannot be undone.
+
+1. Go to **Settings > Custom Fields**.
+2. Click the delete icon on the field you want to remove.
+3. Review the warning that shows how many records have values for this field.
+4. Confirm the deletion.
+
+### Using Custom Fields in Filters and Reports
+
+Custom fields are available as filter criteria throughout SalesOS:
+
+- **List Views** -- Filter leads, contacts, accounts, or deals by any custom field value.
+- **Reports** -- Include custom fields as columns or filter criteria in your reports.
+- **Dashboards** -- Use custom field values to create segmented dashboard widgets.
+- **Pipeline Views** -- Filter the Kanban board by custom field values.
+- **Search** -- Text and dropdown custom field values are included in global search results.
+
+## Web Forms
+
+Web forms let you capture leads directly from your website and route them into SalesOS automatically. Each form submission creates a new lead record with the captured data.
+
+### Creating a Web Form
+
+1. Navigate to **Settings > Web Forms**.
+2. Click **Create Form**.
+3. Configure the form:
+   - **Form Name** -- An internal label for identifying this form (for example, "Contact Us Page" or "Demo Request").
+   - **Fields** -- Select which lead fields to include on the form. You can include both standard fields (first name, last name, email, company, phone) and custom fields.
+   - **Required Fields** -- Mark which fields must be completed before submission.
+   - **Submit Button Text** -- Customize the button label (default is "Submit").
+   - **Success Message** -- The confirmation message displayed after a successful submission.
+4. Click **Save Form**.
+
+### Embedding Forms on Your Website
+
+After creating a form, click **Get Embed Code** to generate the code snippet for your website. SalesOS provides two embedding options:
+
+- **HTML Embed** -- A standard HTML/JavaScript snippet that renders the form inline on your page. Copy and paste the code into your website's HTML where you want the form to appear.
+- **Iframe Embed** -- An iframe-based embed for environments where inline JavaScript is restricted.
+
+Each form has a unique public URL (slug) that can also be shared as a standalone link.
+
+### Form-to-Lead Field Mapping
+
+When a form is submitted, SalesOS maps the form fields to lead record fields automatically based on the field configuration you defined when creating the form. If a submission includes an email address that matches an existing lead, SalesOS can update the existing lead instead of creating a duplicate (configurable per form).
+
+### Form Submission Notifications
+
+You can configure notifications for form submissions:
+
+- **Email Notification** -- Send an email to one or more team members whenever a form is submitted.
+- **In-App Notification** -- Display a real-time notification in SalesOS.
+- **Assignment** -- Automatically assign the new lead to a specific rep or territory based on the submission data.
+
+### Managing Form Submissions
+
+View all submissions for a form by clicking the form name in **Settings > Web Forms** and selecting the **Submissions** tab. Each submission shows the submitted data, the date and time, and the lead record that was created. You can delete individual submissions if needed.
+
+### Cloning and Deactivating Forms
+
+To create a similar form without starting from scratch, use the **Clone** option. To stop accepting submissions on a form without deleting it, toggle the form's status to **Inactive**.
+
+## Best Practices for Pipeline Design
+
+- **Mirror your actual sales process.** Define stages that reflect the real milestones your deals go through, not an idealized version. If your team skips a stage, it probably should not be in the pipeline.
+- **Keep the number of stages manageable.** Five to eight stages is typical. Too few stages provide insufficient visibility; too many create unnecessary friction for reps updating deals.
+- **Set probabilities based on data.** If you have historical win-rate data by stage, use it. Otherwise, start with reasonable estimates and refine them quarterly as you accumulate conversion data.
+- **Use separate pipelines for distinct motions.** An enterprise sales cycle and a self-serve SMB motion are fundamentally different processes. Do not force them into a single pipeline.
+- **Name stages clearly.** Use action-oriented or milestone-oriented names like "Discovery Completed", "Proposal Delivered", or "Contract Sent" rather than vague labels like "Stage 2" or "In Progress".
+- **Leverage custom fields for segmentation.** Custom fields like "Deal Source", "Product Line", or "Competitor" enable powerful filtering and reporting without cluttering the pipeline stages.
+- **Keep web forms simple.** The fewer fields you require on a web form, the higher your conversion rate. Capture the essentials (name, email, company) and enrich the lead record later.

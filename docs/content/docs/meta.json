@@ -1,0 +1,11 @@
+{
+  "title": "Guides",
+  "pages": [
+    "index",
+    "authentication",
+    "rate-limiting",
+    "pagination",
+    "error-handling",
+    "webhooks"
+  ]
+}

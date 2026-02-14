@@ -14,6 +14,7 @@ import {
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { FeatureVisibilityService } from './feature-visibility.service';
@@ -42,6 +43,8 @@ import {
 } from './dto';
 import { DeviceType } from '@prisma/client';
 
+@ApiTags('Feature Visibility')
+@ApiBearerAuth('JWT')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class FeatureVisibilityController {

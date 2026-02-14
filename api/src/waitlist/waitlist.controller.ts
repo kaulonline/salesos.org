@@ -16,6 +16,7 @@ import {
   Ip,
   Headers,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Reflector } from '@nestjs/core';
 import { Throttle } from '@nestjs/throttler';
@@ -42,6 +43,7 @@ class RolesGuard implements CanActivate {
   }
 }
 
+@ApiTags('Waitlist')
 @Controller('waitlist')
 export class WaitlistController {
   constructor(private readonly waitlistService: WaitlistService) {}

@@ -17,6 +17,7 @@ import {
   Ip,
   Headers,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response, Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { Throttle } from '@nestjs/throttler';
@@ -50,6 +51,8 @@ class RolesGuard implements CanActivate {
   }
 }
 
+@ApiTags('Access Requests')
+@ApiBearerAuth('JWT')
 @Controller('access-requests')
 export class AccessRequestsController {
   constructor(private readonly accessRequestsService: AccessRequestsService) {}

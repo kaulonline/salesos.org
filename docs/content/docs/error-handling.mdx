@@ -1,0 +1,143 @@
+---
+title: Error Handling
+description: HTTP status codes, error response format, and validation errors.
+---
+
+## Overview
+
+The SalesOS API uses standard HTTP status codes and returns consistent JSON error responses. All errors include a `statusCode` and `message` field.
+
+## HTTP Status Codes
+
+### Success Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| `200` | OK | Successful GET, PATCH, PUT |
+| `201` | Created | Successful POST (resource created) |
+| `204` | No Content | Successful DELETE |
+
+### Client Error Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| `400` | Bad Request | Invalid request body or parameters |
+| `401` | Unauthorized | Missing or invalid authentication |
+| `403` | Forbidden | Insufficient permissions |
+| `404` | Not Found | Resource does not exist |
+| `409` | Conflict | Duplicate resource or state conflict |
+| `422` | Unprocessable Entity | Semantic validation failure |
+| `429` | Too Many Requests | Rate limit exceeded |
+
+### Server Error Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| `500` | Internal Server Error | Unexpected server failure |
+| `503` | Service Unavailable | Temporary maintenance or overload |
+
+## Error Response Format
+
+All error responses follow this structure:
+
+```json
+{
+  "statusCode": 400,
+  "message": "Bad Request",
+  "error": "Validation failed"
+}
+```
+
+## Validation Errors
+
+When request validation fails (`400`), the response includes detailed field-level errors:
+
+```json
+{
+  "statusCode": 400,
+  "message": [
+    "email must be an email",
+    "firstName should not be empty",
+    "status must be one of: NEW, CONTACTED, QUALIFIED, LOST"
+  ],
+  "error": "Bad Request"
+}
+```
+
+### Common Validation Rules
+
+| Rule | Example Message |
+|------|----------------|
+| Required field | `"firstName should not be empty"` |
+| Invalid email | `"email must be an email"` |
+| Invalid enum | `"status must be one of: NEW, CONTACTED, QUALIFIED"` |
+| String too long | `"name must be shorter than or equal to 255 characters"` |
+| Invalid UUID | `"id must be a UUID"` |
+| Unknown field | `"property unknownField should not exist"` |
+
+Sending unknown fields in the request body will result in a validation error.
+
+## Authentication Errors
+
+```json title="401 Unauthorized"
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+
+This occurs when:
+- No `Authorization` header or `X-API-Key` is provided
+- The JWT token is expired or malformed
+- The API key is invalid or revoked
+
+## Permission Errors
+
+```json title="403 Forbidden"
+{
+  "statusCode": 403,
+  "message": "You do not have permission to perform this action"
+}
+```
+
+This occurs when the authenticated user lacks the required role or profile permission.
+
+## Not Found Errors
+
+```json title="404 Not Found"
+{
+  "statusCode": 404,
+  "message": "Lead with id abc123 not found"
+}
+```
+
+## Handling Errors
+
+```javascript
+async function apiRequest(url, options) {
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    const error = await response.json();
+
+    switch (response.status) {
+      case 401:
+        // Re-authenticate
+        break;
+      case 429:
+        // Retry with backoff
+        break;
+      case 400:
+        // Show validation errors to user
+        console.error('Validation:', error.message);
+        break;
+      default:
+        console.error(`API Error ${error.statusCode}: ${error.message}`);
+    }
+
+    throw error;
+  }
+
+  return response.json();
+}
+```

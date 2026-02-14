@@ -12,12 +12,15 @@ import {
   Res,
   StreamableFile,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { OrdersService } from './orders.service';
 import { OrderStatus, OrderPaymentStatus, OrderFulfillmentStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CurrentOrganization } from '../common/decorators/organization.decorator';
 
+@ApiTags('Orders')
+@ApiBearerAuth('JWT')
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {

@@ -15,6 +15,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { UsersService } from './users.service';
@@ -98,6 +99,8 @@ export interface UserPreferences {
   };
 }
 
+@ApiTags('Users')
+@ApiBearerAuth('JWT')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {

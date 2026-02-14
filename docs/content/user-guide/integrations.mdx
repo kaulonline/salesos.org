@@ -1,0 +1,181 @@
+---
+title: Integrations
+description: Connect SalesOS with your email, calendar, messaging, CRM, and payment tools.
+---
+
+SalesOS integrates with the tools your team already uses so that data flows seamlessly between systems and your reps can work without switching contexts. This guide covers how to browse, connect, configure, and manage integrations.
+
+## Browsing Available Integrations
+
+Navigate to **Settings > Integrations** to view all available integrations. Integrations are organized by category, and you can filter by category or search by name to find the tool you need.
+
+Each integration card shows the service name, a brief description of what it does, the category it belongs to, and its current connection status.
+
+## Integration Categories
+
+### Email: Gmail and Outlook
+
+Connect your email provider to enable email tracking and synchronization directly within SalesOS.
+
+- **Gmail** -- Sync your Gmail inbox with SalesOS. Emails sent to and received from leads, contacts, and accounts are automatically logged on the corresponding record's activity timeline. Email open and link click tracking are available when sending emails through SalesOS.
+- **Outlook** -- Full support for Microsoft Outlook (including Office 365 and Exchange). Provides the same email logging and tracking capabilities as the Gmail integration.
+
+Once connected, you can compose and send emails from within SalesOS record pages, and all correspondence is captured automatically.
+
+### Calendar: Google Calendar and Outlook Calendar
+
+Calendar integrations provide two-way synchronization between your calendar and SalesOS meetings.
+
+- **Google Calendar** -- Meetings created in SalesOS automatically appear on your Google Calendar, and meetings scheduled in Google Calendar that include contacts or leads are reflected in SalesOS.
+- **Outlook Calendar** -- Two-way sync with Microsoft Outlook Calendar, including support for recurring meetings and meeting room bookings.
+
+Calendar sync ensures your SalesOS activity timeline always reflects your complete schedule, and it powers features like meeting prep and conversation intelligence.
+
+### Messaging: Slack and Microsoft Teams
+
+Stay informed and collaborate with your team without leaving your messaging platform.
+
+- **Slack** -- Receive real-time notifications in Slack channels when deals move stages, when new leads are assigned, or when tasks are due. You can configure which events trigger notifications and which channels receive them. Slack integration also supports slash commands for quick CRM lookups.
+- **Microsoft Teams** -- Similar functionality to Slack, including channel-based deal update notifications, task reminders, and mentions. Teams integration works with both standard and private channels.
+
+### CRM: Salesforce and HubSpot
+
+Migrating from another CRM or running SalesOS alongside an existing system? CRM integrations enable data migration and ongoing two-way synchronization.
+
+- **Salesforce** -- Import leads, contacts, accounts, opportunities, and activities from Salesforce. Two-way sync keeps both systems in alignment if you are running them in parallel. Field mapping is fully configurable so you can control exactly which fields sync and in which direction.
+- **HubSpot** -- Import contacts, companies, deals, and engagement data from HubSpot. Supports both one-time migration and continuous two-way sync with configurable field mapping.
+
+### Payment: Stripe
+
+Connect Stripe to process payments for orders created in SalesOS.
+
+- **Stripe** -- Link your Stripe account to enable payment collection directly from SalesOS orders. When an order is created or a quote is accepted, you can generate a Stripe payment link or charge a customer's stored payment method. Payment status is synced back to the SalesOS order record in real time.
+
+### Social: LinkedIn
+
+Enhance your prospecting with LinkedIn data and social selling capabilities.
+
+- **LinkedIn** -- Enrich contact and lead records with LinkedIn profile data including job title, company, location, and profile photo. View a contact's recent LinkedIn activity from within SalesOS to inform your outreach. The integration supports LinkedIn Sales Navigator for advanced prospecting workflows.
+
+## Connecting an Integration
+
+The connection process varies slightly depending on the integration, but generally follows one of two patterns.
+
+### OAuth Flow
+
+Most integrations (Gmail, Outlook, Google Calendar, Outlook Calendar, Slack, Microsoft Teams, Salesforce, HubSpot, Stripe, LinkedIn) use OAuth for secure authorization.
+
+1. Navigate to **Settings > Integrations** and find the integration you want to connect.
+2. Click **Connect**.
+3. You are redirected to the third-party service's login page.
+4. Sign in with your credentials for that service and grant the requested permissions.
+5. You are redirected back to SalesOS. The integration status changes to **Connected**.
+
+SalesOS requests only the minimum permissions needed for the integration to function. You can review the specific permissions on the third-party service's authorization screen before approving.
+
+### API Key Entry
+
+Some integrations may require an API key instead of OAuth. In this case:
+
+1. Navigate to **Settings > Integrations** and find the integration.
+2. Click **Connect**.
+3. Enter the API key (obtained from the third-party service's settings or developer portal).
+4. Click **Save**.
+5. SalesOS validates the key and, if successful, the status changes to **Connected**.
+
+## Connection Status
+
+Each integration displays one of three connection states:
+
+| Status | Description |
+|--------|-------------|
+| **Connected** | The integration is active and data is flowing between systems. |
+| **Disconnected** | The integration is not connected. Click **Connect** to set it up. |
+| **Error** | The connection has encountered a problem (expired token, revoked permissions, or service outage). Action is required. |
+
+When an integration enters the **Error** state, SalesOS displays a message describing the issue and the recommended resolution.
+
+## Syncing Behavior
+
+Each integration syncs data differently depending on the service and the configuration you select.
+
+### What Data Flows Between Systems
+
+- **Email integrations** sync sent and received emails, associating them with the matching lead, contact, or account in SalesOS based on email address.
+- **Calendar integrations** sync meeting events, attendees, and meeting notes in both directions.
+- **Messaging integrations** send notifications from SalesOS to your messaging platform. They do not import messages back into SalesOS.
+- **CRM integrations** sync records (leads, contacts, accounts, deals) and field values. The sync direction (one-way or two-way) and field mapping are configurable.
+- **Payment integrations** sync payment status, transaction IDs, and invoice data from Stripe to SalesOS order records.
+- **Social integrations** pull profile data from LinkedIn into SalesOS contact records. Data flows one way (LinkedIn to SalesOS).
+
+### Sync Frequency
+
+- **Real-time**: Email tracking events (opens, clicks), Slack/Teams notifications, and Stripe payment status updates are synced in real time.
+- **Near real-time**: Email and calendar sync typically occurs within a few minutes of the event.
+- **Scheduled**: CRM data sync (Salesforce, HubSpot) runs on a configurable schedule -- every 15 minutes, hourly, or daily, depending on your preference and data volume.
+
+## Re-Authentication
+
+OAuth tokens can expire or be revoked by the third-party service. When this happens, the integration status changes to **Error** and SalesOS displays a prompt to re-authenticate.
+
+To re-authenticate:
+
+1. Go to **Settings > Integrations** and find the integration with the Error status.
+2. Click **Reconnect**.
+3. Complete the OAuth flow again by signing in and granting permissions.
+
+Re-authentication restores the connection without losing any integration configuration or historical sync data.
+
+## Disconnecting an Integration
+
+To disconnect an integration:
+
+1. Navigate to **Settings > Integrations**.
+2. Find the connected integration and click the three-dot menu.
+3. Select **Disconnect**.
+4. Confirm the action.
+
+Disconnecting an integration stops all data sync immediately. Historical data that was already synced into SalesOS is preserved -- it is not deleted when you disconnect. If you reconnect later, syncing resumes from where it left off.
+
+## Integration-Specific Settings
+
+After connecting an integration, you can access its settings by clicking **Configure** on the integration card. Settings vary by integration but commonly include:
+
+### Sync Frequency
+
+For CRM integrations (Salesforce, HubSpot), you can choose how often data syncs: every 15 minutes, hourly, or daily. More frequent syncing ensures your data is up to date but may consume more API quota with the third-party service.
+
+### Field Mapping
+
+CRM integrations let you map fields between SalesOS and the other system. The field mapping interface shows:
+
+- **SalesOS Field** -- The field in SalesOS.
+- **External Field** -- The corresponding field in the third-party CRM.
+- **Sync Direction** -- SalesOS to external, external to SalesOS, or bidirectional.
+- **Conflict Resolution** -- When the same record is updated in both systems, choose which system's value wins (most recent update, SalesOS always wins, or external always wins).
+
+### Notification Channels
+
+For Slack and Microsoft Teams integrations, you can configure:
+
+- Which Slack channels or Teams channels receive notifications.
+- Which events trigger notifications (deal stage changes, new lead assignments, task due dates, quota updates, and more).
+- Notification format (summary or detailed).
+
+### Email Tracking Preferences
+
+For Gmail and Outlook integrations, you can enable or disable:
+
+- Automatic email logging (all emails or only emails matching CRM records).
+- Open tracking (pixel-based email open detection).
+- Link click tracking.
+- Email thread grouping on the activity timeline.
+
+## Best Practices for Integration Setup
+
+- **Connect email and calendar first.** These integrations have the highest daily impact for reps. Automatic email logging and calendar sync eliminate manual data entry and ensure your activity data is complete.
+- **Start with one-way sync for CRM integrations.** If you are migrating from Salesforce or HubSpot, begin with a one-way import into SalesOS. Verify that the data looks correct before enabling two-way sync to avoid overwriting data in either system.
+- **Be selective with notification events.** Sending every CRM event to Slack or Teams creates noise. Start with high-value notifications (deal stage changes, large deal updates, task reminders) and add more over time based on team feedback.
+- **Review field mappings carefully.** Incorrect field mapping is the most common cause of data quality issues after connecting a CRM integration. Take time to map fields accurately and test with a small batch of records before running a full sync.
+- **Monitor integration health.** Check the Integrations page periodically for any connections in the Error state. Promptly re-authenticate expired connections to avoid gaps in your data.
+- **Use Stripe for a seamless quote-to-cash flow.** Connecting Stripe lets you move from quote acceptance to payment collection without leaving SalesOS, reducing friction and accelerating your cash cycle.

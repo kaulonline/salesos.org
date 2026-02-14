@@ -19,6 +19,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VideoCoachingService } from './video-coaching.service';
 import { CoachingRealtimeService } from './coaching-realtime.service';
@@ -26,6 +27,8 @@ import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CreateCoachingSessionDto, CoachingSessionListQueryDto } from './dto/coaching.dto';
 import { CoachingScenario, CoachingSessionStatus } from '@prisma/client';
 
+@ApiTags('Video Coaching')
+@ApiBearerAuth('JWT')
 @Controller('coaching')
 @UseGuards(JwtAuthGuard)
 export class VideoCoachingController {

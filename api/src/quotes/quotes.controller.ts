@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, UploadedFile, UseInterceptors, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QuotesService } from './quotes.service';
 import { QuoteStatus } from '@prisma/client';
@@ -50,6 +51,8 @@ function transformQuote(quote: any) {
   };
 }
 
+@ApiTags('Quotes')
+@ApiBearerAuth('JWT')
 @Controller('quotes')
 @UseGuards(JwtAuthGuard)
 export class QuotesController {

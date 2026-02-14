@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FeedbackService } from './feedback.service';
 import {
   SubmitFeedbackDto,
@@ -19,6 +20,8 @@ import {
 } from './dto/feedback.dto';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 
+@ApiTags('Feedback')
+@ApiBearerAuth('JWT')
 @Controller('feedback')
 @UseGuards(JwtAuthGuard)
 export class FeedbackController {

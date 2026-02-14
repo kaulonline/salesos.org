@@ -10,10 +10,13 @@ import {
   HttpStatus,
   Header,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ImagesService } from './images.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 
+@ApiTags('Images')
+@ApiBearerAuth('JWT')
 @Controller('images')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}

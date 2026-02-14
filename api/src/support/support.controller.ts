@@ -17,6 +17,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { SupportService } from './support.service';
 import { EmailPollingService } from './email-polling.service';
@@ -57,6 +58,7 @@ export class RolesGuard implements CanActivate {
 
 // ==================== PUBLIC ENDPOINTS ====================
 
+@ApiTags('Support')
 @Controller('support')
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}

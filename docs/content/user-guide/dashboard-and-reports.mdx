@@ -1,0 +1,250 @@
+---
+title: Dashboard & Reports
+description: Visualize your sales performance with dashboards, widgets, and detailed reports.
+---
+
+The Dashboard and Reports in SalesOS give you a real-time view of your sales performance, team activity, and pipeline health. Whether you need a quick daily snapshot or a deep-dive analysis of quarterly trends, these tools help you stay informed and make data-driven decisions.
+
+## Dashboard Home
+
+The Dashboard Home is the first screen you see when you log into SalesOS. It is designed to give you an at-a-glance summary of everything that matters to your day.
+
+### Header Metrics
+
+At the top of the dashboard, you will see three key figures displayed prominently:
+
+- **Leads** -- Your total lead count
+- **Open Deals** -- The number of active opportunities in your pipeline
+- **Pipeline** -- The total dollar value of your open pipeline
+
+Below these, a row of metric pills shows your **Win Rate**, **Closed Won** count for the current month, **Quota Attainment** (with a visual progress bar), and **Conversion Rate**. If you have connected integrations (such as email or calendar), an integration status indicator also appears here.
+
+### Dashboard Widgets
+
+The main dashboard is organized in a multi-column grid layout with the following widgets:
+
+#### Sales Rep Profile Card
+
+Located in the left column, this card displays your profile information along with key personal metrics:
+
+- Estimated commission based on your closed-won revenue and commission rate
+- Total opportunities and pipeline value
+- Closed-won value, win rate, and quota attainment percentage
+- Average deal velocity (days to close)
+- Your top deals by value
+
+#### Sales Activity Chart
+
+This widget shows your activity volume over the last 7 days, broken down by type: calls, emails, and meetings. Each day is represented as a bar, with the current day highlighted. The total monthly activity count is displayed at the top.
+
+#### Deal Velocity Metrics
+
+Deal Velocity tracks how quickly your deals move through the pipeline. This card shows:
+
+- **Average Days to Close** -- The mean number of days from deal creation to close for your won deals
+- **Win Rate** -- Your overall percentage of deals won
+- **Conversion Rate** -- The percentage of deals that advance past early qualification stages
+
+#### Meetings Calendar
+
+A calendar view of your upcoming meetings, showing the next 20 scheduled events. Each meeting entry displays the meeting title, time, and attendees, making it easy to prepare for what is ahead.
+
+#### Pipeline Summary
+
+A compact summary of your pipeline health including:
+
+- Total open deals
+- Deals closed-won this month
+- Average deal size
+- Average deal velocity
+
+#### Action Items
+
+A list of your most recent tasks, with the ability to click into any task for full details. You can mark tasks as complete directly from this widget. A progress indicator shows how many tasks you have completed out of your total assigned tasks.
+
+#### Revenue Forecast
+
+This widget displays your AI-generated revenue forecast alongside your total pipeline value, giving you a forward-looking view of expected revenue based on current deal probabilities and pipeline data.
+
+#### AI Features Card
+
+A quick-access card that links to SalesOS AI capabilities including IRIS, AI Agents, and other intelligent features.
+
+### How Widgets Display Data and Date Ranges
+
+Dashboard widgets pull data in real time from your CRM. Activity data defaults to the last 7 days for the daily chart and the last 30 days for the monthly total. Deal and pipeline metrics reflect all currently open deals. The meetings calendar shows upcoming events from today forward.
+
+The dashboard automatically refreshes when you navigate to it, ensuring you always see the latest data.
+
+---
+
+## Reports
+
+The Reports page provides detailed analytics across six key dimensions of your sales performance. Navigate to Reports from the main navigation menu.
+
+### Report Tabs
+
+Reports are organized into six tabs, each providing a different analytical lens:
+
+#### Pipeline Report
+
+The Pipeline report shows the current state of your sales pipeline:
+
+- **Total Pipeline** -- The aggregate dollar value of all open deals
+- **Open Deals** -- The count of active opportunities
+- **Avg Deal Size** -- The average dollar value per deal
+- **Expected Revenue** -- The probability-weighted revenue forecast
+
+A bar chart breaks down your pipeline by stage, showing the dollar amount and percentage of total pipeline at each stage. This helps you identify where your deals are concentrated and whether your pipeline is top-heavy or well-distributed.
+
+#### Win Rate Report
+
+The Win Rate report analyzes your success in closing deals:
+
+- **Overall Win Rate** -- Your aggregate win percentage
+- **Deals Won** and **Deals Lost** -- Total counts for the selected period
+- **Avg Cycle Time** -- The average number of days from deal creation to close
+
+Two visualizations are provided: a line chart showing win rate trends over time by period, and a bar chart comparing win rates across individual sales reps. This report supports group-by options (see below) to slice the data by different dimensions.
+
+#### Activity Report
+
+The Activity report measures team engagement and effort:
+
+- **Total Activities** -- The overall count of logged activities
+- **Calls**, **Emails**, **Meetings** -- Individual counts by activity type
+
+Charts display activity breakdown by type (bar chart), activity by team member (bar chart), and activity trends over time (line chart). This report supports group-by options for flexible analysis.
+
+#### Revenue Report
+
+The Revenue report tracks closed revenue and compares it to forecasts:
+
+- **Closed Won** -- Total revenue closed in the period, with a growth rate indicator
+- **Deals Closed** -- The number of deals closed-won
+- **Pipeline Value** -- Current total pipeline
+- **Forecast** -- The projected revenue
+
+A line chart overlays actual revenue against forecast by month, making it easy to see whether you are tracking ahead of or behind plan. A bar chart shows revenue contribution by sales rep.
+
+#### Lead Conversion Report
+
+The Lead Conversion report measures how effectively leads turn into qualified opportunities:
+
+- **Conversion Rate** -- The percentage of leads that convert
+- **Avg Time to Convert** -- How many days it takes on average for a lead to convert
+- **Total Converted** -- The absolute number of converted leads
+
+Bar charts compare conversion rates by lead source and by rep, helping you understand which channels and team members are most effective at qualifying leads.
+
+#### Forecast Report
+
+The Forecast report provides a forward-looking view of revenue:
+
+- **Committed** -- Revenue that is highly likely to close
+- **Best Case** -- Optimistic revenue projection
+- **Closed** -- Revenue already closed-won
+- **Quota Attainment** -- Percentage of quota achieved
+
+A multi-line chart shows Closed, Committed, and Best Case amounts by month. A detailed table breaks down quota, committed, best case, and closed amounts for each sales rep.
+
+### Date Range Selection
+
+All reports (except Forecast) support a date range selector with the following options:
+
+- This Week / Last Week
+- This Month / Last Month
+- This Quarter / Last Quarter
+- This Year / Last Year
+
+Click the calendar dropdown in the top-right corner of the Reports page to change the date range. The report data will automatically reload to reflect the new time frame.
+
+### Group-By Options
+
+The **Win Rate** and **Activity** reports support a group-by dropdown that lets you slice data by:
+
+- **Day**, **Week**, **Month**, **Quarter** -- Time-based grouping
+- **Owner** -- Group by sales rep
+- **Stage** -- Group by deal stage
+- **Source** -- Group by lead or deal source
+
+Select the desired grouping from the "Group" dropdown next to the date range selector.
+
+### Exporting Reports
+
+Click the **Export** button in the top-right corner of the Reports page to download the current report data. The **Refresh** button next to it forces a fresh data pull from the server.
+
+---
+
+## Win/Loss Analysis
+
+The Win/Loss Analysis page (accessible from the Analytics section) provides a deeper look at your closed deals to help you understand why you win and why you lose.
+
+### Overview Mode
+
+The default view shows key metrics for your closed deals within the selected date range:
+
+- **Win Rate** -- The percentage of closed deals that were won
+- **Won Deals** and **Lost Deals** -- Counts and total dollar values
+- **Average Deal Size** -- For won deals
+
+You can filter by date range (month, quarter, or year) to focus on different time periods.
+
+### Analysis by Stage
+
+See where deals dropped out of the pipeline. This view shows the distribution of lost deals by the stage they were in when they were lost, helping you identify weak points in your sales process.
+
+### Analysis by Rep
+
+Compare win rates across your team members to identify top performers and coaching opportunities.
+
+### Competitors View
+
+When competitor data is tracked on deals, this view shows win/loss rates against specific competitors, giving you insight into your competitive positioning.
+
+---
+
+## Account Health
+
+The Account Health page monitors the engagement level and risk status of your accounts. Each account is assigned a health score and status based on multiple factors.
+
+### Health Statuses
+
+Accounts are categorized into four health levels:
+
+- **Healthy** -- Regular activity, open deals, and strong engagement signals
+- **At Risk** -- Activity has slowed or engagement is declining
+- **Critical** -- No recent activity, declining revenue, or multiple risk factors present
+- **Unknown** -- Insufficient data to determine health
+
+### Health Score Factors
+
+The health score is calculated based on:
+
+- **Recency of activity** -- How recently someone on your team interacted with the account
+- **Open deals** -- Whether there are active opportunities
+- **Contact coverage** -- Whether you have contacts mapped at the account
+- **Revenue** -- Historical and current revenue from the account
+- **Account type** -- Whether the account is a customer, prospect, or other type
+
+### Filtering and Searching
+
+Use the search bar to find specific accounts by name. Filter by health status (Healthy, At Risk, Critical, Unknown) to focus on the accounts that need the most attention. Click into any account to see its detailed risk factors and expansion opportunities.
+
+---
+
+## Best Practices for Data-Driven Selling
+
+1. **Check your dashboard daily.** Start each morning by reviewing your Action Items, upcoming meetings, and pipeline summary to prioritize your day.
+
+2. **Review reports weekly.** Set aside time each week to look at your Activity report and Win Rate trends. Consistent activity correlates with better outcomes.
+
+3. **Use date range comparisons.** Compare this quarter to last quarter to understand whether your performance is improving or declining.
+
+4. **Monitor deal velocity.** If your average days to close is increasing, investigate whether deals are stalling at a particular stage.
+
+5. **Act on Account Health signals.** Accounts flagged as At Risk or Critical should receive immediate attention. Schedule a touchpoint before the relationship deteriorates further.
+
+6. **Analyze your losses.** The Win/Loss Analysis page is one of the most valuable tools for long-term improvement. Understanding why you lose deals is the first step to winning more of them.
+
+7. **Export and share.** Use the export feature to pull data for team meetings, QBRs, and board presentations. Sharing data creates alignment and accountability.

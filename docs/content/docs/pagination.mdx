@@ -1,0 +1,74 @@
+---
+title: Pagination
+description: Navigate large result sets with cursor-based pagination.
+---
+
+## Overview
+
+List endpoints in the SalesOS API return paginated results. The API uses **offset-based pagination** with configurable page sizes.
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | `1` | Page number (1-indexed) |
+| `limit` | integer | `20` | Items per page (max 100) |
+| `sortBy` | string | `createdAt` | Field to sort by |
+| `sortOrder` | string | `desc` | Sort direction: `asc` or `desc` |
+
+## Example Request
+
+```bash
+curl -X GET "https://www.salesos.org/api/leads?page=2&limit=25&sortBy=createdAt&sortOrder=desc" \
+  -H "Authorization: Bearer <token>"
+```
+
+## Response Format
+
+Paginated endpoints return an array of items:
+
+```json
+[
+  {
+    "id": "lead_001",
+    "firstName": "Alice",
+    "lastName": "Johnson",
+    "createdAt": "2025-01-15T10:30:00Z"
+  },
+  {
+    "id": "lead_002",
+    "firstName": "Bob",
+    "lastName": "Williams",
+    "createdAt": "2025-01-14T09:15:00Z"
+  }
+]
+```
+
+The total count is returned in the response headers:
+
+```http
+X-Total-Count: 150
+```
+
+## Filtering
+
+Most list endpoints support filtering via query parameters:
+
+```bash
+# Filter leads by status
+GET /api/leads?status=QUALIFIED&page=1&limit=20
+
+# Filter opportunities by stage
+GET /api/opportunities?stage=PROPOSAL&sortBy=value&sortOrder=desc
+
+# Search contacts by name
+GET /api/contacts?search=jane&limit=10
+```
+
+## Best Practices
+
+- Use reasonable page sizes (20-50 items) for optimal performance
+- Always handle the case where a page returns fewer items than the limit (end of results)
+- Cache results client-side when browsing back and forth between pages
+- Use `sortBy` and `sortOrder` to get the most relevant results first
+- Combine pagination with filters to reduce the total result set

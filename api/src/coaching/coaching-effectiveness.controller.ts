@@ -15,6 +15,7 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { CoachingEffectivenessService } from './coaching-effectiveness.service';
 import {
@@ -22,6 +23,8 @@ import {
   GetRepEffectivenessQueryDto,
 } from './dto/coaching-effectiveness.dto';
 
+@ApiTags('Coaching Effectiveness')
+@ApiBearerAuth('JWT')
 @Controller('coaching/effectiveness')
 @UseGuards(JwtAuthGuard)
 export class CoachingEffectivenessController {

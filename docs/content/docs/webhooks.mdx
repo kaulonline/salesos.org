@@ -1,0 +1,166 @@
+---
+title: Webhooks
+description: Receive real-time event notifications via webhook subscriptions.
+---
+
+## Overview
+
+SalesOS webhooks deliver real-time HTTP POST notifications to your server when events occur in your CRM. Instead of polling the API, register a webhook URL and receive events as they happen.
+
+## Creating a Webhook
+
+### Via API
+
+```bash
+curl -X POST https://www.salesos.org/api/webhooks-management \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-app.com/webhooks/salesos",
+    "events": ["lead.created", "lead.updated", "opportunity.won"],
+    "secret": "YOUR_WEBHOOK_SECRET"
+  }'
+```
+
+### Via Dashboard
+
+Navigate to **Settings > Webhooks** and click **Add Webhook**.
+
+## Event Types
+
+### CRM Events
+
+| Event | Description |
+|-------|-------------|
+| `lead.created` | A new lead was created |
+| `lead.updated` | A lead was updated |
+| `lead.deleted` | A lead was deleted |
+| `lead.converted` | A lead was converted to contact/opportunity |
+| `contact.created` | A new contact was created |
+| `contact.updated` | A contact was updated |
+| `account.created` | A new account was created |
+| `account.updated` | An account was updated |
+| `opportunity.created` | A new opportunity was created |
+| `opportunity.updated` | An opportunity was updated |
+| `opportunity.won` | An opportunity was marked as won |
+| `opportunity.lost` | An opportunity was marked as lost |
+
+### Sales Events
+
+| Event | Description |
+|-------|-------------|
+| `quote.created` | A new quote was created |
+| `quote.approved` | A quote was approved |
+| `quote.sent` | A quote was sent to the customer |
+| `order.created` | A new order was created |
+| `order.completed` | An order was completed |
+| `meeting.scheduled` | A meeting was scheduled |
+| `meeting.completed` | A meeting was completed |
+| `task.completed` | A task was completed |
+
+## Payload Format
+
+All webhook payloads follow this structure:
+
+```json
+{
+  "id": "evt_abc123",
+  "type": "lead.created",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "organizationId": "org_xyz789",
+  "data": {
+    "id": "lead_def456",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "status": "NEW",
+    "createdAt": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+## Signature Verification
+
+All webhook deliveries include an HMAC-SHA256 signature in the `X-Webhook-Signature` header. Verify this signature to ensure the payload is authentic.
+
+```javascript
+import crypto from 'crypto';
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+
+// In your webhook handler
+app.post('/webhooks/salesos', (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const isValid = verifyWebhookSignature(
+    JSON.stringify(req.body),
+    signature,
+    'YOUR_WEBHOOK_SECRET'
+  );
+
+  if (!isValid) {
+    return res.status(401).send('Invalid signature');
+  }
+
+  // Process the event
+  const { type, data } = req.body;
+
+  switch (type) {
+    case 'lead.created':
+      handleNewLead(data);
+      break;
+    case 'opportunity.won':
+      handleDealWon(data);
+      break;
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+## Delivery & Retries
+
+- Webhooks are delivered within seconds of the event
+- Your endpoint must respond with a `2xx` status code within **30 seconds**
+- Failed deliveries are retried up to **5 times** with exponential backoff:
+  - Retry 1: 1 minute
+  - Retry 2: 5 minutes
+  - Retry 3: 30 minutes
+  - Retry 4: 2 hours
+  - Retry 5: 24 hours
+
+## Managing Webhooks
+
+```bash title="List webhooks"
+GET /api/webhooks-management
+
+```
+
+```bash title="Update a webhook"
+PATCH /api/webhooks-management/:id
+{
+  "events": ["lead.created", "lead.updated"],
+  "active": true
+}
+```
+
+```bash title="Delete a webhook"
+DELETE /api/webhooks-management/:id
+```
+
+## Best Practices
+
+- Always verify webhook signatures before processing
+- Respond with `200` quickly; process events asynchronously
+- Store the event `id` and deduplicate to handle retries
+- Use a queue (Redis, SQS) to process webhooks reliably
+- Monitor webhook delivery logs in the SalesOS dashboard
