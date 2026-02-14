@@ -504,77 +504,44 @@ export function VsMonday() {
         </div>
       </section>
 
-      {/* Customer Stories */}
+      {/* Why Teams Switch */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4">
-              Teams Who Switched to a Real CRM
+              Why Teams Need a Dedicated Sales CRM
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Target size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Monday.com worked great for our product team, but sales was a mess. We had to use 4 separate tools just to track emails and calls. SalesOS has everything in one place."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Built for Sales</h3>
+              <p className="text-[#666]">
+                Purpose-built CRM features like email tracking, call intelligence, and deal scoring that project management tools cannot provide.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  EG
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Emma Garcia</div>
-                  <div className="text-sm text-[#666]">Head of Sales, TeamSync</div>
-                  <div className="text-xs text-[#999]">10-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Brain size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "We loved Monday's visual boards but it is a project management tool, not a CRM. No forecasting, no deal scoring, no email tracking. SalesOS gave us everything we were missing."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">AI Sales Intelligence</h3>
+              <p className="text-[#666]">
+                Native AI forecasting, deal scoring, and predictive analytics that help sales teams focus on the right opportunities.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  BS
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Brian Sullivan</div>
-                  <div className="text-sm text-[#666]">VP Revenue, CloudBridge</div>
-                  <div className="text-xs text-[#999]">14-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <DollarSign size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Monday charged us $129/user plus automation fees. SalesOS only charges on closed deals with unlimited users. No monthly fees plus AI forecasting. Easy decision."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Outcome-Based Pricing</h3>
+              <p className="text-[#666]">
+                Pay for results with unlimited users instead of per-seat fees that scale with team growth and automation costs.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  NT
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Nina Torres</div>
-                  <div className="text-sm text-[#666]">CRO, GrowthPath</div>
-                  <div className="text-xs text-[#999]">8-person sales team</div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>

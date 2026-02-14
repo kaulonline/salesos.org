@@ -131,8 +131,8 @@ export const VsSalesforce: React.FC = () => {
         },
         {
           name: 'Rep adoption rate',
-          salesos: '92%',
-          salesforce: '37%',
+          salesos: 'High adoption',
+          salesforce: 'Lower adoption',
           winner: 'salesos',
           description: 'Sales reps actually use it vs constant resistance'
         },
@@ -206,27 +206,18 @@ export const VsSalesforce: React.FC = () => {
     },
   ];
 
-  const testimonials = [
+  const switchReasons = [
     {
-      quote: "We spent 8 months implementing Salesforce and our team still hated it. We switched to SalesOS and were fully operational in 2 days. Our close rate increased 52% in the first quarter.",
-      author: "Sarah Chen",
-      role: "VP of Sales",
-      company: "TechFlow (120 employees)",
-      savings: "Saved $180k/year in Salesforce costs"
+      title: "Faster Implementation",
+      description: "Sales teams report being fully operational in days instead of months, with minimal training required."
     },
     {
-      quote: "Salesforce required a full-time admin and constant customization. SalesOS just works out of the box. Our reps actually enjoy using it, which was never true with Salesforce.",
-      author: "Marcus Johnson",
-      role: "Head of Revenue Operations",
-      company: "CloudVentures",
-      savings: "Eliminated $120k admin salary"
+      title: "Lower Total Cost",
+      description: "Teams switching from Salesforce typically eliminate implementation costs, reduce per-user fees, and avoid expensive add-ons."
     },
     {
-      quote: "The AI features in SalesOS are light-years ahead. Salesforce Einstein cost us an extra $75/user and barely worked. SalesOS's AI is included and actually predicts which deals will close.",
-      author: "Elena Rodriguez",
-      role: "Chief Revenue Officer",
-      company: "DataSync Inc",
-      impact: "47% improvement in forecast accuracy"
+      title: "Better AI Integration",
+      description: "Native AI features are included in the platform instead of requiring expensive add-ons that need separate configuration."
     },
   ];
 
@@ -359,9 +350,9 @@ export const VsSalesforce: React.FC = () => {
               <div className="w-16 h-16 rounded-2xl bg-[#EAD07D]/20 flex items-center justify-center mx-auto mb-4">
                 <TrendingUp size={32} className="text-[#1A1A1A]" />
               </div>
-              <div className="text-4xl font-bold text-[#1A1A1A] mb-2">92%</div>
+              <div className="text-4xl font-bold text-[#1A1A1A] mb-2">High</div>
               <div className="text-[#666] mb-1">Rep Adoption Rate</div>
-              <div className="text-sm text-red-600 font-medium">vs 37% (Salesforce)</div>
+              <div className="text-sm text-red-600 font-medium">Teams actually use it</div>
             </div>
           </div>
 
@@ -523,36 +514,25 @@ export const VsSalesforce: React.FC = () => {
             <PricingDisclaimer />
           </div>
 
-          {/* Customer Testimonials */}
+          {/* Why Teams Switch */}
           <div className="mb-20">
             <h2 className="text-3xl lg:text-4xl font-bold text-[#1A1A1A] text-center mb-4">
-              Teams Who Made the Switch
+              Why Teams Switch from Salesforce
             </h2>
             <p className="text-center text-[#666] mb-12 max-w-2xl mx-auto">
-              Real stories from sales leaders who moved from Salesforce to SalesOS.
+              Common benefits reported by sales teams who migrated from Salesforce to SalesOS.
             </p>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {testimonials.map((testimonial, idx) => (
+              {switchReasons.map((reason, idx) => (
                 <div key={idx} className="bg-white rounded-3xl p-8 border border-black/5">
-                  <div className="text-[#666] mb-6 leading-relaxed italic">
-                    "{testimonial.quote}"
+                  <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                    <Check size={24} className="text-[#1A1A1A]" />
                   </div>
-                  <div className="border-t border-black/5 pt-4">
-                    <div className="font-semibold text-[#1A1A1A]">{testimonial.author}</div>
-                    <div className="text-sm text-[#666]">{testimonial.role}</div>
-                    <div className="text-sm text-[#999]">{testimonial.company}</div>
-                    {testimonial.savings && (
-                      <div className="mt-3 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold inline-block">
-                        {testimonial.savings}
-                      </div>
-                    )}
-                    {testimonial.impact && (
-                      <div className="mt-3 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold inline-block">
-                        {testimonial.impact}
-                      </div>
-                    )}
-                  </div>
+                  <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">{reason.title}</h3>
+                  <p className="text-[#666] leading-relaxed">
+                    {reason.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -595,13 +575,22 @@ export const VsSalesforce: React.FC = () => {
                 <p className="text-[#666] mb-6">
                   vs 6+ months for Salesforce implementation
                 </p>
-                <Link
-                  to="/signup"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-semibold hover:bg-[#333] transition-colors"
-                >
-                  Start Migration Now
-                  <ArrowRight size={20} />
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-semibold hover:bg-[#333] transition-colors"
+                  >
+                    Start Migration Now
+                    <ArrowRight size={20} />
+                  </Link>
+                  <Link
+                    to="/docs/migration/salesforce-migration"
+                    className="inline-flex items-center gap-2 px-8 py-4 border border-black/10 text-[#1A1A1A] rounded-full font-semibold hover:bg-white transition-colors"
+                  >
+                    View Migration Guide
+                    <FileText size={20} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

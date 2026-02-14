@@ -1,6 +1,7 @@
 // Admin Service - Handles all admin configuration and management operations
 import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ApplicationLogService, LogCategory, TransactionStatus } from './application-log.service';
@@ -38,6 +39,7 @@ export class AdminService implements OnModuleInit {
     private readonly applicationLogService: ApplicationLogService,
     private readonly moduleRef: ModuleRef,
     private readonly salesOSEmailService: SalesOSEmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /**
@@ -996,6 +998,80 @@ export class AdminService implements OnModuleInit {
     return { success: true, message: `Password reset email sent to ${user.email}` };
   }
 
+  async impersonateUser(targetUserId: string, adminUserId: string) {
+    // Verify admin is actually a super admin
+    const admin = await this.prisma.user.findUnique({
+      where: { id: adminUserId },
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Only super admins can impersonate users');
+    }
+
+    // Get target user
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: {
+        organizationMemberships: {
+          where: { isActive: true },
+          include: {
+            organization: {
+              select: { id: true, status: true, name: true },
+            },
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID "${targetUserId}" not found`);
+    }
+
+    if (targetUser.status !== 'ACTIVE') {
+      throw new BadRequestException('Cannot impersonate inactive users');
+    }
+
+    // Get user's primary organization
+    const membership = targetUser.organizationMemberships?.[0];
+    let primaryOrganizationId: string | null = null;
+    if (membership?.organization?.status === 'ACTIVE') {
+      primaryOrganizationId = membership.organization.id;
+    }
+
+    // Generate JWT token for target user
+    const payload = {
+      sub: targetUser.id,
+      email: targetUser.email,
+      role: targetUser.role,
+      organizationId: primaryOrganizationId,
+      impersonatedBy: adminUserId, // Track who is impersonating
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    // Log impersonation for audit trail
+    await this.logAuditAction('IMPERSONATE', 'User', targetUserId, adminUserId, {
+      metadata: {
+        targetEmail: targetUser.email,
+        targetRole: targetUser.role,
+        impersonatedBy: admin.email,
+      },
+    });
+
+    return {
+      token,
+      user: {
+        id: targetUser.id,
+        email: targetUser.email,
+        name: targetUser.name,
+        role: targetUser.role,
+        organizationId: primaryOrganizationId,
+        organizationName: membership?.organization?.name,
+      },
+    };
+  }
+
   // ============================================
   // INTEGRATIONS
   // ============================================
@@ -1112,8 +1188,25 @@ export class AdminService implements OnModuleInit {
       this.prisma.adminAuditLog.count({ where }),
     ]);
 
+    // Transform logs to match API interface (map timestamp -> createdAt, include user object)
+    const transformedLogs = logs.map(log => ({
+      id: log.id,
+      userId: log.userId,
+      action: log.action,
+      entityType: log.entityType,
+      entityId: log.entityId,
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent,
+      details: log.metadata as Record<string, unknown>,
+      createdAt: log.timestamp.toISOString(),
+      user: log.userName || log.userEmail ? {
+        name: log.userName || '',
+        email: log.userEmail || '',
+      } : undefined,
+    }));
+
     return {
-      items: logs,
+      items: transformedLogs,
       total,
       page,
       pageSize,

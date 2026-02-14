@@ -41,8 +41,8 @@ export function VsZoho() {
               <div className="text-white font-medium">Unified System</div>
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-              <div className="text-3xl font-light text-[#EAD07D] mb-2">90%</div>
-              <div className="text-sm text-white/60 mb-1">vs Zoho's 38%</div>
+              <div className="text-3xl font-light text-[#EAD07D] mb-2">Higher</div>
+              <div className="text-sm text-white/60 mb-1">vs Zoho's Lower Adoption</div>
               <div className="text-white font-medium">User Adoption</div>
             </Card>
           </div>
@@ -96,7 +96,7 @@ export function VsZoho() {
               <p className="text-sm text-[#666] mb-3">
                 UI looks and feels like 2010. Confusing navigation, inconsistent design across apps, mobile apps barely functional.
               </p>
-              <p className="text-xs text-[#999]">38% adoption rate average</p>
+              <p className="text-xs text-[#999]">Low adoption rate common</p>
             </Card>
 
             <Card className="p-6 bg-white border-yellow-100">
@@ -172,8 +172,8 @@ export function VsZoho() {
                 />
                 <ComparisonRow
                   feature="User Adoption Rate"
-                  salesos="90% - reps love using it"
-                  zoho="38% - most features go unused due to complexity"
+                  salesos="Higher adoption - reps love using it"
+                  zoho="Lower adoption - features often go unused due to complexity"
                   salesosWins={true}
                 />
               </div>
@@ -519,77 +519,44 @@ export function VsZoho() {
         </div>
       </section>
 
-      {/* Customer Stories */}
+      {/* Why Teams Switch */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4">
-              Teams Who Escaped Zoho
+              Why Teams Leave Zoho
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Clock size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Zoho was cheap but we spent 60 hours configuring it and our team hated the interface. SalesOS took 1 hour to setup, only charges on closed deals with unlimited users, and everyone actually uses it. Worth it."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Setup Complexity</h3>
+              <p className="text-[#666]">
+                Teams report spending significant time on configuration and often hiring consultants. Modern CRMs offer faster setup with AI-guided onboarding.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  RJ
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Raj Joshi</div>
-                  <div className="text-sm text-[#666]">Founder, CloudMetrics</div>
-                  <div className="text-xs text-[#999]">8-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Layers size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "We had 12 different Zoho apps. Our reps spent more time switching between apps than selling. SalesOS is one clean platform that actually works together."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">App Fragmentation</h3>
+              <p className="text-[#666]">
+                Managing multiple separate apps creates workflow friction. Unified platforms reduce context switching and improve team productivity.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  TC
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Tina Chen</div>
-                  <div className="text-sm text-[#666]">VP Sales, DataFlow</div>
-                  <div className="text-xs text-[#999]">18-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <DollarSign size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Zoho looked cheap at $52/user but we paid $8,000 for a consultant just to set it up. Plus analytics cost extra. SalesOS only charges on closed deals, includes everything, and unlimited users."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Hidden Costs</h3>
+              <p className="text-[#666]">
+                Low base pricing can be misleading when critical features require expensive add-ons. Transparent pricing models include all features upfront.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  MW
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Michael Wong</div>
-                  <div className="text-sm text-[#666]">CRO, TechBridge</div>
-                  <div className="text-xs text-[#999]">22-person sales team</div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>
@@ -629,7 +596,7 @@ export function VsZoho() {
                 Is SalesOS easier to use than Zoho?
               </h3>
               <p className="text-[#666] ml-7">
-                Dramatically easier. Zoho has a 38% adoption rate because of complexity. SalesOS has 90% adoption because our modern interface makes sense immediately. No 40-hour training needed.
+                Dramatically easier. Zoho has lower adoption rates due to complexity. SalesOS achieves higher adoption because our modern interface is more intuitive. Minimal training is needed.
               </p>
             </Card>
 

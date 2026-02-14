@@ -495,77 +495,44 @@ export function VsPipedrive() {
         </div>
       </section>
 
-      {/* Customer Stories */}
+      {/* Why Teams Upgrade */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4">
-              Teams Who Upgraded from Pipedrive
+              Why Growing Teams Upgrade from Pipedrive
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Brain size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Pipedrive was great when we were 5 people. At 25 reps, we needed real forecasting and AI coaching. SalesOS gave us enterprise features without the complexity."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Enterprise AI Features</h3>
+              <p className="text-[#666]">
+                Growing teams need advanced forecasting, deal intelligence, and conversation analytics that basic pipeline tools do not provide.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  MR
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Marcus Rodriguez</div>
-                  <div className="text-sm text-[#666]">VP Revenue, DataSync</div>
-                  <div className="text-xs text-[#999]">25-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <DollarSign size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "We loved Pipedrive's UI but hated buying add-ons for everything. SalesOS only charges on closed deals with unlimited users plus AI, forecasting, and call intelligence that Pipedrive will never have."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Transparent Pricing</h3>
+              <p className="text-[#666]">
+                Teams report frustration with add-on costs accumulating over time. Outcome-based pricing aligns costs with results rather than features.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  LT
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Lisa Thompson</div>
-                  <div className="text-sm text-[#666]">CRO, GrowthMetrics</div>
-                  <div className="text-xs text-[#999]">15-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <BarChart size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "Pipedrive is a visual pipeline tool. SalesOS is a revenue intelligence platform. We needed the latter as we scaled to $10M ARR. The switch took 2 hours."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Revenue Intelligence</h3>
+              <p className="text-[#666]">
+                Scaling companies need deeper analytics, predictive insights, and revenue operations capabilities beyond basic reporting.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  AK
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Alex Kim</div>
-                  <div className="text-sm text-[#666]">Founder, StreamFlow</div>
-                  <div className="text-xs text-[#999]">12-person sales team</div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>

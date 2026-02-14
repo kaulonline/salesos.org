@@ -43,6 +43,7 @@ import type { AccessRequest, AccessRequestStatus, AccessRequestStats } from '../
 import { DatabaseBackups } from '../../src/components/admin/DatabaseBackups';
 import { adminApi } from '../../src/api/admin';
 import type { MaintenanceStatus } from '../../src/api/admin';
+import client from '../../src/api/client';
 
 type TabType = 'overview' | 'users' | 'access-requests' | 'organizations' | 'billing' | 'features' | 'settings' | 'audit' | 'backups';
 type BillingSubTab = 'dashboard' | 'pricing-plans' | 'events' | 'invoices';
@@ -250,7 +251,15 @@ export const Admin: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
-  const [userFormData, setUserFormData] = useState({ name: '', email: '', role: 'USER', status: 'ACTIVE' });
+  const [userFormData, setUserFormData] = useState({
+    name: '',
+    email: '',
+    role: 'USER',
+    status: 'ACTIVE',
+    organizationId: '',
+    organizationName: '',
+    organizationRole: 'MEMBER' as 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER'
+  });
   const [userFormLoading, setUserFormLoading] = useState(false);
   const [userActionsMenuId, setUserActionsMenuId] = useState<string | null>(null);
 
@@ -284,7 +293,7 @@ export const Admin: React.FC = () => {
   } = useAdminUsers({ search: searchQuery, role: selectedRole, status: selectedStatus, page: usersPage });
   const { flags, loading: flagsLoading, toggleFlag } = useFeatureFlags();
   const { configs, loading: configsLoading } = useSystemConfig();
-  const { logs, loading: logsLoading } = useAuditLogs({ limit: 20 });
+  const { logs, total: auditLogsTotal, page: auditLogsPage, setPage: setAuditLogsPage, loading: logsLoading, refetch: refetchAuditLogs } = useAuditLogs({ limit: 50 });
 
   // Licensing Hooks
   const { dashboard: licensingDashboard, loading: licensingLoading } = useLicensingDashboard();
@@ -582,32 +591,78 @@ export const Admin: React.FC = () => {
   }, [logs, auditActionFilter]);
 
   // User edit/delete handlers
-  const handleEditUser = (user: any) => {
+  const handleEditUser = async (user: any) => {
     setSelectedUser(user);
     setUserFormData({
       name: user.name || '',
       email: user.email,
       role: user.role,
       status: user.status,
+      organizationId: user.organizationId || '',
+      organizationName: user.organizationName || '',
+      organizationRole: user.organizationRole || 'MEMBER',
     });
     setShowEditUserModal(true);
     setUserActionsMenuId(null);
+
+    // Load organizations if not already loaded
+    if (organizations.length === 0) {
+      try {
+        setOrgsLoading(true);
+        const response = await organizationsApi.getAll(1, 100);
+        setOrganizations(response.organizations);
+        setOrgsTotal(response.total);
+      } catch (err) {
+        console.error('Failed to load organizations:', err);
+      } finally {
+        setOrgsLoading(false);
+      }
+    }
   };
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
     setUserFormLoading(true);
     try {
+      // Update user's system role and status
       await updateUser(selectedUser.id, {
         name: userFormData.name,
         role: userFormData.role as any,
         status: userFormData.status as any,
       });
-      showToast('User updated successfully', 'success');
+
+      // Handle organization changes
+      const oldOrgId = selectedUser.organizationId;
+      const newOrgId = userFormData.organizationId;
+
+      if (oldOrgId !== newOrgId) {
+        // Remove from old organization if it exists
+        if (oldOrgId) {
+          await organizationsApi.removeMember(oldOrgId, selectedUser.id);
+        }
+
+        // Add to new organization if selected
+        if (newOrgId) {
+          await organizationsApi.addMember(newOrgId, {
+            userId: selectedUser.id,
+            role: userFormData.organizationRole,
+          });
+        }
+      } else if (newOrgId && userFormData.organizationRole !== selectedUser.organizationRole) {
+        // If organization hasn't changed but role has, update the role
+        await organizationsApi.updateMember(
+          newOrgId,
+          selectedUser.id,
+          { role: userFormData.organizationRole }
+        );
+      }
+
+      showToast({ type: 'success', title: 'User updated successfully' });
       setShowEditUserModal(false);
       setSelectedUser(null);
+      refetchUsers(); // Refresh the user list
     } catch (err: any) {
-      showToast(err.response?.data?.message || 'Failed to update user', 'error');
+      showToast({ type: 'error', title: 'Failed to update user', message: err.response?.data?.message || 'An error occurred' });
     } finally {
       setUserFormLoading(false);
     }
@@ -648,6 +703,13 @@ export const Admin: React.FC = () => {
       refetchUsers({ search: searchQuery, role: selectedRole, status: selectedStatus, page: usersPage });
     }
   }, [searchQuery, selectedRole, selectedStatus, usersPage]);
+
+  // Refetch audit logs when page changes or filter changes
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      refetchAuditLogs({ page: auditLogsPage, limit: 50, action: auditActionFilter !== 'all' ? auditActionFilter : undefined });
+    }
+  }, [auditLogsPage, auditActionFilter, activeTab]);
 
   // Fetch OAuth config and maintenance status when Settings tab is active
   useEffect(() => {
@@ -1278,7 +1340,9 @@ export const Admin: React.FC = () => {
                 <thead className="bg-[#F8F8F6] border-b border-[#F2F1EA]">
                   <tr>
                     <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">User</th>
-                    <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Role</th>
+                    <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">System Role</th>
+                    <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Organization</th>
+                    <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Org Role</th>
                     <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Status</th>
                     <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Last Login</th>
                     <th className="text-left py-4 px-6 text-[10px] font-bold text-[#999] uppercase tracking-wider">Actions</th>
@@ -1288,14 +1352,14 @@ export const Admin: React.FC = () => {
                   {usersLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-4 px-6">
+                        <td colSpan={7} className="py-4 px-6">
                           <Skeleton className="h-12 rounded-xl" />
                         </td>
                       </tr>
                     ))
                   ) : (users || []).length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-[#666]">
+                      <td colSpan={7} className="py-12 text-center text-[#666]">
                         No users found
                       </td>
                     </tr>
@@ -1311,7 +1375,42 @@ export const Admin: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6">{getRoleBadge(u.role)}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-1.5">
+                            {getRoleBadge(u.role)}
+                            {u.role === 'ADMIN' && (
+                              <span className="text-xs text-[#999]" title="System-wide access">⭐</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          {u.organizationName ? (
+                            <div>
+                              <p className="text-sm font-medium text-[#1A1A1A]">{u.organizationName}</p>
+                              <p className="text-xs text-[#999]">{u.organizationId?.slice(0, 8)}...</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-[#999]">No org</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          {u.organizationRole ? (
+                            <Badge
+                              variant={
+                                u.organizationRole === 'OWNER' ? 'dark' :
+                                u.organizationRole === 'ADMIN' ? 'yellow' :
+                                'outline'
+                              }
+                              size="sm"
+                              className={u.organizationRole === 'OWNER' ? 'gap-1' : ''}
+                            >
+                              {u.organizationRole === 'OWNER' && <Crown size={10} />}
+                              {u.organizationRole}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-[#999]">-</span>
+                          )}
+                        </td>
                         <td className="py-4 px-6">{getStatusBadge(u.status)}</td>
                         <td className="py-4 px-6 text-sm text-[#666]">
                           {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : 'Never'}
@@ -3770,7 +3869,7 @@ export const Admin: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="font-bold text-[#1A1A1A]">Audit Logs</h3>
-                <p className="text-sm text-[#666]">Track all administrative actions</p>
+                <p className="text-sm text-[#666]">Track all administrative actions ({auditLogsTotal} total)</p>
               </div>
               <div className="flex gap-2">
                 <div className="relative">
@@ -3824,35 +3923,124 @@ export const Admin: React.FC = () => {
                 <p className="text-[#666]">No audit logs found</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {(filteredLogs || []).map((log) => (
-                  <div
-                    key={log.id}
-                    className="flex items-start justify-between p-4 bg-[#F8F8F6] rounded-xl hover:bg-[#F2F1EA] transition-colors"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm mt-0.5">
-                        <Clock size={16} className="text-[#666]" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-[#1A1A1A]">{log.action}</p>
-                        <p className="text-xs text-[#666] mt-0.5">
-                          {log.user?.name || log.user?.email || 'System'}
-                          {log.entityType && ` • ${log.entityType}`}
-                          {log.entityId && ` #${log.entityId.slice(0, 8)}`}
-                        </p>
-                        {log.ipAddress && (
-                          <p className="text-xs text-[#999] mt-1">IP: {log.ipAddress}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-[#999]">{new Date(log.createdAt).toLocaleDateString()}</p>
-                      <p className="text-xs text-[#999]">{new Date(log.createdAt).toLocaleTimeString()}</p>
+              <>
+                {/* Audit Logs Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-black/5">
+                        <th className="px-4 py-3 text-left font-medium text-[#666]">Date & Time</th>
+                        <th className="px-4 py-3 text-left font-medium text-[#666]">User</th>
+                        <th className="px-4 py-3 text-left font-medium text-[#666]">Action</th>
+                        <th className="px-4 py-3 text-left font-medium text-[#666]">Entity</th>
+                        <th className="px-4 py-3 text-left font-medium text-[#666]">IP Address</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(filteredLogs || []).map((log) => {
+                        // Safely format date
+                        const formatLogDate = (dateStr?: string) => {
+                          if (!dateStr) return 'N/A';
+                          try {
+                            const date = new Date(dateStr);
+                            if (isNaN(date.getTime())) return 'Invalid Date';
+                            return date.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            });
+                          } catch {
+                            return 'Invalid Date';
+                          }
+                        };
+
+                        return (
+                          <tr key={log.id} className="border-b border-black/5 hover:bg-[#F8F8F6] transition-colors">
+                            <td className="px-4 py-4 text-[#1A1A1A] whitespace-nowrap">
+                              {formatLogDate(log.createdAt)}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                <Avatar
+                                  user={{
+                                    name: log.user?.name || log.user?.email || 'System',
+                                    avatarUrl: undefined,
+                                  }}
+                                  size="sm"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-[#1A1A1A] font-medium truncate">
+                                    {log.user?.name || 'System'}
+                                  </p>
+                                  {log.user?.email && (
+                                    <p className="text-xs text-[#999] truncate">{log.user.email}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                log.action.includes('CREATE') ? 'bg-[#93C01F]/20 text-[#93C01F]' :
+                                log.action.includes('UPDATE') ? 'bg-blue-100 text-blue-700' :
+                                log.action.includes('DELETE') ? 'bg-red-100 text-red-700' :
+                                log.action.includes('LOGIN') ? 'bg-[#EAD07D]/20 text-[#1A1A1A]' :
+                                'bg-[#F8F8F6] text-[#666]'
+                              }`}>
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-[#666]">
+                              {log.entityType ? (
+                                <div>
+                                  <span className="font-medium text-[#1A1A1A]">{log.entityType}</span>
+                                  {log.entityId && (
+                                    <span className="text-xs text-[#999] ml-2">#{log.entityId.slice(0, 8)}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[#999]">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-[#666] font-mono text-xs">
+                              {log.ipAddress || <span className="text-[#999]">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {auditLogsTotal > 50 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-black/5">
+                    <p className="text-sm text-[#666]">
+                      Showing {((auditLogsPage - 1) * 50) + 1} to {Math.min(auditLogsPage * 50, auditLogsTotal)} of {auditLogsTotal} logs
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setAuditLogsPage(auditLogsPage - 1)}
+                        disabled={auditLogsPage === 1}
+                        className="px-4 py-2 rounded-xl bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-4 py-2 text-sm font-medium text-[#666]">
+                        Page {auditLogsPage} of {Math.ceil(auditLogsTotal / 50)}
+                      </span>
+                      <button
+                        onClick={() => setAuditLogsPage(auditLogsPage + 1)}
+                        disabled={auditLogsPage >= Math.ceil(auditLogsTotal / 50)}
+                        className="px-4 py-2 rounded-xl bg-[#F8F8F6] text-sm font-medium hover:bg-[#F2F1EA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </Card>
         </div>
@@ -4868,18 +5056,77 @@ export const Admin: React.FC = () => {
                 />
                 <p className="text-xs text-[#999] mt-1">Email cannot be changed</p>
               </div>
+
+              {/* Organization Selection */}
               <div>
-                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Role</label>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                  Organization
+                  <span className="ml-1 text-xs text-[#999]">(Optional)</span>
+                </label>
                 <select
-                  value={userFormData.role}
-                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                  value={userFormData.organizationId}
+                  onChange={(e) => {
+                    const selectedOrgId = e.target.value;
+                    const selectedOrg = organizations.find(org => org.id === selectedOrgId);
+                    setUserFormData({
+                      ...userFormData,
+                      organizationId: selectedOrgId,
+                      organizationName: selectedOrg?.name || '',
+                    });
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                  disabled={orgsLoading}
                 >
-                  <option value="USER">User</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="ADMIN">Admin</option>
+                  <option value="">None (No Organization)</option>
+                  {organizations.map(org => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
                 </select>
+                {orgsLoading && (
+                  <p className="text-xs text-[#999] mt-1">Loading organizations...</p>
+                )}
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                    System Role
+                    <span className="ml-1 text-xs text-[#999]">(Platform-wide)</span>
+                  </label>
+                  <select
+                    value={userFormData.role}
+                    onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                  >
+                    <option value="USER">User</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="VIEWER">Viewer</option>
+                  </select>
+                </div>
+
+                {userFormData.organizationId && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                      Org Role
+                      <span className="ml-1 text-xs text-[#999]">(Organization)</span>
+                    </label>
+                    <select
+                      value={userFormData.organizationRole}
+                      onChange={(e) => setUserFormData({ ...userFormData, organizationRole: e.target.value as any })}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                    >
+                      <option value="MEMBER">Member</option>
+                      <option value="MANAGER">Manager</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="OWNER">Owner</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Status</label>
                 <select
@@ -4894,21 +5141,61 @@ export const Admin: React.FC = () => {
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
-              <button
-                onClick={() => setShowEditUserModal(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateUser}
-                disabled={userFormLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {userFormLoading && <Loader2 size={16} className="animate-spin" />}
-                Save Changes
-              </button>
+            <div className="border-t border-[#F2F1EA]">
+              {/* Login as User button */}
+              {isAdmin && selectedUser.id !== user?.id && (
+                <div className="px-6 pt-4 pb-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        // Call impersonation endpoint
+                        const response = await client.post(`/admin/users/${selectedUser.id}/impersonate`);
+                        const { token } = response.data;
+
+                        // Store original admin token for later
+                        const currentToken = localStorage.getItem('token');
+                        if (currentToken) {
+                          localStorage.setItem('adminToken', currentToken);
+                        }
+
+                        // Switch to impersonated user
+                        localStorage.setItem('token', token);
+                        showToast({ type: 'success', title: 'Logged in as user', message: `Now viewing as ${selectedUser.name || selectedUser.email}` });
+
+                        // Reload to apply new token
+                        setTimeout(() => window.location.href = '/dashboard', 500);
+                      } catch (err: any) {
+                        showToast({ type: 'error', title: 'Impersonation failed', message: err.response?.data?.message || 'Feature not yet implemented' });
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#EAD07D] bg-[#EAD07D]/10 text-[#1A1A1A] font-medium hover:bg-[#EAD07D]/20 transition-colors flex items-center justify-center gap-2"
+                    title="Login as this user to see their view"
+                  >
+                    <Key size={16} />
+                    Login as {selectedUser.name || selectedUser.email}
+                  </button>
+                  <p className="text-xs text-[#999] mt-2 text-center">
+                    View the dashboard as this user. You can switch back from settings.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 p-6 pt-4">
+                <button
+                  onClick={() => setShowEditUserModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateUser}
+                  disabled={userFormLoading}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {userFormLoading && <Loader2 size={16} className="animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>

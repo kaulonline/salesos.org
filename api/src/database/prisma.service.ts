@@ -130,8 +130,9 @@ export class PrismaService
    */
   async setRlsContext(organizationId: string, isAdmin: boolean = false): Promise<void> {
     try {
-      await this.$executeRaw`SELECT set_config('app.current_organization_id', ${organizationId}, true)`;
-      await this.$executeRaw`SELECT set_config('app.is_admin', ${isAdmin ? 'true' : 'false'}, true)`;
+      // Use $executeRawUnsafe for PgBouncer compatibility (no prepared statements)
+      await this.$executeRawUnsafe(`SELECT set_config('app.current_organization_id', '${organizationId}', true)`);
+      await this.$executeRawUnsafe(`SELECT set_config('app.is_admin', '${isAdmin ? 'true' : 'false'}', true)`);
     } catch (error) {
       this.logger.error(`Failed to set RLS context: ${error}`);
       throw error;
@@ -144,8 +145,9 @@ export class PrismaService
    */
   async clearRlsContext(): Promise<void> {
     try {
-      await this.$executeRaw`SELECT set_config('app.current_organization_id', '', true)`;
-      await this.$executeRaw`SELECT set_config('app.is_admin', 'false', true)`;
+      // Use $executeRawUnsafe for PgBouncer compatibility (no prepared statements)
+      await this.$executeRawUnsafe(`SELECT set_config('app.current_organization_id', '', true)`);
+      await this.$executeRawUnsafe(`SELECT set_config('app.is_admin', 'false', true)`);
     } catch (error) {
       this.logger.error(`Failed to clear RLS context: ${error}`);
       // Don't throw - this is cleanup
@@ -200,9 +202,9 @@ export class PrismaService
     operation: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
     return this.$transaction(async (tx) => {
-      // Set RLS context within the transaction
-      await tx.$executeRaw`SELECT set_config('app.current_organization_id', ${organizationId}, true)`;
-      await tx.$executeRaw`SELECT set_config('app.is_admin', ${isAdmin ? 'true' : 'false'}, true)`;
+      // Set RLS context within the transaction - use $executeRawUnsafe for PgBouncer compatibility
+      await tx.$executeRawUnsafe(`SELECT set_config('app.current_organization_id', '${organizationId}', true)`);
+      await tx.$executeRawUnsafe(`SELECT set_config('app.is_admin', '${isAdmin ? 'true' : 'false'}', true)`);
 
       return operation(tx);
     });
@@ -213,11 +215,10 @@ export class PrismaService
    */
   async getRlsContext(): Promise<{ organizationId: string | null; isAdmin: boolean }> {
     try {
-      const result = await this.$queryRaw<Array<{ org_id: string; is_admin: string }>>`
-        SELECT
-          current_setting('app.current_organization_id', true) as org_id,
-          current_setting('app.is_admin', true) as is_admin
-      `;
+      // Use $queryRawUnsafe for PgBouncer compatibility (no prepared statements)
+      const result = await this.$queryRawUnsafe<Array<{ org_id: string; is_admin: string }>>(
+        `SELECT current_setting('app.current_organization_id', true) as org_id, current_setting('app.is_admin', true) as is_admin`
+      );
 
       return {
         organizationId: result[0]?.org_id || null,

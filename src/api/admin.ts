@@ -53,6 +53,10 @@ export interface AdminUser {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Organization membership info
+  organizationId?: string;
+  organizationName?: string;
+  organizationRole?: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
   stats?: {
     conversationsCount: number;
     leadsCount: number;
@@ -368,7 +372,13 @@ export const adminApi = {
     startDate?: string;
     endDate?: string;
   }): Promise<PaginatedResponse<AuditLog>> => {
-    const response = await client.get<PaginatedResponse<AuditLog>>('/admin/audit-logs', { params });
+    // Transform 'limit' to 'pageSize' for backend compatibility
+    const { limit, ...rest } = params || {};
+    const backendParams = {
+      ...rest,
+      pageSize: limit,
+    };
+    const response = await client.get<PaginatedResponse<AuditLog>>('/admin/audit-logs', { params: backendParams });
     // Handle both 'items' and 'data' response formats
     const items = response.data?.items || response.data?.data || [];
     return {

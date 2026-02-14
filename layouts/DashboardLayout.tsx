@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake, Menu, X, type LucideIcon } from 'lucide-react';
+import { Command, Settings, Building2, Workflow, Plug, Users, ChevronDown, LogOut, User, Shield, BarChart3, Search, Megaphone, CreditCard, FileText, Mail, Columns, GitBranch, Globe, Key, Lock, Package, ShoppingCart, TrendingUp, CheckSquare, Brain, Target, Map, PieChart, BookOpen, MessageSquare, Heart, AlertCircle, Mic, Bell, Sparkles, Calendar, DollarSign, Swords, HardDrive, Handshake, Menu, X, Upload, Database, History, type LucideIcon } from 'lucide-react';
 import { CommandPalette } from '../components/CommandPalette';
 import { OfflineIndicator } from '../src/components/OfflineIndicator';
 import { GlobalSearch, useGlobalSearch } from '../src/components/GlobalSearch/GlobalSearch';
@@ -21,15 +21,38 @@ export const DashboardLayout: React.FC = () => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const { user, logout } = useAuth();
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
   const { showOnboarding, completeOnboarding } = useOnboarding();
   const { isOpen: tourOpen, closeTour, completeTour, startTour } = useProductTour('dashboard');
   const { getVisibleItems, isCategoryEnabled, isItemEnabled } = useMenuPreferences();
 
+  // Check if user is impersonating on mount and when user changes
+  React.useEffect(() => {
+    const adminToken = localStorage.getItem('adminToken');
+    setIsImpersonating(!!adminToken);
+  }, [user]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleExitImpersonation = () => {
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      // Remove admin token from localStorage
+      localStorage.removeItem('adminToken');
+      // Restore the admin token as the current token
+      localStorage.setItem('token', adminToken);
+      // Show success message (you can add a toast here if you have a toast system)
+      alert('Switched back to admin account');
+      // Redirect to admin dashboard
+      navigate('/dashboard/admin');
+      // Reload to apply the admin session
+      window.location.reload();
+    }
   };
 
   // Get user initials for avatar
@@ -149,6 +172,8 @@ export const DashboardLayout: React.FC = () => {
     // Admin-only items
     ...(isAdmin ? [
       { type: 'divider' as const, label: 'Admin' },
+      { label: 'CRM Migration', href: '/dashboard/settings/migration', icon: Upload },
+      { label: 'Migration History', href: '/dashboard/settings/migration-history', icon: History },
       { label: 'Admin Console', href: '/dashboard/admin', icon: Shield },
       { label: 'Billing Admin', href: '/dashboard/admin?tab=billing', icon: BarChart3 },
     ] : []),
@@ -562,8 +587,29 @@ export const DashboardLayout: React.FC = () => {
         </>
       )}
 
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+        <div className="fixed top-[65px] left-0 right-0 z-40 bg-[#EAD07D] border-b-2 border-[#1A1A1A]/20 px-4 py-3 shadow-lg">
+          <div className="max-w-[1920px] mx-auto flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="text-[#1A1A1A]" size={20} />
+              <span className="text-sm font-medium text-[#1A1A1A]">
+                ⚠️ You are currently viewing as <strong>{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email || 'User'}</strong>
+              </span>
+            </div>
+            <button
+              onClick={handleExitImpersonation}
+              className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-full text-sm font-medium hover:bg-[#333] transition-colors shadow-sm"
+            >
+              <Key size={16} />
+              Switch Back to Admin
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
-      <main className="pt-20 pb-24 px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
+      <main className={`pb-24 px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto ${isImpersonating ? 'pt-32' : 'pt-20'}`}>
         <Outlet />
       </main>
 

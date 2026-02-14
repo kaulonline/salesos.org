@@ -42,8 +42,8 @@ export function VsHubSpot() {
               <div className="text-white font-medium">True Cost</div>
             </Card>
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-              <div className="text-3xl font-light text-[#EAD07D] mb-2">90%</div>
-              <div className="text-sm text-white/60 mb-1">vs HubSpot's 42%</div>
+              <div className="text-3xl font-light text-[#EAD07D] mb-2">Higher</div>
+              <div className="text-sm text-white/60 mb-1">vs HubSpot's Lower Adoption</div>
               <div className="text-white font-medium">Feature Adoption</div>
             </Card>
           </div>
@@ -117,9 +117,9 @@ export function VsHubSpot() {
               </div>
               <h3 className="font-semibold text-[#1A1A1A] mb-2">Sales Rep Friction</h3>
               <p className="text-sm text-[#666] mb-3">
-                42% feature adoption rate - reps avoid the complex interface and manual data entry
+                Lower feature adoption - reps often avoid the complex interface and manual data entry requirements
               </p>
-              <p className="text-xs text-[#999]">Industry average for HubSpot</p>
+              <p className="text-xs text-[#999]">Common feedback from users</p>
             </Card>
           </div>
         </div>
@@ -287,8 +287,8 @@ export function VsHubSpot() {
                 />
                 <ComparisonRow
                   feature="Feature Adoption Rate"
-                  salesos="90% - reps actually use all features"
-                  hubspot="42% - most features go unused"
+                  salesos="High adoption - reps actually use features"
+                  hubspot="Lower adoption - many features go unused"
                   salesosWins={true}
                 />
               </div>
@@ -507,80 +507,47 @@ export function VsHubSpot() {
         </div>
       </section>
 
-      {/* Customer Stories */}
+      {/* Why Teams Switch */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-light text-[#1A1A1A] mb-4">
-              Teams Who Made the Switch
+              Why Teams Switch from HubSpot
             </h2>
             <p className="text-lg text-[#666]">
-              Real stories from companies that left HubSpot for SalesOS
+              Common benefits reported by companies that migrated to SalesOS
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <DollarSign size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "We were paying HubSpot $6,800/month for Sales Hub + Marketing Hub + add-ons. With SalesOS, we get MORE features for $1,188/month. The AI alone saves our reps 2 hours per day of manual data entry."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Lower Total Cost</h3>
+              <p className="text-[#666]">
+                Teams report reducing costs by consolidating multiple hubs and eliminating expensive add-ons while getting comparable or better functionality.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  JM
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Jennifer Martinez</div>
-                  <div className="text-sm text-[#666]">VP Sales, TechFlow Solutions</div>
-                  <div className="text-xs text-[#999]">12-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Zap size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "HubSpot had so many features our team never used. We spent more time managing the CRM than selling. SalesOS gives us exactly what we need - nothing more, nothing less. Setup took 2 hours instead of 2 months."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Faster Setup</h3>
+              <p className="text-[#666]">
+                Sales teams typically get operational in hours instead of weeks, with less configuration complexity and fewer integration requirements.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  DK
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">David Kim</div>
-                  <div className="text-sm text-[#666]">Director of Revenue, CloudScale</div>
-                  <div className="text-xs text-[#999]">8-person sales team</div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-8">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-[#EAD07D] text-[#EAD07D]" />
-                ))}
+              <div className="w-12 h-12 rounded-xl bg-[#EAD07D]/20 flex items-center justify-center mb-4">
+                <Brain size={24} className="text-[#1A1A1A]" />
               </div>
-              <p className="text-[#666] mb-6 italic">
-                "The breaking point with HubSpot was when they wanted $15,000 for onboarding AND told us we needed to upgrade to Enterprise ($1,200/user) for conversation intelligence. SalesOS includes it all for $99/user."
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">Native AI Features</h3>
+              <p className="text-[#666]">
+                AI capabilities are built into the core platform rather than requiring expensive tier upgrades or separate add-on packages.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EAD07D]/20 flex items-center justify-center font-semibold text-[#1A1A1A]">
-                  SP
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">Sarah Patel</div>
-                  <div className="text-sm text-[#666]">COO, GrowthWorks</div>
-                  <div className="text-xs text-[#999]">25-person sales team</div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>
