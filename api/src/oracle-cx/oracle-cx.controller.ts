@@ -230,9 +230,22 @@ export class OracleCXController {
         instanceUrl,
       );
 
+      // Get user's organization
+      const user = await this.prisma.user.findUnique({
+        where: { id: stateData.userId },
+        include: { organizationMemberships: true },
+      });
+
+      if (!user || !user.organizationMemberships || user.organizationMemberships.length === 0) {
+        return sendResponse(false, 'User organization not found');
+      }
+
+      const organizationId = user.organizationMemberships[0].organizationId;
+
       // Store the connection
       await this.oracleCXService.storeConnection(
         stateData.userId,
+        organizationId,
         tokens,
         identity,
         instanceUrl,

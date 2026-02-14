@@ -599,6 +599,7 @@ export class OracleCXService implements OnModuleInit {
    */
   async storeConnection(
     userId: string,
+    organizationId: string,
     tokens: OracleCXTokenResponse,
     identity: OracleCXIdentity,
     instanceUrl: string,
@@ -651,6 +652,7 @@ export class OracleCXService implements OnModuleInit {
       },
       create: {
         userId,
+        organizationId,
         integrationId: integration.id,
         instanceUrl,
         accessToken: encryptedAccessToken,
