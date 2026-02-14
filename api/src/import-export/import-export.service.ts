@@ -2,6 +2,8 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CsvParser } from './parsers/csv.parser';
 import { ExcelParser } from './parsers/excel.parser';
+import { DataTransformationService } from './data-transformation.service';
+import { MigrationService } from './migration.service';
 import {
   ImportEntityType,
   ImportFileFormat,
@@ -34,6 +36,8 @@ export class ImportExportService {
     private readonly prisma: PrismaService,
     private readonly csvParser: CsvParser,
     private readonly excelParser: ExcelParser,
+    private readonly dataTransformationService: DataTransformationService,
+    private readonly migrationService: MigrationService,
   ) {
     // Ensure exports directory exists
     if (!fs.existsSync(this.uploadsDir)) {
@@ -86,6 +90,7 @@ export class ImportExportService {
   ): Promise<ImportResult> {
     const importId = uuidv4();
     const startedAt = new Date();
+    let migrationId: string | null = null;
 
     const result: ImportResult = {
       id: importId,
@@ -125,6 +130,28 @@ export class ImportExportService {
 
       result.totalRecords = parsedRows.length;
 
+      // Create migration job if sourceCRM is provided
+      if (options.sourceCRM) {
+        const migration = await this.migrationService.createMigration({
+          organizationId,
+          userId,
+          sourceCRM: options.sourceCRM,
+          entityType: options.entityType,
+          fileName: file.originalname,
+          fileSize: file.size,
+          totalRows: parsedRows.length,
+          fieldMappings: options.fieldMappings.map(fm => ({
+            csvColumn: fm.sourceField,
+            salesosField: fm.targetField,
+            transform: (fm.transform || fm.transformation) as any,
+          })),
+        });
+        migrationId = migration.id;
+
+        // Update migration to IN_PROGRESS
+        await this.migrationService.updateStatus(migrationId, 'IN_PROGRESS');
+      }
+
       // Process each row
       for (const row of parsedRows) {
         // Add any parsing errors
@@ -136,8 +163,28 @@ export class ImportExportService {
         }
 
         try {
-          const imported = await this.importSingleRecord(
+          // Apply data transformations based on field mappings
+          const transformedData = this.dataTransformationService.transformRecord(
             row.data,
+            options.fieldMappings.map(fm => ({
+              csvColumn: fm.sourceField,
+              salesosField: fm.targetField,
+              transform: (fm.transform || fm.transformation) as any,
+            })),
+          );
+
+          // Validate required fields
+          const validation = this.dataTransformationService.validateRequiredFields(
+            transformedData,
+            options.entityType,
+          );
+
+          if (!validation.valid) {
+            throw new Error(`Missing required fields: ${validation.missingFields.join(', ')}`);
+          }
+
+          const imported = await this.importSingleRecord(
+            transformedData,
             options,
             userId,
             organizationId,
@@ -147,6 +194,15 @@ export class ImportExportService {
             result.skippedCount++;
           } else {
             result.successCount++;
+          }
+
+          // Update migration progress periodically
+          if (migrationId && (result.successCount + result.failedCount + result.skippedCount) % 10 === 0) {
+            await this.migrationService.updateProgress(migrationId, {
+              successCount: result.successCount,
+              failedCount: result.failedCount,
+              skippedCount: result.skippedCount,
+            });
           }
         } catch (error) {
           result.failedCount++;
@@ -160,11 +216,30 @@ export class ImportExportService {
 
       result.status = 'COMPLETED';
       result.completedAt = new Date();
+
+      // Update migration to COMPLETED
+      if (migrationId) {
+        await this.migrationService.updateProgress(migrationId, {
+          successCount: result.successCount,
+          failedCount: result.failedCount,
+          skippedCount: result.skippedCount,
+          errors: result.errors,
+        });
+        await this.migrationService.updateStatus(migrationId, 'COMPLETED');
+      }
     } catch (error) {
       this.logger.error(`Import failed: ${error.message}`, error.stack);
       result.status = 'FAILED';
       result.errors.push({ row: 0, message: error.message });
       result.completedAt = new Date();
+
+      // Update migration to FAILED
+      if (migrationId) {
+        await this.migrationService.updateProgress(migrationId, {
+          errors: result.errors,
+        });
+        await this.migrationService.updateStatus(migrationId, 'FAILED');
+      }
     }
 
     return result;

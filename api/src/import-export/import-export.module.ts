@@ -5,11 +5,17 @@ import { ImportExportController } from './import-export.controller';
 import { ImportExportService } from './import-export.service';
 import { CsvParser } from './parsers/csv.parser';
 import { ExcelParser } from './parsers/excel.parser';
+import { AIMappingService } from './ai-mapping.service';
+import { MigrationService } from './migration.service';
+import { DataTransformationService } from './data-transformation.service';
+import { TemplateGeneratorService } from './template-generator.service';
 import { PrismaModule } from '../database/prisma.module';
+import { AnthropicModule } from '../anthropic/anthropic.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AnthropicModule,
     MulterModule.register({
       storage: memoryStorage(),
       limits: {
@@ -34,7 +40,15 @@ import { PrismaModule } from '../database/prisma.module';
     }),
   ],
   controllers: [ImportExportController],
-  providers: [ImportExportService, CsvParser, ExcelParser],
-  exports: [ImportExportService],
+  providers: [
+    ImportExportService,
+    CsvParser,
+    ExcelParser,
+    AIMappingService,
+    MigrationService,
+    DataTransformationService,
+    TemplateGeneratorService,
+  ],
+  exports: [ImportExportService, MigrationService],
 })
 export class ImportExportModule {}
