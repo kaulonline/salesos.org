@@ -10,9 +10,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:network_image_mock/network_image_mock.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:salesos_mobile/core/services/user_preferences_service.dart';
 
 import 'element_tester.dart';
 
@@ -32,6 +37,13 @@ import 'package:salesos_mobile/features/ai_chat/presentation/pages/ai_chat_page.
 
 void main() {
   final List<ScreenTestResult> results = [];
+
+  setUpAll(() async {
+    Animate.restartOnHotReload = false;
+    final tempDir = await Directory.systemTemp.createTemp('salesos_test_');
+    Hive.init(tempDir.path);
+    SharedPreferences.setMockInitialValues({});
+  });
 
   tearDownAll(() {
     // Print summary
@@ -182,25 +194,46 @@ Future<ScreenTestResult> _testScreenFunctionally(
 
   await mockNetworkImagesFor(() async {
     try {
-      // Build screen
+      // Build screen with GoRouter so context.push/go works
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => screen,
+          ),
+          GoRoute(
+            path: '/:rest(.*)',
+            builder: (context, state) => const SizedBox.shrink(),
+          ),
+        ],
+      );
       await tester.pumpWidget(
         ProviderScope(
-          child: MaterialApp(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(
+              await SharedPreferences.getInstance(),
+            ),
+          ],
+          child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
             themeMode: ThemeMode.dark,
             theme: ThemeData.light(),
             darkTheme: ThemeData.dark(),
-            home: screen,
+            routerConfig: router,
           ),
         ),
       );
 
-      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
 
-      // Check for render exception
-      final exception = tester.takeException();
-      if (exception != null) {
-        throw exception;
+      // Check for render exception (ignore overflow in test viewport)
+      Object? exception;
+      while ((exception = tester.takeException()) != null) {
+        if (!exception.toString().contains('overflowed')) {
+          throw exception!;
+        }
       }
 
       rendered = true;

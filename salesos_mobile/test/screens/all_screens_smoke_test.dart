@@ -51,15 +51,29 @@ void main() {
       await tester.setScreenSize(screenSize);
     }
 
+    // Use a phone-sized viewport instead of the default 800x600 to avoid
+    // layout overflow errors on mobile-designed screens
+    final needsPhoneSize = screenSize == null;
+    if (needsPhoneSize) {
+      await tester.setScreenSize(ScreenSizes.iPhone14);
+    }
+
     await mockNetworkImagesFor(() async {
       await tester.pumpWidget(
         createTestableWidget(child: screen),
       );
-      await tester.pump(const Duration(milliseconds: 100));
+      // Pump enough time to clear flutter_animate delayed timers (300ms+)
+      // and let animations run to completion
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
     });
 
     // Test passes if no exception is thrown
     expect(tester.takeException(), isNull, reason: '$name threw an exception');
+
+    if (needsPhoneSize) {
+      await tester.resetScreenSize();
+    }
 
     if (screenSize != null) {
       await tester.resetScreenSize();

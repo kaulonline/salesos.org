@@ -16,7 +16,8 @@ void main() {
             child: const LoginPage(),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         // Check for email field
         expect(find.byType(TextFormField), findsWidgets);
@@ -41,7 +42,8 @@ void main() {
             child: const LoginPage(),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         // Try to find and tap a submit button
         final submitButton = find.byWidgetPredicate(
@@ -54,7 +56,8 @@ void main() {
 
         if (submitButton.evaluate().isNotEmpty) {
           await tester.tap(submitButton.first);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
         }
       });
     });
@@ -66,7 +69,8 @@ void main() {
             child: const LoginPage(),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         // Look for forgot password link
         final forgotPassword = find.byWidgetPredicate(
@@ -87,7 +91,8 @@ void main() {
             themeMode: ThemeMode.light,
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         expect(find.byType(LoginPage), findsOneWidget);
       });
@@ -101,7 +106,8 @@ void main() {
             themeMode: ThemeMode.dark,
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         expect(find.byType(LoginPage), findsOneWidget);
       });
@@ -118,7 +124,8 @@ void main() {
             child: const LoginPage(),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         expect(find.byType(LoginPage), findsOneWidget);
       });
@@ -135,7 +142,8 @@ void main() {
             child: const LoginPage(),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 2));
 
         expect(find.byType(LoginPage), findsOneWidget);
       });

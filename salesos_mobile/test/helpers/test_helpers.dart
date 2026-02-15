@@ -1,11 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:network_image_mock/network_image_mock.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:salesos_mobile/core/network/api_client.dart';
+import 'package:salesos_mobile/core/services/user_preferences_service.dart';
 import 'package:salesos_mobile/features/auth/data/repositories/auth_repository.dart';
 import 'package:salesos_mobile/features/auth/domain/entities/user.dart';
 
@@ -96,6 +103,19 @@ class TestFixtures {
 }
 
 // ============================================================================
+// SHARED TEST STATE
+// ============================================================================
+
+/// Cached SharedPreferences instance for test overrides
+SharedPreferences? _testSharedPreferences;
+
+/// Initialize shared test dependencies (call in setUpAll)
+Future<void> initTestDependencies() async {
+  SharedPreferences.setMockInitialValues({});
+  _testSharedPreferences = await SharedPreferences.getInstance();
+}
+
+// ============================================================================
 // WIDGET TEST WRAPPER
 // ============================================================================
 
@@ -107,16 +127,37 @@ Widget createTestableWidget({
   NavigatorObserver? navigatorObserver,
   String? initialRoute,
 }) {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => child,
+      ),
+      // Catch-all route so context.push/go doesn't crash
+      GoRoute(
+        path: '/:rest(.*)',
+        builder: (context, state) => const SizedBox.shrink(),
+      ),
+    ],
+    observers: navigatorObserver != null ? [navigatorObserver] : [],
+  );
+
+  // Build provider overrides with SharedPreferences if available
+  final allOverrides = <Override>[
+    if (_testSharedPreferences != null)
+      sharedPreferencesProvider.overrideWithValue(_testSharedPreferences!),
+    ...?overrides,
+  ];
+
   return ProviderScope(
-    overrides: overrides ?? [],
-    child: MaterialApp(
+    overrides: allOverrides,
+    child: MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: child,
-      navigatorObservers: navigatorObserver != null ? [navigatorObserver] : [],
-      initialRoute: initialRoute,
+      routerConfig: router,
     ),
   );
 }
@@ -135,11 +176,9 @@ Future<void> pumpTestWidget(
         overrides: overrides,
       ),
     );
-    if (duration != null) {
-      await tester.pump(duration);
-    } else {
-      await tester.pumpAndSettle();
-    }
+    // Use pump with explicit duration instead of pumpAndSettle
+    // to avoid hanging on flutter_animate's repeating timers
+    await tester.pump(duration ?? const Duration(milliseconds: 500));
   });
 }
 
@@ -148,7 +187,18 @@ Future<void> pumpTestWidget(
 // ============================================================================
 
 void setupTestEnvironment() {
-  setUpAll(() {
+  setUpAll(() async {
+    // Disable flutter_animate's hot-reload restart timer to prevent
+    // "Pending timers" test failures in the test environment
+    Animate.restartOnHotReload = false;
+
+    // Initialize Hive with a temp directory for tests
+    final tempDir = await Directory.systemTemp.createTemp('salesos_test_');
+    Hive.init(tempDir.path);
+
+    // Initialize SharedPreferences and cache the instance for provider overrides
+    await initTestDependencies();
+
     // Register fallback values for mocktail
     registerFallbackValue(FakeRoute());
     registerFallbackValue(FakeUser());

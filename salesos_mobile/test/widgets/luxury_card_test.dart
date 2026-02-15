@@ -114,7 +114,7 @@ void main() {
 
   group('LuxuryColors Tests', () {
     test('primary metals have correct values', () {
-      expect(LuxuryColors.champagneGold, const Color(0xFFD4AF37));
+      expect(LuxuryColors.champagneGold, const Color(0xFFEAD07D));
       expect(LuxuryColors.roseGold, const Color(0xFFB76E79));
       expect(LuxuryColors.platinum, const Color(0xFFE5E4E2));
     });
@@ -126,9 +126,10 @@ void main() {
     });
 
     test('rolex signature greens have correct values', () {
-      expect(LuxuryColors.rolexGreen, const Color(0xFF006039));
-      expect(LuxuryColors.deepEmerald, const Color(0xFF064E3B));
-      expect(LuxuryColors.jadePremium, const Color(0xFF00A86B));
+      // These were remapped to champagne gold tones during brand alignment
+      expect(LuxuryColors.rolexGreen, const Color(0xFFEAD07D));
+      expect(LuxuryColors.deepEmerald, const Color(0xFFD4B85C));
+      expect(LuxuryColors.jadePremium, const Color(0xFFEAD07D));
     });
   });
 }
