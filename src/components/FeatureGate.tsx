@@ -86,6 +86,9 @@ export function FeatureProvider({ children }: { children: ReactNode }) {
       setFeatureCache(cache);
     } catch (err) {
       logger.error('Failed to load features:', err);
+      // Ensure we don't break the app - set empty cache and continue
+      setFeatureCache({});
+      setUserTier(undefined);
     } finally {
       setIsLoading(false);
     }

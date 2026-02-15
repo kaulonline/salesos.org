@@ -402,8 +402,12 @@ export const licensingApi = {
   },
 
   getMyFeatures: async (): Promise<LicenseFeature[]> => {
-    const response = await client.get<LicenseFeature[]>('/licensing/my-features');
-    return response.data;
+    try {
+      const response = await client.get<LicenseFeature[]>('/licensing/my-features');
+      return response.data;
+    } catch {
+      return [];
+    }
   },
 
   // Feature Access Check
