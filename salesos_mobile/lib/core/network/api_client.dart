@@ -33,6 +33,8 @@ class ApiClient {
         connectTimeout: AppConfig.connectionTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         sendTimeout: AppConfig.sendTimeout,
+        followRedirects: true,
+        maxRedirects: 3,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

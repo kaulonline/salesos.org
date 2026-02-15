@@ -8,9 +8,10 @@ class AppConfig {
   static const String appBuildNumber = '1';
 
   // API Configuration
-  static const String baseUrl = 'https://salesos.org/api';
+  // Use www.salesos.org to avoid 301 redirect from non-www (Cloudflare rule)
+  static const String baseUrl = 'https://www.salesos.org/api';
   static const String devBaseUrl = 'http://localhost:3000/api';
-  static const String wsUrl = 'wss://salesos.org';
+  static const String wsUrl = 'wss://www.salesos.org';
   static const String devWsUrl = 'ws://localhost:3000';
 
   // Timeouts
