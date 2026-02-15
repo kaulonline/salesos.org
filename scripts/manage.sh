@@ -59,7 +59,7 @@ show_help() {
 cmd_start() {
     echo -e "${GREEN}Starting SalesOS services...${NC}"
     cd "$PROJECT_DIR"
-    pm2 start ecosystem.config.cjs
+    pm2 start deploy/ecosystem.config.cjs
     pm2 save
     echo ""
     pm2 list

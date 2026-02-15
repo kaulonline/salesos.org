@@ -1,0 +1,182 @@
+name: salesos_mobile
+description: "SalesOS - AI-Powered Sales CRM"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^3.0.3
+
+  # Networking & API
+  dio: ^5.7.0
+  web_socket_channel: ^3.0.1
+  socket_io_client: ^3.0.3
+  connectivity_plus: ^7.0.0
+
+  # Local Storage & Database
+  hive_flutter: ^1.1.0
+  hive: ^2.2.3
+  sqflite: ^2.4.1
+  path_provider: ^2.1.5
+  flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.3.3
+
+  # UI Components & Design
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  flutter_slidable: ^4.0.3
+  flutter_svg: ^2.0.10+1
+
+  # Icons
+  cupertino_icons: ^1.0.8
+  iconsax: ^0.0.8
+
+  # Charts & Visualization
+  fl_chart: ^1.1.1
+  percent_indicator: ^4.2.3
+
+  # Navigation & Routing
+  go_router: ^17.0.1
+
+  # Forms & Validation
+  flutter_form_builder: ^10.2.0
+  form_builder_validators: ^11.0.0
+
+  # Internationalization
+  intl: ^0.20.0
+
+  # Native Features
+  local_auth: ^3.0.0
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  url_launcher: ^6.3.1
+  share_plus: ^12.0.1
+  device_info_plus: ^12.3.0
+  package_info_plus: ^9.0.0
+
+  # Camera & Image
+  image_picker: ^1.1.2
+  image_cropper: ^11.0.0
+
+  # Drawing & Canvas (Apple Pencil support)
+  perfect_freehand: ^2.5.1
+  flutter_colorpicker: ^1.1.0
+
+  # Local Notifications (no Firebase needed)
+  flutter_local_notifications: ^20.1.0
+
+  # Calendar & Date
+  table_calendar: ^3.1.2
+  timezone: ^0.10.1
+
+  # Voice & Speech
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+  record: ^6.0.0  # Updated for streaming support
+  just_audio: ^0.10.5
+  audio_session: ^0.2.2
+  flutter_sound: ^9.30.0  # For low-latency PCM streaming playback
+  flutter_webrtc: ^1.3.0  # For Azure OpenAI Realtime WebRTC
+
+  # Animations & Effects
+  flutter_staggered_animations: ^1.1.1
+  animations: ^2.0.11
+
+  # Markdown Rendering
+  flutter_markdown_plus: ^1.0.7
+
+  # Utilities
+  uuid: ^4.5.1
+  logger: ^2.5.0
+  equatable: ^2.0.7
+  dartz: ^0.10.1
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+  timeago: ^3.7.0
+
+  # Firebase (Crashlytics for crash reporting)
+  firebase_core: ^4.4.0
+  firebase_crashlytics: ^5.0.7
+
+  # Export & Document Generation
+  csv: ^7.1.0
+  pdf: ^3.11.0
+  font_awesome_flutter: ^10.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.10.4
+  freezed: ^3.2.3
+  json_serializable: ^6.11.2
+  flutter_launcher_icons: ^0.14.3
+
+  # Testing
+  mocktail: ^1.0.4              # Mocking (simpler than mockito)
+  golden_toolkit: ^0.15.0       # Visual regression testing
+  network_image_mock: ^2.1.1    # Mock network images in tests
+
+# App Icon Configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1A1A1A"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+  macos:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

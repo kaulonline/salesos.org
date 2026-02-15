@@ -279,7 +279,7 @@ setup_services() {
     cd "$PROJECT_DIR"
 
     log "Starting SalesOS services..."
-    pm2 start ecosystem.config.cjs
+    pm2 start deploy/ecosystem.config.cjs
 
     log "Saving PM2 configuration..."
     pm2 save

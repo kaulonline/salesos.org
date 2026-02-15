@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rolex Green for app icon background -->
+    <color name="ic_launcher_background">#006039</color>
+    <!-- Launch screen background matching Flutter login page (richBlack #0D0D0D) -->
+    <color name="launch_background">#0D0D0D</color>
+</resources>

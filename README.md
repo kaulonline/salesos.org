@@ -10,20 +10,36 @@ salesos.org/
 │   ├── src/               # API source code
 │   ├── prisma/            # Database schema & migrations
 │   └── package.json
-├── src/                    # React Frontend
+├── src/                    # React Frontend (app logic)
 │   ├── api/               # API client
 │   ├── components/        # React components
 │   ├── context/           # React contexts
-│   └── hooks/             # Custom hooks
+│   ├── hooks/             # Custom hooks
+│   └── types/             # TypeScript types
 ├── pages/                  # Page components
 ├── components/             # Shared UI components
 ├── layouts/                # Layout components
-├── scripts/                # Deployment & management scripts
+├── docs/                   # Documentation site (Next.js)
+├── docs-internal/          # Internal project docs & guides
+│   ├── guides/            # Admin, navigation, setup guides
+│   ├── plans/             # Roadmaps & feature plans
+│   ├── seo/               # SEO checklists & guides
+│   ├── security/          # Security documentation
+│   ├── infrastructure/    # AWS & SSL setup docs
+│   └── migration/         # Data migration docs
+├── deploy/                 # Deployment & infrastructure configs
+│   ├── ecosystem.config.cjs  # PM2 configuration
+│   ├── nginx.conf         # Nginx configuration
+│   ├── nginx-security.conf# Nginx security headers
+│   ├── .htaccess          # Apache configuration
+│   └── setup_alb_ssl.sh   # AWS ALB/SSL setup script
+├── scripts/                # Operational scripts
 │   ├── install.sh         # Fresh installation script
 │   ├── backup.sh          # Create backup package
 │   ├── manage.sh          # Service management CLI
 │   └── setup-systemd.sh   # Auto-start configuration
-└── ecosystem.config.cjs    # PM2 configuration
+├── e2e/                    # End-to-end tests (Playwright)
+└── public/                 # Static assets
 ```
 
 ## Tech Stack
@@ -122,10 +138,10 @@ REDIS_PORT=6379
 
 ```bash
 # Start all services
-pm2 start ecosystem.config.cjs
+pm2 start deploy/ecosystem.config.cjs
 
 # Start specific service
-pm2 start ecosystem.config.cjs --only salesos-backend
+pm2 start deploy/ecosystem.config.cjs --only salesos-backend
 
 # View logs
 pm2 logs salesos-backend

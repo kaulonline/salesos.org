@@ -13,6 +13,12 @@ api/dist/
 api/node_modules/
 api/coverage/
 
+# Logs and backups (keep dirs, ignore contents)
+logs/*
+!logs/.gitkeep
+backups/*
+!backups/.gitkeep
+
 # Docs build artifacts
 docs/.next/
 docs/.source/

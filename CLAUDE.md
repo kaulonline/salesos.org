@@ -37,6 +37,9 @@ SalesOS is an AI-powered Sales CRM and Revenue Intelligence platform built with 
 - **Frontend**: `/opt/salesos.org/`
 - **Backend API**: `/opt/salesos.org/api/`
 - **Coaching Module**: `/opt/salesos.org/api/src/coaching/`
+- **Deploy/Infra Configs**: `/opt/salesos.org/deploy/` (nginx, PM2, .htaccess)
+- **Internal Docs**: `/opt/salesos.org/docs-internal/` (guides, plans, SEO, security)
+- **Public Docs Site**: `/opt/salesos.org/docs/` (Next.js)
 
 ### Tech Stack
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS

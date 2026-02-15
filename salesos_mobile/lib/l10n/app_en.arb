@@ -1,0 +1,181 @@
+{
+  "@@locale": "en",
+  "appTitle": "SalesOS",
+  "@appTitle": {
+    "description": "The app title"
+  },
+  "dashboard": "Dashboard",
+  "@dashboard": {
+    "description": "Dashboard navigation label"
+  },
+  "deals": "Deals",
+  "@deals": {
+    "description": "Deals navigation label"
+  },
+  "leads": "Leads",
+  "@leads": {
+    "description": "Leads navigation label"
+  },
+  "accounts": "Accounts",
+  "@accounts": {
+    "description": "Accounts navigation label"
+  },
+  "contacts": "Contacts",
+  "@contacts": {
+    "description": "Contacts navigation label"
+  },
+  "tasks": "Tasks",
+  "@tasks": {
+    "description": "Tasks navigation label"
+  },
+  "activities": "Activities",
+  "@activities": {
+    "description": "Activities navigation label"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings navigation label"
+  },
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile navigation label"
+  },
+  "aiChat": "SalesOS AI",
+  "@aiChat": {
+    "description": "AI Chat navigation label"
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Search placeholder"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button"
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Create button"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Close button"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Error label"
+  },
+  "success": "Success",
+  "@success": {
+    "description": "Success label"
+  },
+  "noResults": "No results found",
+  "@noResults": {
+    "description": "No results message"
+  },
+  "today": "Today",
+  "@today": {
+    "description": "Today label"
+  },
+  "yesterday": "Yesterday",
+  "@yesterday": {
+    "description": "Yesterday label"
+  },
+  "tomorrow": "Tomorrow",
+  "@tomorrow": {
+    "description": "Tomorrow label"
+  },
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode setting label"
+  },
+  "fontSize": "Font Size",
+  "@fontSize": {
+    "description": "Font size setting label"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "timezone": "Timezone",
+  "@timezone": {
+    "description": "Timezone setting label"
+  },
+  "pushNotifications": "Push Notifications",
+  "@pushNotifications": {
+    "description": "Push notifications setting label"
+  },
+  "emailNotifications": "Email Notifications",
+  "@emailNotifications": {
+    "description": "Email notifications setting label"
+  },
+  "generalSettings": "General Settings",
+  "@generalSettings": {
+    "description": "General settings page title"
+  },
+  "appearance": "Appearance",
+  "@appearance": {
+    "description": "Appearance section title"
+  },
+  "languageAndRegion": "Language & Region",
+  "@languageAndRegion": {
+    "description": "Language and region section title"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications section title"
+  },
+  "useDarkTheme": "Use dark theme throughout the app",
+  "@useDarkTheme": {
+    "description": "Dark theme description"
+  },
+  "receiveNotifications": "Receive notifications on your device",
+  "@receiveNotifications": {
+    "description": "Push notifications description"
+  },
+  "receiveEmailUpdates": "Receive updates via email",
+  "@receiveEmailUpdates": {
+    "description": "Email notifications description"
+  },
+  "languageChanged": "Language changed to {language}",
+  "@languageChanged": {
+    "description": "Language changed confirmation message",
+    "placeholders": {
+      "language": {
+        "type": "String",
+        "example": "English"
+      }
+    }
+  },
+  "compact": "Compact",
+  "@compact": {
+    "description": "Compact font size option"
+  },
+  "comfortable": "Comfortable",
+  "@comfortable": {
+    "description": "Comfortable font size option"
+  },
+  "large": "Large",
+  "@large": {
+    "description": "Large font size option"
+  }
+}

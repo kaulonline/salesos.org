@@ -140,8 +140,8 @@ backup_config() {
     fi
 
     # Backup PM2 ecosystem config
-    if [[ -f "$PROJECT_DIR/ecosystem.config.cjs" ]]; then
-        cp "$PROJECT_DIR/ecosystem.config.cjs" "$BACKUP_DIR/config/"
+    if [[ -f "$PROJECT_DIR/deploy/ecosystem.config.cjs" ]]; then
+        cp "$PROJECT_DIR/deploy/ecosystem.config.cjs" "$BACKUP_DIR/config/"
     fi
 
     log "Configuration backed up"
@@ -357,7 +357,7 @@ header "Starting services"
 
 cd "$INSTALL_DIR"
 pm2 delete salesos-backend 2>/dev/null || true
-pm2 start ecosystem.config.cjs
+pm2 start deploy/ecosystem.config.cjs
 pm2 save
 
 log "Services started"
