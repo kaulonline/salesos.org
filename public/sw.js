@@ -1,14 +1,12 @@
 // SalesOS Service Worker
-// Provides offline support and caching
+// Provides offline support and caching (v16 - fixed React hydration issues)
 
-const CACHE_NAME = 'salesos-v15';
-const STATIC_CACHE = 'salesos-static-v15';
-const API_CACHE = 'salesos-api-v15';
+const CACHE_NAME = 'salesos-v16';
+const STATIC_CACHE = 'salesos-static-v16';
+const API_CACHE = 'salesos-api-v16';
 
-// Assets to cache on install
+// Assets to cache on install (minimal - no JS/CSS to avoid React hydration issues)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
 ];
 
@@ -61,20 +59,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // IMPORTANT: Skip all .js and .css files to prevent React hydration issues
+  // Let the browser handle these directly without service worker interference
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.jsx') || url.pathname.endsWith('.tsx')) {
+    return;
+  }
+
+  // Skip HMR and dev server requests
+  if (url.pathname.includes('/@') || url.pathname.includes('/__') ||
+      url.searchParams.has('import') || url.searchParams.has('t')) {
+    return;
+  }
+
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleAPIRequest(request));
     return;
   }
 
-  // Handle static assets
+  // Handle static assets (images, fonts only)
   if (isStaticAsset(url.pathname)) {
     event.respondWith(handleStaticRequest(request));
     return;
   }
 
-  // Default: Network first, cache fallback
-  event.respondWith(networkFirstWithCache(request));
+  // Default: Network first, cache fallback (but skip HTML to avoid stale pages)
+  if (request.mode !== 'navigate') {
+    event.respondWith(networkFirstWithCache(request));
+  }
 });
 
 // Network first with cache fallback
@@ -152,10 +165,10 @@ async function handleStaticRequest(request) {
   return networkResponse;
 }
 
-// Check if request is for static asset
+// Check if request is for static asset (images, fonts only - NOT js/css)
 function isStaticAsset(pathname) {
   const staticExtensions = [
-    '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg',
+    '.png', '.jpg', '.jpeg', '.gif', '.svg',
     '.woff', '.woff2', '.ttf', '.eot', '.ico', '.webp'
   ];
   return staticExtensions.some((ext) => pathname.endsWith(ext));

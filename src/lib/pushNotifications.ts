@@ -59,6 +59,7 @@ export async function requestPermission(): Promise<NotificationPermissionState> 
 
 /**
  * Register service worker for push notifications
+ * DISABLED: Service worker disabled to prevent caching issues
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
@@ -67,18 +68,18 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-    });
+    // Check if service worker is already registered (don't register new ones)
+    const registration = await navigator.serviceWorker.getRegistration();
 
-    logger.info('Service worker registered:', registration.scope);
+    if (registration) {
+      logger.info('Using existing service worker registration');
+      return registration;
+    }
 
-    // Wait for the service worker to be ready
-    await navigator.serviceWorker.ready;
-
-    return registration;
+    logger.warn('No service worker registered - push notifications disabled');
+    return null;
   } catch (error) {
-    logger.error('Service worker registration failed:', error);
+    logger.error('Service worker check failed:', error);
     return null;
   }
 }

@@ -287,18 +287,26 @@
 
     <script type="module" src="/index.tsx"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Unregister any existing service workers to prevent caching issues -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered:', registration.scope);
-            })
-            .catch((error) => {
-              console.error('SW registration failed:', error);
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister().then(function(success) {
+              if (success) {
+                console.log('Service worker unregistered successfully');
+              }
             });
+          }
         });
+        // Clear all caches
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (let name of names) {
+              caches.delete(name);
+            }
+          });
+        }
       }
     </script>
   </body>
