@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, ArrowRight, Clock, DollarSign, Zap, Users, Shield, TrendingUp, AlertCircle } from 'lucide-react';
+import { Check, X, ArrowRight, Clock, DollarSign, Zap, Users, Shield, TrendingUp, AlertCircle, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../src/components/SEO';
 import { PricingDisclaimer } from '../../src/components/PricingDisclaimer';

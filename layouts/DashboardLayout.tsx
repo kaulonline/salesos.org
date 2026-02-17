@@ -62,10 +62,10 @@ export const DashboardLayout: React.FC = () => {
 
   const primaryNavItems: Array<{ label: string; href: string; icon?: LucideIcon; highlight?: boolean }> = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Leads', href: '/dashboard/leads' },
+    { label: 'Leads', href: '/dashboard/leads', icon: Target },
     { label: 'Contacts', href: '/dashboard/contacts', icon: User },
     { label: 'Accounts', href: '/dashboard/companies', icon: Building2 },
-    { label: 'Opportunities', href: '/dashboard/deals' },
+    { label: 'Opportunities', href: '/dashboard/deals', icon: TrendingUp },
   ];
 
   // Icon mapping for dynamic nav items
