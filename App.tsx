@@ -230,6 +230,14 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  // Remove the pre-React maintenance overlay if maintenance is off
+  useEffect(() => {
+    if (maintenanceChecked && !maintenance?.enabled) {
+      const overlay = document.getElementById('maintenance-overlay');
+      if (overlay) overlay.remove();
+    }
+  }, [maintenanceChecked, maintenance?.enabled]);
+
   // Show maintenance page on public routes when maintenance is enabled
   const isBypassRoute = isDashboard || isAdmin || isAuthPage || isPortal || isBilling;
 
@@ -246,14 +254,6 @@ function AppContent() {
       />
     );
   }
-
-  // Remove the pre-React maintenance overlay if maintenance is off
-  useEffect(() => {
-    if (maintenanceChecked && !maintenance?.enabled) {
-      const overlay = document.getElementById('maintenance-overlay');
-      if (overlay) overlay.remove();
-    }
-  }, [maintenanceChecked, maintenance?.enabled]);
 
   return (
     <div className="min-h-screen bg-background text-secondary font-sans antialiased overflow-x-hidden">
