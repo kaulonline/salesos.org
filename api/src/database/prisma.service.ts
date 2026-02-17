@@ -7,6 +7,18 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+  private static readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  /**
+   * Validate that a string is a valid UUID format.
+   * Prevents SQL injection in raw queries that interpolate organizationId.
+   * @throws Error if the value is not a valid UUID
+   */
+  private validateUuid(value: string, fieldName: string): void {
+    if (!PrismaService.UUID_REGEX.test(value)) {
+      throw new Error(`Invalid ${fieldName}: must be a valid UUID format`);
+    }
+  }
 
   constructor() {
     // Configure connection pool and logging for production scalability
@@ -129,8 +141,12 @@ export class PrismaService
    * @param isAdmin - Whether the current user is an admin (can bypass RLS)
    */
   async setRlsContext(organizationId: string, isAdmin: boolean = false): Promise<void> {
+    // SECURITY: Validate organizationId as UUID to prevent SQL injection
+    this.validateUuid(organizationId, 'organizationId');
+
     try {
       // Use $executeRawUnsafe for PgBouncer compatibility (no prepared statements)
+      // Safe: organizationId is validated as UUID above, isAdmin is derived from boolean
       await this.$executeRawUnsafe(`SELECT set_config('app.current_organization_id', '${organizationId}', true)`);
       await this.$executeRawUnsafe(`SELECT set_config('app.is_admin', '${isAdmin ? 'true' : 'false'}', true)`);
     } catch (error) {
@@ -201,8 +217,12 @@ export class PrismaService
     isAdmin: boolean,
     operation: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
+    // SECURITY: Validate organizationId as UUID to prevent SQL injection
+    this.validateUuid(organizationId, 'organizationId');
+
     return this.$transaction(async (tx) => {
       // Set RLS context within the transaction - use $executeRawUnsafe for PgBouncer compatibility
+      // Safe: organizationId is validated as UUID above, isAdmin is derived from boolean
       await tx.$executeRawUnsafe(`SELECT set_config('app.current_organization_id', '${organizationId}', true)`);
       await tx.$executeRawUnsafe(`SELECT set_config('app.is_admin', '${isAdmin ? 'true' : 'false'}', true)`);
 
