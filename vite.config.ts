@@ -26,13 +26,14 @@ const getCSPDirectives = (isDev: boolean) => {
     'default-src': ["'self'"],
     'script-src': isDev
       ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"] // Required for HMR in development
-      : ["'self'"],
+      : ["'self'", 'https://static.cloudflareinsights.com'],
     'style-src': [
       "'self'",
       "'unsafe-inline'", // Required for Tailwind/styled-components
+      'https://fonts.googleapis.com',
     ],
     'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-    'font-src': ["'self'", 'data:'],
+    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
     'connect-src': isDev
       ? ["'self'", 'ws:', 'wss:', 'http:', 'https:'] // Permissive for dev server
       : ["'self'", 'wss://*.salesos.org', 'https://*.salesos.org', 'https://*.sentry.io'],
