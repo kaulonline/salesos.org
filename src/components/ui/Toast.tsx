@@ -59,7 +59,7 @@ const toastConfig: Record<ToastType, { icon: React.ElementType; bg: string; icon
 };
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
-  const config = toastConfig[toast.type];
+  const config = toastConfig[toast.type] || toastConfig.info;
   const Icon = config.icon;
   const isAlert = toast.type === 'error' || toast.type === 'warning';
 
@@ -102,10 +102,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = useCallback((toastOrMessage: Omit<Toast, 'id'> | string, type?: ToastType) => {
     const id = Math.random().toString(36).substring(2, 9);
-    // Support both showToast({ type, title }) and showToast('message', 'type')
-    const toast: Toast = typeof toastOrMessage === 'string'
-      ? { id, type: type || 'info', title: toastOrMessage }
-      : { ...toastOrMessage, id };
+    // Coerce non-string, non-plain-object values (e.g. arrays from NestJS validation) to string
+    let toast: Toast;
+    if (typeof toastOrMessage === 'string') {
+      toast = { id, type: type || 'info', title: toastOrMessage };
+    } else if (Array.isArray(toastOrMessage) || typeof toastOrMessage !== 'object' || toastOrMessage === null) {
+      toast = { id, type: type || 'error', title: String(toastOrMessage) };
+    } else {
+      toast = { ...toastOrMessage, id };
+    }
+    // Ensure type is always valid
+    if (!toastConfig[toast.type]) {
+      toast.type = 'info';
+    }
     setToasts((prev) => [...prev, toast]);
   }, []);
 

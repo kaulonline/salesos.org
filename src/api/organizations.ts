@@ -118,7 +118,7 @@ export const organizationsApi = {
   // Create organization registration code
   createCode: async (organizationId: string, data: {
     maxUses?: number;
-    expiresAt?: string;
+    validUntil?: string;
     defaultRole?: string;
   }): Promise<OrganizationCode> => {
     const response = await client.post<OrganizationCode>('/organizations/codes', {
