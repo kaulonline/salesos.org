@@ -570,7 +570,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ isOpen, onClose, form, on
 
                         {/* Field config */}
                         <div className="flex-1 space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs text-[#888] mb-1 block">Label</label>
                               <input
@@ -594,7 +594,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ isOpen, onClose, form, on
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="text-xs text-[#888] mb-1 block">Placeholder</label>
                               <input
@@ -719,7 +719,7 @@ const EditFormModal: React.FC<EditFormModalProps> = ({ isOpen, onClose, form, on
           {/* Styling Tab */}
           {activeTab === 'styling' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium text-[#666] mb-1 block">Background Color</label>
                   <div className="flex items-center gap-2">

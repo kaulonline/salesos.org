@@ -229,7 +229,7 @@ const CreateRuleModal: React.FC<CreateRuleModalProps> = ({ isOpen, onClose, onCr
                   {conditions.map((condition, index) => (
                     <div key={index} className="flex items-start gap-2 p-4 bg-[#F8F8F6] rounded-xl">
                       <GripVertical size={18} className="text-[#888] mt-2 shrink-0" />
-                      <div className="flex-1 grid grid-cols-3 gap-2">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <select
                           value={condition.field}
                           onChange={(e) => updateCondition(index, { field: e.target.value })}
@@ -274,7 +274,7 @@ const CreateRuleModal: React.FC<CreateRuleModalProps> = ({ isOpen, onClose, onCr
             <div className="space-y-4">
               <h3 className="font-medium text-[#1A1A1A]">Assignment Method</h3>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(Object.entries(ASSIGNMENT_TYPE_CONFIG) as [AssignmentMethod, typeof ASSIGNMENT_TYPE_CONFIG[AssignmentMethod]][]).map(([value, config]) => (
                   <button
                     key={value}

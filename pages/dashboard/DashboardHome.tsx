@@ -145,11 +145,11 @@ export const DashboardHome: React.FC = () => {
           <div className="flex gap-3">
             {[1,2,3,4].map(i => <Skeleton key={i} className="h-10 w-24 rounded-full" />)}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
-            <Skeleton className="lg:col-span-3 h-[500px] rounded-3xl" />
-            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
-            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
-            <Skeleton className="lg:col-span-3 h-80 rounded-3xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-6">
+            <Skeleton className="md:col-span-3 h-[500px] rounded-3xl" />
+            <Skeleton className="md:col-span-3 h-80 rounded-3xl" />
+            <Skeleton className="md:col-span-3 h-80 rounded-3xl" />
+            <Skeleton className="md:col-span-3 h-80 rounded-3xl" />
           </div>
         </div>
       </div>
@@ -161,7 +161,7 @@ export const DashboardHome: React.FC = () => {
       <div className="max-w-[1600px] mx-auto">
 
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
           <h1 className="text-3xl lg:text-4xl font-light text-[#1A1A1A]">
             Welcome back, <span className="font-normal">{userName}</span>
           </h1>
@@ -230,10 +230,10 @@ export const DashboardHome: React.FC = () => {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
           {/* Sales Rep Profile Card - Left Column */}
-          <div className="lg:col-span-3">
+          <div className="md:col-span-3">
             <SalesRepProfileCard
               userName={userName}
               userFullName={userFullName}
@@ -251,7 +251,7 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           {/* Middle Section */}
-          <div className="lg:col-span-6 space-y-6">
+          <div className="md:col-span-6 space-y-6">
             {/* Activity & Deal Velocity Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SalesActivityCard
@@ -270,7 +270,7 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="md:col-span-3 space-y-6">
             <PipelineSummaryCard
               totalDeals={totalDeals}
               closedWonThisMonth={closedWonThisMonth}

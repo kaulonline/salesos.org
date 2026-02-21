@@ -1204,21 +1204,26 @@ export const Admin: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 mb-6 bg-white/60 p-1.5 rounded-2xl w-fit border border-white/50 backdrop-blur-sm">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id as TabType)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === tab.id
-                ? 'bg-[#1A1A1A] text-white shadow-md'
-                : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/70'
-            }`}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
+      <div className="relative mb-6">
+        <div className="flex items-center gap-1 md:gap-1.5 bg-white/60 p-1 md:p-1.5 rounded-2xl border border-white/50 backdrop-blur-sm overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id as TabType)}
+              className={`px-3 md:px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 md:gap-2 whitespace-nowrap shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-[#1A1A1A] text-white shadow-md'
+                  : 'text-[#666] hover:text-[#1A1A1A] hover:bg-white/70'
+              }`}
+              title={tab.label}
+            >
+              <tab.icon size={16} />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Scroll fade indicators */}
+        <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-[#F2F1EA] to-transparent pointer-events-none rounded-r-2xl lg:hidden" />
       </div>
 
       {/* Overview Tab */}
@@ -1700,7 +1705,7 @@ export const Admin: React.FC = () => {
       {activeTab === 'access-requests' && (
         <div className="space-y-6">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -1961,7 +1966,7 @@ export const Admin: React.FC = () => {
               {/* Contact Info */}
               <div>
                 <h3 className="font-semibold text-[#1A1A1A] mb-3">Contact Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-[#F8F8F6] rounded-xl p-3">
                     <p className="text-xs text-[#999]">Name</p>
                     <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.firstName} {selectedAccessRequest.lastName}</p>
@@ -1984,7 +1989,7 @@ export const Admin: React.FC = () => {
               {/* Company Info */}
               <div>
                 <h3 className="font-semibold text-[#1A1A1A] mb-3">Company Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-[#F8F8F6] rounded-xl p-3">
                     <p className="text-xs text-[#999]">Company</p>
                     <p className="font-medium text-[#1A1A1A]">{selectedAccessRequest.companyName}</p>
@@ -2338,7 +2343,7 @@ export const Admin: React.FC = () => {
                   {/* Generate new code inline */}
                   <div className="border-t border-[#F2F1EA] pt-4">
                     <label className="block text-sm font-medium text-[#666] mb-3">Generate New Code</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs text-[#999] mb-1">Max Uses</label>
                         <input
@@ -4451,7 +4456,7 @@ export const Admin: React.FC = () => {
 
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Name & Slug */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Plan Name *</label>
                   <input
@@ -4544,7 +4549,7 @@ export const Admin: React.FC = () => {
               </div>
 
               {/* Limits */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Users</label>
                   <input
@@ -4787,7 +4792,7 @@ export const Admin: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Number of Keys *</label>
                   <input
@@ -4928,7 +4933,7 @@ export const Admin: React.FC = () => {
               </div>
 
               {/* Discount Type & Value */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Discount Type</label>
                   <select
@@ -4956,7 +4961,7 @@ export const Admin: React.FC = () => {
               </div>
 
               {/* Duration */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Duration</label>
                   <select
@@ -4985,7 +4990,7 @@ export const Admin: React.FC = () => {
               </div>
 
               {/* Limits */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Max Redemptions</label>
                   <input
@@ -5478,7 +5483,7 @@ export const Admin: React.FC = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
                     System Role

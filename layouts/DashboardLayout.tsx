@@ -198,7 +198,7 @@ export const DashboardLayout: React.FC = () => {
         </Link>
 
         {/* Pill Navigation - Hidden on mobile, visible on lg+ */}
-        <div className="hidden lg:flex items-center gap-2 mx-auto">
+        <div className="hidden lg:flex items-center gap-2 flex-1 min-w-0 justify-center">
           <nav className="flex items-center bg-white/60 p-1 rounded-full border border-white/50 shadow-sm overflow-x-auto max-w-full no-scrollbar backdrop-blur-md" data-tour="main-nav">
             {primaryNavItems.map((item) => {
               const isActive = path === item.href || (item.href !== '/dashboard' && path.startsWith(item.href));
@@ -206,7 +206,7 @@ export const DashboardLayout: React.FC = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-2 ${isActive
+                  className={`px-3 xl:px-5 py-2 xl:py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1.5 xl:gap-2 ${isActive
                       ? 'bg-[#1A1A1A] text-white shadow-md'
                       : item.highlight
                         ? 'text-[#1A1A1A] hover:bg-[#EAD07D]/20'
@@ -224,7 +224,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => 'href' in item && item.href && path.startsWith(item.href))
+              className={`px-3 xl:px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap duration-300 flex items-center gap-1 border backdrop-blur-md ${secondaryNavItems.some(item => 'href' in item && item.href && path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white shadow-md border-[#1A1A1A]'
                   : showMoreMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200 shadow-md'
@@ -279,8 +279,8 @@ export const DashboardLayout: React.FC = () => {
             data-tour="search"
           >
             <Search size={16} />
-            <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-[10px] text-gray-500 font-mono group-hover:bg-gray-200 transition-colors">
+            <span className="hidden xl:inline">Search</span>
+            <kbd className="hidden xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-[10px] text-gray-500 font-mono group-hover:bg-gray-200 transition-colors">
               <span className="text-xs">⌘</span>K
             </kbd>
           </button>
@@ -288,7 +288,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative hidden sm:block" data-tour="ai-menu">
             <button
               onClick={() => setShowAIMenu(!showAIMenu)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${aiNavItems.some(item => path.startsWith(item.href))
+              className={`flex items-center gap-1.5 xl:gap-2 p-2.5 lg:px-3 xl:px-4 lg:py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${aiNavItems.some(item => path.startsWith(item.href))
                   ? 'bg-gradient-to-r from-[#EAD07D] to-[#D4B85C] text-[#1A1A1A] border-[#EAD07D]'
                   : showAIMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200'
@@ -296,7 +296,7 @@ export const DashboardLayout: React.FC = () => {
                 }`}
             >
               <Brain size={16} />
-              <span className="hidden sm:inline">AI</span>
+              <span className="hidden xl:inline">AI</span>
               <ChevronDown size={14} className={`transition-transform duration-200 ${showAIMenu ? 'rotate-180' : ''}`} />
             </button>
 
@@ -330,7 +330,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="relative hidden sm:block" data-tour="settings-menu">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => item.href && path.startsWith(item.href))
+              className={`flex items-center gap-1.5 xl:gap-2 p-2.5 lg:px-3 xl:px-4 lg:py-2 border rounded-full text-sm font-medium transition-all shadow-sm backdrop-blur-sm ${settingsNavItems.some(item => item.href && path.startsWith(item.href))
                   ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
                   : showSettingsMenu
                     ? 'bg-white text-[#1A1A1A] border-gray-200'
@@ -338,7 +338,7 @@ export const DashboardLayout: React.FC = () => {
                 }`}
             >
               <Settings size={16} />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden xl:inline">Settings</span>
               <ChevronDown size={14} className={`transition-transform duration-200 ${showSettingsMenu ? 'rotate-180' : ''}`} />
             </button>
 
