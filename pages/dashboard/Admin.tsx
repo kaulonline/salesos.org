@@ -169,6 +169,21 @@ export const Admin: React.FC = () => {
   const [showSendOrgCodeModal, setShowSendOrgCodeModal] = useState(false);
   const [sendOrgCodeForm, setSendOrgCodeForm] = useState({ organizationCode: '', personalMessage: '' });
   const [sendOrgCodeLoading, setSendOrgCodeLoading] = useState(false);
+
+  // Enhanced Send Org Code modal state
+  const [sendCodeStep, setSendCodeStep] = useState<'select-org' | 'select-code' | 'create-org'>('select-org');
+  const [sendCodeOrgs, setSendCodeOrgs] = useState<Organization[]>([]);
+  const [sendCodeOrgsLoading, setSendCodeOrgsLoading] = useState(false);
+  const [sendCodeOrgSearch, setSendCodeOrgSearch] = useState('');
+  const [sendCodeSelectedOrg, setSendCodeSelectedOrg] = useState<Organization | null>(null);
+  const [sendCodeOrgCodes, setSendCodeOrgCodes] = useState<OrganizationCode[]>([]);
+  const [sendCodeCodesLoading, setSendCodeCodesLoading] = useState(false);
+  const [sendCodeSelectedCode, setSendCodeSelectedCode] = useState('');
+  const [sendCodeGenForm, setSendCodeGenForm] = useState({ maxUses: 100, expiresInDays: 365, defaultRole: 'MEMBER' });
+  const [sendCodeGenLoading, setSendCodeGenLoading] = useState(false);
+  const [sendCodeNewOrgForm, setSendCodeNewOrgForm] = useState({ name: '', slug: '', contactEmail: '' });
+  const [sendCodeNewOrgLoading, setSendCodeNewOrgLoading] = useState(false);
+
   const [usersPage, setUsersPage] = useState(1);
   const [showAuditFilterMenu, setShowAuditFilterMenu] = useState(false);
   const [auditActionFilter, setAuditActionFilter] = useState<string>('all');
@@ -781,19 +796,24 @@ export const Admin: React.FC = () => {
   };
 
   const handleSendOrgCode = async () => {
-    if (!selectedAccessRequest || !sendOrgCodeForm.organizationCode) {
-      showToast('Please enter an organization code', 'error');
+    const codeToSend = sendCodeSelectedCode || sendOrgCodeForm.organizationCode;
+    if (!selectedAccessRequest || !codeToSend) {
+      showToast('Please select an organization code', 'error');
       return;
     }
     setSendOrgCodeLoading(true);
     try {
       await accessRequestsApi.sendOrgCode(selectedAccessRequest.id, {
-        organizationCode: sendOrgCodeForm.organizationCode,
+        organizationCode: codeToSend,
         personalMessage: sendOrgCodeForm.personalMessage || undefined,
       });
       showToast('Organization code sent successfully', 'success');
       setShowSendOrgCodeModal(false);
       setSendOrgCodeForm({ organizationCode: '', personalMessage: '' });
+      setSendCodeSelectedCode('');
+      setSendCodeSelectedOrg(null);
+      setSendCodeOrgCodes([]);
+      setSendCodeStep('select-org');
       setSelectedAccessRequest(null);
       fetchAccessRequests();
     } catch (err) {
@@ -937,6 +957,139 @@ export const Admin: React.FC = () => {
     }
   };
 
+  // --- Enhanced Send Org Code modal helpers ---
+
+  const fetchSendCodeOrgs = async (search?: string) => {
+    setSendCodeOrgsLoading(true);
+    try {
+      const result = await organizationsApi.getAll(1, 50, 'ACTIVE', search || undefined);
+      setSendCodeOrgs(result.organizations || []);
+    } catch (err) {
+      console.error('Failed to fetch orgs for send code:', err);
+    } finally {
+      setSendCodeOrgsLoading(false);
+    }
+  };
+
+  const fetchSendCodeOrgCodes = async (orgId: string) => {
+    setSendCodeCodesLoading(true);
+    try {
+      const codes = await organizationsApi.getCodes(orgId);
+      setSendCodeOrgCodes(codes || []);
+    } catch (err) {
+      console.error('Failed to fetch org codes:', err);
+    } finally {
+      setSendCodeCodesLoading(false);
+    }
+  };
+
+  // Debounced search for orgs in send code modal
+  useEffect(() => {
+    if (!showSendOrgCodeModal) return;
+    if (sendCodeStep !== 'select-org') return;
+    const timer = setTimeout(() => {
+      fetchSendCodeOrgs(sendCodeOrgSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [sendCodeOrgSearch, showSendOrgCodeModal, sendCodeStep]);
+
+  const openSendOrgCodeModal = async (request?: AccessRequest) => {
+    const req = request || selectedAccessRequest;
+    if (!req) return;
+    setSelectedAccessRequest(req);
+    // Reset all modal state
+    setSendCodeStep('select-org');
+    setSendCodeSelectedOrg(null);
+    setSendCodeOrgCodes([]);
+    setSendCodeSelectedCode('');
+    setSendCodeCodesLoading(false);
+    setSendCodeGenLoading(false);
+    setSendCodeGenForm({ maxUses: 100, expiresInDays: 365, defaultRole: 'MEMBER' });
+    setSendOrgCodeForm({ organizationCode: '', personalMessage: '' });
+    // Pre-fill search with company name
+    const companyName = req.companyName || '';
+    setSendCodeOrgSearch(companyName);
+    // Pre-fill create-org form
+    setSendCodeNewOrgForm({
+      name: companyName,
+      slug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      contactEmail: req.email || '',
+    });
+    setSendCodeNewOrgLoading(false);
+    setShowSendOrgCodeModal(true);
+    // Fetch orgs and auto-select exact match
+    try {
+      setSendCodeOrgsLoading(true);
+      const result = await organizationsApi.getAll(1, 50, 'ACTIVE', companyName || undefined);
+      const orgs = result.organizations || [];
+      setSendCodeOrgs(orgs);
+      // Auto-select exact name match
+      const exactMatch = orgs.find(o => o.name.toLowerCase() === companyName.toLowerCase());
+      if (exactMatch) {
+        setSendCodeSelectedOrg(exactMatch);
+        setSendCodeStep('select-code');
+        fetchSendCodeOrgCodes(exactMatch.id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch orgs:', err);
+    } finally {
+      setSendCodeOrgsLoading(false);
+    }
+  };
+
+  const handleSendCodeSelectOrg = (org: Organization) => {
+    setSendCodeSelectedOrg(org);
+    setSendCodeSelectedCode('');
+    setSendCodeStep('select-code');
+    fetchSendCodeOrgCodes(org.id);
+  };
+
+  const handleSendCodeGenerateCode = async () => {
+    if (!sendCodeSelectedOrg) return;
+    setSendCodeGenLoading(true);
+    try {
+      const newCode = await organizationsApi.createCode(sendCodeSelectedOrg.id, {
+        maxUses: sendCodeGenForm.maxUses,
+        validUntil: new Date(Date.now() + sendCodeGenForm.expiresInDays * 24 * 60 * 60 * 1000).toISOString(),
+        defaultRole: sendCodeGenForm.defaultRole,
+      });
+      // Auto-select the new code
+      setSendCodeSelectedCode(newCode.code);
+      // Refresh codes list
+      await fetchSendCodeOrgCodes(sendCodeSelectedOrg.id);
+      showToast({ type: 'success', title: 'Code Generated', message: `Code ${newCode.code} created` });
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Failed to Generate Code', message: err.response?.data?.message || 'Please try again' });
+    } finally {
+      setSendCodeGenLoading(false);
+    }
+  };
+
+  const handleSendCodeCreateOrg = async () => {
+    if (!sendCodeNewOrgForm.name || !sendCodeNewOrgForm.slug) {
+      showToast({ type: 'error', title: 'Name and slug are required' });
+      return;
+    }
+    setSendCodeNewOrgLoading(true);
+    try {
+      const newOrg = await organizationsApi.create({
+        name: sendCodeNewOrgForm.name,
+        slug: sendCodeNewOrgForm.slug.toLowerCase().replace(/\s+/g, '-'),
+        contactEmail: sendCodeNewOrgForm.contactEmail || undefined,
+      });
+      showToast({ type: 'success', title: 'Organization Created', message: newOrg.name });
+      // Auto-select the new org and move to code step
+      setSendCodeSelectedOrg(newOrg);
+      setSendCodeSelectedCode('');
+      setSendCodeStep('select-code');
+      fetchSendCodeOrgCodes(newOrg.id);
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Failed to Create Organization', message: err.response?.data?.message || 'Please try again' });
+    } finally {
+      setSendCodeNewOrgLoading(false);
+    }
+  };
+
   // Generate organization code
   const handleGenerateCode = async () => {
     if (!selectedOrg) return;
@@ -944,7 +1097,7 @@ export const Admin: React.FC = () => {
     try {
       await organizationsApi.createCode(selectedOrg.id, {
         maxUses: genCodeForm.maxUses,
-        expiresAt: new Date(Date.now() + genCodeForm.expiresInDays * 24 * 60 * 60 * 1000).toISOString(),
+        validUntil: new Date(Date.now() + genCodeForm.expiresInDays * 24 * 60 * 60 * 1000).toISOString(),
         defaultRole: genCodeForm.defaultRole,
       });
       showToast('Registration code generated successfully', 'success');
@@ -1756,10 +1909,7 @@ export const Admin: React.FC = () => {
                           )}
                           {(request.status === 'CONTACTED' || request.status === 'QUALIFIED' || request.status === 'APPROVED') && (
                             <button
-                              onClick={() => {
-                                setSelectedAccessRequest(request);
-                                setShowSendOrgCodeModal(true);
-                              }}
+                              onClick={() => openSendOrgCodeModal(request)}
                               className="p-2 rounded-lg hover:bg-[#EAD07D]/20 transition-colors text-[#EAD07D]"
                               title="Send Org Code"
                             >
@@ -1967,7 +2117,7 @@ export const Admin: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowAccessRequestDetailModal(false);
-                    setShowSendOrgCodeModal(true);
+                    openSendOrgCodeModal();
                   }}
                   className="flex-1 px-4 py-2.5 rounded-xl bg-[#EAD07D] text-[#1A1A1A] font-medium hover:bg-[#EAD07D]/80 transition-colors flex items-center justify-center gap-2"
                 >
@@ -1980,46 +2130,284 @@ export const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* Send Org Code Modal */}
+      {/* Send Org Code Modal (Enhanced) */}
       {showSendOrgCodeModal && selectedAccessRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA]">
+          <div className="bg-white rounded-3xl w-full max-w-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-[#F2F1EA] shrink-0">
               <div>
                 <h2 className="text-xl font-semibold text-[#1A1A1A]">Send Organization Code</h2>
-                <p className="text-sm text-[#666]">to {selectedAccessRequest.email}</p>
+                <p className="text-sm text-[#666]">to {selectedAccessRequest.email} ({selectedAccessRequest.companyName})</p>
               </div>
               <button onClick={() => setShowSendOrgCodeModal(false)} className="text-[#666] hover:text-[#1A1A1A]">
                 <X size={24} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[#666] mb-1">Organization Code *</label>
-                <input
-                  type="text"
-                  value={sendOrgCodeForm.organizationCode}
-                  onChange={(e) => setSendOrgCodeForm({ ...sendOrgCodeForm, organizationCode: e.target.value.toUpperCase() })}
-                  placeholder="Enter or generate a code"
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#666] mb-1">Personal Message (optional)</label>
-                <textarea
-                  value={sendOrgCodeForm.personalMessage}
-                  onChange={(e) => setSendOrgCodeForm({ ...sendOrgCodeForm, personalMessage: e.target.value })}
-                  placeholder="Add a personalized message..."
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
-                />
-              </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Step: Select Organization */}
+              {sendCodeStep === 'select-org' && (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
+                    <input
+                      type="text"
+                      value={sendCodeOrgSearch}
+                      onChange={(e) => setSendCodeOrgSearch(e.target.value)}
+                      placeholder="Search organizations..."
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {sendCodeOrgsLoading ? (
+                      <div className="flex items-center justify-center py-8 text-[#999]">
+                        <Loader2 size={20} className="animate-spin mr-2" />
+                        Loading organizations...
+                      </div>
+                    ) : sendCodeOrgs.length === 0 ? (
+                      <div className="text-center py-8 text-[#999]">
+                        <Building2 size={32} className="mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">No organizations found</p>
+                      </div>
+                    ) : (
+                      sendCodeOrgs.map((org) => (
+                        <button
+                          key={org.id}
+                          onClick={() => handleSendCodeSelectOrg(org)}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#F8F8F6] transition-colors text-left group"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center shrink-0">
+                            <Building2 size={16} className="text-[#1A1A1A]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[#1A1A1A] truncate">{org.name}</p>
+                            <p className="text-xs text-[#999] truncate">{org.slug} {org._count?.members ? `· ${org._count.members} members` : ''}</p>
+                          </div>
+                          <ChevronRight size={16} className="text-[#999] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Create New Organization button */}
+                  <button
+                    onClick={() => setSendCodeStep('create-org')}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-[#EAD07D]/40 hover:border-[#EAD07D] hover:bg-[#EAD07D]/5 transition-colors text-left"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#EAD07D]/10 flex items-center justify-center shrink-0">
+                      <Plus size={16} className="text-[#EAD07D]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#1A1A1A]">Create New Organization</p>
+                      <p className="text-xs text-[#999]">Set up a new org for this request</p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Step: Create Organization */}
+              {sendCodeStep === 'create-org' && (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setSendCodeStep('select-org')}
+                    className="text-sm text-[#EAD07D] hover:text-[#1A1A1A] font-medium flex items-center gap-1"
+                  >
+                    <ChevronRight size={14} className="rotate-180" />
+                    Back to search
+                  </button>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Organization Name *</label>
+                    <input
+                      type="text"
+                      value={sendCodeNewOrgForm.name}
+                      onChange={(e) => setSendCodeNewOrgForm({
+                        ...sendCodeNewOrgForm,
+                        name: e.target.value,
+                        slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+                      })}
+                      placeholder="Acme Corp"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Slug *</label>
+                    <input
+                      type="text"
+                      value={sendCodeNewOrgForm.slug}
+                      onChange={(e) => setSendCodeNewOrgForm({ ...sendCodeNewOrgForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                      placeholder="acme-corp"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-1">Contact Email</label>
+                    <input
+                      type="email"
+                      value={sendCodeNewOrgForm.contactEmail}
+                      onChange={(e) => setSendCodeNewOrgForm({ ...sendCodeNewOrgForm, contactEmail: e.target.value })}
+                      placeholder="contact@acme.com"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSendCodeCreateOrg}
+                    disabled={sendCodeNewOrgLoading || !sendCodeNewOrgForm.name || !sendCodeNewOrgForm.slug}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {sendCodeNewOrgLoading && <Loader2 size={16} className="animate-spin" />}
+                    <Building2 size={16} />
+                    Create & Continue
+                  </button>
+                </div>
+              )}
+
+              {/* Step: Select Code */}
+              {sendCodeStep === 'select-code' && sendCodeSelectedOrg && (
+                <div className="space-y-4">
+                  {/* Selected org header */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F6]">
+                    <div className="w-9 h-9 rounded-lg bg-[#EAD07D]/20 flex items-center justify-center shrink-0">
+                      <Building2 size={16} className="text-[#1A1A1A]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1A1A1A]">{sendCodeSelectedOrg.name}</p>
+                      <p className="text-xs text-[#999]">{sendCodeSelectedOrg.slug}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSendCodeStep('select-org');
+                        setSendCodeSelectedOrg(null);
+                        setSendCodeSelectedCode('');
+                      }}
+                      className="text-xs text-[#EAD07D] hover:text-[#1A1A1A] font-medium"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  {/* Existing codes */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#666] mb-2">Select a Code</label>
+                    {sendCodeCodesLoading ? (
+                      <div className="flex items-center justify-center py-6 text-[#999]">
+                        <Loader2 size={16} className="animate-spin mr-2" />
+                        Loading codes...
+                      </div>
+                    ) : (
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {sendCodeOrgCodes.filter(c => c.status === 'ACTIVE').length === 0 ? (
+                          <p className="text-sm text-[#999] py-3 text-center">No active codes. Generate one below.</p>
+                        ) : (
+                          sendCodeOrgCodes.filter(c => c.status === 'ACTIVE').map((code) => (
+                            <button
+                              key={code.id}
+                              onClick={() => setSendCodeSelectedCode(code.code)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors text-left ${
+                                sendCodeSelectedCode === code.code
+                                  ? 'border-[#EAD07D] bg-[#EAD07D]/5'
+                                  : 'border-transparent hover:bg-[#F8F8F6]'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                sendCodeSelectedCode === code.code
+                                  ? 'border-[#EAD07D] bg-[#EAD07D]'
+                                  : 'border-[#ccc]'
+                              }`}>
+                                {sendCodeSelectedCode === code.code && <Check size={12} className="text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-mono font-medium text-[#1A1A1A]">{code.code}</p>
+                                <p className="text-xs text-[#999]">
+                                  {code.currentUses}/{code.maxUses} uses · {code.defaultRole}
+                                  {code.expiresAt ? ` · expires ${formatDate(code.expiresAt)}` : ''}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Generate new code inline */}
+                  <div className="border-t border-[#F2F1EA] pt-4">
+                    <label className="block text-sm font-medium text-[#666] mb-3">Generate New Code</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs text-[#999] mb-1">Max Uses</label>
+                        <input
+                          type="number"
+                          value={sendCodeGenForm.maxUses}
+                          onChange={(e) => setSendCodeGenForm({ ...sendCodeGenForm, maxUses: parseInt(e.target.value) || 1 })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                          min={1}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#999] mb-1">Expires (days)</label>
+                        <input
+                          type="number"
+                          value={sendCodeGenForm.expiresInDays}
+                          onChange={(e) => setSendCodeGenForm({ ...sendCodeGenForm, expiresInDays: parseInt(e.target.value) || 1 })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                          min={1}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#999] mb-1">Default Role</label>
+                        <select
+                          value={sendCodeGenForm.defaultRole}
+                          onChange={(e) => setSendCodeGenForm({ ...sendCodeGenForm, defaultRole: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] outline-none text-sm"
+                        >
+                          <option value="MEMBER">MEMBER</option>
+                          <option value="MANAGER">MANAGER</option>
+                          <option value="ADMIN">ADMIN</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSendCodeGenerateCode}
+                      disabled={sendCodeGenLoading}
+                      className="mt-3 px-4 py-2 rounded-xl bg-[#EAD07D]/20 text-[#1A1A1A] font-medium hover:bg-[#EAD07D]/30 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {sendCodeGenLoading ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
+                      Generate & Select
+                    </button>
+                  </div>
+
+                  {/* Personal message - shown once a code is selected */}
+                  {sendCodeSelectedCode && (
+                    <div className="border-t border-[#F2F1EA] pt-4">
+                      <label className="block text-sm font-medium text-[#666] mb-1">Personal Message (optional)</label>
+                      <textarea
+                        value={sendOrgCodeForm.personalMessage}
+                        onChange={(e) => setSendOrgCodeForm({ ...sendOrgCodeForm, personalMessage: e.target.value })}
+                        placeholder="Add a personalized message..."
+                        rows={3}
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#F8F8F6] border border-transparent focus:border-[#EAD07D] focus:ring-2 focus:ring-[#EAD07D]/20 outline-none text-sm resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex gap-3 p-6 border-t border-[#F2F1EA]">
+
+            {/* Footer */}
+            <div className="flex gap-3 p-6 border-t border-[#F2F1EA] shrink-0">
               <button
                 onClick={() => {
                   setShowSendOrgCodeModal(false);
                   setSendOrgCodeForm({ organizationCode: '', personalMessage: '' });
+                  setSendCodeSelectedCode('');
+                  setSendCodeSelectedOrg(null);
+                  setSendCodeStep('select-org');
                 }}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-[#F2F1EA] text-[#666] font-medium hover:bg-[#F8F8F6] transition-colors"
               >
@@ -2027,10 +2415,11 @@ export const Admin: React.FC = () => {
               </button>
               <button
                 onClick={handleSendOrgCode}
-                disabled={sendOrgCodeLoading || !sendOrgCodeForm.organizationCode}
+                disabled={sendOrgCodeLoading || !sendCodeSelectedCode}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-[#333] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {sendOrgCodeLoading && <Loader2 size={16} className="animate-spin" />}
+                <Mail size={16} />
                 Send Code
               </button>
             </div>
